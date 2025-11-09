@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Warlock SSH Command Interface</title>
+    <style>
+        body {
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #000;
+            background-image: 
+                radial-gradient(circle at 20% 20%, rgba(0,255,0,0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(0,255,0,0.1) 0%, transparent 50%),
+                radial-gradient(circle at 40% 60%, rgba(0,255,0,0.05) 0%, transparent 50%);
+            color: #00ff00;
+            position: relative;
+            overflow-x: hidden;
+        }
+        
+        /* Matrix Background */
+        #matrix-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.4;
+            overflow: hidden;
+        }
+        
+        .matrix-column {
+            position: absolute;
+            top: -100%;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 16px;
+            color: #00ff00;
+            line-height: 20px;
+            white-space: nowrap;
+            animation-name: matrix-rain;
+            animation-timing-function: linear;
+            animation-iteration-count: infinite;
+            text-shadow: 0 0 8px #00ff00, 0 0 15px #00ff00;
+            filter: brightness(1.5);
+            font-weight: bold;
+        }
+        
+        .matrix-column:nth-child(odd) {
+            color: #00ff00;
+            text-shadow: 0 0 10px #00ff00, 0 0 20px #00ff00;
+        }
+        
+        .matrix-column:nth-child(3n) {
+            color: #88ff88;
+            font-size: 18px;
+            text-shadow: 0 0 12px #88ff88, 0 0 24px #88ff88;
+        }
+        
+        .matrix-column:nth-child(4n) {
+            color: #44ff44;
+            font-size: 14px;
+            text-shadow: 0 0 8px #44ff44, 0 0 16px #44ff44;
+        }
+        
+        .matrix-column:nth-child(5n) {
+            color: #66ff66;
+            font-size: 20px;
+            text-shadow: 0 0 15px #66ff66, 0 0 30px #66ff66;
+            animation-duration: 1.5s !important;
+        }
+        
+        @keyframes matrix-rain {
+            0% {
+                transform: translateY(-100vh);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh);
+                opacity: 0;
+            }
+        }
+        .container {
+            background: rgba(0,0,0,0.75);
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 40px rgba(0,255,0,0.6), inset 0 0 20px rgba(0,255,0,0.1);
+            border: 3px solid #00ff00;
+            position: relative;
+            z-index: 1;
+            backdrop-filter: blur(2px);
+        }
+        h1 {
+            color: #00ff00;
+            text-align: center;
+            text-shadow: 0 0 10px #00ff00, 0 0 20px #00ff00, 0 0 30px #00ff00;
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+        
+        @keyframes glow {
+            from {
+                text-shadow: 0 0 10px #00ff00, 0 0 20px #00ff00, 0 0 30px #00ff00;
+            }
+            to {
+                text-shadow: 0 0 15px #00ff00, 0 0 25px #00ff00, 0 0 35px #00ff00, 0 0 45px #00ff00;
+            }
+        }
+        
+        /* Scanning line effect */
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #00ff00, transparent);
+            animation: scan 4s linear infinite;
+            z-index: 1000;
+            box-shadow: 0 0 10px #00ff00;
+        }
+        
+        @keyframes scan {
+            0% { transform: translateY(0vh); }
+            100% { transform: translateY(100vh); }
+        }
+        .control-panel {
+            text-align: center;
+            margin: 30px 0;
+        }
+        .ssh-button {
+            background: linear-gradient(45deg, #00ff00, #008800);
+            color: #000;
+            border: none;
+            padding: 15px 30px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 5px;
+            cursor: pointer;
+            box-shadow: 0 0 15px rgba(0,255,0,0.5);
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+        .ssh-button:hover {
+            background: linear-gradient(45deg, #00cc00, #00ff00);
+            box-shadow: 0 0 25px rgba(0,255,0,0.8);
+            transform: translateY(-2px);
+        }
+        .ssh-button:disabled {
+            background: #333;
+            color: #666;
+            box-shadow: none;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .terminal {
+            background: rgba(0,0,0,0.8);
+            border: 3px solid #00ff00;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+            min-height: 300px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 14px;
+            line-height: 1.4;
+            box-shadow: inset 0 0 20px rgba(0,255,0,0.3), 0 0 30px rgba(0,255,0,0.4);
+            overflow-x: auto;
+            white-space: pre-wrap;
+            position: relative;
+            z-index: 1;
+        }
+        .terminal-header {
+            color: #00ff00;
+            border-bottom: 1px solid #00ff00;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+        .command-line {
+            color: #ffff00;
+            margin-bottom: 10px;
+        }
+        .output {
+            color: #00ff00;
+            margin-left: 0;
+        }
+        .error {
+            color: #ff0000;
+        }
+        .loading {
+            color: #ffff00;
+            animation: blink 1s infinite;
+        }
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0.3; }
+        }
+        .status {
+            text-align: center;
+            margin: 15px 0;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .status.success {
+            background: rgba(0,255,0,0.1);
+            border: 1px solid #00ff00;
+        }
+        .status.error {
+            background: rgba(255,0,0,0.1);
+            border: 1px solid #ff0000;
+            color: #ff0000;
+        }
+    </style>
+</head>
+<body>
+    <div id="matrix-bg"></div>
+    <div class="container">
+        <h1>🔮 WARLOCK SSH COMMAND INTERFACE</h1>
+        
+        <div class="control-panel">
+            <button id="sshButton" class="ssh-button">
+                Execute SSH Command
+            </button>
+        </div>
+        
+        <div id="status" class="status" style="display: none;"></div>
+        
+        <div class="terminal">
+            <div class="terminal-header">
+                === COMMAND OUTPUT TERMINAL ===
+            </div>
+            <div id="terminalOutput">
+                Ready to execute SSH command...<br>
+                Command: ssh root@45.26.230.248 '/home/steam/VEIN/manage.py --help'
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Matrix Background Animation
+        function createMatrixBackground() {
+            const matrixBg = document.getElementById('matrix-bg');
+            const columns = Math.floor(window.innerWidth / 15); // More columns for denser effect
+            
+            // Matrix characters (mix of numbers, letters, and symbols)
+            const matrixChars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz!@#$%^&*()_+-=[]{}|;:,.<>?`~アカサタナハマヤラワ日本語';
+            
+            for (let i = 0; i < columns; i++) {
+                const column = document.createElement('div');
+                column.className = 'matrix-column';
+                column.style.left = (i * 15) + 'px';
+                column.style.animationDuration = (Math.random() * 2 + 1) + 's'; // Faster falling
+                column.style.animationDelay = (Math.random() * 3) + 's';
+                
+                // Create random characters for this column
+                let columnText = '';
+                const charCount = Math.floor(Math.random() * 30) + 20; // More characters per column
+                for (let j = 0; j < charCount; j++) {
+                    const char = matrixChars[Math.floor(Math.random() * matrixChars.length)];
+                    const opacity = Math.random() > 0.5 ? 1 : (Math.random() * 0.8 + 0.2); // More variation in opacity
+                    const brightness = Math.random() > 0.8 ? 'filter: brightness(2);' : '';
+                    columnText += `<span style="opacity: ${opacity}; ${brightness}">${char}</span><br>`;
+                }
+                
+                column.innerHTML = columnText;
+                matrixBg.appendChild(column);
+            }
+        }
+        
+        // Initialize matrix background
+        createMatrixBackground();
+        
+        // Recreate matrix on window resize
+        window.addEventListener('resize', () => {
+            const matrixBg = document.getElementById('matrix-bg');
+            matrixBg.innerHTML = '';
+            createMatrixBackground();
+        });
+        
+        // Update matrix characters periodically for more dynamic effect
+        setInterval(() => {
+            const columns = document.querySelectorAll('.matrix-column');
+            columns.forEach(column => {
+                if (Math.random() > 0.85) { // 15% chance to update each column
+                    const spans = column.querySelectorAll('span');
+                    spans.forEach(span => {
+                        if (Math.random() > 0.7) { // 30% chance to update each character
+                            const matrixChars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz!@#$%^&*()_+-=[]{}|;:,.<>?`~アカサタナハマヤラワ日本語';
+                            span.textContent = matrixChars[Math.floor(Math.random() * matrixChars.length)];
+                            // Random brightness flicker
+                            if (Math.random() > 0.9) {
+                                span.style.filter = 'brightness(3)';
+                                setTimeout(() => span.style.filter = '', 50);
+                            }
+                        }
+                    });
+                }
+            });
+        }, 75); // Faster updates
+
+        const sshButton = document.getElementById('sshButton');
+        const terminalOutput = document.getElementById('terminalOutput');
+        const statusDiv = document.getElementById('status');
+
+        function updateTerminal(content, isError = false) {
+            terminalOutput.innerHTML = content;
+            if (isError) {
+                terminalOutput.classList.add('error');
+            } else {
+                terminalOutput.classList.remove('error');
+            }
+        }
+
+        function showStatus(message, isError = false) {
+            statusDiv.textContent = message;
+            statusDiv.className = `status ${isError ? 'error' : 'success'}`;
+            statusDiv.style.display = 'block';
+        }
+
+        function hideStatus() {
+            statusDiv.style.display = 'none';
+        }
+
+        sshButton.addEventListener('click', async () => {
+            // Disable button and show loading
+            sshButton.disabled = true;
+            sshButton.textContent = 'Executing...';
+            
+            // Show loading in terminal
+            updateTerminal(`<div class="command-line">$ ssh root@45.26.230.248 '/home/steam/VEIN/manage.py --help'</div><div class="loading">Executing command... Please wait.</div>`);
+            hideStatus();
+
+            try {
+                const response = await fetch('/run-ssh-command', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    const output = `<div class="command-line">$ ${result.command}</div><div class="output">${result.output}</div>`;
+                    updateTerminal(output);
+                    showStatus('Command executed successfully!');
+                } else {
+                    const errorOutput = `<div class="command-line">$ ${result.command}</div><div class="error">ERROR: ${result.output}</div>`;
+                    if (result.stderr) {
+                        errorOutput += `<div class="error">STDERR: ${result.stderr}</div>`;
+                    }
+                    updateTerminal(errorOutput, true);
+                    showStatus('Command execution failed!', true);
+                }
+            } catch (error) {
+                updateTerminal(`<div class="error">Network Error: ${error.message}</div>`, true);
+                showStatus('Network error occurred!', true);
+            } finally {
+                // Re-enable button
+                sshButton.disabled = false;
+                sshButton.textContent = 'Execute SSH Command';
+            }
+        });
+    </script>
+</body>
+</html>

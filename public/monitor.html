@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Warlock - System Monitor</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1rem 0;
+            box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 2rem;
+        }
+        
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #667eea;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .nav-menu {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+        
+        .nav-menu a {
+            text-decoration: none;
+            color: #555;
+            font-weight: 500;
+            transition: color 0.3s ease;
+            position: relative;
+        }
+        
+        .nav-menu a:hover,
+        .nav-menu a.active {
+            color: #667eea;
+        }
+        
+        .nav-menu a.active::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: #667eea;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+        
+        .monitor-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            overflow: hidden;
+            margin-bottom: 2rem;
+        }
+        
+        .card-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+            background: rgba(102, 126, 234, 0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .card-header h2 {
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin: 0;
+        }
+        
+        .btn-refresh {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .btn-refresh:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+        
+        .btn-refresh:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .terminal-container {
+            padding: 0;
+            height: 700px;
+        }
+        
+        .terminal {
+            height: 100%;
+            background: #000;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .terminal-header {
+            background: #333;
+            padding: 0.75rem 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #ccc;
+            font-size: 0.9rem;
+            font-weight: 500;
+            border-bottom: 1px solid #555;
+        }
+        
+        .terminal-body {
+            flex: 1;
+            padding: 1rem;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 0.8rem;
+            line-height: 1.2;
+            color: #00ff41;
+            background: #000;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        
+        .status-indicator.connected {
+            background: rgba(34, 197, 94, 0.15);
+            color: #059669;
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+        
+        .status-indicator.disconnected {
+            background: rgba(239, 68, 68, 0.15);
+            color: #dc2626;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+        
+        .status-indicator.loading {
+            background: rgba(59, 130, 246, 0.15);
+            color: #2563eb;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+        
+        .loading-spinner {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border: 2px solid currentColor;
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .error-message {
+            color: #ff4444;
+            padding: 1rem;
+            background: rgba(255, 68, 68, 0.1);
+            border: 1px solid rgba(255, 68, 68, 0.3);
+            border-radius: 6px;
+            margin: 1rem;
+        }
+        
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #667eea;
+            text-decoration: none;
+            margin-bottom: 1rem;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+        
+        .back-link:hover {
+            color: #5a67d8;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <i class="fas fa-gamepad"></i>
+                Warlock Game Server Platform
+            </div>
+            <nav>
+                <ul class="nav-menu">
+                    <li><a href="/">Server Management</a></li>
+                    <li><a href="/monitor" class="active">Server Monitor</a></li>
+                    <li><a href="#">Player Logs</a></li>
+                    <li><a href="#">Settings</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <div class="container">
+        <a href="/" class="back-link">
+            <i class="fas fa-arrow-left"></i>
+            Back to Server Management
+        </a>
+        
+        <div class="monitor-card">
+            <div class="card-header">
+                <h2>
+                    <i class="fas fa-chart-line"></i>
+                    System Performance Monitor
+                </h2>
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <div id="statusIndicator" class="status-indicator disconnected">
+                        <i class="fas fa-circle"></i>
+                        Disconnected
+                    </div>
+                    <button id="refreshBtn" class="btn-refresh">
+                        <i class="fas fa-sync-alt"></i>
+                        Start Monitor
+                    </button>
+                </div>
+            </div>
+            
+            <div class="terminal-container">
+                <div class="terminal">
+                    <div class="terminal-header">
+                        <i class="fas fa-terminal"></i>
+                        Remote Server Monitor - root@45.26.230.248
+                    </div>
+                    <div class="terminal-body" id="terminalOutput">
+                        <div style="color: #ffd700;">Welcome to Warlock System Monitor</div>
+                        <div style="color: #00ff41;">Click "Start Monitor" to begin real-time system monitoring...</div>
+                        <div style="color: #888; margin-top: 1rem;">
+• Real-time CPU, Memory, Disk, and Process monitoring
+• Network interface and connection statistics
+• Load averages and system uptime
+• Updates every 3 seconds
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const refreshBtn = document.getElementById('refreshBtn');
+        const terminalOutput = document.getElementById('terminalOutput');
+        const statusIndicator = document.getElementById('statusIndicator');
+        
+        let isMonitoring = false;
+        let monitorInterval;
+        
+        function updateStatus(status, text) {
+            statusIndicator.className = `status-indicator ${status}`;
+            if (status === 'loading') {
+                statusIndicator.innerHTML = `<div class="loading-spinner"></div> ${text}`;
+            } else if (status === 'connected') {
+                statusIndicator.innerHTML = `<i class="fas fa-circle"></i> ${text}`;
+            } else {
+                statusIndicator.innerHTML = `<i class="fas fa-circle"></i> ${text}`;
+            }
+        }
+        
+        function appendToTerminal(content, className = '') {
+            const div = document.createElement('div');
+            if (className) div.className = className;
+            div.textContent = content;
+            terminalOutput.appendChild(div);
+            terminalOutput.scrollTop = terminalOutput.scrollHeight;
+        }
+        
+        function clearTerminal() {
+            terminalOutput.innerHTML = '';
+        }
+        
+        async function startMonitoring() {
+            if (isMonitoring) {
+                stopMonitoring();
+                return;
+            }
+            
+            isMonitoring = true;
+            refreshBtn.disabled = true;
+            refreshBtn.innerHTML = '<div class="loading-spinner"></div> Starting...';
+            updateStatus('loading', 'Connecting...');
+            
+            clearTerminal();
+            appendToTerminal('$ Connecting to remote server...', 'color: #ffd700;');
+            appendToTerminal('$ Initializing system monitoring...', 'color: #ffd700;');
+            
+            try {
+                // First, check if bpytop is installed, if not install it
+                const response = await fetch('/start-bpytop', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    updateStatus('connected', 'Monitor Active');
+                    refreshBtn.innerHTML = '<i class="fas fa-stop"></i> Stop Monitor';
+                    refreshBtn.disabled = false;
+                    
+                    appendToTerminal('✓ System monitoring is ready', 'color: #00ff41;');
+                    appendToTerminal('$ Starting real-time data collection...', 'color: #ffd700;');
+                    appendToTerminal('', '');
+                    
+                    // Start polling for bpytop output
+                    startPolling();
+                } else {
+                    updateStatus('disconnected', 'Connection Failed');
+                    refreshBtn.innerHTML = '<i class="fas fa-sync-alt"></i> Retry';
+                    refreshBtn.disabled = false;
+                    appendToTerminal(`Error: ${result.output}`, 'color: #ff4444;');
+                    isMonitoring = false;
+                }
+            } catch (error) {
+                updateStatus('disconnected', 'Connection Failed');
+                refreshBtn.innerHTML = '<i class="fas fa-sync-alt"></i> Retry';
+                refreshBtn.disabled = false;
+                appendToTerminal(`Network Error: ${error.message}`, 'color: #ff4444;');
+                isMonitoring = false;
+            }
+        }
+        
+        function startPolling() {
+            monitorInterval = setInterval(async () => {
+                try {
+                    const response = await fetch('/bpytop-output');
+                    const result = await response.json();
+                    
+                    if (result.success && result.output) {
+                        // Clear terminal and show fresh bpytop output
+                        clearTerminal();
+                        appendToTerminal(result.output, 'color: #00ff41;');
+                    }
+                } catch (error) {
+                    console.error('Polling error:', error);
+                }
+            }, 3000); // Update every 3 seconds
+        }
+        
+        function stopMonitoring() {
+            isMonitoring = false;
+            if (monitorInterval) {
+                clearInterval(monitorInterval);
+            }
+            
+            updateStatus('disconnected', 'Stopping...');
+            refreshBtn.disabled = true;
+            refreshBtn.innerHTML = '<div class="loading-spinner"></div> Stopping...';
+            
+            // Send stop request
+            fetch('/stop-bpytop', { method: 'POST' })
+                .then(() => {
+                    updateStatus('disconnected', 'Disconnected');
+                    refreshBtn.innerHTML = '<i class="fas fa-sync-alt"></i> Start Monitor';
+                    refreshBtn.disabled = false;
+                    appendToTerminal('', '');
+                    appendToTerminal('Monitor stopped.', 'color: #ffd700;');
+                })
+                .catch(error => {
+                    console.error('Stop error:', error);
+                    updateStatus('disconnected', 'Disconnected');
+                    refreshBtn.innerHTML = '<i class="fas fa-sync-alt"></i> Start Monitor';
+                    refreshBtn.disabled = false;
+                });
+        }
+        
+        refreshBtn.addEventListener('click', startMonitoring);
+        
+        // Stop monitoring when page is closed
+        window.addEventListener('beforeunload', () => {
+            if (isMonitoring) {
+                fetch('/stop-bpytop', { method: 'POST' });
+            }
+        });
+    </script>
+</body>
+</html>

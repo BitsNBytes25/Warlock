@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Warlock - Game Server Management Platform</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1rem 0;
+            box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 2rem;
+        }
+        
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #667eea;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .nav-menu {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+        
+        .nav-menu a {
+            text-decoration: none;
+            color: #555;
+            font-weight: 500;
+            transition: color 0.3s ease;
+            position: relative;
+        }
+        
+        .nav-menu a:hover,
+        .nav-menu a.active {
+            color: #667eea;
+        }
+        
+        .nav-menu a.active::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: #667eea;
+        }
+        
+        .main-container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 2rem;
+        }
+        
+        .sidebar {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            height: fit-content;
+            position: sticky;
+            top: 100px;
+        }
+        
+        .sidebar h3 {
+            color: #333;
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .command-list {
+            list-style: none;
+        }
+        
+        .command-item {
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .command-item:hover {
+            background: rgba(102, 126, 234, 0.1);
+            border-left-color: #667eea;
+        }
+        
+        .command-item.active {
+            background: rgba(102, 126, 234, 0.15);
+            border-left-color: #667eea;
+            color: #667eea;
+            font-weight: 600;
+        }
+        
+        .command-icon {
+            width: 16px;
+            text-align: center;
+        }
+        
+        .content-area {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .content-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+            background: rgba(102, 126, 234, 0.05);
+        }
+        
+        .content-header h2 {
+            color: #333;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .content-header p {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .content-body {
+            padding: 1.5rem;
+        }
+        
+        .command-form {
+            margin-bottom: 2rem;
+        }
+        
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            transition: border-color 0.3s ease;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        }
+        
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .terminal-container {
+            margin-top: 2rem;
+        }
+        
+        .terminal {
+            background: #1a1a1a;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        
+        .terminal-header {
+            background: #333;
+            padding: 0.75rem 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #ccc;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+        
+        .terminal-body {
+            padding: 1rem;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            color: #00ff41;
+            background: #000;
+            min-height: 300px;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        
+        .command-prompt {
+            color: #ffd700;
+            margin-bottom: 0.5rem;
+        }
+        
+        .output-text {
+            color: #00ff41;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        
+        .error-text {
+            color: #ff4444;
+        }
+        
+        .loading-spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #00ff41;
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+        
+        .status-badge.success {
+            background: rgba(34, 197, 94, 0.1);
+            color: #059669;
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+        
+        .status-badge.error {
+            background: rgba(239, 68, 68, 0.1);
+            color: #dc2626;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+        
+        .status-badge.loading {
+            background: rgba(59, 130, 246, 0.1);
+            color: #2563eb;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+        
+        @media (max-width: 768px) {
+            .main-container {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            
+            .sidebar {
+                position: static;
+            }
+            
+            .header-content {
+                padding: 0 1rem;
+            }
+            
+            .nav-menu {
+                gap: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <i class="fas fa-gamepad"></i>
+                Warlock Game Server Platform
+            </div>
+            <nav>
+                <ul class="nav-menu">
+                    <li><a href="/" class="active">Server Management</a></li>
+                    <li><a href="/monitor">Server Monitor</a></li>
+                    <li><a href="#">Player Logs</a></li>
+                    <li><a href="#">Settings</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <aside class="sidebar">
+            <h3><i class="fas fa-server"></i> Server Operations</h3>
+            <ul class="command-list" id="commandList">
+                <li class="command-item active" data-command="create-server">
+                    <i class="fas fa-plus-circle command-icon"></i>
+                    <span>Create Game Server</span>
+                </li>
+                <li class="command-item" data-command="server-control">
+                    <i class="fas fa-power-off command-icon"></i>
+                    <span>Start/Stop Server</span>
+                </li>
+                <li class="command-item" data-command="server-config">
+                    <i class="fas fa-cogs command-icon"></i>
+                    <span>Configure Server</span>
+                </li>
+                <li class="command-item" data-command="player-management">
+                    <i class="fas fa-users command-icon"></i>
+                    <span>Player Management</span>
+                </li>
+                <li class="command-item" data-command="server-monitor">
+                    <i class="fas fa-chart-line command-icon"></i>
+                    <span>Server Monitoring</span>
+                </li>
+                <li class="command-item" data-command="backup-restore">
+                    <i class="fas fa-save command-icon"></i>
+                    <span>Backup & Restore</span>
+                </li>
+            </ul>
+        </aside>
+
+        <main class="content-area">
+            <div class="content-header">
+                <h2 id="commandTitle">
+                    <i class="fas fa-plus-circle"></i>
+                    Create Game Server
+                </h2>
+                <p id="commandDescription">Create and deploy a new game server instance</p>
+            </div>
+            
+            <div class="content-body">
+                <div id="statusContainer"></div>
+                
+                <form class="command-form" id="commandForm">
+                    <div id="dynamicInputs">
+                        <!-- Dynamic inputs will be generated here -->
+                    </div>
+                    
+                    <button type="submit" class="btn-primary" id="executeBtn">
+                        <i class="fas fa-play"></i>
+                        Execute Command
+                    </button>
+                </form>
+
+                <div class="terminal-container">
+                    <div class="terminal">
+                        <div class="terminal-header">
+                            <i class="fas fa-terminal"></i>
+                            Command Output
+                        </div>
+                        <div class="terminal-body" id="terminalOutput">
+                            <div class="output-text">Ready to execute commands...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Command configurations
+        const commands = {
+            'create-server': {
+                title: 'Create Game Server',
+                description: 'Create and deploy a new game server instance',
+                icon: 'fas fa-plus-circle',
+                endpoint: '/create-server',
+                inputs: [
+                    {
+                        type: 'select',
+                        name: 'game_type',
+                        label: 'Game Type',
+                        options: [
+                            { value: 'minecraft', label: 'Minecraft' },
+                            { value: 'csgo', label: 'Counter-Strike: GO' },
+                            { value: 'rust', label: 'Rust' },
+                            { value: 'ark', label: 'ARK: Survival Evolved' },
+                            { value: 'valheim', label: 'Valheim' },
+                            { value: 'terraria', label: 'Terraria' }
+                        ],
+                        required: true
+                    },
+                    {
+                        type: 'text',
+                        name: 'server_name',
+                        label: 'Server Name',
+                        placeholder: 'My Awesome Game Server',
+                        required: true
+                    },
+                    {
+                        type: 'number',
+                        name: 'max_players',
+                        label: 'Max Players',
+                        placeholder: '20',
+                        required: true
+                    },
+                    {
+                        type: 'select',
+                        name: 'server_size',
+                        label: 'Server Size',
+                        options: [
+                            { value: 'small', label: 'Small (2GB RAM, 2 CPU)' },
+                            { value: 'medium', label: 'Medium (4GB RAM, 4 CPU)' },
+                            { value: 'large', label: 'Large (8GB RAM, 6 CPU)' },
+                            { value: 'xlarge', label: 'X-Large (16GB RAM, 8 CPU)' }
+                        ],
+                        required: true
+                    }
+                ]
+            },
+            'server-control': {
+                title: 'Start/Stop Server',
+                description: 'Control game server power state and restart services',
+                icon: 'fas fa-power-off',
+                endpoint: '/server-control',
+                inputs: [
+                    {
+                        type: 'select',
+                        name: 'server_id',
+                        label: 'Select Server',
+                        options: [
+                            { value: 'minecraft-001', label: 'Minecraft Server #001' },
+                            { value: 'rust-002', label: 'Rust Server #002' },
+                            { value: 'csgo-003', label: 'CS:GO Server #003' }
+                        ],
+                        required: true
+                    },
+                    {
+                        type: 'select',
+                        name: 'action',
+                        label: 'Action',
+                        options: [
+                            { value: 'start', label: 'Start Server' },
+                            { value: 'stop', label: 'Stop Server' },
+                            { value: 'restart', label: 'Restart Server' },
+                            { value: 'force-stop', label: 'Force Stop Server' }
+                        ],
+                        required: true
+                    }
+                ]
+            },
+            'server-config': {
+                title: 'Configure Server',
+                description: 'Modify game server settings and configurations',
+                icon: 'fas fa-cogs',
+                endpoint: '/server-config',
+                inputs: [
+                    {
+                        type: 'select',
+                        name: 'server_id',
+                        label: 'Select Server',
+                        options: [
+                            { value: 'minecraft-001', label: 'Minecraft Server #001' },
+                            { value: 'rust-002', label: 'Rust Server #002' },
+                            { value: 'csgo-003', label: 'CS:GO Server #003' }
+                        ],
+                        required: true
+                    },
+                    {
+                        type: 'select',
+                        name: 'config_type',
+                        label: 'Configuration Type',
+                        options: [
+                            { value: 'game_settings', label: 'Game Settings' },
+                            { value: 'server_properties', label: 'Server Properties' },
+                            { value: 'mods_plugins', label: 'Mods/Plugins' },
+                            { value: 'world_settings', label: 'World Settings' }
+                        ],
+                        required: true
+                    },
+                    {
+                        type: 'textarea',
+                        name: 'config_content',
+                        label: 'Configuration Content',
+                        placeholder: 'Enter configuration settings...',
+                        required: false
+                    }
+                ]
+            },
+            'player-management': {
+                title: 'Player Management',
+                description: 'Manage players, bans, and permissions',
+                icon: 'fas fa-users',
+                endpoint: '/player-management',
+                inputs: [
+                    {
+                        type: 'select',
+                        name: 'server_id',
+                        label: 'Select Server',
+                        options: [
+                            { value: 'minecraft-001', label: 'Minecraft Server #001' },
+                            { value: 'rust-002', label: 'Rust Server #002' },
+                            { value: 'csgo-003', label: 'CS:GO Server #003' }
+                        ],
+                        required: true
+                    },
+                    {
+                        type: 'select',
+                        name: 'action',
+                        label: 'Action',
+                        options: [
+                            { value: 'list_players', label: 'List Online Players' },
+                            { value: 'kick_player', label: 'Kick Player' },
+                            { value: 'ban_player', label: 'Ban Player' },
+                            { value: 'unban_player', label: 'Unban Player' },
+                            { value: 'list_bans', label: 'List Banned Players' }
+                        ],
+                        required: true
+                    },
+                    {
+                        type: 'text',
+                        name: 'player_name',
+                        label: 'Player Name (if applicable)',
+                        placeholder: 'PlayerName123',
+                        required: false
+                    }
+                ]
+            },
+            'server-monitor': {
+                title: 'Server Monitoring',
+                description: 'Monitor server performance, resources, and status',
+                icon: 'fas fa-chart-line',
+                endpoint: '/server-monitor',
+                inputs: [
+                    {
+                        type: 'select',
+                        name: 'monitor_type',
+                        label: 'Monitor Type',
+                        options: [
+                            { value: 'performance', label: 'Performance Stats' },
+                            { value: 'player_count', label: 'Player Count' },
+                            { value: 'resource_usage', label: 'Resource Usage' },
+                            { value: 'server_logs', label: 'Recent Server Logs' }
+                        ],
+                        required: true
+                    },
+                    {
+                        type: 'select',
+                        name: 'server_id',
+                        label: 'Select Server (optional)',
+                        options: [
+                            { value: 'all', label: 'All Servers' },
+                            { value: 'minecraft-001', label: 'Minecraft Server #001' },
+                            { value: 'rust-002', label: 'Rust Server #002' },
+                            { value: 'csgo-003', label: 'CS:GO Server #003' }
+                        ],
+                        required: false
+                    }
+                ]
+            },
+            'backup-restore': {
+                title: 'Backup & Restore',
+                description: 'Create backups and restore game server data',
+                icon: 'fas fa-save',
+                endpoint: '/backup-restore',
+                inputs: [
+                    {
+                        type: 'select',
+                        name: 'server_id',
+                        label: 'Select Server',
+                        options: [
+                            { value: 'minecraft-001', label: 'Minecraft Server #001' },
+                            { value: 'rust-002', label: 'Rust Server #002' },
+                            { value: 'csgo-003', label: 'CS:GO Server #003' }
+                        ],
+                        required: true
+                    },
+                    {
+                        type: 'select',
+                        name: 'action',
+                        label: 'Action',
+                        options: [
+                            { value: 'create_backup', label: 'Create Backup' },
+                            { value: 'restore_backup', label: 'Restore from Backup' },
+                            { value: 'list_backups', label: 'List Available Backups' },
+                            { value: 'delete_backup', label: 'Delete Backup' }
+                        ],
+                        required: true
+                    },
+                    {
+                        type: 'text',
+                        name: 'backup_name',
+                        label: 'Backup Name (for create/restore)',
+                        placeholder: 'backup_2024_11_09',
+                        required: false
+                    }
+                ]
+            }
+        };
+
+        // DOM elements
+        const commandList = document.getElementById('commandList');
+        const commandTitle = document.getElementById('commandTitle');
+        const commandDescription = document.getElementById('commandDescription');
+        const dynamicInputs = document.getElementById('dynamicInputs');
+        const commandForm = document.getElementById('commandForm');
+        const executeBtn = document.getElementById('executeBtn');
+        const terminalOutput = document.getElementById('terminalOutput');
+        const statusContainer = document.getElementById('statusContainer');
+
+        let currentCommand = 'create-server';
+
+        // Initialize the interface
+        function init() {
+            setupCommandList();
+            loadCommand(currentCommand);
+        }
+
+        // Setup command list event handlers
+        function setupCommandList() {
+            commandList.addEventListener('click', (e) => {
+                const item = e.target.closest('.command-item');
+                if (item) {
+                    // Update active state
+                    document.querySelectorAll('.command-item').forEach(i => i.classList.remove('active'));
+                    item.classList.add('active');
+                    
+                    // Load command
+                    const commandId = item.dataset.command;
+                    loadCommand(commandId);
+                }
+            });
+        }
+
+        // Load command configuration
+        function loadCommand(commandId) {
+            currentCommand = commandId;
+            const config = commands[commandId];
+            
+            // Update header
+            commandTitle.innerHTML = `<i class="${config.icon}"></i> ${config.title}`;
+            commandDescription.textContent = config.description;
+            
+            // Generate dynamic inputs
+            generateInputs(config.inputs);
+            
+            // Clear terminal
+            clearTerminal();
+            clearStatus();
+        }
+
+        // Generate dynamic input fields
+        function generateInputs(inputs) {
+            dynamicInputs.innerHTML = '';
+            
+            inputs.forEach(input => {
+                const formGroup = document.createElement('div');
+                formGroup.className = 'form-group';
+                
+                if (input.type === 'checkbox') {
+                    formGroup.innerHTML = `
+                        <label>
+                            <input type="checkbox" name="${input.name}" ${input.checked ? 'checked' : ''}>
+                            ${input.label}
+                        </label>
+                    `;
+                } else {
+                    const label = document.createElement('label');
+                    label.textContent = input.label;
+                    formGroup.appendChild(label);
+                    
+                    if (input.type === 'select') {
+                        const select = document.createElement('select');
+                        select.name = input.name;
+                        select.required = input.required || false;
+                        
+                        input.options.forEach(option => {
+                            const optionEl = document.createElement('option');
+                            optionEl.value = option.value;
+                            optionEl.textContent = option.label;
+                            select.appendChild(optionEl);
+                        });
+                        
+                        formGroup.appendChild(select);
+                    } else if (input.type === 'textarea') {
+                        const textarea = document.createElement('textarea');
+                        textarea.name = input.name;
+                        textarea.placeholder = input.placeholder || '';
+                        textarea.required = input.required || false;
+                        textarea.rows = 4;
+                        formGroup.appendChild(textarea);
+                    } else {
+                        const inputEl = document.createElement('input');
+                        inputEl.type = input.type;
+                        inputEl.name = input.name;
+                        inputEl.placeholder = input.placeholder || '';
+                        inputEl.required = input.required || false;
+                        
+                        // Set additional attributes for number inputs
+                        if (input.type === 'number') {
+                            if (input.min !== undefined) inputEl.min = input.min;
+                            if (input.max !== undefined) inputEl.max = input.max;
+                            if (input.step !== undefined) inputEl.step = input.step;
+                        }
+                        
+                        formGroup.appendChild(inputEl);
+                    }
+                }
+                
+                dynamicInputs.appendChild(formGroup);
+            });
+        }
+
+        // Handle form submission
+        commandForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const config = commands[currentCommand];
+            const formData = new FormData(commandForm);
+            const data = Object.fromEntries(formData.entries());
+            
+            // Add command type to data
+            data.command = currentCommand;
+            
+            await executeCommand(config.endpoint, data);
+        });
+
+        // Execute command
+        async function executeCommand(endpoint, data) {
+            // Show loading state
+            showStatus('Executing command...', 'loading');
+            executeBtn.disabled = true;
+            executeBtn.innerHTML = '<div class="loading-spinner"></div> Executing...';
+            
+            // Show command in terminal
+            showInTerminal(`$ Executing ${commands[currentCommand].title}...`, 'command-prompt');
+            
+            try {
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showStatus('Command executed successfully!', 'success');
+                    showInTerminal(result.output, 'output-text');
+                } else {
+                    showStatus('Command execution failed!', 'error');
+                    showInTerminal(`Error: ${result.output}`, 'error-text');
+                    if (result.stderr) {
+                        showInTerminal(`STDERR: ${result.stderr}`, 'error-text');
+                    }
+                }
+            } catch (error) {
+                showStatus('Network error occurred!', 'error');
+                showInTerminal(`Network Error: ${error.message}`, 'error-text');
+            } finally {
+                // Reset button state
+                executeBtn.disabled = false;
+                executeBtn.innerHTML = '<i class="fas fa-play"></i> Execute Command';
+            }
+        }
+
+        // Show status message
+        function showStatus(message, type) {
+            const iconMap = {
+                'success': 'fas fa-check-circle',
+                'error': 'fas fa-exclamation-circle',
+                'loading': 'fas fa-spinner fa-spin'
+            };
+            
+            statusContainer.innerHTML = `
+                <div class="status-badge ${type}">
+                    <i class="${iconMap[type]}"></i>
+                    ${message}
+                </div>
+            `;
+        }
+
+        // Clear status
+        function clearStatus() {
+            statusContainer.innerHTML = '';
+        }
+
+        // Show content in terminal
+        function showInTerminal(content, className = 'output-text') {
+            const div = document.createElement('div');
+            div.className = className;
+            div.textContent = content;
+            terminalOutput.appendChild(div);
+            
+            // Scroll to bottom
+            terminalOutput.scrollTop = terminalOutput.scrollHeight;
+        }
+
+        // Clear terminal
+        function clearTerminal() {
+            terminalOutput.innerHTML = '<div class="output-text">Ready to execute commands...</div>';
+        }
+
+        // Initialize the application
+        init();
+    </script>
+</body>
+</html>
