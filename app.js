@@ -40,7 +40,12 @@ app.get('/index', (req, res) => {
 
 // Route to serve the new SPA
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'app.html'));
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// API endpoint to serve navigation component
+app.get('/components/nav', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'components', 'nav.html'));
 });
 
 // API endpoint to serve page fragments for SPA

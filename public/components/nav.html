@@ -1,0 +1,175 @@
+<style>
+    .navbar {
+        background: rgba(26, 26, 46, 0.95);
+        backdrop-filter: blur(15px);
+        padding: 1rem 0;
+        box-shadow: 
+            0 2px 20px rgba(0, 150, 255, 0.2),
+            inset 0 1px 0 rgba(0, 150, 255, 0.15);
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+        border-bottom: 1px solid rgba(0, 150, 255, 0.3);
+    }
+    
+    .navbar-content {
+        max-width: 1400px;
+        margin: 0 auto;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0 2rem;
+    }
+    
+    .logo {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: #0096ff;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        font-family: 'Orbitron', monospace;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        text-shadow: 0 0 10px rgba(0, 150, 255, 0.5);
+        text-decoration: none;
+    }
+
+    .logo i {
+        font-size: 1.6rem;
+        animation: rotate 15s linear infinite;
+        color: #0096ff;
+    }
+
+    @keyframes rotate {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+    
+    .nav-links {
+        display: flex;
+        gap: 2rem;
+        list-style: none;
+    }
+    
+    .nav-links a {
+        text-decoration: none;
+        color: #87ceeb;
+        font-weight: 600;
+        font-family: 'Rajdhani', sans-serif;
+        font-size: 1.1rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        transition: all 0.3s ease;
+        position: relative;
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .nav-links a::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(45deg, transparent, rgba(0, 212, 255, 0.2), transparent);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        border-radius: 8px;
+    }
+    
+    .nav-links a:hover::before,
+    .nav-links a.active::before {
+        opacity: 1;
+    }
+    
+    .nav-links a:hover,
+    .nav-links a.active {
+        color: #00d4ff;
+        text-shadow: 0 0 15px #00d4ff;
+        border: 1px solid rgba(0, 212, 255, 0.4);
+    }
+    
+    .nav-links a.active::after {
+        content: '';
+        position: absolute;
+        bottom: -3px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 80%;
+        height: 2px;
+        background: linear-gradient(90deg, transparent, #00d4ff, transparent);
+        box-shadow: 0 0 10px #00d4ff;
+    }
+
+    @media (max-width: 768px) {
+        .navbar-content {
+            flex-direction: column;
+            gap: 1rem;
+            padding: 1rem;
+        }
+        
+        .nav-links {
+            gap: 1rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .nav-links a {
+            font-size: 0.95rem;
+            padding: 0.4rem 0.8rem;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+        }
+    }
+</style>
+
+<nav class="navbar">
+    <div class="navbar-content">
+        <a href="/" class="logo">
+            <i class="fas fa-hat-wizard"></i>
+            <span>Warlock</span>
+        </a>
+        <ul class="nav-links">
+            <li><a href="/" class="nav-link" data-page="dashboard">
+                <i class="fas fa-chart-line"></i> Dashboard
+            </a></li>
+            <li><a href="/monitor" class="nav-link" data-page="monitor">
+                <i class="fas fa-desktop"></i> Monitor
+            </a></li>
+            <li><a href="/files" class="nav-link" data-page="files">
+                <i class="fas fa-folder"></i> Files
+            </a></li>
+            <li><a href="/settings" class="nav-link" data-page="settings">
+                <i class="fas fa-cog"></i> Settings
+            </a></li>
+        </ul>
+    </div>
+</nav>
+
+<script>
+    // Highlight active page based on current URL
+    (function() {
+        const currentPath = window.location.pathname;
+        const navLinks = document.querySelectorAll('.nav-link');
+        
+        navLinks.forEach(link => {
+            link.classList.remove('active');
+            const href = link.getAttribute('href');
+            
+            if (href === currentPath || 
+                (currentPath === '/' && link.dataset.page === 'dashboard') ||
+                (currentPath === '/index' && link.dataset.page === 'dashboard') ||
+                (currentPath.includes(link.dataset.page))) {
+                link.classList.add('active');
+            }
+        });
+    })();
+</script>

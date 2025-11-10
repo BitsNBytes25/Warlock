@@ -380,18 +380,7 @@
     </style>
 </head>
 <body>
-    <!-- Navigation Bar -->
-    <nav class="navbar">
-        <div class="navbar-content">
-            <div class="logo">⚡ WARLOCK</div>
-            <ul class="nav-links">
-                <li><a href="/"><i class="fas fa-home"></i> Dashboard</a></li>
-                <li><a href="/files"><i class="fas fa-folder"></i> Files</a></li>
-                <li><a href="/monitor"><i class="fas fa-chart-line"></i> Monitor</a></li>
-                <li><a href="/settings" class="active"><i class="fas fa-cog"></i> Settings</a></li>
-            </ul>
-        </div>
-    </nav>
+    <div id="nav-placeholder"></div>
 
     <div class="container">
         <div class="settings-card">
@@ -618,6 +607,14 @@ echo 'ssh-rsa YOUR_PUBLIC_KEY_HERE user@host' >> /root/.ssh/authorized_keys</cod
             });
         }
 
+        // Load navigation component
+        fetch('/components/nav')
+            .then(response => response.text())
+            .then(html => {
+                document.getElementById('nav-placeholder').innerHTML = html;
+            })
+            .catch(error => console.error('Error loading navigation:', error));
+        
         // Load settings on page load
         loadCurrentSettings();
     </script>

@@ -647,20 +647,7 @@
     </style>
 </head>
 <body>
-    <header class="header">
-        <div class="header-content">
-            <div class="logo">
-                <i class="fas fa-cog"></i>
-                WARLOCK
-            </div>
-            <nav class="nav-menu">
-                <a href="/" class="active">Dashboard</a>
-                <a href="/monitor.html">Monitor</a>
-                <a href="/files.html">Files</a>
-                <a href="/settings">Settings</a>
-            </nav>
-        </div>
-    </header>
+    <div id="nav-placeholder"></div>
 
     <div class="main-container" style="grid-template-columns: 1fr; max-width: 1200px;">
         <main class="content-area">
@@ -1282,6 +1269,14 @@
         refreshBtn.addEventListener('click', loadAllServicesAndStats);
         document.getElementById('getServicesBtn').addEventListener('click', manualGetServices);
         document.getElementById('getStatsBtn').addEventListener('click', manualGetStats);
+
+        // Load navigation component
+        fetch('/components/nav')
+            .then(response => response.text())
+            .then(html => {
+                document.getElementById('nav-placeholder').innerHTML = html;
+            })
+            .catch(error => console.error('Error loading navigation:', error));
 
         // Load on page load
         window.addEventListener('DOMContentLoaded', () => {

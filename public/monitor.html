@@ -454,20 +454,7 @@
     </style>
 </head>
 <body>
-    <header class="header">
-        <div class="header-content">
-            <div class="logo">
-                <i class="fas fa-cog"></i>
-                WARLOCK
-            </div>
-            <nav class="nav-menu">
-                <a href="/">Dashboard</a>
-                <a href="/monitor.html" class="active">Monitor</a>
-                <a href="/files.html">Files</a>
-                <a href="/settings">Settings</a>
-            </nav>
-        </div>
-    </header>
+    <div id="nav-placeholder"></div>
 
     <div class="container">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
@@ -866,6 +853,14 @@
                 startMonitoring();
             }
         }
+        
+        // Load navigation component
+        fetch('/components/nav')
+            .then(response => response.text())
+            .then(html => {
+                document.getElementById('nav-placeholder').innerHTML = html;
+            })
+            .catch(error => console.error('Error loading navigation:', error));
         
         // Start monitoring immediately since DOM is ready when script runs
         setTimeout(initializeMonitoring, 2000);

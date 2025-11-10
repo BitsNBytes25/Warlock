@@ -309,26 +309,47 @@
             // Extract styles if any
             const styles = doc.querySelectorAll('style');
             styles.forEach(style => {
-                if (!document.querySelector(`style[data-page="${pageName}"]`)) {
-                    const newStyle = document.createElement('style');
-                    newStyle.setAttribute('data-page', pageName);
-                    newStyle.textContent = style.textContent;
-                    document.head.appendChild(newStyle);
+                // Remove existing page-specific styles
+                const existingStyle = document.querySelector(`style[data-page="${pageName}"]`);
+                if (existingStyle) {
+                    existingStyle.remove();
                 }
+                
+                // Add new styles
+                const newStyle = document.createElement('style');
+                newStyle.setAttribute('data-page', pageName);
+                newStyle.textContent = style.textContent;
+                document.head.appendChild(newStyle);
             });
             
-            // Extract body content
-            const bodyContent = doc.body.innerHTML;
+            // Remove header/navigation from the page content
+            const header = doc.querySelector('header, .header, nav.navbar');
+            if (header) {
+                header.remove();
+            }
+            
+            // Extract main container or body content
+            let bodyContent;
+            const mainContainer = doc.querySelector('.main-container, .content-container, main');
+            if (mainContainer) {
+                bodyContent = mainContainer.outerHTML;
+            } else {
+                bodyContent = doc.body.innerHTML;
+            }
             
             // Load content
             loading.classList.remove('active');
             content.innerHTML = bodyContent;
             content.classList.add('page-transition');
             
-            // Execute scripts
+            // Remove and re-execute scripts
+            const existingScripts = document.querySelectorAll(`script[data-page="${pageName}"]`);
+            existingScripts.forEach(s => s.remove());
+            
             const scripts = doc.querySelectorAll('script');
             scripts.forEach(script => {
                 const newScript = document.createElement('script');
+                newScript.setAttribute('data-page', pageName);
                 if (script.src) {
                     newScript.src = script.src;
                 } else {

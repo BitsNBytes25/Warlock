@@ -994,20 +994,7 @@
     </style>
 </head>
 <body>
-    <header class="header">
-        <div class="header-content">
-            <div class="logo">
-                <i class="fas fa-cog"></i>
-                WARLOCK
-            </div>
-            <nav class="nav-menu">
-                <a href="/">Dashboard</a>
-                <a href="/monitor.html">Monitor</a>
-                <a href="/files.html" class="active">Files</a>
-                <a href="/settings">Settings</a>
-            </nav>
-        </div>
-    </header>
+    <div id="nav-placeholder"></div>
 
     <div class="container">
 
@@ -2718,6 +2705,14 @@
             // Load initial directory
             loadDirectory(currentPath);
         }
+        
+        // Load navigation component
+        fetch('/components/nav')
+            .then(response => response.text())
+            .then(html => {
+                document.getElementById('nav-placeholder').innerHTML = html;
+            })
+            .catch(error => console.error('Error loading navigation:', error));
         
         // Load application paths
         loadApplicationPaths();
