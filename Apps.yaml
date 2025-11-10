@@ -5,6 +5,8 @@
   installer: dist/server-install-debian12.sh
   header: some-path-to-image.jpg
   image: some-path-to-image.jpg
+  icon: https://files.eval.bz/warlock/ark-128x128.png
+  thumbnail: https://files.eval.bz/warlock/ark_460x215.jpg
 - guid: 6ee9bb12-0e21-4ca0-a2f2-75fdeb9af718
   title: VEIN Dedicated Server
   source: github
@@ -12,3 +14,5 @@
   installer: dist/installer.sh
   header: some-path-to-image.jpg
   image: some-path-to-image.jpg
+  icon: https://files.eval.bz/warlock/vein-128x128.png
+  thumbnail: https://files.eval.bz/warlock/vein_616x353.jpg

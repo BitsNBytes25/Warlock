@@ -3,6 +3,7 @@ const path = require('path');
 const { exec } = require('child_process');
 const multer = require('multer');
 const fs = require('fs');
+const yaml = require('js-yaml');
 
 const app = express();
 const PORT = process.env.PORT || 3077;
@@ -206,44 +207,54 @@ app.post('/backup-restore', createCommandEndpoint('backup-restore'));
 // Helper function to get all applications and their paths
 async function getAllApplications() {
     return new Promise((resolve, reject) => {
-        const sshCommand = buildSSHCommand('for file in /var/lib/warlock/*.app; do if [ -f "$file" ]; then echo "===FILE:$(basename "$file")"; cat "$file"; echo ""; echo "===END"; fi; done');
-        
+        const sshCommand = buildSSHCommand('for file in /var/lib/warlock/*.app; do if [ -f "$file" ]; then echo "$(basename "$file" \'.app\'):$(cat "$file")"; fi; done');
+
+        console.log('Executing get-applications command:', sshCommand);
+
         exec(sshCommand, { timeout: 30000 }, (error, stdout, stderr) => {
             if (error) {
                 console.error('Get applications error:', error);
                 return reject(error);
             }
-            
-            const applications = [];
-            const lines = stdout.split('\n');
-            let currentApp = null;
-            let collectingPath = false;
-            
-            for (let line of lines) {
-                const trimmedLine = line.trim();
-                
-                if (trimmedLine.startsWith('===FILE:')) {
-                    if (currentApp && currentApp.path) {
-                        applications.push(currentApp);
-                    }
-                    const fileName = trimmedLine.substring(8).trim();
-                    const appName = fileName.replace('.app', '');
-                    currentApp = { name: appName, fileName: fileName, path: '' };
-                    collectingPath = true;
-                } else if (trimmedLine === '===END') {
-                    if (currentApp && currentApp.path) {
-                        applications.push(currentApp);
-                    }
-                    currentApp = null;
-                    collectingPath = false;
-                } else if (collectingPath && trimmedLine && trimmedLine !== '===END') {
-                    if (!currentApp.path) {
-                        currentApp.path = trimmedLine;
-                    }
+
+            console.log('Applications raw output:', stdout);
+
+            // Open Apps.yaml and parse it for the list of applications
+            const appsFilePath = path.join(__dirname, 'Apps.yaml');
+            let applications = [];
+            if (fs.existsSync(appsFilePath)) {
+                const fileContents = fs.readFileSync(appsFilePath, 'utf8');
+                const data = yaml.load(fileContents);
+                if (data) {
+                    data.forEach(item => {
+                        applications[ item.guid ] = item;
+                    });
+
+                    console.log('Application Definitions Loaded', applications);
                 }
             }
-            
-            resolve(applications);
+
+            // Parse the output to extract application names and paths
+            const apps = [];
+            for (let line of stdout.split('\n')) {
+                if (line.trim()) {
+                    let [guid, path] = line.split(':'),
+                        appData = { guid: guid.trim(), path: path.trim() };
+
+                    // Add some data from the local apps definition if it's available
+                    if (applications[ appData.guid ]) {
+                        appData = { ...appData, ...applications[ appData.guid ] };
+                    }
+                    else {
+                        appData.title = appData.guid; // Fallback to using guid as name
+                    }
+                    apps.push(appData);
+                }
+            }
+
+            console.log('Parsed applications:', apps);
+
+            resolve(apps);
         });
     });
 }
@@ -483,67 +494,23 @@ app.post('/get-stats', async (req, res) => {
 
 // Get applications from .app files in /var/lib/warlock
 app.post('/get-applications', (req, res) => {
-    const sshCommand = buildSSHCommand('for file in /var/lib/warlock/*.app; do if [ -f "$file" ]; then echo "===FILE:$(basename "$file")"; cat "$file"; echo ""; echo "===END"; fi; done');
-    
-    console.log('Executing get-applications command:', sshCommand);
-    
-    exec(sshCommand, { timeout: 30000 }, (error, stdout, stderr) => {
-        if (error) {
-            console.error('Get applications error:', error);
+    getAllApplications()
+        .then(applications => {
+            res.json({
+                success: true,
+                applications: applications,
+                output: 'omitted',
+                stderr: 'omitted'
+            });
+        })
+        .catch(e => {
             return res.json({
                 success: false,
-                error: error.message,
-                output: stderr || stdout,
+                error: e.message,
+                output: 'omitted',
                 applications: []
             });
-        }
-        
-        console.log('Applications raw output:', stdout);
-        
-        // Parse the output to extract application names and paths
-        const applications = [];
-        const lines = stdout.split('\n');
-        let currentApp = null;
-        let collectingPath = false;
-        
-        for (let line of lines) {
-            const trimmedLine = line.trim();
-            
-            if (trimmedLine.startsWith('===FILE:')) {
-                // Save previous app if exists
-                if (currentApp && currentApp.path) {
-                    applications.push(currentApp);
-                }
-                
-                // Start new app
-                const fileName = trimmedLine.substring(8).trim(); // Remove '===FILE:' and trim
-                const appName = fileName.replace('.app', '');
-                currentApp = { name: appName, fileName: fileName, path: '' };
-                collectingPath = true;
-            } else if (trimmedLine === '===END') {
-                // End of current file
-                if (currentApp && currentApp.path) {
-                    applications.push(currentApp);
-                }
-                currentApp = null;
-                collectingPath = false;
-            } else if (collectingPath && trimmedLine && trimmedLine !== '===END') {
-                // Collect path (take first non-empty line as the path)
-                if (!currentApp.path) {
-                    currentApp.path = trimmedLine;
-                }
-            }
-        }
-        
-        console.log('Parsed applications:', applications);
-        
-        res.json({
-            success: true,
-            applications: applications,
-            output: stdout,
-            stderr: stderr
         });
-    });
 });
 
 // Service control endpoint (start/stop/restart) - now works with all applications dynamically

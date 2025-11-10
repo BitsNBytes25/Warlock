@@ -680,7 +680,7 @@
                 <div id="applicationsContainer" style="margin-bottom: 2rem;">
                     <h3 style="color: #0096ff; margin-bottom: 1rem; font-size: 1.3rem; display: flex; align-items: center; gap: 0.75rem;">
                         <i class="fas fa-th-large"></i>
-                        Available Applications
+                        Installed Applications
                     </h3>
                     <div id="applicationsList" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1rem;">
                         <!-- Applications will be inserted here -->
@@ -1274,17 +1274,32 @@
             let html = '';
             applications.forEach(app => {
                 // Extract the last folder name from the path
-                const pathParts = app.path.split('/').filter(part => part.length > 0);
-                const displayName = pathParts.length > 0 ? pathParts[pathParts.length - 1] : app.name;
+                let pathParts = app.path.split('/').filter(part => part.length > 0),
+                    displayName = app.title || pathParts[pathParts.length - 1],
+                    icon = app.icon || null,
+                    thumbnail = app.thumbnail || null;
+
+                if (!icon) {
+                    icon = '<i class="fas fa-cube" style="font-size: 1.5rem; color: white;"></i>';
+                }
+                else {
+                    icon = '<img src="' + icon + '" alt="' + displayName + ' Icon" style="width: 36px; height: 36px; border-radius: 6px;">';
+                }
+
+                if (thumbnail) {
+                    thumbnail = '<img class="app-thumbnail" src="' + thumbnail + '" alt="' + displayName + ' Thumbnail" style="width: 100%; height: auto;">';
+                }
+
                 
                 html += `
                     <div class="application-card" style="background: rgba(26, 26, 46, 0.9); border: 1px solid rgba(0, 150, 255, 0.2); border-radius: 12px; padding: 1.5rem; transition: all 0.3s; cursor: pointer; position: relative; overflow: hidden;"
                          onmouseover="this.style.borderColor='#0096ff'; this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 20px rgba(0, 150, 255, 0.3)';"
                          onmouseout="this.style.borderColor='rgba(0, 150, 255, 0.2)'; this.style.transform='translateY(0)'; this.style.boxShadow='none';"
                          onclick="window.open('/files.html?path=${encodeURIComponent(app.path)}', '_blank')">
+                        ${thumbnail ? thumbnail : ''}
                         <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
                             <div style="width: 48px; height: 48px; background: linear-gradient(135deg, #0096ff 0%, #0066cc 100%); border-radius: 10px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0, 150, 255, 0.3);">
-                                <i class="fas fa-cube" style="font-size: 1.5rem; color: white;"></i>
+                                ${icon}
                             </div>
                             <div style="flex: 1;">
                                 <h4 style="color: #0096ff; margin: 0; font-size: 1.1rem; font-weight: 600;">${displayName}</h4>
