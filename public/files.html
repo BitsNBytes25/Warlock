@@ -211,7 +211,7 @@
             display: flex;
             flex-direction: column;
             min-width: 300px;
-            flex: 1;
+            flex: 1 1 auto;
         }
         
         .file-viewer-card {
@@ -226,8 +226,8 @@
             overflow: hidden;
             display: flex;
             flex-direction: column;
-            min-width: 300px;
-            flex: 1;
+            flex: 1 1 auto;
+            min-width: 400px;
         }
         
         .card-header {
@@ -640,7 +640,7 @@
         
         .file-item {
             display: grid;
-            grid-template-columns: auto 1fr auto auto;
+            grid-template-columns: auto 1fr auto auto auto;
             gap: 0.75rem;
             padding: 0.75rem;
             border-radius: 8px;
@@ -700,6 +700,74 @@
         
         @keyframes spin {
             to { transform: rotate(360deg); }
+        }
+        
+        /* Context Menu Styles */
+        .context-menu {
+            position: fixed;
+            background: rgba(26, 26, 46, 0.98);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(0, 150, 255, 0.3);
+            border-radius: 8px;
+            padding: 0.5rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            z-index: 10000;
+            display: none;
+            min-width: 200px;
+        }
+        
+        .context-menu.show {
+            display: block;
+        }
+        
+        .context-menu-item {
+            padding: 0.75rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: #e2e8f0;
+            font-size: 0.9rem;
+        }
+        
+        .context-menu-item:hover {
+            background: rgba(0, 150, 255, 0.2);
+        }
+        
+        .context-menu-item.danger {
+            color: #ef4444;
+        }
+        
+        .context-menu-item.danger:hover {
+            background: rgba(220, 38, 38, 0.2);
+        }
+        
+        .context-menu-separator {
+            height: 1px;
+            background: rgba(0, 150, 255, 0.2);
+            margin: 0.5rem 0;
+        }
+        
+        .three-dot-menu {
+            position: relative;
+        }
+        
+        .three-dot-btn {
+            background: none;
+            border: none;
+            color: #94a3b8;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+            font-size: 1.1rem;
+        }
+        
+        .three-dot-btn:hover {
+            background: rgba(0, 150, 255, 0.2);
+            color: #0096ff;
         }
         
         .error-message {
@@ -936,6 +1004,7 @@
                 <a href="/">Dashboard</a>
                 <a href="/monitor.html">Monitor</a>
                 <a href="/files.html" class="active">Files</a>
+                <a href="/settings">Settings</a>
             </nav>
         </div>
     </header>
@@ -952,12 +1021,15 @@
                         <div class="action-buttons" style="margin-top: 0.5rem;">
                             <button id="createFolderBtn" class="btn-nav btn-action" title="Create Folder">
                                 <i class="fas fa-folder-plus"></i>
+                                Folder
                             </button>
                             <button id="createFileBtn" class="btn-nav btn-action" title="Create File">
                                 <i class="fas fa-file-plus"></i>
+                                File
                             </button>
                             <button id="uploadBtn" class="btn-nav btn-upload" title="Upload Files">
                                 <i class="fas fa-cloud-upload-alt"></i>
+                                Upload
                             </button>
                             <input type="file" id="fileInput" multiple style="display: none;" />
                             <button id="refreshBtn" class="btn-nav" title="Refresh">
@@ -984,30 +1056,10 @@
                 <div class="file-browser" style="height: 100%; overflow-y: auto;">
                     <div class="sidebar-browser">
                         <div class="quick-paths">
-                            <h4>Quick Paths</h4>
+                            <h4>Game Directories</h4>
                             <div class="quick-path-item" data-path="/home/steam">
                                 <i class="fas fa-home"></i>
                                 Steam Home
-                            </div>
-                            <div class="quick-path-item" data-path="/home/steam/VEIN">
-                                <i class="fas fa-gamepad"></i>
-                                VEIN Directory
-                            </div>
-                            <div class="quick-path-item" data-path="/var/log">
-                                <i class="fas fa-file-alt"></i>
-                                System Logs
-                            </div>
-                            <div class="quick-path-item" data-path="/etc">
-                                <i class="fas fa-cogs"></i>
-                                Configuration
-                            </div>
-                            <div class="quick-path-item" data-path="/tmp">
-                                <i class="fas fa-clock"></i>
-                                Temporary Files
-                            </div>
-                            <div class="quick-path-item" data-path="/">
-                                <i class="fas fa-hdd"></i>
-                                Root Directory
                             </div>
                         </div>
                         
@@ -1060,10 +1112,6 @@
                             <button id="saveFileBtn" class="btn-nav btn-action">
                                 <i class="fas fa-save"></i>
                                 Save
-                            </button>
-                            <button id="closeViewerBtn" class="btn-nav">
-                                <i class="fas fa-times"></i>
-                                Close
                             </button>
                         </div>
                     </div>
@@ -1154,6 +1202,105 @@
                     Cancel
                 </button>
             </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="deleteConfirmModal" class="modal" style="display: none;">
+        <div class="modal-overlay"></div>
+        <div class="modal-content">
+            <div class="modal-header" style="background: rgba(220, 38, 38, 0.2);">
+                <h3><i class="fas fa-exclamation-triangle"></i> Confirm Deletion</h3>
+                <button class="modal-close" id="closeDeleteModal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div style="background: rgba(220, 38, 38, 0.1); border: 1px solid rgba(220, 38, 38, 0.3); border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem;">
+                    <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+                        <i class="fas fa-exclamation-triangle" style="font-size: 2.5rem; color: #ef4444;"></i>
+                        <div>
+                            <h4 style="color: #ef4444; margin: 0 0 0.5rem 0; font-size: 1.1rem;">⚠️ WARNING - THIS ACTION CANNOT BE UNDONE! ⚠️</h4>
+                            <p style="color: #fca5a5; margin: 0; font-size: 0.9rem;">This will permanently delete the item and all its contents!</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>You are about to delete:</label>
+                    <div id="deleteItemInfo" style="background: rgba(0, 150, 255, 0.1); padding: 1rem; border-radius: 8px; font-family: 'Courier New', monospace; color: #87ceeb; margin-top: 0.5rem;">
+                    </div>
+                </div>
+                <div class="form-group" id="recursiveWarning" style="display: none;">
+                    <div style="background: rgba(220, 38, 38, 0.2); border: 1px solid rgba(220, 38, 38, 0.4); border-radius: 8px; padding: 1rem; color: #fca5a5;">
+                        <i class="fas fa-folder-open"></i> <strong>RECURSIVE DELETE:</strong> This folder and ALL files/subfolders inside will be permanently deleted!
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="deleteConfirmText" style="color: #ef4444;">Type <strong>"DELETE"</strong> to confirm:</label>
+                    <input type="text" id="deleteConfirmText" placeholder="Type DELETE to confirm..." style="border-color: rgba(220, 38, 38, 0.5);" />
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-nav" style="background: rgba(220, 38, 38, 0.2); border-color: rgba(220, 38, 38, 0.5); color: #ef4444;" id="confirmDelete" disabled>
+                    <i class="fas fa-trash"></i>
+                    Delete Permanently
+                </button>
+                <button class="btn-nav btn-secondary" id="cancelDelete">
+                    <i class="fas fa-times"></i>
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rename Modal -->
+    <div id="renameModal" class="modal" style="display: none;">
+        <div class="modal-overlay"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-edit"></i> Rename Item</h3>
+                <button class="modal-close" id="closeRenameModal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div style="background: rgba(251, 191, 36, 0.1); border: 1px solid rgba(251, 191, 36, 0.3); border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem;">
+                    <div style="display: flex; align-items: center; gap: 1rem;">
+                        <i class="fas fa-exclamation-triangle" style="font-size: 1.5rem; color: #fbbf24;"></i>
+                        <div>
+                            <h4 style="color: #fbbf24; margin: 0 0 0.5rem 0; font-size: 1rem;">⚠️ Caution</h4>
+                            <p style="color: #fcd34d; margin: 0; font-size: 0.85rem;">Renaming files or folders may break applications or scripts that depend on the current name or path!</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="renameNewName">New Name:</label>
+                    <input type="text" id="renameNewName" placeholder="Enter new name..." />
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-nav btn-action" id="confirmRename">
+                    <i class="fas fa-edit"></i>
+                    Rename
+                </button>
+                <button class="btn-nav btn-secondary" id="cancelRename">
+                    <i class="fas fa-times"></i>
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Context Menu -->
+    <div id="contextMenu" class="context-menu">
+        <div class="context-menu-item" id="contextRename">
+            <i class="fas fa-edit"></i>
+            <span>Rename</span>
+        </div>
+        <div class="context-menu-separator"></div>
+        <div class="context-menu-item danger" id="contextDelete">
+            <i class="fas fa-trash"></i>
+            <span>Delete</span>
         </div>
     </div>
 
@@ -1555,9 +1702,8 @@
                         ${getFileIcon(file.type, file.name, file.symlinkTarget)}
                         <div class="file-name" style="${isSymlink ? 'color: #00d4ff;' : ''}">${displayName}</div>
                         <div class="file-size">${file.type === 'directory' || file.type === 'symlink' ? '-' : formatFileSize(file.size || 0)}</div>
-                        <div class="file-permissions">${file.permissions || '-'}</div>
-                        ${file.type === 'file' || file.type === 'symlink' ? `
-                            <div class="file-actions">
+                        <div class="file-actions">
+                            ${file.type === 'file' || file.type === 'symlink' ? `
                                 <button class="action-btn" onclick="previewFile('${file.path}', '${file.name}', event)">
                                     <i class="fas fa-eye"></i> View
                                 </button>
@@ -1566,15 +1712,28 @@
                                         <i class="fas fa-edit"></i> Edit
                                     </button>
                                 ` : ''}
-                            </div>
-                        ` : ''}
+                            ` : ''}
+                        </div>
+                        <button class="three-dot-btn" onclick="showThreeDotMenu('${file.path}', '${file.name}', ${file.type === 'directory'}, event)" title="More options">
+                            <i class="fas fa-ellipsis-v"></i>
+                        </button>
                     </div>
                 `;
             }).join('');
             
             // Add click handlers
             document.querySelectorAll('.file-item').forEach(item => {
-                item.addEventListener('click', () => handleFileClick(item));
+                item.addEventListener('click', (e) => {
+                    // Don't trigger on button clicks
+                    if (e.target.closest('button')) return;
+                    handleFileClick(item);
+                });
+                
+                // Add right-click context menu
+                item.addEventListener('contextmenu', (e) => {
+                    e.preventDefault();
+                    showContextMenu(e, item.dataset.path, item.dataset.name, item.dataset.type === 'directory');
+                });
             });
         }
         
@@ -1609,10 +1768,10 @@
             fileEditorContent.style.display = 'none';
             filePreviewContent.style.display = 'flex';
             
-            // Update title and show search bar
+            // Update title and show search bar (hide actions for preview)
             viewerTitle.innerHTML = `<i class="fas fa-file"></i> ${fileName}`;
             viewerSearchBar.style.display = 'flex';
-            viewerActions.style.display = 'flex';
+            viewerActions.style.display = 'none';
             
             previewContent.textContent = 'Loading file...';
             
@@ -1726,6 +1885,7 @@
             
             currentEditFile = { path: filePath, name: fileName };
             
+            const fileViewerCard = document.querySelector('.file-viewer-card');
             const viewerTitle = document.getElementById('viewerTitle');
             const viewerSearchBar = document.getElementById('viewerSearchBar');
             const viewerActions = document.getElementById('viewerActions');
@@ -1833,6 +1993,7 @@
         }
         
         function closeViewer() {
+            const fileViewerCard = document.querySelector('.file-viewer-card');
             const viewerTitle = document.getElementById('viewerTitle');
             const viewerSearchBar = document.getElementById('viewerSearchBar');
             const viewerActions = document.getElementById('viewerActions');
@@ -1872,7 +2033,6 @@
         
         // Viewer event listeners
         document.getElementById('saveFileBtn').addEventListener('click', saveFile);
-        document.getElementById('closeViewerBtn').addEventListener('click', closeViewer);
         
         // Editor textarea event listener for stats
         document.getElementById('editorTextarea').addEventListener('input', updateEditorStats);
@@ -1936,10 +2096,54 @@
             uploadModal.style.display = 'none';
         });
         
+        document.getElementById('cancelDelete').addEventListener('click', () => {
+            document.getElementById('deleteConfirmModal').style.display = 'none';
+            deleteItemData = null;
+        });
+        
+        document.getElementById('closeDeleteModal').addEventListener('click', () => {
+            document.getElementById('deleteConfirmModal').style.display = 'none';
+            deleteItemData = null;
+        });
+        
+        document.getElementById('cancelRename').addEventListener('click', () => {
+            document.getElementById('renameModal').style.display = 'none';
+            renameItemData = null;
+        });
+        
+        document.getElementById('closeRenameModal').addEventListener('click', () => {
+            document.getElementById('renameModal').style.display = 'none';
+            renameItemData = null;
+        });
+        
+        // Enable delete button when user types "DELETE"
+        document.getElementById('deleteConfirmText').addEventListener('input', (e) => {
+            const confirmBtn = document.getElementById('confirmDelete');
+            confirmBtn.disabled = e.target.value !== 'DELETE';
+        });
+        
+        // Context menu handlers
+        document.getElementById('contextRename').addEventListener('click', showRenameModal);
+        document.getElementById('contextDelete').addEventListener('click', () => {
+            if (contextMenuData) {
+                hideContextMenu();
+                confirmDelete(contextMenuData.path, contextMenuData.name, contextMenuData.isDirectory, null);
+            }
+        });
+        
+        // Hide context menu on click outside
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('#contextMenu') && !e.target.closest('.three-dot-btn')) {
+                hideContextMenu();
+            }
+        });
+        
         // Confirm handlers
         document.getElementById('confirmCreateFolder').addEventListener('click', createFolder);
         document.getElementById('confirmCreateFile').addEventListener('click', createFile);
         document.getElementById('confirmUpload').addEventListener('click', startUpload);
+        document.getElementById('confirmDelete').addEventListener('click', performDelete);
+        document.getElementById('confirmRename').addEventListener('click', performRename);
         
         // Modal overlay close
         document.addEventListener('click', (e) => {
@@ -2003,6 +2207,170 @@
                     loadDirectory(currentPath); // Refresh current directory
                 } else {
                     alert(`Error creating file: ${result.error}`);
+                }
+            } catch (error) {
+                alert(`Network error: ${error.message}`);
+            }
+        }
+        
+        // Delete confirmation
+        let deleteItemData = null;
+        
+        function confirmDelete(itemPath, itemName, isDirectory, event) {
+            if (event) event.stopPropagation();
+            
+            deleteItemData = { path: itemPath, name: itemName, isDirectory };
+            
+            const deleteModal = document.getElementById('deleteConfirmModal');
+            const deleteItemInfo = document.getElementById('deleteItemInfo');
+            const recursiveWarning = document.getElementById('recursiveWarning');
+            const confirmBtn = document.getElementById('confirmDelete');
+            const confirmInput = document.getElementById('deleteConfirmText');
+            
+            // Reset confirmation input and button
+            confirmInput.value = '';
+            confirmBtn.disabled = true;
+            
+            // Show item info
+            deleteItemInfo.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                    <i class="fas fa-${isDirectory ? 'folder' : 'file'}" style="color: #0096ff;"></i>
+                    <strong>${itemName}</strong>
+                </div>
+                <div style="font-size: 0.85rem; color: #64748b;">
+                    Path: ${itemPath}
+                </div>
+                <div style="font-size: 0.85rem; color: #64748b; margin-top: 0.5rem;">
+                    Type: ${isDirectory ? 'Folder (Recursive Delete)' : 'File'}
+                </div>
+            `;
+            
+            // Show recursive warning for directories
+            recursiveWarning.style.display = isDirectory ? 'block' : 'none';
+            
+            deleteModal.style.display = 'flex';
+        }
+        
+        async function performDelete() {
+            if (!deleteItemData) return;
+            
+            try {
+                const response = await fetch('/delete-item', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        path: deleteItemData.path,
+                        isDirectory: deleteItemData.isDirectory
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    document.getElementById('deleteConfirmModal').style.display = 'none';
+                    deleteItemData = null;
+                    loadDirectory(currentPath); // Refresh current directory
+                } else {
+                    alert(`Error deleting item: ${result.error}`);
+                }
+            } catch (error) {
+                alert(`Network error: ${error.message}`);
+            }
+        }
+        
+        // Context menu and three-dot menu functionality
+        let contextMenuData = null;
+        
+        function showContextMenu(event, itemPath, itemName, isDirectory) {
+            const contextMenu = document.getElementById('contextMenu');
+            contextMenuData = { path: itemPath, name: itemName, isDirectory };
+            
+            // Position the context menu at mouse position
+            contextMenu.style.left = event.pageX + 'px';
+            contextMenu.style.top = event.pageY + 'px';
+            contextMenu.classList.add('show');
+        }
+        
+        function showThreeDotMenu(itemPath, itemName, isDirectory, event) {
+            if (event) event.stopPropagation();
+            
+            const contextMenu = document.getElementById('contextMenu');
+            contextMenuData = { path: itemPath, name: itemName, isDirectory };
+            
+            // Position the context menu near the three-dot button
+            const rect = event.target.closest('.three-dot-btn').getBoundingClientRect();
+            contextMenu.style.left = (rect.left - 150) + 'px';
+            contextMenu.style.top = (rect.bottom + 5) + 'px';
+            contextMenu.classList.add('show');
+        }
+        
+        function hideContextMenu() {
+            const contextMenu = document.getElementById('contextMenu');
+            contextMenu.classList.remove('show');
+        }
+        
+        // Rename functionality
+        let renameItemData = null;
+        
+        function showRenameModal() {
+            if (!contextMenuData) return;
+            
+            renameItemData = contextMenuData;
+            hideContextMenu();
+            
+            const renameModal = document.getElementById('renameModal');
+            const renameNewName = document.getElementById('renameNewName');
+            
+            renameNewName.value = renameItemData.name;
+            
+            renameModal.style.display = 'flex';
+            
+            // Focus and select the input
+            setTimeout(() => {
+                renameNewName.focus();
+                renameNewName.select();
+            }, 100);
+        }
+        
+        async function performRename() {
+            if (!renameItemData) return;
+            
+            const newName = document.getElementById('renameNewName').value.trim();
+            
+            if (!newName) {
+                alert('Please enter a new name');
+                return;
+            }
+            
+            if (newName === renameItemData.name) {
+                document.getElementById('renameModal').style.display = 'none';
+                return;
+            }
+            
+            const oldPath = renameItemData.path;
+            const pathParts = oldPath.split('/');
+            pathParts[pathParts.length - 1] = newName;
+            const newPath = pathParts.join('/');
+            
+            try {
+                const response = await fetch('/rename-item', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        oldPath: oldPath,
+                        newPath: newPath,
+                        isDirectory: renameItemData.isDirectory
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    document.getElementById('renameModal').style.display = 'none';
+                    renameItemData = null;
+                    loadDirectory(currentPath); // Refresh current directory
+                } else {
+                    alert(`Error renaming item: ${result.error}`);
                 }
             } catch (error) {
                 alert(`Network error: ${error.message}`);
@@ -2293,8 +2661,66 @@
             }
         });
         
-        // Load initial directory
-        loadDirectory(currentPath);
+        // Fetch and add application paths to quick paths
+        async function loadApplicationPaths() {
+            try {
+                const response = await fetch('/get-applications', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const result = await response.json();
+                
+                if (result.success && result.applications && result.applications.length > 0) {
+                    const quickPathsContainer = document.querySelector('.quick-paths');
+                    
+                    // Add a separator
+                    const separator = document.createElement('div');
+                    separator.style.cssText = 'border-top: 1px solid rgba(0, 150, 255, 0.2); margin: 1rem 0; padding-top: 1rem;';
+                    separator.innerHTML = '<h4 style="color: #0096ff; font-size: 0.9rem; margin-bottom: 0.5rem;"><i class="fas fa-cube"></i> Applications</h4>';
+                    quickPathsContainer.appendChild(separator);
+                    
+                    // Add each application path as a quick path
+                    result.applications.forEach(app => {
+                        // Extract the last folder name from the path
+                        const pathParts = app.path.split('/').filter(part => part.length > 0);
+                        const displayName = pathParts.length > 0 ? pathParts[pathParts.length - 1] : app.name;
+                        
+                        const quickPathItem = document.createElement('div');
+                        quickPathItem.className = 'quick-path-item';
+                        quickPathItem.dataset.path = app.path;
+                        quickPathItem.innerHTML = `
+                            <i class="fas fa-cube"></i>
+                            ${displayName}
+                        `;
+                        quickPathItem.addEventListener('click', () => {
+                            loadDirectory(app.path);
+                        });
+                        quickPathsContainer.appendChild(quickPathItem);
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading application paths:', error);
+            }
+        }
+        
+        // Check for path parameter in URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const pathParam = urlParams.get('path');
+        
+        if (pathParam) {
+            // If path parameter exists, navigate to that path
+            currentPath = pathParam;
+            loadDirectory(pathParam);
+        } else {
+            // Load initial directory
+            loadDirectory(currentPath);
+        }
+        
+        // Load application paths
+        loadApplicationPaths();
     </script>
 </body>
 </html>

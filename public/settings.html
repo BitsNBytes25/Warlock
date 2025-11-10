@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings - Warlock</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Rajdhani', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #e2e8f0;
+            min-height: 100vh;
+        }
+        
+        .navbar {
+            background: rgba(26, 26, 46, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1rem 2rem;
+            border-bottom: 2px solid rgba(0, 150, 255, 0.3);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        .navbar-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.8rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 30px rgba(102, 126, 234, 0.5);
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+        
+        .nav-links a {
+            color: #94a3b8;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+        }
+        
+        .nav-links a:hover,
+        .nav-links a.active {
+            color: #0096ff;
+            background: rgba(0, 150, 255, 0.1);
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 3rem auto;
+            padding: 0 2rem;
+        }
+        
+        .settings-card {
+            background: rgba(26, 26, 46, 0.9);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(0, 150, 255, 0.2);
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 
+                0 25px 50px rgba(0, 0, 0, 0.5),
+                inset 0 1px 0 rgba(0, 150, 255, 0.2),
+                0 0 30px rgba(0, 150, 255, 0.1);
+        }
+        
+        .settings-header {
+            margin-bottom: 2rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid rgba(0, 150, 255, 0.2);
+        }
+        
+        .settings-header h1 {
+            font-family: 'Orbitron', sans-serif;
+            color: #0096ff;
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .settings-header p {
+            color: #94a3b8;
+            font-size: 1rem;
+        }
+        
+        .form-section {
+            margin-bottom: 2rem;
+        }
+        
+        .form-section h2 {
+            color: #0096ff;
+            font-size: 1.3rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-group label {
+            display: block;
+            color: #e2e8f0;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            font-size: 1rem;
+        }
+        
+        .form-group .help-text {
+            display: block;
+            color: #94a3b8;
+            font-size: 0.85rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(0, 150, 255, 0.3);
+            border-radius: 8px;
+            color: #e2e8f0;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: #0096ff;
+            box-shadow: 0 0 0 3px rgba(0, 150, 255, 0.1);
+        }
+        
+        .warning-box {
+            background: rgba(251, 191, 36, 0.1);
+            border: 1px solid rgba(251, 191, 36, 0.3);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: start;
+            gap: 1rem;
+        }
+        
+        .warning-box i {
+            font-size: 1.5rem;
+            color: #fbbf24;
+            margin-top: 0.2rem;
+        }
+        
+        .warning-box .warning-content h3 {
+            color: #fbbf24;
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .warning-box .warning-content p {
+            color: #fcd34d;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(0, 150, 255, 0.2);
+        }
+        
+        .btn {
+            padding: 0.75rem 2rem;
+            border: none;
+            border-radius: 8px;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: 1px solid rgba(0, 150, 255, 0.3);
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-secondary {
+            background: rgba(0, 0, 0, 0.3);
+            color: #94a3b8;
+            border: 1px solid rgba(0, 150, 255, 0.2);
+        }
+        
+        .btn-secondary:hover {
+            background: rgba(0, 150, 255, 0.1);
+            color: #0096ff;
+        }
+        
+        .btn-test {
+            background: rgba(34, 197, 94, 0.2);
+            color: #22c55e;
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+        
+        .btn-test:hover {
+            background: rgba(34, 197, 94, 0.3);
+        }
+        
+        .status-message {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+            display: none;
+        }
+        
+        .status-message.success {
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            color: #22c55e;
+        }
+        
+        .status-message.error {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #ef4444;
+        }
+        
+        .status-message.info {
+            background: rgba(0, 150, 255, 0.1);
+            border: 1px solid rgba(0, 150, 255, 0.3);
+            color: #0096ff;
+        }
+        
+        .current-config {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(0, 150, 255, 0.2);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .current-config h3 {
+            color: #0096ff;
+            font-size: 1rem;
+            margin-bottom: 0.75rem;
+        }
+        
+        .current-config .config-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid rgba(0, 150, 255, 0.1);
+        }
+        
+        .current-config .config-item:last-child {
+            border-bottom: none;
+        }
+        
+        .current-config .config-label {
+            color: #94a3b8;
+            font-size: 0.9rem;
+        }
+        
+        .current-config .config-value {
+            color: #e2e8f0;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 0.9rem;
+        }
+        
+        .setup-instructions {
+            background: rgba(0, 150, 255, 0.05);
+            border: 1px solid rgba(0, 150, 255, 0.3);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .setup-instructions h3 {
+            color: #0096ff;
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .setup-instructions p {
+            color: #94a3b8;
+            margin-bottom: 1rem;
+            line-height: 1.6;
+        }
+        
+        .setup-instructions .step {
+            margin-bottom: 1.5rem;
+        }
+        
+        .setup-instructions .step-title {
+            color: #0096ff;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            font-size: 1rem;
+        }
+        
+        .code-block {
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(0, 150, 255, 0.2);
+            border-radius: 8px;
+            padding: 1rem;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 0.85rem;
+            color: #22c55e;
+            overflow-x: auto;
+            position: relative;
+        }
+        
+        .code-block code {
+            display: block;
+            white-space: pre;
+            line-height: 1.6;
+        }
+        
+        .copy-btn {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            background: rgba(0, 150, 255, 0.2);
+            border: 1px solid rgba(0, 150, 255, 0.3);
+            color: #0096ff;
+            padding: 0.4rem 0.8rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            transition: all 0.2s ease;
+        }
+        
+        .copy-btn:hover {
+            background: rgba(0, 150, 255, 0.3);
+        }
+        
+        .copy-btn.copied {
+            background: rgba(34, 197, 94, 0.2);
+            border-color: rgba(34, 197, 94, 0.3);
+            color: #22c55e;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="navbar-content">
+            <div class="logo">⚡ WARLOCK</div>
+            <ul class="nav-links">
+                <li><a href="/"><i class="fas fa-home"></i> Dashboard</a></li>
+                <li><a href="/files"><i class="fas fa-folder"></i> Files</a></li>
+                <li><a href="/monitor"><i class="fas fa-chart-line"></i> Monitor</a></li>
+                <li><a href="/settings" class="active"><i class="fas fa-cog"></i> Settings</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="settings-card">
+            <div class="settings-header">
+                <h1>
+                    <i class="fas fa-cog"></i>
+                    Settings
+                </h1>
+                <p>Configure your remote server connection settings</p>
+            </div>
+
+            <!-- Current Configuration Display -->
+            <div class="current-config">
+                <h3><i class="fas fa-info-circle"></i> Current Configuration</h3>
+                <div class="config-item">
+                    <span class="config-label">SSH User:</span>
+                    <span class="config-value" id="currentUser">Loading...</span>
+                </div>
+                <div class="config-item">
+                    <span class="config-label">SSH Host:</span>
+                    <span class="config-value" id="currentHost">Loading...</span>
+                </div>
+            </div>
+
+            <!-- SSH Setup Instructions -->
+            <div class="setup-instructions">
+                <h3><i class="fas fa-key"></i> SSH Key Setup Required</h3>
+                <p>Before this application can connect to your remote server, you must configure SSH key authentication for the <strong>root</strong> user. Follow these steps on your <strong>game server</strong>:</p>
+                
+                <div class="step">
+                    <div class="step-title">Step 1: Configure Game Server (Root User)</div>
+                    <p style="font-size: 0.9rem; color: #94a3b8;">SSH into your game server as root and run these commands (replace the last line with your actual public key):</p>
+                    <div class="code-block">
+                        <button class="copy-btn" onclick="copyCode(this, 'code1')"><i class="fas fa-copy"></i> Copy</button>
+                        <code id="code1">mkdir -p /root/.ssh
+chmod 700 /root/.ssh
+touch /root/.ssh/authorized_keys
+chmod 600 /root/.ssh/authorized_keys
+echo 'ssh-rsa YOUR_PUBLIC_KEY_HERE user@host' >> /root/.ssh/authorized_keys</code>
+                    </div>
+                    <p style="font-size: 0.85rem; color: #ef4444; margin-top: 0.5rem;"><i class="fas fa-exclamation-triangle"></i> <strong>Important:</strong> Replace the entire echo line with your actual public key!</p>
+                    <p style="font-size: 0.85rem; color: #fbbf24; margin-top: 0.5rem;"><i class="fas fa-info-circle"></i> <strong>Note:</strong> Only root user is supported at this time. Non-root users will not work.</p>
+                </div>
+            </div>
+
+            <!-- SSH Configuration Form -->
+            <form id="settingsForm">
+                <div class="form-section">
+                    <h2><i class="fas fa-server"></i> SSH Configuration</h2>
+                    
+                    <div class="form-group">
+                        <label for="sshUser">SSH User</label>
+                        <span class="help-text">Must be 'root' - other users are not supported at this time</span>
+                        <input type="text" id="sshUser" name="sshUser" value="root" readonly style="background-color: #2a2a3e; cursor: not-allowed;">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="sshHost">SSH Host</label>
+                        <span class="help-text">The IP address or hostname of your remote server</span>
+                        <input type="text" id="sshHost" name="sshHost" placeholder="45.26.230.248" required>
+                    </div>
+                </div>
+
+                <!-- Status Message -->
+                <div id="statusMessage" class="status-message"></div>
+
+                <!-- Action Buttons -->
+                <div class="button-group">
+                    <button type="button" class="btn btn-test" id="testConnectionBtn">
+                        <i class="fas fa-plug"></i>
+                        Test Connection
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i>
+                        Save Settings
+                    </button>
+                    <button type="button" class="btn btn-secondary" id="resetBtn">
+                        <i class="fas fa-undo"></i>
+                        Reset
+                    </button>
+                </div>
+            </form>
+
+            <!-- Warning Box -->
+            <div class="warning-box" style="margin-top: 2rem;">
+                <i class="fas fa-exclamation-triangle"></i>
+                <div class="warning-content">
+                    <h3>⚠️ Important Notice</h3>
+                    <p>Changing these settings will affect all server operations. The application will need to be restarted for changes to take effect. Make sure you have SSH key authentication configured for the new settings.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Load current settings on page load
+        async function loadCurrentSettings() {
+            try {
+                const response = await fetch('/get-settings');
+                const result = await response.json();
+                
+                if (result.success) {
+                    document.getElementById('currentUser').textContent = result.settings.SSH_USER || 'Not set';
+                    document.getElementById('currentHost').textContent = result.settings.SSH_HOST || 'Not set';
+                    document.getElementById('sshUser').value = result.settings.SSH_USER || '';
+                    document.getElementById('sshHost').value = result.settings.SSH_HOST || '';
+                } else {
+                    showMessage('error', 'Failed to load current settings');
+                }
+            } catch (error) {
+                showMessage('error', `Network error: ${error.message}`);
+            }
+        }
+
+        // Save settings
+        document.getElementById('settingsForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const sshUser = 'root'; // Always use root
+            const sshHost = document.getElementById('sshHost').value.trim();
+            
+            if (!sshHost) {
+                showMessage('error', 'Please enter SSH host');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/save-settings', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        SSH_USER: sshUser,
+                        SSH_HOST: sshHost
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showMessage('success', 'Settings saved successfully! Please restart the application for changes to take effect.');
+                    loadCurrentSettings(); // Refresh display
+                } else {
+                    showMessage('error', `Failed to save settings: ${result.error}`);
+                }
+            } catch (error) {
+                showMessage('error', `Network error: ${error.message}`);
+            }
+        });
+
+        // Test connection
+        document.getElementById('testConnectionBtn').addEventListener('click', async () => {
+            const sshUser = 'root'; // Always use root
+            const sshHost = document.getElementById('sshHost').value.trim();
+            
+            if (!sshHost) {
+                showMessage('error', 'Please enter SSH host before testing');
+                return;
+            }
+            
+            showMessage('info', 'Testing connection...');
+            
+            try {
+                const response = await fetch('/test-connection', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        SSH_USER: sshUser,
+                        SSH_HOST: sshHost
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showMessage('success', 'Connection test successful! ✓');
+                } else {
+                    showMessage('error', `Connection test failed: ${result.error}`);
+                }
+            } catch (error) {
+                showMessage('error', `Network error: ${error.message}`);
+            }
+        });
+
+        // Reset form
+        document.getElementById('resetBtn').addEventListener('click', () => {
+            loadCurrentSettings();
+            showMessage('info', 'Form reset to current settings');
+        });
+
+        // Show status message
+        function showMessage(type, message) {
+            const statusDiv = document.getElementById('statusMessage');
+            statusDiv.className = `status-message ${type}`;
+            statusDiv.textContent = message;
+            statusDiv.style.display = 'block';
+            
+            // Auto-hide after 5 seconds for non-error messages
+            if (type !== 'error') {
+                setTimeout(() => {
+                    statusDiv.style.display = 'none';
+                }, 5000);
+            }
+        }
+        
+        // Copy code to clipboard
+        function copyCode(button, codeId) {
+            const codeElement = document.getElementById(codeId);
+            const text = codeElement.textContent;
+            
+            navigator.clipboard.writeText(text).then(() => {
+                // Update button to show success
+                const originalHTML = button.innerHTML;
+                button.innerHTML = '<i class="fas fa-check"></i> Copied!';
+                button.classList.add('copied');
+                
+                // Reset after 2 seconds
+                setTimeout(() => {
+                    button.innerHTML = originalHTML;
+                    button.classList.remove('copied');
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy:', err);
+                alert('Failed to copy to clipboard');
+            });
+        }
+
+        // Load settings on page load
+        loadCurrentSettings();
+    </script>
+</body>
+</html>

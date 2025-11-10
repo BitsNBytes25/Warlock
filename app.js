@@ -2,44 +2,97 @@ const express = require('express');
 const path = require('path');
 const { exec } = require('child_process');
 const multer = require('multer');
+const fs = require('fs');
 
 const app = express();
 const PORT = process.env.PORT || 3077;
+
+// Load environment variables
+require('dotenv').config();
+
+// Get SSH configuration from environment or defaults
+// This function re-reads the .env file each time to get fresh values
+const getSSHConfig = () => {
+    // Re-read .env file to get latest values
+    delete require.cache[require.resolve('dotenv')];
+    require('dotenv').config();
+    
+    return {
+        SSH_USER: process.env.SSH_USER || 'root',
+        SSH_HOST: process.env.SSH_HOST || 'not set'
+    };
+};
+
+// Helper function to build SSH command with current config
+const buildSSHCommand = (remoteCommand) => {
+    const config = getSSHConfig();
+    return `ssh ${config.SSH_USER}@${config.SSH_HOST} '${remoteCommand}'`;
+};
 
 // Middleware
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Route to serve the main HTML page
-app.get('/', (req, res) => {
+// Route to serve the main HTML page (legacy)
+app.get('/index', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Monitor page route
+// Route to serve the new SPA
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'app.html'));
+});
+
+// API endpoint to serve page fragments for SPA
+app.get('/pages/:page', (req, res) => {
+    const page = req.params.page;
+    const allowedPages = ['dashboard', 'monitor', 'files', 'settings'];
+    
+    if (!allowedPages.includes(page)) {
+        return res.status(404).send('Page not found');
+    }
+    
+    // Map page names to file names
+    const pageFiles = {
+        'dashboard': 'index.html',
+        'monitor': 'monitor.html',
+        'files': 'files.html',
+        'settings': 'settings.html'
+    };
+    
+    res.sendFile(path.join(__dirname, 'public', pageFiles[page]));
+});
+
+// Monitor page route (legacy)
 app.get('/monitor', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'monitor.html'));
 });
 
-// File browser page route
+// File browser page route (legacy)
 app.get('/files', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'files.html'));
+});
+
+// Settings page route (legacy)
+app.get('/settings', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'settings.html'));
 });
 
 // Game Server Command configurations
 const commandConfigs = {
     'create-server': {
         command: (params) => {
-            return `ssh root@45.26.230.248 '/home/steam/VEIN/manage.py create_server --game=${params.game_type} --name="${params.server_name}" --max-players=${params.max_players} --size=${params.server_size}'`;
+            return `ssh ${getSSHConfig().SSH_USER}@${getSSHConfig().SSH_HOST} '/home/steam/VEIN/manage.py create_server --game=${params.game_type} --name="${params.server_name}" --max-players=${params.max_players} --size=${params.server_size}'`;
         },
         description: 'Create Game Server'
     },
     'server-control': {
         command: (params) => {
             const actions = {
-                'start': `ssh root@45.26.230.248 '/home/steam/VEIN/manage.py start_server --server-id=${params.server_id}'`,
-                'stop': `ssh root@45.26.230.248 '/home/steam/VEIN/manage.py stop_server --server-id=${params.server_id}'`,
-                'restart': `ssh root@45.26.230.248 '/home/steam/VEIN/manage.py restart_server --server-id=${params.server_id}'`,
-                'force-stop': `ssh root@45.26.230.248 '/home/steam/VEIN/manage.py force_stop_server --server-id=${params.server_id}'`
+                'start': buildSSHCommand(`/home/steam/VEIN/manage.py start_server --server-id=${params.server_id}`),
+                'stop': buildSSHCommand(`/home/steam/VEIN/manage.py stop_server --server-id=${params.server_id}`),
+                'restart': buildSSHCommand(`/home/steam/VEIN/manage.py restart_server --server-id=${params.server_id}`),
+                'force-stop': buildSSHCommand(`/home/steam/VEIN/manage.py force_stop_server --server-id=${params.server_id}`)
             };
             return actions[params.action] || actions['start'];
         },
@@ -49,9 +102,9 @@ const commandConfigs = {
         command: (params) => {
             if (params.config_content) {
                 // Save config content to a temp file and upload it
-                return `ssh root@45.26.230.248 '/home/steam/VEIN/manage.py configure_server --server-id=${params.server_id} --config-type=${params.config_type} --config-data="${params.config_content}"'`;
+                return buildSSHCommand(`/home/steam/VEIN/manage.py configure_server --server-id=${params.server_id} --config-type=${params.config_type} --config-data="${params.config_content}"`);
             } else {
-                return `ssh root@45.26.230.248 '/home/steam/VEIN/manage.py get_server_config --server-id=${params.server_id} --config-type=${params.config_type}'`;
+                return buildSSHCommand(`/home/steam/VEIN/manage.py get_server_config --server-id=${params.server_id} --config-type=${params.config_type}`);
             }
         },
         description: 'Server Configuration'
@@ -59,11 +112,11 @@ const commandConfigs = {
     'player-management': {
         command: (params) => {
             const actions = {
-                'list_players': `ssh root@45.26.230.248 '/home/steam/VEIN/manage.py list_players --server-id=${params.server_id}'`,
-                'kick_player': `ssh root@45.26.230.248 '/home/steam/VEIN/manage.py kick_player --server-id=${params.server_id} --player="${params.player_name}"'`,
-                'ban_player': `ssh root@45.26.230.248 '/home/steam/VEIN/manage.py ban_player --server-id=${params.server_id} --player="${params.player_name}"'`,
-                'unban_player': `ssh root@45.26.230.248 '/home/steam/VEIN/manage.py unban_player --server-id=${params.server_id} --player="${params.player_name}"'`,
-                'list_bans': `ssh root@45.26.230.248 '/home/steam/VEIN/manage.py list_bans --server-id=${params.server_id}'`
+                'list_players': buildSSHCommand(`/home/steam/VEIN/manage.py list_players --server-id=${params.server_id}`),
+                'kick_player': buildSSHCommand(`/home/steam/VEIN/manage.py kick_player --server-id=${params.server_id} --player="${params.player_name}"`),
+                'ban_player': buildSSHCommand(`/home/steam/VEIN/manage.py ban_player --server-id=${params.server_id} --player="${params.player_name}"`),
+                'unban_player': buildSSHCommand(`/home/steam/VEIN/manage.py unban_player --server-id=${params.server_id} --player="${params.player_name}"`),
+                'list_bans': buildSSHCommand(`/home/steam/VEIN/manage.py list_bans --server-id=${params.server_id}`)
             };
             return actions[params.action] || actions['list_players'];
         },
@@ -72,10 +125,10 @@ const commandConfigs = {
     'server-monitor': {
         command: (params) => {
             const monitors = {
-                'performance': `ssh root@45.26.230.248 '/home/steam/VEIN/manage.py server_stats ${params.server_id !== 'all' ? '--server-id=' + params.server_id : '--all'}'`,
-                'player_count': `ssh root@45.26.230.248 '/home/steam/VEIN/manage.py player_count ${params.server_id !== 'all' ? '--server-id=' + params.server_id : '--all'}'`,
-                'resource_usage': `ssh root@45.26.230.248 '/home/steam/VEIN/manage.py resource_usage ${params.server_id !== 'all' ? '--server-id=' + params.server_id : '--all'}'`,
-                'server_logs': `ssh root@45.26.230.248 '/home/steam/VEIN/manage.py server_logs ${params.server_id !== 'all' ? '--server-id=' + params.server_id : '--all'} --tail=50'`
+                'performance': buildSSHCommand(`/home/steam/VEIN/manage.py server_stats ${params.server_id !== 'all' ? '--server-id=' + params.server_id : '--all'}`),
+                'player_count': buildSSHCommand(`/home/steam/VEIN/manage.py player_count ${params.server_id !== 'all' ? '--server-id=' + params.server_id : '--all'}`),
+                'resource_usage': buildSSHCommand(`/home/steam/VEIN/manage.py resource_usage ${params.server_id !== 'all' ? '--server-id=' + params.server_id : '--all'}`),
+                'server_logs': buildSSHCommand(`/home/steam/VEIN/manage.py server_logs ${params.server_id !== 'all' ? '--server-id=' + params.server_id : '--all'} --tail=50`)
             };
             return monitors[params.monitor_type] || monitors['performance'];
         },
@@ -84,10 +137,10 @@ const commandConfigs = {
     'backup-restore': {
         command: (params) => {
             const actions = {
-                'create_backup': `ssh root@45.26.230.248 '/home/steam/VEIN/manage.py create_backup --server-id=${params.server_id} ${params.backup_name ? '--name=' + params.backup_name : ''}'`,
-                'restore_backup': `ssh root@45.26.230.248 '/home/steam/VEIN/manage.py restore_backup --server-id=${params.server_id} --backup-name=${params.backup_name}'`,
-                'list_backups': `ssh root@45.26.230.248 '/home/steam/VEIN/manage.py list_backups --server-id=${params.server_id}'`,
-                'delete_backup': `ssh root@45.26.230.248 '/home/steam/VEIN/manage.py delete_backup --server-id=${params.server_id} --backup-name=${params.backup_name}'`
+                'create_backup': buildSSHCommand(`/home/steam/VEIN/manage.py create_backup --server-id=${params.server_id} ${params.backup_name ? '--name=' + params.backup_name : ''}`),
+                'restore_backup': buildSSHCommand(`/home/steam/VEIN/manage.py restore_backup --server-id=${params.server_id} --backup-name=${params.backup_name}`),
+                'list_backups': buildSSHCommand(`/home/steam/VEIN/manage.py list_backups --server-id=${params.server_id}`),
+                'delete_backup': buildSSHCommand(`/home/steam/VEIN/manage.py delete_backup --server-id=${params.server_id} --backup-name=${params.backup_name}`)
             };
             return actions[params.action] || actions['list_backups'];
         },
@@ -147,7 +200,7 @@ app.post('/backup-restore', createCommandEndpoint('backup-restore'));
 
 // Get services endpoint
 app.post('/get-services', (req, res) => {
-    const sshCommand = "ssh root@45.26.230.248 '/home/steam/VEIN/manage.py --get-services'";
+    const sshCommand = buildSSHCommand('/home/steam/VEIN/manage.py --get-services');
     
     console.log('Executing get-services command:', sshCommand);
     
@@ -175,8 +228,8 @@ app.post('/get-services', (req, res) => {
 app.post('/get-stats', (req, res) => {
     const serviceName = req.body.service || '';
     const sshCommand = serviceName 
-        ? `ssh root@45.26.230.248 '/home/steam/VEIN/manage.py --get-stats --service ${serviceName}'`
-        : "ssh root@45.26.230.248 '/home/steam/VEIN/manage.py --get-stats'";
+        ? buildSSHCommand(`/home/steam/VEIN/manage.py --get-stats --service ${serviceName}`)
+        : buildSSHCommand('/home/steam/VEIN/manage.py --get-stats');
     
     console.log('Executing get-stats command:', sshCommand);
     
@@ -194,6 +247,71 @@ app.post('/get-stats', (req, res) => {
         
         res.json({
             success: true,
+            output: stdout,
+            stderr: stderr
+        });
+    });
+});
+
+// Get applications from .app files in /var/lib/warlock
+app.post('/get-applications', (req, res) => {
+    const sshCommand = buildSSHCommand('for file in /var/lib/warlock/*.app; do if [ -f "$file" ]; then echo "===FILE:$(basename "$file")"; cat "$file"; echo ""; echo "===END"; fi; done');
+    
+    console.log('Executing get-applications command:', sshCommand);
+    
+    exec(sshCommand, { timeout: 30000 }, (error, stdout, stderr) => {
+        if (error) {
+            console.error('Get applications error:', error);
+            return res.json({
+                success: false,
+                error: error.message,
+                output: stderr || stdout,
+                applications: []
+            });
+        }
+        
+        console.log('Applications raw output:', stdout);
+        
+        // Parse the output to extract application names and paths
+        const applications = [];
+        const lines = stdout.split('\n');
+        let currentApp = null;
+        let collectingPath = false;
+        
+        for (let line of lines) {
+            const trimmedLine = line.trim();
+            
+            if (trimmedLine.startsWith('===FILE:')) {
+                // Save previous app if exists
+                if (currentApp && currentApp.path) {
+                    applications.push(currentApp);
+                }
+                
+                // Start new app
+                const fileName = trimmedLine.substring(8).trim(); // Remove '===FILE:' and trim
+                const appName = fileName.replace('.app', '');
+                currentApp = { name: appName, fileName: fileName, path: '' };
+                collectingPath = true;
+            } else if (trimmedLine === '===END') {
+                // End of current file
+                if (currentApp && currentApp.path) {
+                    applications.push(currentApp);
+                }
+                currentApp = null;
+                collectingPath = false;
+            } else if (collectingPath && trimmedLine && trimmedLine !== '===END') {
+                // Collect path (take first non-empty line as the path)
+                if (!currentApp.path) {
+                    currentApp.path = trimmedLine;
+                }
+            }
+        }
+        
+        console.log('Parsed applications:', applications);
+        
+        res.json({
+            success: true,
+            applications: applications,
             output: stdout,
             stderr: stderr
         });
@@ -219,7 +337,7 @@ app.post('/service-action', (req, res) => {
         });
     }
     
-    const sshCommand = `ssh root@45.26.230.248 '/home/steam/VEIN/manage.py --${action} --service ${service}'`;
+    const sshCommand = buildSSHCommand(`/home/steam/VEIN/manage.py --${action} --service ${service}`);
     
     console.log(`Executing ${action} command for ${service}:`, sshCommand);
     
@@ -245,7 +363,7 @@ app.post('/service-action', (req, res) => {
 
 // Legacy endpoint for backward compatibility
 app.post('/run-ssh-command', (req, res) => {
-    const sshCommand = "ssh root@45.26.230.248 '/home/steam/VEIN/manage.py --help'";
+    const sshCommand = buildSSHCommand('/home/steam/VEIN/manage.py --help');
     
     console.log('Executing legacy SSH command:', sshCommand);
     
@@ -288,7 +406,7 @@ app.post('/start-bpytop', (req, res) => {
     function updateSystemStats() {
         if (!bpytopProcess) return; // Stop if monitoring was stopped
         
-        const monitorCommand = `ssh root@45.26.230.248 '
+        const monitorCommand = buildSSHCommand(`
 echo "=== WARLOCK SYSTEM MONITOR ==="
 echo "Timestamp: $(date)"
 echo ""
@@ -315,7 +433,7 @@ ip addr show | grep -E "inet |UP|DOWN" | head -10
 echo ""
 echo "=== ACTIVE CONNECTIONS ==="
 ss -tuln | head -10
-        '`;
+`);
         
         exec(monitorCommand, (error, stdout, stderr) => {
             if (error) {
@@ -385,7 +503,7 @@ app.post('/browse-files', (req, res) => {
     
     // Use ls with detailed output to get file information
     // -la shows all details including symlinks
-    const browseCommand = `ssh root@45.26.230.248 'ls -la "${requestedPath}" 2>/dev/null | tail -n +2'`;
+    const browseCommand = buildSSHCommand(`ls -la "${requestedPath}" 2>/dev/null | tail -n +2`);
     
     exec(browseCommand, (error, stdout, stderr) => {
         if (error) {
@@ -478,7 +596,7 @@ app.post('/view-file', (req, res) => {
     console.log('Viewing file:', filePath);
     
     // First check if it's a text file and get its size
-    const fileInfoCommand = `ssh root@45.26.230.248 'file "${filePath}" && stat -c%s "${filePath}" 2>/dev/null'`;
+    const fileInfoCommand = buildSSHCommand(`file "${filePath}" && stat -c%s "${filePath}" 2>/dev/null`);
     
     exec(fileInfoCommand, (error, stdout, stderr) => {
         if (error) {
@@ -510,7 +628,7 @@ app.post('/view-file', (req, res) => {
         }
         
         // Read the file content
-        const readCommand = `ssh root@45.26.230.248 'cat "${filePath}" 2>/dev/null'`;
+        const readCommand = buildSSHCommand(`cat "${filePath}" 2>/dev/null`);
         
         exec(readCommand, { maxBuffer: 1024 * 1024 * 2 }, (readError, readStdout, readStderr) => {
             if (readError) {
@@ -544,7 +662,7 @@ app.post('/view-image', (req, res) => {
     console.log('Viewing image:', filePath);
     
     // Check file size first
-    const sizeCommand = `ssh root@45.26.230.248 'stat -c%s "${filePath}" 2>/dev/null'`;
+    const sizeCommand = buildSSHCommand(`stat -c%s "${filePath}" 2>/dev/null`);
     
     exec(sizeCommand, (error, stdout) => {
         if (error) {
@@ -556,18 +674,18 @@ app.post('/view-image', (req, res) => {
         
         const fileSize = parseInt(stdout.trim()) || 0;
         
-        // Limit image size to 10MB
-        if (fileSize > 10 * 1024 * 1024) {
+        // Limit image/video size to 100MB
+        if (fileSize > 100 * 1024 * 1024) {
             return res.json({
                 success: false,
-                error: 'Image is too large to preview (>10MB)'
+                error: 'File is too large to preview (>100MB)'
             });
         }
         
-        // Read the image as base64
-        const readCommand = `ssh root@45.26.230.248 'base64 "${filePath}" 2>/dev/null'`;
+        // Read the image/video as base64
+        const readCommand = buildSSHCommand(`base64 "${filePath}" 2>/dev/null`);
         
-        exec(readCommand, { maxBuffer: 15 * 1024 * 1024 }, (readError, readStdout) => {
+        exec(readCommand, { maxBuffer: 150 * 1024 * 1024 }, (readError, readStdout) => {
             if (readError) {
                 return res.json({
                     success: false,
@@ -604,7 +722,7 @@ app.post('/view-image', (req, res) => {
 app.post('/enhanced-monitor', (req, res) => {
     console.log('Getting enhanced system stats...');
     
-    const monitorCommand = `ssh root@45.26.230.248 '
+    const monitorCommand = buildSSHCommand(`
 echo "SYSTEM_STATS_START"
 
 echo "CPU_USAGE:"
@@ -635,7 +753,7 @@ echo "TOP_MEMORY_PROCESSES:"
 ps aux --sort=-%mem | head -6 | tail -5 | awk "{print \\$11, \\$4}"
 
 echo "SYSTEM_STATS_END"
-    '`;
+`);
     
     exec(monitorCommand, (error, stdout, stderr) => {
         if (error) {
@@ -688,7 +806,7 @@ app.post('/create-folder', (req, res) => {
     
     console.log('Creating folder:', folderPath);
     
-    const createCommand = `ssh root@45.26.230.248 'mkdir -p "${folderPath}" && echo "Folder created successfully"'`;
+    const createCommand = buildSSHCommand(`mkdir -p "${folderPath}" && echo "Folder created successfully"`);
     
     exec(createCommand, (error, stdout, stderr) => {
         if (error) {
@@ -715,6 +833,90 @@ app.post('/create-folder', (req, res) => {
     });
 });
 
+// Rename file or folder endpoint
+app.post('/rename-item', (req, res) => {
+    const { oldPath, newPath, isDirectory } = req.body;
+    
+    if (!oldPath || !newPath) {
+        return res.json({
+            success: false,
+            error: 'Old path and new path are required'
+        });
+    }
+    
+    console.log('Renaming item:', oldPath, '->', newPath);
+    
+    // Use mv command to rename
+    const renameCommand = buildSSHCommand(`mv "${oldPath}" "${newPath}" && echo "Renamed successfully"`);
+    
+    exec(renameCommand, (error, stdout, stderr) => {
+        if (error) {
+            console.error('Rename error:', error);
+            return res.json({
+                success: false,
+                error: `Cannot rename item: ${error.message}`
+            });
+        }
+        
+        if (stderr && stderr.trim()) {
+            console.error('Rename stderr:', stderr);
+            return res.json({
+                success: false,
+                error: `Rename error: ${stderr.trim()}`
+            });
+        }
+        
+        console.log('Item renamed successfully:', oldPath, '->', newPath);
+        res.json({
+            success: true,
+            message: 'Item renamed successfully'
+        });
+    });
+});
+
+// Delete file or folder endpoint
+app.post('/delete-item', (req, res) => {
+    const { path: itemPath, isDirectory } = req.body;
+    
+    if (!itemPath) {
+        return res.json({
+            success: false,
+            error: 'Item path is required'
+        });
+    }
+    
+    console.log('Deleting item:', itemPath, 'isDirectory:', isDirectory);
+    
+    // Use rm -rf for directories, rm for files
+    const deleteCommand = isDirectory 
+        ? buildSSHCommand(`rm -rf "${itemPath}" && echo "Deleted successfully"`)
+        : buildSSHCommand(`rm -f "${itemPath}" && echo "Deleted successfully"`);
+    
+    exec(deleteCommand, (error, stdout, stderr) => {
+        if (error) {
+            console.error('Delete error:', error);
+            return res.json({
+                success: false,
+                error: `Cannot delete item: ${error.message}`
+            });
+        }
+        
+        if (stderr && stderr.trim()) {
+            console.error('Delete stderr:', stderr);
+            return res.json({
+                success: false,
+                error: `Delete error: ${stderr.trim()}`
+            });
+        }
+        
+        console.log('Item deleted successfully:', itemPath);
+        res.json({
+            success: true,
+            message: isDirectory ? 'Folder deleted successfully' : 'File deleted successfully'
+        });
+    });
+});
+
 // Recursive file search endpoint
 app.post('/search-files', (req, res) => {
     const { path, query } = req.body;
@@ -733,7 +935,7 @@ app.post('/search-files', (req, res) => {
     // -type f for files, -type d for directories
     // Use both to find files and folders
     // Exclude hidden files with ! -name ".*"
-    const searchCommand = `ssh root@45.26.230.248 '
+    const searchCommand = buildSSHCommand(`
         cd "${path}" 2>/dev/null || exit 1
         find . -maxdepth 10 \\( -type f -o -type d \\) ! -name ".*" -iname "*${query}*" 2>/dev/null | while read item; do
             fullpath="${path}/\${item#./}"
@@ -744,7 +946,7 @@ app.post('/search-files', (req, res) => {
                 echo "FILE|\$fullpath|\$(basename "$fullpath")|\$size"
             fi
         done | head -100
-    '`;
+    `);
     
     exec(searchCommand, (error, stdout, stderr) => {
         if (error) {
@@ -854,7 +1056,7 @@ app.post('/save-file', (req, res) => {
     const tempFile = `/tmp/warlock_edit_${Date.now()}.tmp`;
     
     // Write content to temp file, then move it to the target location
-    const saveCommand = `ssh root@45.26.230.248 '
+    const saveCommand = buildSSHCommand(`
         cat > "${tempFile}" << '\''EOF'\''
 ${content}
 EOF
@@ -867,7 +1069,7 @@ EOF
             echo "Failed to write temporary file"
             exit 1
         fi
-    '`;
+    `);
     
     exec(saveCommand, { maxBuffer: 1024 * 1024 * 5 }, (error, stdout, stderr) => {
         if (error) {
@@ -894,7 +1096,116 @@ EOF
     });
 });
 
+// Settings endpoints
+app.get('/get-settings', (req, res) => {
+    try {
+        const settings = getSSHConfig();
+        res.json({
+            success: true,
+            settings: settings
+        });
+    } catch (error) {
+        res.json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+app.post('/save-settings', (req, res) => {
+    const { SSH_USER, SSH_HOST } = req.body;
+    
+    if (!SSH_USER || !SSH_HOST) {
+        return res.json({
+            success: false,
+            error: 'SSH_USER and SSH_HOST are required'
+        });
+    }
+    
+    const envPath = path.join(__dirname, '.env');
+    let envContent = '';
+    
+    // Read existing .env file if it exists
+    if (fs.existsSync(envPath)) {
+        envContent = fs.readFileSync(envPath, 'utf8');
+    }
+    
+    // Update or add SSH_USER
+    if (envContent.includes('SSH_USER=')) {
+        envContent = envContent.replace(/SSH_USER=.*/g, `SSH_USER=${SSH_USER}`);
+    } else {
+        envContent += `\nSSH_USER=${SSH_USER}`;
+    }
+    
+    // Update or add SSH_HOST
+    if (envContent.includes('SSH_HOST=')) {
+        envContent = envContent.replace(/SSH_HOST=.*/g, `SSH_HOST=${SSH_HOST}`);
+    } else {
+        envContent += `\nSSH_HOST=${SSH_HOST}`;
+    }
+    
+    try {
+        fs.writeFileSync(envPath, envContent.trim() + '\n');
+        
+        // Reload environment variables to pick up the new settings
+        delete require.cache[require.resolve('dotenv')];
+        require('dotenv').config();
+        
+        console.log('Settings saved to .env file and reloaded');
+        const newConfig = getSSHConfig();
+        console.log(`New SSH Configuration: ${newConfig.SSH_USER}@${newConfig.SSH_HOST}`);
+        
+        res.json({
+            success: true,
+            message: 'Settings saved successfully'
+        });
+    } catch (error) {
+        console.error('Error saving settings:', error);
+        res.json({
+            success: false,
+            error: `Failed to save settings: ${error.message}`
+        });
+    }
+});
+
+app.post('/test-connection', (req, res) => {
+    const { SSH_USER, SSH_HOST } = req.body;
+    
+    if (!SSH_USER || !SSH_HOST) {
+        return res.json({
+            success: false,
+            error: 'SSH_USER and SSH_HOST are required'
+        });
+    }
+    
+    const testCommand = `ssh ${SSH_USER}@${SSH_HOST} 'echo "Connection successful"'`;
+    
+    exec(testCommand, { timeout: 10000 }, (error, stdout, stderr) => {
+        if (error) {
+            console.error('Connection test failed:', error);
+            return res.json({
+                success: false,
+                error: `Connection failed: ${error.message}`
+            });
+        }
+        
+        if (stdout.includes('Connection successful')) {
+            res.json({
+                success: true,
+                message: 'Connection test successful'
+            });
+        } else {
+            res.json({
+                success: false,
+                error: 'Unexpected response from server'
+            });
+        }
+    });
+});
+
 // Start the server
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
+    const config = getSSHConfig();
+    console.log(`SSH Configuration: ${config.SSH_USER}@${config.SSH_HOST}`);
 });

@@ -657,6 +657,7 @@
                 <a href="/" class="active">Dashboard</a>
                 <a href="/monitor.html">Monitor</a>
                 <a href="/files.html">Files</a>
+                <a href="/settings">Settings</a>
             </nav>
         </div>
     </header>
@@ -686,6 +687,21 @@
                         Get Stats
                     </button>
                     <span id="loadingStatus" style="color: #87ceeb; font-size: 0.9rem;"></span>
+                </div>
+
+                <!-- Applications List -->
+                <div id="applicationsContainer" style="margin-bottom: 2rem;">
+                    <h3 style="color: #0096ff; margin-bottom: 1rem; font-size: 1.3rem; display: flex; align-items: center; gap: 0.75rem;">
+                        <i class="fas fa-th-large"></i>
+                        Available Applications
+                    </h3>
+                    <div id="applicationsList" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1rem;">
+                        <!-- Applications will be inserted here -->
+                        <div style="grid-column: 1 / -1; text-align: center; padding: 2rem; color: #666;">
+                            <i class="fas fa-spinner fa-spin" style="font-size: 2rem; margin-bottom: 1rem; display: block;"></i>
+                            <p>Loading applications...</p>
+                        </div>
+                    </div>
                 </div>
 
                 <div id="servicesContainer" style="margin-bottom: 2rem;">
@@ -1182,6 +1198,86 @@
             }
         }
 
+        async function fetchApplications() {
+            try {
+                const response = await fetch('/get-applications', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const result = await response.json();
+                
+                console.log('Applications Result:', result);
+                
+                if (result.success && result.applications) {
+                    displayApplications(result.applications);
+                    return result.applications;
+                } else {
+                    displayApplications([]);
+                    return [];
+                }
+            } catch (error) {
+                console.error('Error fetching applications:', error);
+                displayApplications([]);
+                return [];
+            }
+        }
+
+        function displayApplications(applications) {
+            const applicationsList = document.getElementById('applicationsList');
+            
+            if (applications.length === 0) {
+                applicationsList.innerHTML = `
+                    <div style="grid-column: 1 / -1; text-align: center; padding: 2rem; color: #666;">
+                        <i class="fas fa-inbox" style="font-size: 2rem; margin-bottom: 1rem; display: block; opacity: 0.3;"></i>
+                        <p>No applications found in /var/lib/warlock</p>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = '';
+            applications.forEach(app => {
+                // Extract the last folder name from the path
+                const pathParts = app.path.split('/').filter(part => part.length > 0);
+                const displayName = pathParts.length > 0 ? pathParts[pathParts.length - 1] : app.name;
+                
+                html += `
+                    <div class="application-card" style="background: rgba(26, 26, 46, 0.9); border: 1px solid rgba(0, 150, 255, 0.2); border-radius: 12px; padding: 1.5rem; transition: all 0.3s; cursor: pointer; position: relative; overflow: hidden;"
+                         onmouseover="this.style.borderColor='#0096ff'; this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 20px rgba(0, 150, 255, 0.3)';"
+                         onmouseout="this.style.borderColor='rgba(0, 150, 255, 0.2)'; this.style.transform='translateY(0)'; this.style.boxShadow='none';"
+                         onclick="window.open('/files.html?path=${encodeURIComponent(app.path)}', '_blank')">
+                        <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+                            <div style="width: 48px; height: 48px; background: linear-gradient(135deg, #0096ff 0%, #0066cc 100%); border-radius: 10px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0, 150, 255, 0.3);">
+                                <i class="fas fa-cube" style="font-size: 1.5rem; color: white;"></i>
+                            </div>
+                            <div style="flex: 1;">
+                                <h4 style="color: #0096ff; margin: 0; font-size: 1.1rem; font-weight: 600;">${displayName}</h4>
+                            </div>
+                        </div>
+                        <div style="padding: 0.75rem; background: rgba(0, 40, 80, 0.4); border-radius: 6px; border-left: 3px solid #0096ff;">
+                            <div style="display: flex; align-items: center; gap: 0.5rem; color: #87ceeb; font-size: 0.9rem;">
+                                <i class="fas fa-folder" style="color: #0096ff;"></i>
+                                <span style="font-family: 'Monaco', monospace; word-break: break-all;">${app.path}</span>
+                            </div>
+                        </div>
+                        <div style="margin-top: 1rem; display: flex; gap: 0.5rem;">
+                            <button onclick="event.stopPropagation(); window.open('/files.html?path=${encodeURIComponent(app.path)}', '_blank')" 
+                                    style="flex: 1; padding: 0.5rem; background: linear-gradient(135deg, #0096ff 0%, #0066cc 100%); border: none; border-radius: 6px; color: white; font-size: 0.85rem; cursor: pointer; transition: all 0.3s;"
+                                    onmouseover="this.style.background='linear-gradient(135deg, #00a8ff 0%, #0077dd 100%)'"
+                                    onmouseout="this.style.background='linear-gradient(135deg, #0096ff 0%, #0066cc 100%)'">
+                                <i class="fas fa-folder-open"></i> Browse
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            applicationsList.innerHTML = html;
+        }
+
         // Event listeners
         refreshBtn.addEventListener('click', loadAllServicesAndStats);
         document.getElementById('getServicesBtn').addEventListener('click', manualGetServices);
@@ -1189,7 +1285,8 @@
 
         // Load on page load
         window.addEventListener('DOMContentLoaded', () => {
-            addTerminalLine('Dashboard loaded. Fetching services...', 'info');
+            addTerminalLine('Dashboard loaded. Fetching applications and services...', 'info');
+            fetchApplications();
             loadAllServicesAndStats();
             
             // Auto-refresh every 5 seconds
