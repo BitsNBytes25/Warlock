@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Warlock - System Monitor</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -13,24 +14,58 @@
         }
         
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            font-family: 'Rajdhani', 'Inter', sans-serif;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(0, 150, 255, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(0, 150, 255, 0.2) 0%, transparent 50%),
+                linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
             min-height: 100vh;
-            color: #333;
+            color: #e2e8f0;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                repeating-linear-gradient(
+                    90deg,
+                    transparent,
+                    transparent 100px,
+                    rgba(0, 150, 255, 0.03) 101px,
+                    rgba(0, 150, 255, 0.03) 102px
+                ),
+                repeating-linear-gradient(
+                    0deg,
+                    transparent,
+                    transparent 100px,
+                    rgba(0, 150, 255, 0.03) 101px,
+                    rgba(0, 150, 255, 0.03) 102px
+                );
+            pointer-events: none;
+            z-index: 1;
         }
         
         .header {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            padding: 1rem 0;
-            box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+            background: rgba(26, 26, 46, 0.95);
+            backdrop-filter: blur(15px);
+            padding: 1.2rem 0;
+            box-shadow: 
+                0 2px 20px rgba(0, 150, 255, 0.2),
+                inset 0 1px 0 rgba(0, 150, 255, 0.15);
             position: sticky;
             top: 0;
             z-index: 100;
+            border-bottom: 1px solid rgba(0, 150, 255, 0.3);
         }
         
         .header-content {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
             display: flex;
             justify-content: space-between;
@@ -39,88 +74,304 @@
         }
         
         .logo {
-            font-size: 1.8rem;
+            font-size: 2rem;
             font-weight: 700;
-            color: #667eea;
+            color: #0096ff;
             display: flex;
             align-items: center;
-            gap: 0.5rem;
+            gap: 0.75rem;
+            font-family: 'Orbitron', monospace;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            text-shadow: 0 0 10px rgba(0, 150, 255, 0.5);
+        }
+
+        .logo i {
+            font-size: 1.8rem;
+            animation: rotate 15s linear infinite;
+            color: #0096ff;
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
         }
         
         .nav-menu {
             display: flex;
-            gap: 2rem;
+            gap: 3rem;
             list-style: none;
         }
         
         .nav-menu a {
             text-decoration: none;
-            color: #555;
-            font-weight: 500;
-            transition: color 0.3s ease;
+            color: #94a3b8;
+            font-weight: 600;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 1.1rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
             position: relative;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+        }
+
+        .nav-menu a::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, transparent, rgba(0, 150, 255, 0.2), transparent);
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            border-radius: 8px;
+        }
+        
+        .nav-menu a:hover::before,
+        .nav-menu a.active::before {
+            opacity: 1;
         }
         
         .nav-menu a:hover,
         .nav-menu a.active {
-            color: #667eea;
+            color: #0096ff;
+            text-shadow: 0 0 15px #0096ff;
+            border: 1px solid rgba(0, 150, 255, 0.4);
         }
         
         .nav-menu a.active::after {
             content: '';
             position: absolute;
-            bottom: -5px;
-            left: 0;
-            width: 100%;
+            bottom: -3px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80%;
             height: 2px;
-            background: #667eea;
+            background: linear-gradient(90deg, transparent, #0096ff, transparent);
+            box-shadow: 0 0 10px #0096ff;
         }
         
         .container {
             max-width: 1400px;
-            margin: 2rem auto;
-            padding: 0 2rem;
+            margin: 0 auto;
+            padding: 2rem;
+            position: relative;
+            z-index: 2;
         }
         
-        .monitor-card {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 12px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
-            overflow: hidden;
+        .monitor-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 1.5rem;
             margin-bottom: 2rem;
+        }
+
+        .monitor-card {
+            background: rgba(26, 26, 46, 0.9);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(0, 150, 255, 0.2);
+            border-radius: 20px;
+            box-shadow: 
+                0 25px 50px rgba(0, 0, 0, 0.5),
+                inset 0 1px 0 rgba(0, 150, 255, 0.2),
+                0 0 30px rgba(0, 150, 255, 0.1);
+            overflow: hidden;
         }
         
         .card-header {
             padding: 1.5rem;
-            border-bottom: 1px solid rgba(0,0,0,0.1);
-            background: rgba(102, 126, 234, 0.05);
+            border-bottom: 1px solid rgba(0, 150, 255, 0.2);
+            background: rgba(0, 150, 255, 0.1);
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
         
         .card-header h2 {
-            color: #333;
+            color: #0096ff;
+            font-family: 'Orbitron', monospace;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
             display: flex;
             align-items: center;
             gap: 0.75rem;
+            text-shadow: 0 0 10px rgba(0, 150, 255, 0.5);
             margin: 0;
         }
         
         .btn-refresh {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #0096ff 0%, #0066cc 100%);
             color: white;
-            border: none;
-            padding: 0.5rem 1rem;
-            border-radius: 6px;
+            border: 1px solid rgba(0, 150, 255, 0.3);
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
             font-size: 0.9rem;
             font-weight: 600;
+            font-family: 'Rajdhani', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 1px;
             cursor: pointer;
             transition: all 0.3s ease;
             display: inline-flex;
             align-items: center;
             gap: 0.5rem;
+            box-shadow: 0 4px 15px rgba(0, 150, 255, 0.3);
+        }
+
+        .btn-refresh:hover {
+            box-shadow: 0 6px 20px rgba(0, 150, 255, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .card-body {
+            padding: 1.5rem;
+            color: #e2e8f0;
+        }
+
+        .usage-display {
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .usage-percentage {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #0096ff;
+            margin-bottom: 1rem;
+            font-family: 'Orbitron', monospace;
+            text-shadow: 0 0 10px rgba(0, 150, 255, 0.5);
+        }
+
+        .usage-bar {
+            width: 100%;
+            height: 12px;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 6px;
+            overflow: hidden;
+            border: 1px solid rgba(0, 150, 255, 0.3);
+        }
+
+        .usage-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #0096ff, #00d4ff);
+            width: 0%;
+            transition: width 0.5s ease;
+            box-shadow: 0 0 10px rgba(0, 150, 255, 0.5);
+        }
+
+        .system-details {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .detail-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 6px;
+            border-left: 3px solid rgba(0, 150, 255, 0.5);
+        }
+
+        .detail-item span:first-child {
+            color: #94a3b8;
+            font-weight: 500;
+        }
+
+        .detail-item span:last-child {
+            color: #0096ff;
+            font-weight: 600;
+            font-family: 'Orbitron', monospace;
+        }
+
+        .process-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .process-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 6px;
+            border-left: 3px solid rgba(0, 150, 255, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .process-item:hover {
+            background: rgba(0, 150, 255, 0.1);
+            border-left-color: #0096ff;
+        }
+
+        .process-name {
+            font-weight: 500;
+            color: #e2e8f0;
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .process-usage {
+            color: #0096ff;
+            font-weight: 600;
+            font-family: 'Orbitron', monospace;
+            min-width: 60px;
+            text-align: right;
+        }
+
+        .process-loading {
+            text-align: center;
+            color: #94a3b8;
+            padding: 2rem;
+            font-style: italic;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .status-indicator.connected {
+            background: rgba(34, 197, 94, 0.2);
+            color: #22c55e;
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+
+        .status-indicator.disconnected {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .back-link {
+            color: #94a3b8;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+        .back-link:hover {
+            color: #0096ff;
         }
         
         .btn-refresh:hover {
@@ -133,44 +384,6 @@
             cursor: not-allowed;
             transform: none;
             box-shadow: none;
-        }
-        
-        .terminal-container {
-            padding: 0;
-            height: 700px;
-        }
-        
-        .terminal {
-            height: 100%;
-            background: #000;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-        }
-        
-        .terminal-header {
-            background: #333;
-            padding: 0.75rem 1rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            color: #ccc;
-            font-size: 0.9rem;
-            font-weight: 500;
-            border-bottom: 1px solid #555;
-        }
-        
-        .terminal-body {
-            flex: 1;
-            padding: 1rem;
-            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-            font-size: 0.8rem;
-            line-height: 1.2;
-            color: #00ff41;
-            background: #000;
-            overflow-y: auto;
-            white-space: pre-wrap;
-            word-wrap: break-word;
         }
         
         .status-indicator {
@@ -244,59 +457,148 @@
     <header class="header">
         <div class="header-content">
             <div class="logo">
-                <i class="fas fa-gamepad"></i>
-                Warlock Game Server Platform
+                <i class="fas fa-cog"></i>
+                WARLOCK
             </div>
-            <nav>
-                <ul class="nav-menu">
-                    <li><a href="/">Server Management</a></li>
-                    <li><a href="/monitor" class="active">Server Monitor</a></li>
-                    <li><a href="#">Player Logs</a></li>
-                    <li><a href="#">Settings</a></li>
-                </ul>
+            <nav class="nav-menu">
+                <a href="/">Dashboard</a>
+                <a href="/monitor.html" class="active">Monitor</a>
+                <a href="/files.html">Files</a>
             </nav>
         </div>
     </header>
 
     <div class="container">
-        <a href="/" class="back-link">
-            <i class="fas fa-arrow-left"></i>
-            Back to Server Management
-        </a>
-        
-        <div class="monitor-card">
-            <div class="card-header">
-                <h2>
-                    <i class="fas fa-chart-line"></i>
-                    System Performance Monitor
-                </h2>
-                <div style="display: flex; align-items: center; gap: 1rem;">
-                    <div id="statusIndicator" class="status-indicator disconnected">
-                        <i class="fas fa-circle"></i>
-                        Disconnected
-                    </div>
-                    <button id="refreshBtn" class="btn-refresh">
-                        <i class="fas fa-sync-alt"></i>
-                        Start Monitor
-                    </button>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+            <a href="/" class="back-link">
+                <i class="fas fa-arrow-left"></i>
+                Back to Server Management
+            </a>
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <div id="statusIndicator" class="status-indicator disconnected">
+                    <i class="fas fa-circle"></i>
+                    <span>Disconnected</span>
                 </div>
             </div>
-            
-            <div class="terminal-container">
-                <div class="terminal">
-                    <div class="terminal-header">
-                        <i class="fas fa-terminal"></i>
-                        Remote Server Monitor - root@45.26.230.248
-                    </div>
-                    <div class="terminal-body" id="terminalOutput">
-                        <div style="color: #ffd700;">Welcome to Warlock System Monitor</div>
-                        <div style="color: #00ff41;">Click "Start Monitor" to begin real-time system monitoring...</div>
-                        <div style="color: #888; margin-top: 1rem;">
-• Real-time CPU, Memory, Disk, and Process monitoring
-• Network interface and connection statistics
-• Load averages and system uptime
-• Updates every 3 seconds
+        </div>
+
+        <!-- System Overview Cards -->
+        <div class="monitor-grid">
+            <div class="monitor-card">
+                <div class="card-header">
+                    <h2><i class="fas fa-microchip"></i> CPU Usage</h2>
+                </div>
+                <div class="card-body">
+                    <div class="usage-display">
+                        <div class="usage-percentage" id="cpuUsage">0%</div>
+                        <div class="usage-bar">
+                            <div class="usage-fill" id="cpuBar"></div>
                         </div>
+                    </div>
+                    <div class="system-details" id="cpuDetails">
+                        <div class="detail-item">
+                            <span>Load Average:</span>
+                            <span id="loadAvg">--</span>
+                        </div>
+                        <div class="detail-item">
+                            <span>Cores:</span>
+                            <span id="cpuCores">--</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="monitor-card">
+                <div class="card-header">
+                    <h2><i class="fas fa-memory"></i> Memory Usage</h2>
+                </div>
+                <div class="card-body">
+                    <div class="usage-display">
+                        <div class="usage-percentage" id="memoryUsage">0%</div>
+                        <div class="usage-bar">
+                            <div class="usage-fill" id="memoryBar"></div>
+                        </div>
+                    </div>
+                    <div class="system-details" id="memoryDetails">
+                        <div class="detail-item">
+                            <span>Used:</span>
+                            <span id="memoryUsed">-- GB</span>
+                        </div>
+                        <div class="detail-item">
+                            <span>Total:</span>
+                            <span id="memoryTotal">-- GB</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="monitor-card">
+                <div class="card-header">
+                    <h2><i class="fas fa-hdd"></i> Storage Usage</h2>
+                </div>
+                <div class="card-body">
+                    <div class="usage-display">
+                        <div class="usage-percentage" id="storageUsage">0%</div>
+                        <div class="usage-bar">
+                            <div class="usage-fill" id="storageBar"></div>
+                        </div>
+                    </div>
+                    <div class="system-details" id="storageDetails">
+                        <div class="detail-item">
+                            <span>Used:</span>
+                            <span id="storageUsed">-- GB</span>
+                        </div>
+                        <div class="detail-item">
+                            <span>Available:</span>
+                            <span id="storageAvail">-- GB</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="monitor-card">
+                <div class="card-header">
+                    <h2><i class="fas fa-network-wired"></i> Network</h2>
+                </div>
+                <div class="card-body">
+                    <div class="system-details" id="networkDetails">
+                        <div class="detail-item">
+                            <span>RX:</span>
+                            <span id="networkRx">-- MB/s</span>
+                        </div>
+                        <div class="detail-item">
+                            <span>TX:</span>
+                            <span id="networkTx">-- MB/s</span>
+                        </div>
+                        <div class="detail-item">
+                            <span>Connections:</span>
+                            <span id="networkConns">--</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Process Lists -->
+        <div class="monitor-grid">
+            <div class="monitor-card">
+                <div class="card-header">
+                    <h2><i class="fas fa-list"></i> Top CPU Processes</h2>
+                </div>
+                <div class="card-body">
+                    <div class="process-list" id="topCpuProcesses">
+                        <div class="process-loading">Loading processes...</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="monitor-card">
+                <div class="card-header">
+                    <h2><i class="fas fa-memory"></i> Top Memory Processes</h2>
+                </div>
+                <div class="card-body">
+                    <div class="process-list" id="topMemoryProcesses">
+                        <div class="process-loading">Loading processes...</div>
                     </div>
                 </div>
             </div>
@@ -304,85 +606,201 @@
     </div>
 
     <script>
-        const refreshBtn = document.getElementById('refreshBtn');
-        const terminalOutput = document.getElementById('terminalOutput');
+
         const statusIndicator = document.getElementById('statusIndicator');
+        
+        // System monitoring elements
+        const cpuUsage = document.getElementById('cpuUsage');
+        const cpuBar = document.getElementById('cpuBar');
+        const memoryUsage = document.getElementById('memoryUsage');
+        const memoryBar = document.getElementById('memoryBar');
+        const storageUsage = document.getElementById('storageUsage');
+        const storageBar = document.getElementById('storageBar');
+        
+        const loadAvg = document.getElementById('loadAvg');
+        const cpuCores = document.getElementById('cpuCores');
+        const memoryUsed = document.getElementById('memoryUsed');
+        const memoryTotal = document.getElementById('memoryTotal');
+        const storageUsed = document.getElementById('storageUsed');
+        const storageAvail = document.getElementById('storageAvail');
+        const networkRx = document.getElementById('networkRx');
+        const networkTx = document.getElementById('networkTx');
+        const networkConns = document.getElementById('networkConns');
+        
+        const topCpuProcesses = document.getElementById('topCpuProcesses');
+        const topMemoryProcesses = document.getElementById('topMemoryProcesses');
         
         let isMonitoring = false;
         let monitorInterval;
         
         function updateStatus(status, text) {
             statusIndicator.className = `status-indicator ${status}`;
+            const iconElement = statusIndicator.querySelector('i') || statusIndicator.querySelector('.loading-spinner') || document.createElement('i');
+            const textElement = statusIndicator.querySelector('span');
+            
             if (status === 'loading') {
-                statusIndicator.innerHTML = `<div class="loading-spinner"></div> ${text}`;
-            } else if (status === 'connected') {
-                statusIndicator.innerHTML = `<i class="fas fa-circle"></i> ${text}`;
+                iconElement.className = 'loading-spinner';
             } else {
-                statusIndicator.innerHTML = `<i class="fas fa-circle"></i> ${text}`;
+                iconElement.className = 'fas fa-circle';
+            }
+            
+            if (textElement) {
+                textElement.textContent = text;
             }
         }
         
-        function appendToTerminal(content, className = '') {
-            const div = document.createElement('div');
-            if (className) div.className = className;
-            div.textContent = content;
-            terminalOutput.appendChild(div);
-            terminalOutput.scrollTop = terminalOutput.scrollHeight;
+        function updateUsageDisplay(percentage, barElement, textElement) {
+            const percent = Math.min(100, Math.max(0, percentage));
+            barElement.style.width = percent + '%';
+            textElement.textContent = percent.toFixed(1) + '%';
+            
+            // Color coding based on usage
+            if (percent > 80) {
+                barElement.style.background = 'linear-gradient(90deg, #ef4444, #f87171)';
+            } else if (percent > 60) {
+                barElement.style.background = 'linear-gradient(90deg, #f59e0b, #fbbf24)';
+            } else {
+                barElement.style.background = 'linear-gradient(90deg, #0096ff, #00d4ff)';
+            }
         }
         
-        function clearTerminal() {
-            terminalOutput.innerHTML = '';
-        }
-        
-        async function startMonitoring() {
-            if (isMonitoring) {
-                stopMonitoring();
+        function updateProcessList(container, processes) {
+            container.innerHTML = '';
+            
+            if (!processes || processes.length === 0) {
+                container.innerHTML = '<div class="process-loading">No process data available</div>';
                 return;
             }
             
-            isMonitoring = true;
-            refreshBtn.disabled = true;
-            refreshBtn.innerHTML = '<div class="loading-spinner"></div> Starting...';
-            updateStatus('loading', 'Connecting...');
-            
-            clearTerminal();
-            appendToTerminal('$ Connecting to remote server...', 'color: #ffd700;');
-            appendToTerminal('$ Initializing system monitoring...', 'color: #ffd700;');
-            
+            processes.forEach(process => {
+                const [name, usage] = process.split(' ');
+                const processDiv = document.createElement('div');
+                processDiv.className = 'process-item';
+                processDiv.innerHTML = `
+                    <div class="process-name">${name}</div>
+                    <div class="process-usage">${parseFloat(usage).toFixed(1)}%</div>
+                `;
+                container.appendChild(processDiv);
+            });
+        }
+        
+        async function fetchSystemStats() {
             try {
-                // First, check if bpytop is installed, if not install it
-                const response = await fetch('/start-bpytop', {
+                const response = await fetch('/enhanced-monitor', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
+                    headers: { 'Content-Type': 'application/json' }
                 });
                 
                 const result = await response.json();
                 
-                if (result.success) {
-                    updateStatus('connected', 'Monitor Active');
-                    refreshBtn.innerHTML = '<i class="fas fa-stop"></i> Stop Monitor';
-                    refreshBtn.disabled = false;
-                    
-                    appendToTerminal('✓ System monitoring is ready', 'color: #00ff41;');
-                    appendToTerminal('$ Starting real-time data collection...', 'color: #ffd700;');
-                    appendToTerminal('', '');
-                    
-                    // Start polling for bpytop output
-                    startPolling();
+                if (result.success && result.stats) {
+                    updateSystemDisplay(result.stats);
                 } else {
-                    updateStatus('disconnected', 'Connection Failed');
-                    refreshBtn.innerHTML = '<i class="fas fa-sync-alt"></i> Retry';
-                    refreshBtn.disabled = false;
-                    appendToTerminal(`Error: ${result.output}`, 'color: #ff4444;');
-                    isMonitoring = false;
+                    throw new Error(result.error || 'Failed to fetch stats');
                 }
             } catch (error) {
+                console.error('Fetch error:', error);
+                throw error;
+            }
+        }
+        
+        function updateSystemDisplay(stats) {
+            console.log('Received stats:', stats); // Debug log
+            
+            // CPU Usage
+            if (stats.CPU_USAGE && stats.CPU_USAGE[0]) {
+                const cpuPercent = parseFloat(stats.CPU_USAGE[0]);
+                if (!isNaN(cpuPercent)) {
+                    updateUsageDisplay(cpuPercent, cpuBar, cpuUsage);
+                }
+            }
+            
+            // Memory Usage
+            if (stats.MEMORY_STATS && stats.MEMORY_STATS[0]) {
+                const memoryData = stats.MEMORY_STATS[0].trim();
+                const parts = memoryData.split(/\s+/);
+                
+                if (parts.length >= 2) {
+                    // Convert KB to GB (divide by 1024 * 1024)
+                    const totalKB = parseFloat(parts[0]);  // Total memory in KB
+                    const usedKB = parseFloat(parts[1]);   // Used memory in KB
+                    const total = totalKB / 1024 / 1024;   // Convert to GB
+                    const used = usedKB / 1024 / 1024;     // Convert to GB
+                    
+                    if (!isNaN(used) && !isNaN(total) && total > 0) {
+                        const memoryPercent = (used / total) * 100;
+                        updateUsageDisplay(memoryPercent, memoryBar, memoryUsage);
+                        memoryUsed.textContent = used.toFixed(1) + ' GB';
+                        memoryTotal.textContent = total.toFixed(1) + ' GB';
+                    }
+                }
+            }
+            
+            // Storage Usage
+            if (stats.STORAGE_STATS && stats.STORAGE_STATS[0]) {
+                const parts = stats.STORAGE_STATS[0].split(' ');
+                const usedStr = parts[0];
+                const availStr = parts[1];
+                const percentStr = parts[2];
+                const storagePercent = parseFloat(percentStr.replace('%', ''));
+                
+                updateUsageDisplay(storagePercent, storageBar, storageUsage);
+                storageUsed.textContent = usedStr;
+                storageAvail.textContent = availStr;
+            }
+            
+            // System Details
+            if (stats.LOAD_AVERAGE && stats.LOAD_AVERAGE[0]) {
+                loadAvg.textContent = stats.LOAD_AVERAGE[0];
+            }
+            
+            if (stats.CPU_INFO && stats.CPU_INFO[0]) {
+                cpuCores.textContent = stats.CPU_INFO[0];
+            }
+            
+            // Network Stats
+            if (stats.NETWORK_STATS && stats.NETWORK_STATS[0]) {
+                const [rxBytes, txBytes] = stats.NETWORK_STATS[0].split(' ').map(parseFloat);
+                // Convert bytes to MB
+                const rx = rxBytes / 1024 / 1024;
+                const tx = txBytes / 1024 / 1024;
+                networkRx.textContent = rx.toFixed(2) + ' MB';
+                networkTx.textContent = tx.toFixed(2) + ' MB';
+            }
+            
+            if (stats.CONNECTIONS && stats.CONNECTIONS[0]) {
+                networkConns.textContent = stats.CONNECTIONS[0];
+            }
+            
+            // Process Lists
+            if (stats.TOP_CPU_PROCESSES) {
+                updateProcessList(topCpuProcesses, stats.TOP_CPU_PROCESSES);
+            }
+            
+            if (stats.TOP_MEMORY_PROCESSES) {
+                updateProcessList(topMemoryProcesses, stats.TOP_MEMORY_PROCESSES);
+            }
+        }
+
+        async function startMonitoring() {
+            if (isMonitoring) {
+                return;
+            }
+            
+            isMonitoring = true;
+            updateStatus('loading', 'Connecting...');
+            
+            try {
+                // Initial stats fetch
+                await fetchSystemStats();
+                
+                updateStatus('connected', 'Monitor Active');
+                
+                // Start continuous monitoring
+                monitorInterval = setInterval(fetchSystemStats, 3000);
+                
+            } catch (error) {
                 updateStatus('disconnected', 'Connection Failed');
-                refreshBtn.innerHTML = '<i class="fas fa-sync-alt"></i> Retry';
-                refreshBtn.disabled = false;
-                appendToTerminal(`Network Error: ${error.message}`, 'color: #ff4444;');
                 isMonitoring = false;
             }
         }
@@ -394,9 +812,8 @@
                     const result = await response.json();
                     
                     if (result.success && result.output) {
-                        // Clear terminal and show fresh bpytop output
-                        clearTerminal();
-                        appendToTerminal(result.output, 'color: #00ff41;');
+                        // Log fresh bpytop output to console
+                        console.log(result.output);
                     }
                 } catch (error) {
                     console.error('Polling error:', error);
@@ -408,30 +825,32 @@
             isMonitoring = false;
             if (monitorInterval) {
                 clearInterval(monitorInterval);
+                monitorInterval = null;
             }
             
-            updateStatus('disconnected', 'Stopping...');
-            refreshBtn.disabled = true;
-            refreshBtn.innerHTML = '<div class="loading-spinner"></div> Stopping...';
+            updateStatus('disconnected', 'Disconnected');
             
-            // Send stop request
-            fetch('/stop-bpytop', { method: 'POST' })
-                .then(() => {
-                    updateStatus('disconnected', 'Disconnected');
-                    refreshBtn.innerHTML = '<i class="fas fa-sync-alt"></i> Start Monitor';
-                    refreshBtn.disabled = false;
-                    appendToTerminal('', '');
-                    appendToTerminal('Monitor stopped.', 'color: #ffd700;');
-                })
-                .catch(error => {
-                    console.error('Stop error:', error);
-                    updateStatus('disconnected', 'Disconnected');
-                    refreshBtn.innerHTML = '<i class="fas fa-sync-alt"></i> Start Monitor';
-                    refreshBtn.disabled = false;
-                });
+            // Reset all displays to default values
+            cpuUsage.textContent = '0%';
+            cpuBar.style.width = '0%';
+            memoryUsage.textContent = '0%';
+            memoryBar.style.width = '0%';
+            storageUsage.textContent = '0%';
+            storageBar.style.width = '0%';
+            
+            loadAvg.textContent = '--';
+            cpuCores.textContent = '--';
+            memoryUsed.textContent = '-- GB';
+            memoryTotal.textContent = '-- GB';
+            storageUsed.textContent = '-- GB';
+            storageAvail.textContent = '-- GB';
+            networkRx.textContent = '-- MB/s';
+            networkTx.textContent = '-- MB/s';
+            networkConns.textContent = '--';
+            
+            topCpuProcesses.innerHTML = '<div class="process-loading">Monitor stopped</div>';
+            topMemoryProcesses.innerHTML = '<div class="process-loading">Monitor stopped</div>';
         }
-        
-        refreshBtn.addEventListener('click', startMonitoring);
         
         // Stop monitoring when page is closed
         window.addEventListener('beforeunload', () => {
@@ -439,6 +858,16 @@
                 fetch('/stop-bpytop', { method: 'POST' });
             }
         });
+        
+        // Auto-start monitoring when page loads
+        function initializeMonitoring() {
+            if (!isMonitoring) {
+                startMonitoring();
+            }
+        }
+        
+        // Start monitoring immediately since DOM is ready when script runs
+        setTimeout(initializeMonitoring, 2000);
     </script>
 </body>
 </html>

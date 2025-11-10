@@ -672,25 +672,10 @@
             </div>
             
             <div class="content-body">
-                <div style="display: flex; gap: 1rem; margin-bottom: 2rem; align-items: center; flex-wrap: wrap;">
-                    <button type="button" class="btn-primary" id="refreshBtn">
-                        <i class="fas fa-sync-alt"></i>
-                        Refresh
-                    </button>
-                    <button type="button" class="btn-primary" id="getServicesBtn">
-                        <i class="fas fa-list"></i>
-                        Get Services
-                    </button>
-                    <button type="button" class="btn-primary" id="getStatsBtn">
-                        <i class="fas fa-chart-bar"></i>
-                        Get Stats
-                    </button>
-                    <span id="loadingStatus" style="color: #87ceeb; font-size: 0.9rem;"></span>
-                </div>
-
-                <div id="servicesContainer" style="margin-bottom: 2rem;">
-                    <!-- Services table will be inserted here -->
-                </div>
+                <button type="button" class="btn-primary" id="getServicesBtn" style="margin-bottom: 2rem;">
+                    <i class="fas fa-play"></i>
+                    Get Services
+                </button>
 
                 <div class="terminal-container">
                     <div class="terminal">
@@ -709,11 +694,7 @@
 
     <script>
         const terminalOutput = document.getElementById('terminalOutput');
-        const servicesContainer = document.getElementById('servicesContainer');
-        const loadingStatus = document.getElementById('loadingStatus');
-        const refreshBtn = document.getElementById('refreshBtn');
-
-        let servicesData = [];
+        const getServicesBtn = document.getElementById('getServicesBtn');
 
         function addTerminalLine(text, type = 'output') {
             const line = document.createElement('div');
@@ -727,299 +708,13 @@
             terminalOutput.innerHTML = '';
         }
 
-        function setLoadingStatus(message) {
-            loadingStatus.textContent = message;
-        }
-
-        async function fetchServices() {
-            try {
-                const response = await fetch('/get-services', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                });
-
-                const result = await response.json();
-                
-                console.log('Get Services Result:', result);
-                
-                if (result.success && result.output) {
-                    // Try to parse as JSON
-                    try {
-                        const servicesData = JSON.parse(result.output.trim());
-                        
-                        // New format: {"service-name": {...data...}}
-                        if (typeof servicesData === 'object' && !Array.isArray(servicesData)) {
-                            // Return array of objects with service data
-                            return Object.keys(servicesData).map(serviceName => ({
-                                serviceName: serviceName,
-                                statsData: servicesData[serviceName],
-                                success: true
-                            }));
-                        }
-                        
-                        // Old format: ["service1", "service2"]
-                        if (Array.isArray(servicesData)) {
-                            return servicesData;
-                        }
-                    } catch (e) {
-                        console.error('Error parsing services JSON:', e);
-                        // If not JSON, parse as lines
-                        const lines = result.output.trim().split('\n');
-                        const services = lines.filter(line => line.trim().length > 0);
-                        return services;
-                    }
-                } else {
-                    addTerminalLine('Failed to get services: ' + (result.error || 'Unknown error'), 'error');
-                    return [];
-                }
-            } catch (error) {
-                console.error('Error fetching services:', error);
-                addTerminalLine('Network error fetching services: ' + error.message, 'error');
-                return [];
-            }
-        }
-
-        async function fetchStatsForService(serviceName) {
-            try {
-                const response = await fetch('/get-stats', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ service: serviceName })
-                });
-
-                const result = await response.json();
-                
-                if (result.success && result.output) {
-                    // Parse the JSON stats output
-                    try {
-                        const statsJson = JSON.parse(result.output.trim());
-                        // The stats JSON format is: {"service-name": {...stats...}}
-                        const serviceStats = statsJson[serviceName];
-                        
-                        return {
-                            serviceName: serviceName,
-                            stats: result.output,
-                            statsData: serviceStats,
-                            success: true
-                        };
-                    } catch (e) {
-                        console.error('Error parsing stats JSON for ' + serviceName + ':', e);
-                        return {
-                            serviceName: serviceName,
-                            stats: result.output,
-                            statsData: null,
-                            success: true
-                        };
-                    }
-                } else {
-                    return {
-                        serviceName: serviceName,
-                        stats: result.error || 'Failed to get stats',
-                        statsData: null,
-                        success: false
-                    };
-                }
-            } catch (error) {
-                console.error('Error fetching stats for ' + serviceName + ':', error);
-                return {
-                    serviceName: serviceName,
-                    stats: 'Network error: ' + error.message,
-                    statsData: null,
-                    success: false
-                };
-            }
-        }
-
-        function createServicesTable(servicesWithStats) {
-            if (servicesWithStats.length === 0) {
-                servicesContainer.innerHTML = '<p style="color: #87ceeb; text-align: center; padding: 2rem;">No services found.</p>';
-                return;
-            }
-
-            let tableHTML = `
-                <div style="overflow-x: auto;">
-                    <table style="width: 100%; border-collapse: collapse; background: rgba(0, 40, 80, 0.3); border: 1px solid rgba(0, 150, 255, 0.2); border-radius: 10px; overflow: hidden;">
-                        <thead>
-                            <tr style="background: rgba(0, 150, 255, 0.2); border-bottom: 2px solid rgba(0, 150, 255, 0.4);">
-                                <th style="padding: 1rem; text-align: left; color: #00d4ff; font-weight: 600; text-transform: uppercase; font-size: 0.9rem;">Service</th>
-                                <th style="padding: 1rem; text-align: center; color: #00d4ff; font-weight: 600; text-transform: uppercase; font-size: 0.9rem;">Status</th>
-                                <th style="padding: 1rem; text-align: center; color: #00d4ff; font-weight: 600; text-transform: uppercase; font-size: 0.9rem;">Players</th>
-                                <th style="padding: 1rem; text-align: center; color: #00d4ff; font-weight: 600; text-transform: uppercase; font-size: 0.9rem;">Memory</th>
-                                <th style="padding: 1rem; text-align: center; color: #00d4ff; font-weight: 600; text-transform: uppercase; font-size: 0.9rem;">CPU</th>
-                                <th style="padding: 1rem; text-align: center; color: #00d4ff; font-weight: 600; text-transform: uppercase; font-size: 0.9rem;">Game PID</th>
-                                <th style="padding: 1rem; text-align: center; color: #00d4ff; font-weight: 600; text-transform: uppercase; font-size: 0.9rem;">Service PID</th>
-                                <th style="padding: 1rem; text-align: center; color: #00d4ff; font-weight: 600; text-transform: uppercase; font-size: 0.9rem;">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-            `;
-
-            servicesWithStats.forEach((service, index) => {
-                const bgColor = index % 2 === 0 ? 'rgba(0, 40, 80, 0.2)' : 'rgba(0, 40, 80, 0.4)';
-                
-                // Parse the stats JSON
-                let parsedStats = null;
-                let statusColor = '#ef4444';
-                let statusIcon = 'fa-exclamation-circle';
-                let statusText = 'ERROR';
-                let serviceStatus = 'unknown';
-                
-                if (service.success && service.statsData) {
-                    parsedStats = service.statsData;
-                    serviceStatus = parsedStats.status || 'unknown';
-                    statusColor = serviceStatus === 'running' ? '#22c55e' : '#ef4444';
-                    statusIcon = serviceStatus === 'running' ? 'fa-check-circle' : 'fa-times-circle';
-                    statusText = serviceStatus.toUpperCase();
-                }
-
-                // Determine which buttons to show based on status
-                const isRunning = serviceStatus === 'running';
-                const isStopped = serviceStatus === 'stopped' || serviceStatus === 'offline';
-                const isRestarting = serviceStatus === 'restarting';
-                
-                // Build action buttons based on status
-                let actionButtons = '';
-                
-                // Show Start button only if NOT running
-                if (!isRunning) {
-                    actionButtons += `
-                        <button onclick="serviceAction('${service.serviceName}', 'start')" 
-                            style="padding: 0.4rem 0.8rem; background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); border: none; border-radius: 5px; color: white; cursor: pointer; font-weight: 500; font-size: 0.85rem; transition: all 0.3s; box-shadow: 0 2px 4px rgba(34, 197, 94, 0.3);"
-                            onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 8px rgba(34, 197, 94, 0.4)';"
-                            onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 4px rgba(34, 197, 94, 0.3)';">
-                            <i class="fas fa-play"></i> Start
-                        </button>
-                    `;
-                }
-                
-                // Show Stop button only if NOT stopped/offline
-                if (!isStopped) {
-                    actionButtons += `
-                        <button onclick="serviceAction('${service.serviceName}', 'stop')" 
-                            style="padding: 0.4rem 0.8rem; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); border: none; border-radius: 5px; color: white; cursor: pointer; font-weight: 500; font-size: 0.85rem; transition: all 0.3s; box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);"
-                            onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 8px rgba(239, 68, 68, 0.4)';"
-                            onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 4px rgba(239, 68, 68, 0.3)';">
-                            <i class="fas fa-stop"></i> Stop
-                        </button>
-                    `;
-                }
-                
-                // Show Restart button only if NOT already restarting
-                if (!isRestarting) {
-                    actionButtons += `
-                        <button onclick="serviceAction('${service.serviceName}', 'restart')" 
-                            style="padding: 0.4rem 0.8rem; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); border: none; border-radius: 5px; color: white; cursor: pointer; font-weight: 500; font-size: 0.85rem; transition: all 0.3s; box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);"
-                            onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 8px rgba(245, 158, 11, 0.4)';"
-                            onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 4px rgba(245, 158, 11, 0.3)';">
-                            <i class="fas fa-sync-alt"></i> Restart
-                        </button>
-                    `;
-                }
-
-                tableHTML += `
-                    <tr style="background: ${bgColor}; border-bottom: 1px solid rgba(0, 150, 255, 0.1); transition: background 0.3s;">
-                        <td style="padding: 1rem; color: #87ceeb; font-weight: 500;">${service.serviceName}</td>
-                        <td style="padding: 1rem; text-align: center;">
-                            <span style="display: inline-flex; align-items: center; gap: 0.5rem; color: ${statusColor}; font-weight: 600;">
-                                <i class="fas ${statusIcon}"></i>
-                                ${statusText}
-                            </span>
-                        </td>
-                        <td style="padding: 1rem; text-align: center; color: #e2e8f0;">${parsedStats ? parsedStats.player_count : '-'}</td>
-                        <td style="padding: 1rem; text-align: center; color: #e2e8f0;">${parsedStats ? parsedStats.memory_usage : '-'}</td>
-                        <td style="padding: 1rem; text-align: center; color: #e2e8f0;">${parsedStats ? parsedStats.cpu_usage : '-'}</td>
-                        <td style="padding: 1rem; text-align: center; color: #e2e8f0; font-family: 'Monaco', monospace; font-size: 0.85rem;">${parsedStats ? parsedStats.game_pid : '-'}</td>
-                        <td style="padding: 1rem; text-align: center; color: #e2e8f0; font-family: 'Monaco', monospace; font-size: 0.85rem;">${parsedStats ? parsedStats.service_pid : '-'}</td>
-                        <td style="padding: 1rem; text-align: center;">
-                            <div style="display: flex; gap: 0.5rem; justify-content: center; flex-wrap: wrap;">
-                                ${actionButtons}
-                            </div>
-                        </td>
-                    </tr>
-                `;
-            });
-
-            tableHTML += `
-                        </tbody>
-                    </table>
-                </div>
-            `;
-
-            servicesContainer.innerHTML = tableHTML;
-        }
-
-        async function loadAllServicesAndStats() {
-            refreshBtn.disabled = true;
-            refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...';
-            clearTerminal();
-            addTerminalLine('> Loading services and stats...', 'command');
-            
-            setLoadingStatus('Fetching services...');
-
-            // Step 1: Get all services
-            const services = await fetchServices();
-            
-            if (services.length === 0) {
-                setLoadingStatus('No services found');
-                servicesContainer.innerHTML = '<p style="color: #87ceeb; text-align: center; padding: 2rem;">No services available.</p>';
-                refreshBtn.disabled = false;
-                refreshBtn.innerHTML = '<i class="fas fa-sync-alt"></i> Refresh';
-                addTerminalLine('No services found', 'error');
-                return;
-            }
-
-            addTerminalLine(`Found ${services.length} service(s)`, 'success');
-
-            // Step 2: Check if services already have stats (new format) or need to fetch them (old format)
-            let servicesWithStats = [];
-            
-            // Check if first service already has statsData
-            if (services[0].statsData) {
-                // New format: services already have their stats
-                addTerminalLine('Services loaded with stats', 'success');
-                servicesWithStats = services;
-            } else {
-                // Old format: need to fetch stats for each service
-                setLoadingStatus(`Loading stats for ${services.length} service(s)...`);
-                
-                for (let i = 0; i < services.length; i++) {
-                    const serviceName = services[i];
-                    addTerminalLine(`Fetching stats for: ${serviceName}`, 'info');
-                    setLoadingStatus(`Loading stats (${i + 1}/${services.length})...`);
-                    
-                    const stats = await fetchStatsForService(serviceName);
-                    servicesWithStats.push(stats);
-                    
-                    if (stats.success) {
-                        addTerminalLine(`✓ Stats loaded for ${serviceName}`, 'success');
-                    } else {
-                        addTerminalLine(`✗ Failed to load stats for ${serviceName}`, 'error');
-                    }
-                }
-            }
-
-            // Step 3: Create and display the table
-            createServicesTable(servicesWithStats);
-            servicesData = servicesWithStats;
-
-            setLoadingStatus('');
-            refreshBtn.disabled = false;
-            refreshBtn.innerHTML = '<i class="fas fa-sync-alt"></i> Refresh';
-            addTerminalLine('All services and stats loaded successfully', 'success');
-        }
-
-        async function manualGetServices() {
+        async function getServices() {
             clearTerminal();
             addTerminalLine('> Executing: ./manage.py --get-services', 'command');
             addTerminalLine('Connecting to remote server...', 'info');
             
-            const btn = document.getElementById('getServicesBtn');
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Running...';
+            getServicesBtn.disabled = true;
+            getServicesBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Running...';
 
             try {
                 const response = await fetch('/get-services', {
@@ -1067,22 +762,446 @@
                 console.error('Network error:', error);
                 addTerminalLine('Network error: ' + error.message, 'error');
             } finally {
-                btn.disabled = false;
-                btn.innerHTML = '<i class="fas fa-list"></i> Get Services';
+                getServicesBtn.disabled = false;
+                getServicesBtn.innerHTML = '<i class="fas fa-play"></i> Get Services';
             }
         }
 
-        async function manualGetStats() {
+        getServicesBtn.addEventListener('click', getServices);
+    </script>
+</body>
+</html>
+                            { value: 'csgo', label: 'Counter-Strike: GO' },
+                            { value: 'rust', label: 'Rust' },
+                            { value: 'ark', label: 'ARK: Survival Evolved' },
+                            { value: 'valheim', label: 'Valheim' },
+                            { value: 'terraria', label: 'Terraria' }
+                        ],
+                        required: true
+                    },
+                    {
+                        type: 'text',
+                        name: 'server_name',
+                        label: 'Server Name',
+                        placeholder: 'My Awesome Game Server',
+                        required: true
+                    },
+                    {
+                        type: 'number',
+                        name: 'max_players',
+                        label: 'Max Players',
+                        placeholder: '20',
+                        required: true
+                    },
+                    {
+                        type: 'select',
+                        name: 'server_size',
+                        label: 'Server Size',
+                        options: [
+                            { value: 'small', label: 'Small (2GB RAM, 2 CPU)' },
+                            { value: 'medium', label: 'Medium (4GB RAM, 4 CPU)' },
+                            { value: 'large', label: 'Large (8GB RAM, 6 CPU)' },
+                            { value: 'xlarge', label: 'X-Large (16GB RAM, 8 CPU)' }
+                        ],
+                        required: true
+                    }
+                ]
+            },
+            'server-control': {
+                title: 'Start/Stop Server',
+                description: 'Control game server power state and restart services',
+                icon: 'fas fa-power-off',
+                endpoint: '/server-control',
+                inputs: [
+                    {
+                        type: 'select',
+                        name: 'server_id',
+                        label: 'Select Server',
+                        options: [
+                            { value: 'minecraft-001', label: 'Minecraft Server #001' },
+                            { value: 'rust-002', label: 'Rust Server #002' },
+                            { value: 'csgo-003', label: 'CS:GO Server #003' }
+                        ],
+                        required: true
+                    },
+                    {
+                        type: 'select',
+                        name: 'action',
+                        label: 'Action',
+                        options: [
+                            { value: 'start', label: 'Start Server' },
+                            { value: 'stop', label: 'Stop Server' },
+                            { value: 'restart', label: 'Restart Server' },
+                            { value: 'force-stop', label: 'Force Stop Server' }
+                        ],
+                        required: true
+                    }
+                ]
+            },
+            'server-config': {
+                title: 'Configure Server',
+                description: 'Modify game server settings and configurations',
+                icon: 'fas fa-cogs',
+                endpoint: '/server-config',
+                inputs: [
+                    {
+                        type: 'select',
+                        name: 'server_id',
+                        label: 'Select Server',
+                        options: [
+                            { value: 'minecraft-001', label: 'Minecraft Server #001' },
+                            { value: 'rust-002', label: 'Rust Server #002' },
+                            { value: 'csgo-003', label: 'CS:GO Server #003' }
+                        ],
+                        required: true
+                    },
+                    {
+                        type: 'select',
+                        name: 'config_type',
+                        label: 'Configuration Type',
+                        options: [
+                            { value: 'game_settings', label: 'Game Settings' },
+                            { value: 'server_properties', label: 'Server Properties' },
+                            { value: 'mods_plugins', label: 'Mods/Plugins' },
+                            { value: 'world_settings', label: 'World Settings' }
+                        ],
+                        required: true
+                    },
+                    {
+                        type: 'textarea',
+                        name: 'config_content',
+                        label: 'Configuration Content',
+                        placeholder: 'Enter configuration settings...',
+                        required: false
+                    }
+                ]
+            },
+            'player-management': {
+                title: 'Player Management',
+                description: 'Manage players, bans, and permissions',
+                icon: 'fas fa-users',
+                endpoint: '/player-management',
+                inputs: [
+                    {
+                        type: 'select',
+                        name: 'server_id',
+                        label: 'Select Server',
+                        options: [
+                            { value: 'minecraft-001', label: 'Minecraft Server #001' },
+                            { value: 'rust-002', label: 'Rust Server #002' },
+                            { value: 'csgo-003', label: 'CS:GO Server #003' }
+                        ],
+                        required: true
+                    },
+                    {
+                        type: 'select',
+                        name: 'action',
+                        label: 'Action',
+                        options: [
+                            { value: 'list_players', label: 'List Online Players' },
+                            { value: 'kick_player', label: 'Kick Player' },
+                            { value: 'ban_player', label: 'Ban Player' },
+                            { value: 'unban_player', label: 'Unban Player' },
+                            { value: 'list_bans', label: 'List Banned Players' }
+                        ],
+                        required: true
+                    },
+                    {
+                        type: 'text',
+                        name: 'player_name',
+                        label: 'Player Name (if applicable)',
+                        placeholder: 'PlayerName123',
+                        required: false
+                    }
+                ]
+            },
+            'server-monitor': {
+                title: 'Server Monitoring',
+                description: 'Monitor server performance, resources, and status',
+                icon: 'fas fa-chart-line',
+                endpoint: '/server-monitor',
+                inputs: [
+                    {
+                        type: 'select',
+                        name: 'monitor_type',
+                        label: 'Monitor Type',
+                        options: [
+                            { value: 'performance', label: 'Performance Stats' },
+                            { value: 'player_count', label: 'Player Count' },
+                            { value: 'resource_usage', label: 'Resource Usage' },
+                            { value: 'server_logs', label: 'Recent Server Logs' }
+                        ],
+                        required: true
+                    },
+                    {
+                        type: 'select',
+                        name: 'server_id',
+                        label: 'Select Server (optional)',
+                        options: [
+                            { value: 'all', label: 'All Servers' },
+                            { value: 'minecraft-001', label: 'Minecraft Server #001' },
+                            { value: 'rust-002', label: 'Rust Server #002' },
+                            { value: 'csgo-003', label: 'CS:GO Server #003' }
+                        ],
+                        required: false
+                    }
+                ]
+            },
+            'backup-restore': {
+                title: 'Backup & Restore',
+                description: 'Create backups and restore game server data',
+                icon: 'fas fa-save',
+                endpoint: '/backup-restore',
+                inputs: [
+                    {
+                        type: 'select',
+                        name: 'server_id',
+                        label: 'Select Server',
+                        options: [
+                            { value: 'minecraft-001', label: 'Minecraft Server #001' },
+                            { value: 'rust-002', label: 'Rust Server #002' },
+                            { value: 'csgo-003', label: 'CS:GO Server #003' }
+                        ],
+                        required: true
+                    },
+                    {
+                        type: 'select',
+                        name: 'action',
+                        label: 'Action',
+                        options: [
+                            { value: 'create_backup', label: 'Create Backup' },
+                            { value: 'restore_backup', label: 'Restore from Backup' },
+                            { value: 'list_backups', label: 'List Available Backups' },
+                            { value: 'delete_backup', label: 'Delete Backup' }
+                        ],
+                        required: true
+                    },
+                    {
+                        type: 'text',
+                        name: 'backup_name',
+                        label: 'Backup Name (for create/restore)',
+                        placeholder: 'backup_2024_11_09',
+                        required: false
+                    }
+                ]
+            }
+        };
+
+        // DOM elements
+        const commandList = document.getElementById('commandList');
+        const commandTitle = document.getElementById('commandTitle');
+        const commandDescription = document.getElementById('commandDescription');
+        const dynamicInputs = document.getElementById('dynamicInputs');
+        const commandForm = document.getElementById('commandForm');
+        const executeBtn = document.getElementById('executeBtn');
+        const terminalOutput = document.getElementById('terminalOutput');
+        const statusContainer = document.getElementById('statusContainer');
+
+        let currentCommand = 'create-server';
+
+        // Initialize the interface
+        function init() {
+            setupCommandList();
+            loadCommand(currentCommand);
+        }
+
+        // Setup command list event handlers
+        function setupCommandList() {
+            commandList.addEventListener('click', (e) => {
+                const item = e.target.closest('.command-item');
+                if (item) {
+                    // Update active state
+                    document.querySelectorAll('.command-item').forEach(i => i.classList.remove('active'));
+                    item.classList.add('active');
+                    
+                    // Load command
+                    const commandId = item.dataset.command;
+                    loadCommand(commandId);
+                }
+            });
+        }
+
+        // Load command configuration
+        function loadCommand(commandId) {
+            currentCommand = commandId;
+            const config = commands[commandId];
+            
+            // Update header
+            commandTitle.innerHTML = `<i class="${config.icon}"></i> ${config.title}`;
+            commandDescription.textContent = config.description;
+            
+            // Generate dynamic inputs
+            generateInputs(config.inputs);
+            
+            // Clear terminal
             clearTerminal();
-            addTerminalLine('> Executing: ./manage.py --get-stats', 'command');
+            clearStatus();
+        }
+
+        // Generate dynamic input fields
+        function generateInputs(inputs) {
+            dynamicInputs.innerHTML = '';
+            
+            inputs.forEach(input => {
+                const formGroup = document.createElement('div');
+                formGroup.className = 'form-group';
+                
+                if (input.type === 'checkbox') {
+                    formGroup.innerHTML = `
+                        <label>
+                            <input type="checkbox" name="${input.name}" ${input.checked ? 'checked' : ''}>
+                            ${input.label}
+                        </label>
+                    `;
+                } else {
+                    const label = document.createElement('label');
+                    label.textContent = input.label;
+                    formGroup.appendChild(label);
+                    
+                    if (input.type === 'select') {
+                        const select = document.createElement('select');
+                        select.name = input.name;
+                        select.required = input.required || false;
+                        
+                        input.options.forEach(option => {
+                            const optionEl = document.createElement('option');
+                            optionEl.value = option.value;
+                            optionEl.textContent = option.label;
+                            select.appendChild(optionEl);
+                        });
+                        
+                        formGroup.appendChild(select);
+                    } else if (input.type === 'textarea') {
+                        const textarea = document.createElement('textarea');
+                        textarea.name = input.name;
+                        textarea.placeholder = input.placeholder || '';
+                        textarea.required = input.required || false;
+                        textarea.rows = 4;
+                        formGroup.appendChild(textarea);
+                    } else {
+                        const inputEl = document.createElement('input');
+                        inputEl.type = input.type;
+                        inputEl.name = input.name;
+                        inputEl.placeholder = input.placeholder || '';
+                        inputEl.required = input.required || false;
+                        
+                        // Set additional attributes for number inputs
+                        if (input.type === 'number') {
+                            if (input.min !== undefined) inputEl.min = input.min;
+                            if (input.max !== undefined) inputEl.max = input.max;
+                            if (input.step !== undefined) inputEl.step = input.step;
+                        }
+                        
+                        formGroup.appendChild(inputEl);
+                    }
+                }
+                
+                dynamicInputs.appendChild(formGroup);
+            });
+        }
+
+        // Handle form submission
+        commandForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const config = commands[currentCommand];
+            const formData = new FormData(commandForm);
+            const data = Object.fromEntries(formData.entries());
+            
+            // Add command type to data
+            data.command = currentCommand;
+            
+            await executeCommand(config.endpoint, data);
+        });
+
+        // Execute command
+        async function executeCommand(endpoint, data) {
+            // Show loading state
+            showStatus('Executing command...', 'loading');
+            executeBtn.disabled = true;
+            executeBtn.innerHTML = '<div class="loading-spinner"></div> Executing...';
+            
+            // Show command in terminal
+            showInTerminal(`$ Executing ${commands[currentCommand].title}...`, 'command-prompt');
+            
+            try {
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showStatus('Command executed successfully!', 'success');
+                    showInTerminal(result.output, 'output-text');
+                } else {
+                    showStatus('Command execution failed!', 'error');
+                    showInTerminal(`Error: ${result.output}`, 'error-text');
+                    if (result.stderr) {
+                        showInTerminal(`STDERR: ${result.stderr}`, 'error-text');
+                    }
+                }
+            } catch (error) {
+                showStatus('Network error occurred!', 'error');
+                showInTerminal(`Network Error: ${error.message}`, 'error-text');
+            } finally {
+                // Reset button state
+                executeBtn.disabled = false;
+                executeBtn.innerHTML = '<i class="fas fa-play"></i> Execute Command';
+            }
+        }
+
+        // Show status message
+        function showStatus(message, type) {
+            const iconMap = {
+                'success': 'fas fa-check-circle',
+                'error': 'fas fa-exclamation-circle',
+                'loading': 'fas fa-spinner fa-spin'
+            };
+            
+            statusContainer.innerHTML = `
+                <div class="status-badge ${type}">
+                    <i class="${iconMap[type]}"></i>
+                    ${message}
+                </div>
+            `;
+        }
+
+        // Clear status
+        function clearStatus() {
+            statusContainer.innerHTML = '';
+        }
+
+        // Show content in terminal
+        function showInTerminal(content, className = 'output-text') {
+            const div = document.createElement('div');
+            div.className = className;
+            div.textContent = content;
+            terminalOutput.appendChild(div);
+            
+            // Scroll to bottom
+            terminalOutput.scrollTop = terminalOutput.scrollHeight;
+        }
+
+        // Clear terminal
+        function clearTerminal() {
+            terminalOutput.innerHTML = '';
+        }
+
+        async function getServices() {
+            clearTerminal();
+            addTerminalLine('> Executing: ./manage.py --get-services', 'command');
             addTerminalLine('Connecting to remote server...', 'info');
             
-            const btn = document.getElementById('getStatsBtn');
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Running...';
+            getServicesBtn.disabled = true;
+            getServicesBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Running...';
 
             try {
-                const response = await fetch('/get-stats', {
+                const response = await fetch('/get-services', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -1091,7 +1210,7 @@
 
                 const result = await response.json();
                 
-                console.log('Get Stats Result:', result);
+                console.log('Get Services Result:', result);
                 
                 if (result.success) {
                     addTerminalLine('Command executed successfully:', 'success');
@@ -1127,78 +1246,12 @@
                 console.error('Network error:', error);
                 addTerminalLine('Network error: ' + error.message, 'error');
             } finally {
-                btn.disabled = false;
-                btn.innerHTML = '<i class="fas fa-chart-bar"></i> Get Stats';
+                getServicesBtn.disabled = false;
+                getServicesBtn.innerHTML = '<i class="fas fa-play"></i> Get Services';
             }
         }
 
-        async function serviceAction(serviceName, action) {
-            addTerminalLine(`> Executing: ./manage.py --${action} --service ${serviceName}`, 'command');
-            addTerminalLine('Connecting to remote server...', 'info');
-            
-            try {
-                const response = await fetch('/service-action', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        service: serviceName,
-                        action: action
-                    })
-                });
-
-                const result = await response.json();
-                
-                console.log(`${action} result for ${serviceName}:`, result);
-                
-                if (result.success) {
-                    addTerminalLine(`✓ ${action.toUpperCase()} command executed successfully for ${serviceName}`, 'success');
-                    
-                    if (result.output) {
-                        const outputLines = result.output.split('\n');
-                        outputLines.forEach(line => {
-                            if (line.trim()) {
-                                addTerminalLine(line);
-                            }
-                        });
-                    }
-                    
-                    // Reload the services and stats after action
-                    setTimeout(() => {
-                        addTerminalLine('Refreshing service status...', 'info');
-                        loadAllServicesAndStats();
-                    }, 2000);
-                } else {
-                    addTerminalLine(`✗ ${action.toUpperCase()} command failed for ${serviceName}:`, 'error');
-                    addTerminalLine(result.error || 'Unknown error', 'error');
-                    if (result.output) {
-                        addTerminalLine(result.output);
-                    }
-                }
-            } catch (error) {
-                console.error(`Network error during ${action}:`, error);
-                addTerminalLine(`Network error: ${error.message}`, 'error');
-            }
-        }
-
-        // Event listeners
-        refreshBtn.addEventListener('click', loadAllServicesAndStats);
-        document.getElementById('getServicesBtn').addEventListener('click', manualGetServices);
-        document.getElementById('getStatsBtn').addEventListener('click', manualGetStats);
-
-        // Load on page load
-        window.addEventListener('DOMContentLoaded', () => {
-            addTerminalLine('Dashboard loaded. Fetching services...', 'info');
-            loadAllServicesAndStats();
-            
-            // Auto-refresh every 5 seconds
-            setInterval(() => {
-                addTerminalLine('Auto-refreshing...', 'info');
-                loadAllServicesAndStats();
-            }, 5000);
-        });
+        getServicesBtn.addEventListener('click', getServices);
     </script>
 </body>
 </html>
-```
