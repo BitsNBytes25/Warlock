@@ -1232,36 +1232,41 @@
         }
 
         async function fetchApplications() {
-            try {
-                const response = await fetch('/get-applications', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                });
+            // Try to use localStorage for faster results, defaulting back to the manual fetch
+            return new Promise((resolve, reject) => {
+                let applications = localStorage.getItem('applications');
 
-                const result = await response.json();
-                
-                console.log('Applications Result:', result);
-                
-                if (result.success && result.applications) {
-                    displayApplications(result.applications);
-                    return result.applications;
-                } else {
-                    displayApplications([]);
-                    return [];
+                if (applications) {
+                    resolve(JSON.parse(applications));
                 }
-            } catch (error) {
-                console.error('Error fetching applications:', error);
-                displayApplications([]);
-                return [];
-            }
+                else {
+                    fetch('/get-applications', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    })
+                        .then(response => response.json())
+                        .then(result => {
+                            if (result.success && result.applications) {
+                                localStorage.setItem('applications', JSON.stringify(result.applications));
+                                resolve(result.applications);
+                            } else {
+                                reject(result.error);
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error fetching applications:', error);
+                            reject(error);
+                        });
+                }
+            });
         }
 
         function displayApplications(applications) {
             const applicationsList = document.getElementById('applicationsList');
-            
-            if (applications.length === 0) {
+
+            if (Object.keys(applications).length === 0) {
                 applicationsList.innerHTML = `
                     <div style="grid-column: 1 / -1; text-align: center; padding: 2rem; color: #666;">
                         <i class="fas fa-inbox" style="font-size: 2rem; margin-bottom: 1rem; display: block; opacity: 0.3;"></i>
@@ -1272,10 +1277,11 @@
             }
 
             let html = '';
-            applications.forEach(app => {
+            for (const [guid, app] of Object.entries(applications)) {
+                console.debug(app);
                 // Extract the last folder name from the path
-                let pathParts = app.path.split('/').filter(part => part.length > 0),
-                    displayName = app.title || pathParts[pathParts.length - 1],
+                let //pathParts = app.path.split('/').filter(part => part.length > 0),
+                    displayName = app.title || guid,
                     icon = app.icon || null,
                     thumbnail = app.thumbnail || null;
 
@@ -1321,7 +1327,7 @@
                         </div>
                     </div>
                 `;
-            });
+            }
 
             applicationsList.innerHTML = html;
         }
@@ -1342,14 +1348,19 @@
         // Load on page load
         window.addEventListener('DOMContentLoaded', () => {
             addTerminalLine('Dashboard loaded. Fetching applications and services...', 'info');
-            fetchApplications();
+            fetchApplications().then(applications => {
+                displayApplications(applications);
+            }).catch(error => {
+                console.error('Error fetching applications:', error);
+                addTerminalLine('Error fetching applications: ' + error, 'error');
+            });
             loadAllServicesAndStats();
             
             // Auto-refresh every 5 seconds
-            setInterval(() => {
+            /*setInterval(() => {
                 addTerminalLine('Auto-refreshing...', 'info');
                 loadAllServicesAndStats();
-            }, 5000);
+            }, 5000);*/
         });
     </script>
 </body>

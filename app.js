@@ -11,24 +11,135 @@ const PORT = process.env.PORT || 3077;
 // Load environment variables
 require('dotenv').config();
 
-// Get SSH configuration from environment or defaults
-// This function re-reads the .env file each time to get fresh values
-const getSSHConfig = () => {
+// getSSHConfig -> getSSHHosts
+
+/**
+ * Reload the environmental .env file, generally useful after changes are done
+ */
+const reloadEnv = () => {
     // Re-read .env file to get latest values
     delete require.cache[require.resolve('dotenv')];
     require('dotenv').config();
-    
-    return {
-        SSH_USER: process.env.SSH_USER || 'root',
-        SSH_HOST: process.env.SSH_HOST || 'not set'
-    };
 };
 
-// Helper function to build SSH command with current config
-const buildSSHCommand = (remoteCommand) => {
-    const config = getSSHConfig();
-    return `ssh ${config.SSH_USER}@${config.SSH_HOST} '${remoteCommand}'`;
+/**
+ * Get the configured application runner hosts (IP addresses or hostnames)
+ *
+ * @returns {string[]}
+ */
+const getSSHHosts = () => {
+    let hosts = process.env.HOSTS;
+    if (hosts) {
+        return hosts.split(',').map(h => h.trim());
+    }
+    else {
+        return []
+    }
 };
+
+/**
+ * Generate an SSH command string to run a remote or local command
+ * @param target
+ * @param remoteCommand
+ * @returns {`ssh root@${*} '${string}'`|`ssh ${*}@${*} '${string}'`}
+ */
+const buildSSHCommand = (target, remoteCommand) => {
+    const hosts = getSSHHosts();
+    if (!hosts.includes(target)) {
+        throw new Error(`Target host '${target}' is not in the configured HOSTS list.`);
+    }
+
+    if (target === 'localhost' || target === '127.0.0.1') {
+        return remoteCommand; // No SSH needed for localhost
+    }
+    else {
+        return `ssh root@${target} '${remoteCommand}'`;
+    }
+};
+
+async function cmdRunner(target, cmd) {
+    return new Promise((resolve, reject) => {
+        const sshCommand = buildSSHCommand(target, cmd);
+
+        console.debug('cmdRunner: Executing command on ' + target, sshCommand);
+        exec(sshCommand, { timeout: 30000 }, (error, stdout, stderr) => {
+            if (error) {
+                console.error('cmdRunner: Received error:', error);
+                return reject(error);
+            }
+
+            console.debug('cmdRunner:', stdout);
+            resolve({ stdout, stderr });
+        });
+    });
+}
+
+/**
+ * Get all applications from /var/lib/warlock/*.app registration files
+ *
+ * @param target Hostname or IP of the target machine to run commands against
+ *
+ * @returns {Promise<unknown>}
+ */
+async function getAllApplications() {
+    return new Promise((resolve, reject) => {
+        const hosts = getSSHHosts(),
+            appsFilePath = path.join(__dirname, 'Apps.yaml'),
+            cmd = 'for file in /var/lib/warlock/*.app; do if [ -f "$file" ]; then echo "$(basename "$file" \'.app\'):$(cat "$file")"; fi; done';
+        let applications = {},
+            promises = [];
+
+        if (hosts.length === 0) {
+            return reject(new Error('No hosts configured in HOSTS environment variable.'));
+        }
+
+        // Open Apps.yaml and parse it for the list of applications
+        if (fs.existsSync(appsFilePath)) {
+            const fileContents = fs.readFileSync(appsFilePath, 'utf8');
+            const data = yaml.load(fileContents);
+            if (data) {
+                data.forEach(item => {
+                    applications[ item.guid ] = item;
+                    applications[ item.guid ].hosts = [];
+                });
+
+                console.debug('getAllApplications: Application Definitions Loaded', applications);
+            }
+        }
+
+        hosts.forEach(host => {
+            promises.push(cmdRunner(host, cmd));
+        });
+
+        Promise.all(promises)
+            .then(results => {
+                results.forEach((result, index) => {
+                    const target = hosts[index];
+                    const stdout = result.stdout;
+
+                    for (let line of stdout.split('\n')) {
+                        if (line.trim()) {
+                            let [guid, path] = line.split(':').map(s => s.trim()),
+                                appData = {path: path.trim(), host: target};
+
+                            // Add some data from the local apps definition if it's available
+                            if (!applications[guid]) {
+                                applications[guid] = {
+                                    guid: guid,
+                                    title: guid,
+                                    description: 'No description available',
+                                    hosts: []
+                                };
+                            }
+                            applications[guid]['hosts'].push(appData);
+                        }
+                    }
+                });
+
+                return resolve(applications);
+            });
+    });
+}
 
 // Middleware
 app.use(express.json());
@@ -204,60 +315,6 @@ app.post('/player-management', createCommandEndpoint('player-management'));
 app.post('/server-monitor', createCommandEndpoint('server-monitor'));
 app.post('/backup-restore', createCommandEndpoint('backup-restore'));
 
-// Helper function to get all applications and their paths
-async function getAllApplications() {
-    return new Promise((resolve, reject) => {
-        const sshCommand = buildSSHCommand('for file in /var/lib/warlock/*.app; do if [ -f "$file" ]; then echo "$(basename "$file" \'.app\'):$(cat "$file")"; fi; done');
-
-        console.log('Executing get-applications command:', sshCommand);
-
-        exec(sshCommand, { timeout: 30000 }, (error, stdout, stderr) => {
-            if (error) {
-                console.error('Get applications error:', error);
-                return reject(error);
-            }
-
-            console.log('Applications raw output:', stdout);
-
-            // Open Apps.yaml and parse it for the list of applications
-            const appsFilePath = path.join(__dirname, 'Apps.yaml');
-            let applications = [];
-            if (fs.existsSync(appsFilePath)) {
-                const fileContents = fs.readFileSync(appsFilePath, 'utf8');
-                const data = yaml.load(fileContents);
-                if (data) {
-                    data.forEach(item => {
-                        applications[ item.guid ] = item;
-                    });
-
-                    console.log('Application Definitions Loaded', applications);
-                }
-            }
-
-            // Parse the output to extract application names and paths
-            const apps = [];
-            for (let line of stdout.split('\n')) {
-                if (line.trim()) {
-                    let [guid, path] = line.split(':'),
-                        appData = { guid: guid.trim(), path: path.trim() };
-
-                    // Add some data from the local apps definition if it's available
-                    if (applications[ appData.guid ]) {
-                        appData = { ...appData, ...applications[ appData.guid ] };
-                    }
-                    else {
-                        appData.title = appData.guid; // Fallback to using guid as name
-                    }
-                    apps.push(appData);
-                }
-            }
-
-            console.log('Parsed applications:', apps);
-
-            resolve(apps);
-        });
-    });
-}
 
 // Get services endpoint - now queries all applications
 app.post('/get-services', async (req, res) => {
@@ -496,18 +553,15 @@ app.post('/get-stats', async (req, res) => {
 app.post('/get-applications', (req, res) => {
     getAllApplications()
         .then(applications => {
-            res.json({
+            return res.json({
                 success: true,
-                applications: applications,
-                output: 'omitted',
-                stderr: 'omitted'
+                applications: applications
             });
         })
         .catch(e => {
             return res.json({
                 success: false,
                 error: e.message,
-                output: 'omitted',
                 applications: []
             });
         });
@@ -1440,6 +1494,4 @@ app.post('/test-connection', (req, res) => {
 // Start the server
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
-    const config = getSSHConfig();
-    console.log(`SSH Configuration: ${config.SSH_USER}@${config.SSH_HOST}`);
 });
