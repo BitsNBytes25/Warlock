@@ -1,0 +1,14 @@
+- guid: aad94a15-983d-4b35-87ab-8659371ef4e6
+  title: ARK Survival Ascended Dedicated Server
+  source: github
+  repo: cdp1337/ARKSurvivalAscended-Linux
+  installer: dist/server-install-debian12.sh
+  header: some-path-to-image.jpg
+  image: some-path-to-image.jpg
+- guid: 6ee9bb12-0e21-4ca0-a2f2-75fdeb9af718
+  title: VEIN Dedicated Server
+  source: github
+  repo: BitsNBytes25/VEIN-Dedicated-Server
+  installer: dist/installer.sh
+  header: some-path-to-image.jpg
+  image: some-path-to-image.jpg
