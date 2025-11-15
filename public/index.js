@@ -1,7 +1,5 @@
 const servicesContainer = document.getElementById('servicesContainer');
 
-let applicationData = null;
-
 function createServicesTable() {
 
 	if (document.getElementById('services-table')) {
@@ -58,28 +56,28 @@ function populateServicesTable(servicesWithStats) {
 
 	servicesWithStats.forEach(record => {
 		let service = record.service,
-			app = record.app,
+			app_guid = record.app,
 			host = record.host,
 			row = table.querySelector('tr.service[data-host="' + host.host + '"][data-service="' + service.service + '"]'),
 			fields = ['host', 'icon', 'name', 'status', 'port', 'players', 'memory', 'cpu', 'actions'],
 			statusIcon = '',
 			actionButtons = [],
-			appIcon = renderAppIcon(app);
+			appIcon = renderAppIcon(app_guid);
 
 		if (service.status === 'running') {
 			statusIcon = '<i class="fas fa-check-circle"></i>';
 			actionButtons.push(`
-<button data-host="${host.host}" data-service="${service.service}" data-action="stop" data-guid="${app.guid}" class="service-control action-stop">
+<button data-host="${host.host}" data-service="${service.service}" data-action="stop" data-guid="${app_guid}" class="service-control action-stop">
 	<i class="fas fa-stop"></i> Stop
 </button>`);
 		} else if (service.status === 'stopped') {
 			statusIcon = '<i class="fas fa-times-circle"></i>';
 			actionButtons.push(`
-<button data-href="/service/configure/${app.guid}/${host.host}/${service.service}" class="link-control action-configure">
+<button data-href="/service/configure/${app_guid}/${host.host}/${service.service}" class="link-control action-configure">
 	<i class="fas fa-cog"></i> Config
 </button>`);
 			actionButtons.push(`
-<button data-host="${host.host}" data-service="${service.service}" data-action="start" data-guid="${app.guid}" class="service-control action-start">
+<button data-host="${host.host}" data-service="${service.service}" data-action="start" data-guid="${app_guid}" class="service-control action-start">
 	<i class="fas fa-play"></i> Start
 </button>`);
 		} else if (service.status === 'starting' || service.status === 'stopping') {
@@ -112,7 +110,7 @@ function populateServicesTable(servicesWithStats) {
 			let val = service[field] || '';
 
 			if (field === 'host') {
-				val = host.host;
+				val = renderHostName(host.host);
 			}
 			else if (field === 'status') {
 				val = statusIcon + ' ' + service[field].toUpperCase();
@@ -191,11 +189,11 @@ function displayApplications(applications) {
 
 	if (Object.keys(applications).length === 0) {
 		applicationsList.innerHTML = `
-                    <div style="grid-column: 1 / -1; text-align: center; padding: 2rem; color: #666;">
-                        <i class="fas fa-inbox" style="font-size: 2rem; margin-bottom: 1rem; display: block; opacity: 0.3;"></i>
-                        <p>No applications found in /var/lib/warlock</p>
-                    </div>
-                `;
+			<div style="grid-column: 1 / -1; text-align: center; padding: 2rem; color: #666;">
+				<i class="fas fa-inbox" style="font-size: 2rem; margin-bottom: 1rem; display: block; opacity: 0.3;"></i>
+				<p>No applications found in /var/lib/warlock</p>
+			</div>
+		`;
 		return;
 	}
 
@@ -205,7 +203,7 @@ function displayApplications(applications) {
 		// Extract the last folder name from the path
 		let //pathParts = app.path.split('/').filter(part => part.length > 0),
 			displayName = app.title || guid,
-			icon = renderAppIcon(app),
+			icon = renderAppIcon(guid),
 			thumbnail = app.thumbnail || null;
 
 		if (thumbnail) {
@@ -228,7 +226,7 @@ function displayApplications(applications) {
 
 		app.hosts.forEach(host => {
 			html += `<div class="app-install">
-					<span class="host-name">${host.host}</span>
+					<span class="host-name">${renderHostIcon(host.host)} ${renderHostName(host.host)}</span>
 					<span class="host-actions">
 						<button class="link-control action-configure" data-href="/application/${guid}/configure/${host.host}" title="Configure Application">
 							<i class="fas fa-cog"></i>
@@ -260,12 +258,17 @@ fetch('/components/nav')
 
 // Load on page load
 window.addEventListener('DOMContentLoaded', () => {
-	fetchApplications().then(applications => {
-		displayApplications(applications);
+	fetchHosts().then(hosts => {
+		fetchApplications().then(applications => {
+			// Display applications
+			displayApplications(applications);
 
-		loadAllServicesAndStats();
+			loadAllServicesAndStats();
+		}).catch(error => {
+			console.error('Error fetching applications:', error);
+		});
 	}).catch(error => {
-		console.error('Error fetching applications:', error);
+		console.error('Error fetching hosts:', error);
 	});
 
 	// Auto-refresh every 5 seconds

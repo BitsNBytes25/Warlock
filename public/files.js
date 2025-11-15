@@ -72,20 +72,6 @@ function showError(message) {
 	`;
 }
 
-/**
- * Format bytes as human-readable text.
- *
- * @param {number} bytes
- * @returns {string}
- */
-function formatFileSize(bytes) {
-	if (bytes === 0) return '0 B';
-	const k = 1024;
-	const sizes = ['B', 'KB', 'MB', 'GB'];
-	const i = Math.floor(Math.log(bytes) / Math.log(k));
-	return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
-}
-
 
 
 async function performRecursiveSearch(query) {
@@ -804,35 +790,33 @@ async function createFolder() {
 	}
 }
 
+/**
+ * Handler to create a new file, optionally with or without content.
+ *
+ * @returns {Promise<void>}
+ */
 async function createFile() {
 	const fileName = document.getElementById('fileName').value.trim();
 	const fileContent = document.getElementById('fileContent').value;
 
-	if (!fileName) {
-		alert('Please enter a file name');
-		return;
-	}
-
-	const filePath = currentPath + '/' + fileName;
-
-	try {
-		const response = await fetch('/save-file', {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({ path: filePath, content: fileContent })
+	fetch(`/api/file/${host}`, {
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify({ path: currentPath, name: fileName, content: fileContent })
+	})
+		.then(response => response.json())
+		.then(result => {
+			if (result.success) {
+				createFileModal.style.display = 'none';
+				loadDirectory(currentPath); // Refresh current directory
+			}
+			else {
+				alert(`Error creating file: ${result.error}`);
+			}
+		})
+		.catch(error => {
+			alert(`Network error: ${error.message}`);
 		});
-
-		const result = await response.json();
-
-		if (result.success) {
-			createFileModal.style.display = 'none';
-			loadDirectory(currentPath); // Refresh current directory
-		} else {
-			alert(`Error creating file: ${result.error}`);
-		}
-	} catch (error) {
-		alert(`Network error: ${error.message}`);
-	}
 }
 
 // Delete confirmation

@@ -45,15 +45,27 @@
 	--button-start: white;
 	--button-start-bg-1: #22c55e;
 	--button-start-bg-2: #16a34a;
+	--button-start-shadow: rgba(34, 197, 94, 0.4);
 	--button-stop: white;
 	--button-stop-bg-1: #ef4444;
 	--button-stop-bg-2: #dc2626;
+	--button-stop-shadow: rgba(239, 68, 68, 0.4);
 	--button-browse: white;
 	--button-browse-bg-1: #667eea;
 	--button-browse-bg-2: #5a67d8;
+	--button-browse-shadow: rgba(6, 23, 80, 0.4);
 	--button-remove: white;
 	--button-remove-bg-1: #f87171;
 	--button-remove-bg-2: #ef4444;
+	--button-remove-shadow: rgba(239, 68, 68, 0.4);
+	--button-save: white;
+	--button-save-bg-1: #22c55e;
+	--button-save-bg-2: #16a34a;
+	--button-save-shadow: rgba(34, 197, 94, 0.4);
+	--button-cancel: white;
+	--button-cancel-bg-1: #3e3232;
+	--button-cancel-bg-2: #3a1e1e;
+	--button-cancel-shadow: rgba(43, 26, 26, 0.4);
 	--table-header: white;
 	--table-header-bg-1: #518ca5;
 	--table-header-bg-2: rgba(0, 150, 255, 0.9);
@@ -62,12 +74,23 @@
 	--table-row-bg-2: rgba(0, 40, 80, 0.65);
 	--table-border: rgba(0, 212, 255, 1);
 	--input: rgba(26, 26, 46, 1);
+	--input-placeholder: #326075;
 	--input-bg: #87ceeb;
 	--input-border: #0096ff;
+	--input-focus: rgb(4, 4, 11);
+	--input-focus-bg: #a0d9f1;
+	--input-focus-border: #1ea1fd;
+	--input-focus-shadow: rgba(0, 150, 255, 0.59);
 	--status-running: #22c55e;
 	--status-starting: #facc15;
 	--status-stopped: #ef4444;
 	--status-stopping: #f97316;
+	--status-good-bg-1: #22c55e;
+	--status-good-bg-2: #9af3bb;
+	--status-warning-bg-1: #c59722;
+	--status-warning-bg-2: #f3cf9a;
+	--status-critical-bg-1: #c52222;
+	--status-critical-bg-2: #f39a9a;
 }
 
 
@@ -366,13 +389,15 @@ table td {
 
 .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
 	outline: none;
-	border-color: var(--primary-strong);
-	box-shadow: 0 0 20px rgba(0, 212, 255, 0.4), inset 0 0 20px rgba(0, 212, 255, 0.1);
-	color: var(--primary-strong);
+	background: var(--input-focus-bg);
+	border-color: var(--input-focus-border);
+	box-shadow: 0 5px 10px var(--input-focus-shadow);
+	color: var(--input-focus);
+	transform: translateY(-2px);
 }
 
 .form-group input::placeholder, .form-group textarea::placeholder {
-	color: rgba(135, 206, 235, 0.7);
+	color: var(--input-placeholder);
 }
 
 .btn-primary {
@@ -418,6 +443,9 @@ button {
 	font-size: 0.85rem;
 	transition: all 0.3s;
 }
+button:hover {
+	transform: translateY(-2px);
+}
 button.disabled {
 	opacity: 0.6;
 	cursor: not-allowed;
@@ -430,7 +458,6 @@ button.action-configure {
 	color: var(--button-config);
 }
 button.action-configure:hover {
-	transform: translateY(-2px);
 	box-shadow: 0 4px 8px var(--button-config-shadow);
 }
 
@@ -439,7 +466,6 @@ button.action-start {
 	color: var(--button-start);
 }
 button.action-start:hover {
-	transform: translateY(-2px);
 	box-shadow: 0 4px 8px var(--button-start-shadow);
 }
 
@@ -448,7 +474,6 @@ button.action-stop {
 	color: var(--button-stop);
 }
 button.action-stop:hover {
-	transform: translateY(-2px);
 	box-shadow: 0 4px 8px var(--button-stop-shadow);
 }
 
@@ -457,7 +482,6 @@ button.action-browse {
 	color: var(--button-browse);
 }
 button.action-browse:hover {
-	transform: translateY(-2px);
 	box-shadow: 0 4px 8px var(--button-browse-shadow);
 }
 
@@ -466,8 +490,23 @@ button.action-remove {
 	color: var(--button-remove);
 }
 button.action-remove:hover {
-	transform: translateY(-2px);
 	box-shadow: 0 4px 8px var(--button-remove-shadow);
+}
+
+button.action-save {
+	background: linear-gradient(135deg, var(--button-save-bg-1) 0%, var(--button-save-bg-2) 100%);
+	color: var(--button-save);
+}
+button.action-save:hover {
+	box-shadow: 0 4px 8px var(--button-save-shadow);
+}
+
+button.action-cancel {
+	background: linear-gradient(135deg, var(--button-cancel-bg-1) 0%, var(--button-cancel-bg-2) 100%);
+	color: var(--button-cancel);
+}
+button.action-cancel:hover {
+	box-shadow: 0 4px 8px var(--button-cancel-shadow);
 }
 
 /* Hologram loader */
@@ -519,14 +558,6 @@ button.action-remove:hover {
 	animation: spin 1s ease-in-out infinite;
 }
 
-/* ==========================
-   Application List (Dashboard)
-   ========================== */
-
-#applicationsContainer {
-	margin-bottom: 3rem;
-}
-
 
 /* ==========================
    Services table
@@ -564,9 +595,22 @@ button.action-remove:hover {
 }
 
 /* ==========================
-   Application cards
+   Application/Host cards
    ========================== */
-.application-card {
+
+#applicationsContainer {
+	margin-bottom: 3rem;
+}
+
+#applicationsList,
+#hostsList {
+	display: grid;
+	grid-template-columns: repeat(4, minmax(250px, 1fr));
+	gap: 1rem;
+}
+
+.application-card,
+.host-card {
 	border-radius: 12px;
 	padding: 1.5rem;
 	transition: all 0.3s;
@@ -577,41 +621,58 @@ button.action-remove:hover {
 	border: 1px solid var(--content-border);
 }
 
-.application-card:hover {
+.application-card:hover,
+.host-card:hover {
 	border-color: var(--content-hover-border);
 	transform: translateY(-2px);
 	box-shadow: 0 10px 20px var(--content-shadow);
 }
 
-.application-card .app-thumbnail {
+.application-card .app-thumbnail,
+.host-card .os-thumbnail {
 	width: calc(100% + 3rem);
-	height: auto;
-	margin-top: -1.5rem;
-	margin-left: -1.5rem;
-	margin-right: -1.5rem;
+	height: 10rem;
+	margin: -1.5rem -1.5rem 1rem;
+	object-fit: cover;
 }
 
-.application-card .app-install {
+.application-card .app-install,
+.host-card .filesystem-row-header,
+.host-card .app-install {
 	display: flex;
 	align-content: space-between;
 	align-items: center;
+	margin: 0 0 1.25rem;
 }
-.application-card .app-install .host-name {
-	flex: 1;
+.application-card .app-install .host-name,
+.host-card .filesystem-row-header .filesystem-path,
+.host-card .app-install .app-name {
+	flex: 2;
+	display: flex;
+	align-items: center;
+	gap: 0.25rem;
 }
-.application-card .app-install .host-actions {
+.application-card .app-install .host-name img,
+.host-card .app-install .app-name img {
+	width: 1.25em;
+}
+.application-card .app-install .host-actions,
+.host-card .filesystem-row-header .filesystem-actions,
+.host-card .app-install .app-actions {
 	flex: 1;
 	text-align: right;
 }
 
-.application-card .app-name {
+.application-card .app-name,
+.host-card .host-name {
 	display: flex;
 	align-items: center;
 	gap: 1rem;
 	margin-bottom: 1rem;
 }
 
-.application-card .app-icon {
+.application-card .app-icon,
+.host-card .host-icon {
 	width: 48px;
 	height: 48px;
 	background: linear-gradient(135deg, var(--primary) 0%, #0066cc 100%);
@@ -622,7 +683,8 @@ button.action-remove:hover {
 	box-shadow: 0 4px 12px rgba(0, 150, 255, 0.3);
 }
 
-.application-card .app-icon img {
+.application-card .app-icon img,
+.host-card .host-icon img {
 	max-width: 100%;
 	max-height: 100%;
 	border-radius: 8px;
@@ -637,6 +699,41 @@ button.action-remove:hover {
 	font-weight: 500;
 	font-size: 0.85rem;
 	transition: all 0.3s;
+}
+
+.host-card .filesystem-usage-bar {
+	width: 100%;
+	height: 1.4rem;
+	background: rgba(189, 189, 189, 0.4);
+	border-radius: 6px;
+	overflow: hidden;
+	margin-top: 0.5rem;
+	position: relative;
+	margin-bottom: 1.5rem;
+}
+.host-card .filesystem-usage-bar .usage-fill {
+	height: 100%;
+	transition: width 0.5s ease;
+	position: absolute;
+	top: 0;
+	left: 0;
+}
+.host-card .filesystem-usage-bar .usage-fill.usage-status-normal {
+	background: linear-gradient(90deg, var(--status-good-bg-1), var(--status-good-bg-2));
+}
+.host-card .filesystem-usage-bar .usage-fill.usage-status-warning {
+	background: linear-gradient(90deg, var(--status-warning-bg-1), var(--status-warning-bg-2));
+}
+.host-card .filesystem-usage-bar .usage-fill.usage-status-critical {
+	background: linear-gradient(90deg, var(--status-critical-bg-1), var(--status-critical-bg-2));
+}
+
+.host-card .filesystem-usage-text {
+	color: var(--content);
+	text-shadow: 0 0 1px var(--content-bg);
+	position: relative;
+	z-index: 2;
+	text-align: center;
 }
 
 /* ==========================

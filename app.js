@@ -111,6 +111,8 @@ const buildSSHCommand = (target, remoteCommand) => {
         return remoteCommand; // No SSH needed for localhost
     }
     else {
+        // Escape single quotes in the remote command to avoid breaking the SSH command
+        remoteCommand = remoteCommand.replace(/'/g, "'\\''");
         return `ssh -o LogLevel=quiet -o StrictHostKeyChecking=no root@${target} '${remoteCommand}'`;
     }
 };
@@ -132,10 +134,10 @@ async function cmdRunner(target, cmd, extraFields = {}) {
             if (error) {
                 console.error('cmdRunner: Received error:', stderr || error);
                 if (stderr) {
-                    return reject(new Error(stderr));
+                    return reject({error: new Error(stderr), stdout, stderr, extraFields});
                 }
                 else {
-                    return reject(error);
+                    return reject({error, stdout, stderr, extraFields});
                 }
             }
 
@@ -160,7 +162,7 @@ async function updateFilePermissions(target, filename, user = null, group = null
                 return resolve();
             })
             .catch(e => {
-                return reject(e);
+                return reject(e.error);
             });
     });
 }
@@ -323,8 +325,8 @@ async function getServicesStatus(appData, hostData) {
                     services: appServices
                 });
             })
-            .catch(error => {
-                return reject(new Error(`Error retrieving services for application '${guid}' on host '${hostData.host}': ${error.message}`));
+            .catch(e => {
+                return reject(new Error(`Error retrieving services for application '${guid}' on host '${hostData.host}': ${e.error.message}`));
             });
     });
 }
@@ -356,7 +358,7 @@ async function getAllServices() {
                                 let appServices = result.value.services;
                                 for (let svc of Object.values(appServices)) {
                                     // Merge extra fields into service data
-                                    services.push({service: svc, app: result.value.app, host: result.value.host} );
+                                    services.push({service: svc, app: result.value.app.guid, host: result.value.host} );
                                 }
                             }
                         });
@@ -476,6 +478,11 @@ app.get('/monitor', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'monitor.html'));
 });
 
+// File browser page route (with no host selected)
+app.get('/files', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'files_noserver.html'));
+});
+
 // File browser page route
 app.get('/files/:host', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'files.html'));
@@ -551,7 +558,7 @@ app.get('/api/service/:guid/:host/:service/configs', async (req, res) => {
                 .catch(e => {
                     return res.json({
                         success: false,
-                        error: e.message,
+                        error: e.error.message,
                         service: []
                     });
                 });
@@ -585,7 +592,7 @@ app.post('/api/service/:guid/:host/:service/configs', async (req, res) => {
                 .catch(e => {
                     return res.json({
                         success: false,
-                        error: e.message
+                        error: e.error.message
                     });
                 });
         });
@@ -650,7 +657,7 @@ const serviceActionHandler = (action, req, res) => {
                 .catch(e => {
                     return res.json({
                         success: false,
-                        error: e.message
+                        error: e.error.message
                     });
                 });
         })
@@ -670,6 +677,105 @@ app.post('/api/service/stop', async (req, res) => {
 });
 app.post('/api/service/restart', async (req, res) => {
     serviceActionHandler('restart', req, res);
+});
+
+/**
+ * API endpoint to get all enabled hosts and their general information
+ */
+app.get('/api/hosts', async (req, res) => {
+    let promises = [];
+    const hosts = getSSHHosts();
+    hosts.forEach(host => {
+        // In one SSH session, retrieve the device hostname, mounted disks and their free/used space,
+        // and OS name and version.
+        promises.push(
+            cmdRunner(
+                host,
+                'echo "HOSTNAME: $(hostname -f)"; ' +
+                'echo "KERNEL: $(uname -a)"; ' +
+                'echo "OS_INFO:"; ' +
+                'lsb_release -a; ' +
+                'echo "DISK_INFO:"; ' +
+                'df --output=source,fstype,used,avail,target -x tmpfs -x devtmpfs -x squashfs -x efivarfs',
+                { host: host }
+            )
+        );
+    });
+
+    Promise.allSettled(promises)
+        .then(results => {
+            let ret = {};
+            results.forEach(result => {
+
+                console.log(result);
+
+                let hostInfo = {
+                    connected: false,
+                    hostname: '',
+                    os: {
+                        name: '',
+                        title: '',
+                        version: '',
+                    },
+                    disks: []
+                },
+                    host = null;
+
+                if (result.status === 'fulfilled') {
+                    const lines = result.value.stdout.split('\n');
+                    let group = null;
+
+                    hostInfo.connected = true;
+                    host = result.value.extraFields.host;
+                    lines.forEach(line => {
+                        if (line.startsWith('HOSTNAME:')) {
+                            hostInfo.hostname = line.replace('HOSTNAME:', '').trim();
+                            group = null;
+                        }
+                        else if (line === 'DISK_INFO:') {
+                            group = 'disks';
+                        }
+                        else if (line === 'OS_INFO:') {
+                            group = 'os';
+                        }
+                        else if (group === 'disks' && !line.startsWith('Filesystem')) {
+                            const parts = line.trim().split(/\s+/);
+                            if (parts.length === 5) {
+                                hostInfo.disks.push({
+                                    filesystem: parts[0],
+                                    fstype: parts[1],
+                                    used: parseInt(parts[2]) * 1024,
+                                    avail: parseInt(parts[3]) * 1024,
+                                    size: (parseInt(parts[2]) + parseInt(parts[3])) * 1024,
+                                    mountpoint: parts[4]
+                                });
+                            }
+                        }
+                        else if (group === 'os' && line.startsWith('Description:')) {
+                            hostInfo.os.title = line.replace('Description:', '').trim();
+                        }
+                        else if (group === 'os' && line.startsWith('Release:')) {
+                            hostInfo.os.version = line.replace('Release:', '').trim();
+                        }
+                        else if (group === 'os' && line.startsWith('Distributor ID:')) {
+                            hostInfo.os.name = line.replace('Distributor ID:', '').trim().toLowerCase();
+                        }
+                    });
+                }
+                else {
+                    host = result.reason.extraFields.host;
+                }
+
+                if (host) {
+                    ret[host] = hostInfo;
+                }
+            });
+
+            return res.json({
+                success: true,
+                hosts: ret
+            });
+        });
 });
 
 app.get('/service-config', async (req, res) => {
@@ -696,7 +802,7 @@ app.get('/service-config', async (req, res) => {
                 .catch(e => {
                     return res.json({
                         success: false,
-                        error: e.message
+                        error: e.error.message
                     });
                 });
         })
@@ -895,7 +1001,7 @@ app.get('/api/files/:host', (req, res) => {
         .catch(e => {
             return res.json({
                 success: false,
-                error: e.message
+                error: e.error.message
             });
         });
 });
@@ -983,7 +1089,7 @@ app.get('/api/file/:host', (req, res) => {
         .catch(e => {
             return res.json({
                 success: false,
-                error: e.message
+                error: e.error.message
             });
         });
 });
@@ -992,35 +1098,63 @@ app.get('/api/file/:host', (req, res) => {
  * Save file contents to a given path on the target host
  */
 app.post('/api/file/:host', (req, res) => {
-    const { path: filePath, content } = req.body;
-    const host = req.params.host;
+    const params = req.body,
+        host = req.params.host;
 
-    if (!getSSHHosts().includes(host)) {
+    let path = params.path || null,
+        content = params.content || null,
+        name = params.name || null;
+
+    // Sanity checks
+    try {
+        if (!getSSHHosts().includes(host)) {
+            throw new Error('Requested host is not in the configured HOSTS list');
+        }
+
+        if (!path) {
+            throw new Error('Please enter a file path');
+        }
+
+        if (name) {
+            // Allow the user to submit a path + name separately so we can validate the name
+            ['"', "'", '/', '\\', '?', '%', '*', ':', '|', '<', '>'].forEach(char => {
+                if (name.includes(char)) {
+                    throw new Error(`The file name cannot contain the following characters: " ' / \\ ? % * : | < >`);
+                }
+            });
+        }
+
+        ['"', "'", '\\', '?', '%', '*', ':', '|', '<', '>'].forEach(char => {
+            if (path.includes(char)) {
+                throw new Error(`The file path cannot contain the following characters: " ' \\ ? % * : | < >`);
+            }
+        });
+    }
+    catch (e) {
         return res.json({
             success: false,
-            error: 'Requested host is not in the configured HOSTS list'
+            error: e.message
         });
     }
 
-    if (!filePath) {
-        return res.json({
-            success: false,
-            error: 'File path is required'
-        });
+    if (name) {
+        // If name and path are requested separately, combine them to perform file operations.
+        path = path.replace(/\/+$/,'') + '/' + name;
     }
+
 
     if (content) {
         // Content was requested, save to a local /tmp file to transfer to the target server
-        console.log('Saving file:', filePath);
+        console.log('Saving file:', path);
 
         // Create a temporary file on the server with the content and then move it
         const tempFile = `/tmp/warlock_edit_${Date.now()}.tmp`;
         fs.writeFileSync(tempFile, content, 'utf8');
 
         // Push the temporary file to the target device
-        filePushRunner(host, tempFile, filePath)
+        filePushRunner(host, tempFile, path)
             .then(() => {
-                console.log('File saved successfully:', filePath);
+                console.log('File saved successfully:', path);
                 res.json({
                     success: true,
                     message: 'File saved successfully'
@@ -1040,11 +1174,11 @@ app.post('/api/file/:host', (req, res) => {
     }
     else {
         // No content supplied, that's fine!  We can still create an empty file.
-        cmdRunner(host, `touch "${filePath}"`)
+        cmdRunner(host, `touch "${path}"`)
             .then(() => {
-                console.debug('File created successfully:', filePath);
+                console.debug('File created successfully:', path);
                 // Update file permissions to try to keep them consistent
-                updateFilePermissions(host, filePath)
+                updateFilePermissions(host, path)
                     .then(() => {
                         res.json({
                             success: true,
@@ -1063,7 +1197,7 @@ app.post('/api/file/:host', (req, res) => {
                 console.error('Create file error:', e);
                 return res.json({
                     success: false,
-                    error: `Cannot create file: ${e.message}`
+                    error: `Cannot create file: ${e.error.message}`
                 });
             });
     }

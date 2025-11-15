@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Warlock - Server Management</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <title>Warlock - File Manager</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/frontend.css">
     <link rel="stylesheet" href="/themes.css">
@@ -19,25 +19,25 @@
                 <div class="content-header-inner">
                     <h2>
                         <i class="fas fa-server"></i>
-                        Fleet Services
+                        Fleet Files
                     </h2>
-                    <p>View all available game server services</p>
+                    <p>View files on your fleet of servers</p>
                 </div>
             </div>
-            
+
             <div class="content-body">
 
-                <!-- Applications List -->
-                <div id="applicationsContainer">
+                <!-- Hosts List -->
+                <div id="hostsContainer">
                     <h3>
                         <i class="fas fa-th-large"></i>
-                        Installed Applications
+                        Available Servers
                     </h3>
-                    <div id="applicationsList" style="">
-                        <!-- Applications will be inserted here -->
+                    <div id="hostsList">
+                        <!-- Servers will be inserted here -->
                         <div style="grid-column: 1 / -1;">
                             <i class="fas fa-spinner fa-spin" style="font-size: 2rem; margin-bottom: 1rem; display: block;"></i>
-                            <p>Loading applications...</p>
+                            <p>Loading hosts...</p>
                         </div>
                     </div>
                 </div>
@@ -49,25 +49,12 @@
         </main>
     </div>
 
-    <a href="#" data-theme="red" class="theme-changer">[ RED ]</a>
-    <a href="#" data-theme="default" class="theme-changer">[ DEFAULT ]</a>
 
     <script>
-        document.querySelectorAll('.theme-changer').forEach(link => {
-            link.addEventListener('click', (e) => {
-                e.preventDefault();
-                const selectedTheme = link.getAttribute('data-theme');
-                document.body.className = document.body.className.replace(/theme-\w+/g, '');
-                document.body.classList.add('theme-' + selectedTheme);
-                localStorage.setItem('theme', selectedTheme);
-            });
-        });
-
         // @todo Implement this in settings
         let theme = localStorage.getItem("theme") || 'default';
         document.body.classList.add('theme-' + theme);
     </script>
-
-    <script src="index.js"></script>
+    <script src="/files_noserver.js"></script>
 </body>
 </html>

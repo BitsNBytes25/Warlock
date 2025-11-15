@@ -1,5 +1,5 @@
 - guid: aad94a15-983d-4b35-87ab-8659371ef4e6
-  title: ARK Survival Ascended Dedicated Server
+  title: ARK Survival Ascended
   source: github
   repo: cdp1337/ARKSurvivalAscended-Linux
   installer: dist/server-install-debian12.sh
@@ -8,7 +8,7 @@
   icon: https://files.eval.bz/warlock/ark-128x128.png
   thumbnail: https://files.eval.bz/warlock/ark_460x215.jpg
 - guid: 6ee9bb12-0e21-4ca0-a2f2-75fdeb9af718
-  title: VEIN Dedicated Server
+  title: VEIN
   source: github
   repo: BitsNBytes25/VEIN-Dedicated-Server
   installer: dist/installer.sh
