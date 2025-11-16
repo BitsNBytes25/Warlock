@@ -88,17 +88,19 @@
                         <!-- Search Bar (shown when viewing/editing) -->
                         <div id="viewerSearchBar" class="search-bar" style="display: none; align-items: center; gap: 0.5rem;">
                             <input type="text" id="viewerSearch" class="search-input" placeholder="Search in file..." style="width: 200px; padding: 0.4rem 0.8rem; font-size: 0.85rem;">
-                            <button id="viewerSearchPrev" class="btn-editor" style="padding: 0.4rem 0.8rem;">
-                                <i class="fas fa-chevron-up"></i>
-                            </button>
-                            <button id="viewerSearchNext" class="btn-editor" style="padding: 0.4rem 0.8rem;">
-                                <i class="fas fa-chevron-down"></i>
-                            </button>
+                            <div class="button-group">
+                                <button id="viewerSearchPrev" class="btn-editor" style="padding: 0.4rem 0.8rem;">
+                                    <i class="fas fa-chevron-up"></i>
+                                </button>
+                                <button id="viewerSearchNext" class="btn-editor" style="padding: 0.4rem 0.8rem;">
+                                    <i class="fas fa-chevron-down"></i>
+                                </button>
+                            </div>
                             <span id="viewerSearchCount" style="font-size: 0.85rem; color: #94a3b8;"></span>
                         </div>
                         <!-- Action Buttons -->
                         <div id="viewerActions" class="action-buttons" style="display: none; gap: 0.5rem;">
-                            <button id="saveFileBtn" class="btn-nav btn-action">
+                            <button id="saveFileBtn" class="action-save">
                                 <i class="fas fa-save"></i>
                                 Save
                             </button>

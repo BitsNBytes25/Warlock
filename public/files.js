@@ -517,16 +517,18 @@ function editFile(fileData) {
 	console.log(fileData);
 	currentEditFile = { path: fileData.path, name: fileData.name };
 
-	const fileViewerCard = document.querySelector('.file-viewer-card');
-	const viewerTitle = document.getElementById('viewerTitle');
-	const viewerSearchBar = document.getElementById('viewerSearchBar');
-	const viewerActions = document.getElementById('viewerActions');
-	const viewerEmptyState = document.getElementById('viewerEmptyState');
-	const filePreviewContent = document.getElementById('filePreviewContent');
-	const fileEditorContent = document.getElementById('fileEditorContent');
-	const editorTextarea = document.getElementById('editorTextarea');
-	const editorInfo = document.getElementById('editorInfo');
-	const saveFileBtn = document.getElementById('saveFileBtn');
+	const fileViewerCard = document.querySelector('.file-viewer-card'),
+		viewerTitle = document.getElementById('viewerTitle'),
+		viewerSearchBar = document.getElementById('viewerSearchBar'),
+		viewerActions = document.getElementById('viewerActions'),
+		viewerEmptyState = document.getElementById('viewerEmptyState'),
+		filePreviewContent = document.getElementById('filePreviewContent'),
+		fileEditorContent = document.getElementById('fileEditorContent'),
+		editorTextarea = document.getElementById('editorTextarea'),
+		editorInfo = document.getElementById('editorInfo'),
+		saveFileBtn = document.getElementById('saveFileBtn'),
+		viewerSearchPrev = document.getElementById('viewerSearchPrev'),
+		viewerSearchNext = document.getElementById('viewerSearchNext');
 
 	// Hide empty state and preview, show editor
 	hideLoading();
@@ -535,13 +537,15 @@ function editFile(fileData) {
 	fileEditorContent.style.display = 'flex';
 
 	// Update title and show search bar and actions
-	viewerTitle.innerHTML = `<i class="fas fa-edit"></i> Editing: ${currentEditFile.name}`;
+	viewerTitle.innerHTML = `<i class="fas fa-edit"></i> ${currentEditFile.name}`;
 	viewerSearchBar.style.display = 'flex';
 	viewerActions.style.display = 'flex';
 
 	editorTextarea.value = fileData.content;
 	editorTextarea.disabled = false;
 	saveFileBtn.disabled = false;
+	viewerSearchPrev.classList.add('disabled');
+	viewerSearchNext.classList.add('disabled');
 	editorInfo.textContent = 'Ready to edit';
 	updateEditorStats();
 }
@@ -1062,16 +1066,17 @@ async function startUpload() {
 let viewerMatches = [];
 let viewerCurrentMatch = -1;
 
-document.getElementById('viewerSearch').addEventListener('input', (e) => {
-	const searchTerm = e.target.value;
-	const previewContent = document.getElementById('previewContent');
-	const editorTextarea = document.getElementById('editorTextarea');
-	const filePreviewContent = document.getElementById('filePreviewContent');
-	const fileEditorContent = document.getElementById('fileEditorContent');
-
-	// Determine if we're searching in preview or editor
-	const isPreviewMode = filePreviewContent.style.display !== 'none';
-	const content = isPreviewMode ? previewContent : editorTextarea;
+function performViewerSearchEvent(e) {
+	const searchTerm = e.target.value,
+		previewContent = document.getElementById('previewContent'),
+		editorTextarea = document.getElementById('editorTextarea'),
+		filePreviewContent = document.getElementById('filePreviewContent'),
+		fileEditorContent = document.getElementById('fileEditorContent'),
+		// Determine if we're searching in preview or editor
+		isPreviewMode = filePreviewContent.style.display !== 'none',
+		fileSearchNext = document.getElementById('viewerSearchNext'),
+		fileSearchPrev = document.getElementById('viewerSearchPrev'),
+		content = isPreviewMode ? previewContent : editorTextarea;
 
 	if (!searchTerm) {
 		// Clear highlights
@@ -1079,6 +1084,8 @@ document.getElementById('viewerSearch').addEventListener('input', (e) => {
 			previewContent.innerHTML = previewContent.dataset.originalContent;
 		}
 		document.getElementById('viewerSearchCount').textContent = '';
+		fileSearchNext.classList.add('disabled');
+		fileSearchPrev.classList.add('disabled');
 		viewerMatches = [];
 		viewerCurrentMatch = -1;
 		return;
@@ -1114,6 +1121,8 @@ document.getElementById('viewerSearch').addEventListener('input', (e) => {
 		parts.push(textContent.substring(lastIndex));
 
 		previewContent.innerHTML = parts.join('');
+		fileSearchNext.classList.remove('disabled');
+		fileSearchPrev.classList.remove('disabled');
 		viewerCurrentMatch = 0;
 		updateViewerSearchHighlight();
 	} else {
@@ -1129,7 +1138,20 @@ document.getElementById('viewerSearch').addEventListener('input', (e) => {
 		}
 
 		viewerCurrentMatch = 0;
+		fileSearchNext.classList.remove('disabled');
+		fileSearchPrev.classList.remove('disabled');
 		updateViewerSearchHighlight();
+	}
+}
+
+document.getElementById('viewerSearch').addEventListener('blur', performViewerSearchEvent);
+document.getElementById('viewerSearch').addEventListener('keyup', e => {
+	if (e.key === 'Enter') {
+		performViewerSearchEvent(e);
+	}
+	else if (e.key === 'Escape') {
+		e.target.value = '';
+		performViewerSearchEvent(e);
 	}
 });
 
