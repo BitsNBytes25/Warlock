@@ -966,16 +966,17 @@ app.get('/api/files/:host', (req, res) => {
     // Use ls with detailed output to get file information
     // -la shows all details including symlinks
     //let cmd = `ls -la "${requestedPath}" | tail -n +2`;
-    let cmd = `P="${requestedPath}";`
-    cmd += 'ls -1 "$P" | while read F; do ' +
-        '[ -h "$P/$F" ] && FP="$(readlink "$P/$F")" || FP="$P/$F";' +
+    let cmd = `P="${requestedPath}"; ` +
+        'ls -1 "$P" | while read F; do ' +
+        'P="${P%/}"; ' +
+        '[ -h "$P/$F" ] && FP="$(readlink -f "$P/$F")" || FP="$P/$F";' +
         '[ -h "$P/$F" ] && SL="true" || SL="false";' +
-        '[ -d "$FP" ] && S="null" || S="$(stat -L -c%s "$FP")";' +
-        'M="$(file --mime-type "$FP" | sed "s#.*: ##")";' +
-        'PERMS="$(stat -c%a "$FP")";' +
+        '[ -f "$FP" ] && [ -r "$FP" ] && S="$(stat -L -c%s "$FP")" || S="null";' +
+        '[ -r "$FP" ] && M="$(file --mime-type "$FP" | sed "s#.*: ##")" || M="";' +
+        '[ -r "$FP" ] && PERMS="$(stat -c%a "$FP")" || PERMS="null";' +
         'U="$(stat -c%U "$FP")";' +
         'G="$(stat -c%G "$FP")";' +
-        'MTIME="$(stat -c%Y "$FP")";' +
+        '[ -r "$FP" ] && MTIME="$(stat -c%Y "$FP")" || MTIME="null";' +
         `echo "{\\"name\\":\\"$F\\",\\"mimetype\\":\\"$M\\",\\"path\\":\\"$FP\\",\\"size\\":$S,\\"symlink\\":$SL,\\"permissions\\":$PERMS,\\"user\\":\\"$U\\",\\"group\\":\\"$G\\",\\"modified\\":$MTIME},";` +
         'done;';
     cmdRunner(host, cmd)

@@ -644,6 +644,12 @@ button.action-cancel:hover {
 	align-items: center;
 	margin: 0 0 1.25rem;
 }
+.host-card .filesystem-row-header {
+	display: flex;
+	align-content: space-between;
+	align-items: center;
+	margin: 0 0 0.5rem;
+}
 .application-card .app-install .host-name,
 .host-card .filesystem-row-header .filesystem-path,
 .host-card .app-install .app-name {
@@ -675,12 +681,14 @@ button.action-cancel:hover {
 .host-card .host-icon {
 	width: 48px;
 	height: 48px;
-	background: linear-gradient(135deg, var(--primary) 0%, #0066cc 100%);
 	border-radius: 10px;
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	box-shadow: 0 4px 12px rgba(0, 150, 255, 0.3);
+}
+.application-card .app-icon {
+	background-color: var(--table-header-bg-2);
+	box-shadow: 0 4px 12px var(--table-header-bg-1);
 }
 
 .application-card .app-icon img,
@@ -688,6 +696,11 @@ button.action-cancel:hover {
 	max-width: 100%;
 	max-height: 100%;
 	border-radius: 8px;
+}
+
+.application-card .app-icon i,
+.host-card .host-icon i {
+	color: var(--table-header);
 }
 
 .application-card .host-actions button {
@@ -701,22 +714,39 @@ button.action-cancel:hover {
 	transition: all 0.3s;
 }
 
+.host-card .filesystem,
+.host-card .app-install {
+	border-radius: 8px;
+	transition: all 0.3s ease;
+	border: 1px solid transparent;
+	margin: 0.5em -0.5em;
+	padding: 0.5em;
+	cursor: pointer;
+}
+
+.host-card .filesystem:hover,
+.host-card .app-install:hover {
+	background: var(--content-hover-bg);
+	border: 1px solid var(--content-hover-border);
+	color: var(--content-hover);
+	text-shadow: 0 0 8px rgba(0, 150, 255, 0.3);
+}
+
 .host-card .filesystem-usage-bar {
 	width: 100%;
 	height: 1.4rem;
 	background: rgba(189, 189, 189, 0.4);
 	border-radius: 6px;
 	overflow: hidden;
-	margin-top: 0.5rem;
 	position: relative;
-	margin-bottom: 1.5rem;
 }
 .host-card .filesystem-usage-bar .usage-fill {
 	height: 100%;
 	transition: width 0.5s ease;
 	position: absolute;
 	top: 0;
-	left: 0;
+	left: -4px;
+	transform: skewX(-30deg);
 }
 .host-card .filesystem-usage-bar .usage-fill.usage-status-normal {
 	background: linear-gradient(90deg, var(--status-good-bg-1), var(--status-good-bg-2));

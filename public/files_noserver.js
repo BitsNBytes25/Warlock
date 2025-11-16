@@ -62,14 +62,9 @@ function displayHostsWithApplications(hosts, applications) {
 					usageStatus = 'normal'
 				}
 
-				html += `<div class="filesystem">
+				html += `<div class="filesystem link-control" data-href="/files/${host}?path=${fs.mountpoint}" title="Browse ${fs.mountpoint}">
 					<div class="filesystem-row-header">
 						<div class="filesystem-path" title="${fs.mountpoint}">${fs.mountpoint}</div>
-						<div class="filesystem-actions">
-							<button class="link-control action-browse" data-href="/files/${host}?path=${fs.mountpoint}" title="Browse ${fs.mountpoint}">
-								<i class="fas fa-folder"></i>
-							</button>
-						</div>
 					</div>
 					
 					<div class="filesystem-usage-bar">
@@ -86,13 +81,9 @@ function displayHostsWithApplications(hosts, applications) {
 		for (const [guid, app] of Object.entries(applications)) {
 			let isInstalled = app.hosts.some(h => h.host === host);
 			if (isInstalled) {
-				html += `<div class="app-install">
+				let gamePath = app.hosts.find(h => h.host === host).path;
+				html += `<div class="app-install link-control" data-href="/files/${host}?path=${gamePath}" title="Browse Files">
 					<span class="app-name">${renderAppIcon(guid)} ${app.title || guid}</span>
-					<span class="app-actions">
-						<button class="link-control action-browse" data-href="/files/${host}?path=${app.hosts.find(h => h.host === host).path}" title="Browse Files">
-							<i class="fas fa-folder"></i>
-						</button>
-					</span>
 				</div>`;
 			}
 		}

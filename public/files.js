@@ -347,7 +347,7 @@ async function loadDirectory(path) {
 				displayFiles(data.files);
 			}
 			else {
-				showError(`Failed to load directory: ${result.error}`);
+				showError(`Failed to load directory: ${data.error}`);
 			}
 		})
 		.finally(() => {
@@ -1283,7 +1283,7 @@ async function loadApplicationPaths() {
 				app.hosts.forEach(hostData => {
 					if (hostData.host === host) {
 						// Extract the last folder name from the path
-						const icon = renderAppIcon(app);
+						const icon = renderAppIcon(guid);
 
 						const quickPathItem = document.createElement('div');
 						quickPathItem.className = 'quick-path-item';
