@@ -12,19 +12,20 @@ import { cmdRunner } from "./cmd_runner.mjs";
  * or copy locally if target is localhost
  *
  * @param {string} target Target hostname or IP address
- * @param {string} src Local source file, (usually within /tmp)
- * @param {string} dest Fully resolved pathname of target file
+ * @param {string} localFileName Local source file, (usually within /tmp)
+ * @param {string} remoteFileName Fully resolved pathname of target file
+ * @param {boolean} pullFile PULL file from remote server instead of pushing
  * @param extraFields {*}
  * @returns {Promise<{stdout: string, stderr: string, extraFields: *}>|Promise<{error: Error, stdout: string, stderr: string, extraFields: *}>}
  */
-export async function filePushRunner(target, src, dest, extraFields = {}) {
+export async function filePushRunner(target, localFileName, remoteFileName, pullFile = false, extraFields = {}) {
 	return new Promise((resolve, reject) => {
 		// Confirm the host exists in the database first
 		Host.count({where: {ip: target}})
 			.then(count => {
 				let sshCommand = null,
 					cmdOptions = {timeout: 120000, maxBuffer: 1024 * 1024 * 20},
-					permissionCmd = `chown $(stat -c%U "$(dirname "${dest}")"):$(stat -c%U "$(dirname "${dest}")") "${dest}"`;
+					permissionCmd = `chown $(stat -c%U "$(dirname "${remoteFileName}")"):$(stat -c%U "$(dirname "${remoteFileName}")") "${remoteFileName}"`;
 
 				if (count === 0) {
 					return reject({
@@ -36,11 +37,22 @@ export async function filePushRunner(target, src, dest, extraFields = {}) {
 				}
 
 				if (target === 'localhost' || target === '127.0.0.1') {
-					sshCommand = `cp "${src}" "${dest}"`;
-					logger.debug('filePushRunner: Copying local file', dest);
+					if (pullFile) {
+						sshCommand = `cp "${remoteFileName}" "${localFileName}"`;
+					}
+					else {
+						sshCommand = `cp "${localFileName}" "${remoteFileName}"`;
+					}
+					logger.debug('filePushRunner: Copying local file', remoteFileName);
 				} else {
-					sshCommand = `scp -o LogLevel=quiet -o StrictHostKeyChecking=no "${src}" root@${target}:"${dest}"`;
-					logger.debug('filePushRunner: Pushing file to ' + target, dest);
+					if (pullFile) {
+						sshCommand = `scp -o LogLevel=quiet -o StrictHostKeyChecking=no root@${target}:"${remoteFileName}" "${localFileName}"`;
+						logger.debug('filePushRunner: Pulling file from ' + target, remoteFileName);
+					}
+					else {
+						sshCommand = `scp -o LogLevel=quiet -o StrictHostKeyChecking=no "${localFileName}" root@${target}:"${remoteFileName}"`;
+						logger.debug('filePushRunner: Pushing file to ' + target, remoteFileName);
+					}
 				}
 
 				exec(sshCommand, cmdOptions, (error, stdout, stderr) => {
@@ -54,20 +66,25 @@ export async function filePushRunner(target, src, dest, extraFields = {}) {
 					}
 
 					logger.debug('filePushRunner: file transfer completed');
-					// Now that the file is uploaded, ssh to the host to change the ownership to the correct user.
-					// We have no way of knowing exactly which user should have access,
-					// but we can guess based on the parent directory.
-					cmdRunner(target, permissionCmd)
-						.then(dat => {
-							return resolve({
-								stdout: stdout + dat.stdout,
-								stderr: stderr + dat.stderr,
-								extraFields
+					if (pullFile) {
+						return resolve({stdout, stderr, extraFields});
+					}
+					else {
+						// Now that the file is uploaded, ssh to the host to change the ownership to the correct user.
+						// We have no way of knowing exactly which user should have access,
+						// but we can guess based on the parent directory.
+						cmdRunner(target, permissionCmd)
+							.then(dat => {
+								return resolve({
+									stdout: stdout + dat.stdout,
+									stderr: stderr + dat.stderr,
+									extraFields
+								});
+							})
+							.catch(e => {
+								return reject(e);
 							});
-						})
-						.catch(e => {
-							return reject(e);
-						});
+					}
 				});
 			});
 	});

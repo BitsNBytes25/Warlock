@@ -127,7 +127,14 @@
                 
                 <!-- File Preview (for viewing) -->
                 <div id="filePreviewContent" style="display: none; flex: 1; overflow: auto; padding: 1.5rem; background: rgba(0, 0, 0, 0.3);">
-                    <pre id="previewContent" style="margin: 0; color: #e2e8f0; font-family: 'Monaco', 'Menlo', monospace; font-size: 0.9rem; line-height: 1.6; white-space: pre-wrap; word-wrap: break-word;"></pre>
+                    <div id="previewContent"></div>
+
+                    <div id="viewerActions" class="action-buttons">
+                        <button id="downloadFileBtn" class="action-download">
+                            <i class="fas fa-download"></i>
+                            Download
+                        </button>
+                    </div>
                 </div>
                 
                 <!-- File Editor (for editing) -->

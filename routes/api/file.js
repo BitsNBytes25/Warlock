@@ -13,6 +13,11 @@ const router = express.Router();
 router.get('/:host', validate_session, (req, res) => {
 	const filePath = req.query.path || null,
 		host = req.params.host;
+	let forceDownload = req.query.download || false;
+
+	if (forceDownload === 'true' || forceDownload === '1') {
+		forceDownload = true;
+	}
 
 	if (!filePath) {
 		return res.json({
@@ -30,69 +35,84 @@ router.get('/:host', validate_session, (req, res) => {
 			});
 		}
 
-		// First check if it's a text file and get its size
-		let cmd = `[ -h "${filePath}" ] && F="$(readlink "${filePath}")" || F="${filePath}"; file --mime-type "$F" && stat -c%s "$F" && echo "$F"`;
-		cmdRunner(host, cmd).then(result => {
-			let lines = result.stdout.trim().split('\n'),
-				mimetype = lines[0] || '',
-				encoding = null,
-				cmd = null,
-				filesize = parseInt(lines[1]) || 0,
-				filename = lines[2] || '';
+		if (forceDownload) {
+			// Create a temporary file to download the file to
+			const tempFile = `/tmp/warlock_download_${Date.now()}_${path.basename(filePath)}`;
+			filePushRunner(host, tempFile, filePath, true).then(() => {
+				return res.download(tempFile, path.basename(filePath), (err) => {
+					// Remove the temporary file after download
+					fs.unlinkSync(tempFile);
+					if (err) {
+						logger.error('File download error:', err);
+					}
+				});
+			});
+		}
+		else {
+			// First check if it's a text file and get its size
+			let cmd = `[ -h "${filePath}" ] && F="$(readlink -f "${filePath}")" || F="${filePath}"; file --mime-type "$F" && stat -c%s "$F" && echo "$F"`;
+			cmdRunner(host, cmd).then(result => {
+				let lines = result.stdout.trim().split('\n'),
+					mimetype = lines[0] || '',
+					encoding = null,
+					cmd = null,
+					filesize = parseInt(lines[1]) || 0,
+					filename = lines[2] || '';
 
-			if (mimetype) {
-				mimetype = mimetype.split(':').pop().trim();
-			}
-
-			if (filesize <= 1024 * 1024 * 10) {
-				if (mimetype.startsWith('text/') || mimetype === 'application/json' || mimetype === 'application/xml') {
-					cmd = `cat "${filePath}"`;
-					encoding = 'raw';
-				} else if (mimetype.startsWith('image/') || mimetype.startsWith('video/')) {
-					// For images/videos, return base64 encoding
-					cmd = `base64 "${filePath}"`;
-					encoding = 'base64';
+				if (mimetype) {
+					mimetype = mimetype.split(':').pop().trim();
 				}
-			}
 
-			// Read the file content
-			if (cmd) {
-				cmdRunner(host, cmd).then(result => {
+				if (filesize <= 1024 * 1024 * 10) {
+					if (mimetype.startsWith('text/') || mimetype === 'application/json' || mimetype === 'application/xml') {
+						cmd = `cat "${filePath}"`;
+						encoding = 'raw';
+					} else if (mimetype.startsWith('image/') || mimetype.startsWith('video/')) {
+						// For images/videos, return base64 encoding
+						cmd = `base64 "${filePath}"`;
+						encoding = 'base64';
+					}
+				}
+
+				// Read the file content
+				if (cmd) {
+					cmdRunner(host, cmd).then(result => {
+						return res.json({
+							success: true,
+							content: result.stdout,
+							encoding: encoding,
+							mimetype: mimetype,
+							size: filesize,
+							path: filename,
+							name: path.basename(filePath),
+						});
+					})
+						.catch(e => {
+							return res.json({
+								success: false,
+								error: 'Cannot read file content'
+							});
+						});
+				}
+				else {
 					return res.json({
 						success: true,
-						content: result.stdout,
+						content: null,
 						encoding: encoding,
 						mimetype: mimetype,
 						size: filesize,
 						path: filename,
 						name: path.basename(filePath),
-					});
-				})
-					.catch(e => {
-						return res.json({
-							success: false,
-							error: 'Cannot read file content'
-						});
-					});
-			}
-			else {
-				return res.json({
-					success: true,
-					content: null,
-					encoding: encoding,
-					mimetype: mimetype,
-					size: filesize,
-					path: filename,
-					name: path.basename(filePath),
-				})
-			}
-		})
+					})
+				}
+			})
 			.catch(e => {
 				return res.json({
 					success: false,
 					error: e.error.message
 				});
 			});
+		}
 	});
 });
 

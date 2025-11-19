@@ -437,13 +437,13 @@ async function openFile(filePath, fileName) {
 			console.debug(result);
 
 			if (result.success) {
-				if (result.encoding === 'raw' && result.content) {
+				if (result.encoding === 'raw') {
 					editFile(result);
 				}
 				else if (result.mimetype === 'inode/directory') {
 					loadDirectory(filePath);
 				}
-				else if (result.content) {
+				else {
 					previewFile(result);
 				}
 			}
@@ -467,12 +467,14 @@ function previewFile(fileData) {
 	hideLoading();
 	viewerEmptyState.style.display = 'none';
 	fileEditorContent.style.display = 'none';
-	filePreviewContent.style.display = 'flex';
+	filePreviewContent.style.display = 'block';
 
 	// Update title and show search bar (hide actions for preview)
 	viewerTitle.innerHTML = `<i class="fas fa-file"></i> ${fileData.name}`;
-	viewerSearchBar.style.display = 'flex';
+	viewerSearchBar.style.display = 'none';
 	viewerActions.style.display = 'none';
+
+	document.getElementById('downloadFileBtn').dataset.path = fileData.path;
 
 	if (fileData.encoding === 'base64' && fileData.mimetype.startsWith('image/')) {
 		const imgSrc = `data:${fileData.mimetype};base64,${fileData.content}`;
@@ -482,11 +484,10 @@ function previewFile(fileData) {
 					 alt="${fileData.name}" 
 					 style="max-width: 100%; max-height: 100%; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);" />
 				<div style="margin-top: 1rem; color: #94a3b8; font-size: 0.9rem;">
-					${fileData.name} - ${(fileData.size / 1024).toFixed(1)} KB
+					${fileData.name} - ${formatFileSize(fileData.size)}
 				</div>
 			</div>
 		`;
-		viewerSearchBar.style.display = 'none'; // Hide search for images
 	}
 	else if (fileData.encoding === 'base64' && fileData.mimetype.startsWith('video/')) {
 		const videoSrc = `data:${fileData.mimetype};base64,${fileData.content}`;
@@ -497,13 +498,16 @@ function previewFile(fileData) {
 					Your browser does not support the video tag.
 				</video>
 				<div style="margin-top: 1rem; color: #94a3b8; font-size: 0.9rem;">
-					${fileData.name} - ${(fileData.size / 1024 / 1024).toFixed(2)} MB
+					${fileData.name} - ${formatFileSize(fileData.size)}
 				</div>
 			</div>
 		`;
 	}
 	else {
-		console.log(fileData);
+		previewContent.innerHTML = `<div style="text-align: center; padding: 1rem;">
+		${getFileIcon(fileData.mimetype)}<br/>
+		${fileData.name} - ${formatFileSize(fileData.size)}
+</div>`;
 	}
 
 }
@@ -750,6 +754,7 @@ document.getElementById('confirmCreateFile').addEventListener('click', createFil
 document.getElementById('confirmUpload').addEventListener('click', startUpload);
 document.getElementById('confirmDelete').addEventListener('click', performDelete);
 document.getElementById('confirmRename').addEventListener('click', performRename);
+document.getElementById('downloadFileBtn').addEventListener('click', performDownload);
 
 // Modal overlay close
 document.addEventListener('click', (e) => {
@@ -917,6 +922,19 @@ function showRenameModal() {
 		renameNewName.focus();
 		renameNewName.select();
 	}, 100);
+}
+
+function performDownload(e) {
+	e.preventDefault();
+	let filePath = null;
+	if (e.target.dataset.path) {
+		filePath = e.target.dataset.path;
+	}
+	else {
+		filePath = e.target.closest('[data-path]').dataset.path;
+	}
+
+	window.open(`/api/file/${host}?path=${filePath}&download=1`, '_blank');
 }
 
 async function performRename() {

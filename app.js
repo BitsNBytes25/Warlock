@@ -122,6 +122,7 @@ app.use(session({
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
+
 /***************************************************************
  **               Application/UI Endpoints
  ***************************************************************/
@@ -137,21 +138,9 @@ app.use('/service/logs', require('./routes/service_logs'));
 app.use('/service/configure', require('./routes/service_configure'));
 
 
-// Monitor page route (legacy)
-/*app.get('/monitor', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'monitor.html'));
-});*/
-
-// Settings page route (legacy)
-/*app.get('/settings', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'settings.html'));
-});*/
-
-
 /***************************************************************
  **                      API Endpoints
  ***************************************************************/
-
 
 app.use('/api/applications', require('./routes/api/applications'));
 app.use('/api/file', require('./routes/api/file'));
@@ -274,95 +263,6 @@ app.post('/search-files', (req, res) => {
             results: results,
             count: results.length
         });
-    });
-});*/
-
-/*// Configure multer for file uploads
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        cb(null, '/tmp/');
-    },
-    filename: (req, file, cb) => {
-        cb(null, `warlock_upload_${Date.now()}_${file.originalname}`);
-    }
-});
-
-const upload = multer({ 
-    storage: storage,
-    limits: { fileSize: 100 * 1024 * 1024 } // 100MB limit
-});
-
-// Upload file endpoint
-app.post('/upload-file', upload.single('file'), (req, res) => {
-    if (!req.file) {
-        return res.json({
-            success: false,
-            error: 'No file uploaded'
-        });
-    }
-    
-    const targetPath = req.body.path;
-    const targetFile = `${targetPath}/${req.file.originalname}`;
-    const tempFile = req.file.path;
-    
-    logger.info('Uploading file:', req.file.originalname, 'to:', targetFile);
-    
-    // Transfer file to remote server
-    const uploadCommand = `scp "${tempFile}" root@45.26.230.248:"${targetFile}" && rm -f "${tempFile}"`;
-    
-    exec(uploadCommand, (error, stdout, stderr) => {
-        if (error) {
-            logger.error('Upload file error:', error);
-            // Clean up temp file
-            exec(`rm -f "${tempFile}"`, () => {});
-            return res.json({
-                success: false,
-                error: `Cannot upload file: ${error.message}`
-            });
-        }
-        
-        logger.info('File uploaded successfully:', targetFile);
-        res.json({
-            success: true,
-            message: 'File uploaded successfully'
-        });
-    });
-});*/
-
-
-
-/*app.post('/test-connection', (req, res) => {
-    const { SSH_USER, SSH_HOST } = req.body;
-    
-    if (!SSH_USER || !SSH_HOST) {
-        return res.json({
-            success: false,
-            error: 'SSH_USER and SSH_HOST are required'
-        });
-    }
-    
-    const testCommand = `ssh ${SSH_USER}@${SSH_HOST} 'echo "Connection successful"'`;
-    
-    exec(testCommand, { timeout: 10000 }, (error, stdout, stderr) => {
-        if (error) {
-            logger.error('Connection test failed:', error);
-            return res.json({
-                success: false,
-                error: `Connection failed: ${error.message}`
-            });
-        }
-        
-        if (stdout.includes('Connection successful')) {
-            res.json({
-                success: true,
-                message: 'Connection test successful'
-            });
-        } else {
-            res.json({
-                success: false,
-                error: 'Unexpected response from server'
-            });
-        }
     });
 });*/
 
