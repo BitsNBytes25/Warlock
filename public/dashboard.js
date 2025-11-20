@@ -199,25 +199,23 @@ async function loadAllServicesAndStats() {
  */
 function displayApplications(applications) {
 	const applicationsList = document.getElementById('applicationsList');
-
-	if (Object.keys(applications).length === 0) {
-		applicationsList.innerHTML = `
-			<div style="grid-column: 1 / -1; text-align: center; padding: 2rem; color: #666;">
-				<i class="fas fa-inbox" style="font-size: 2rem; margin-bottom: 1rem; display: block; opacity: 0.3;"></i>
-				<p>No applications found in /var/lib/warlock</p>
-			</div>
-		`;
-		return;
-	}
+	let installedApplications = 0;
 
 	let html = '';
 	for (const [guid, app] of Object.entries(applications)) {
 		console.debug(app);
+		// Skip applications which are not installed on any hosts
+		if (!app.hosts || app.hosts.length === 0) {
+			continue;
+		}
+
 		// Extract the last folder name from the path
 		let //pathParts = app.path.split('/').filter(part => part.length > 0),
 			displayName = app.title || guid,
 			icon = renderAppIcon(guid),
 			thumbnail = app.thumbnail || null;
+
+		installedApplications += 1;
 
 		if (thumbnail) {
 			thumbnail = '<img class="app-thumbnail" src="' + thumbnail + '" alt="' + displayName + ' Thumbnail">';
@@ -247,7 +245,7 @@ function displayApplications(applications) {
 						<button class="link-control action-browse" data-href="/files/${host.host}?path=${host.path}" title="Browse Files">
 							<i class="fas fa-folder"></i>
 						</button>
-						<button class="ZZZZ action-remove" data-href="/application/${guid}/manage/${host.host}" title="Uninstall Game">
+						<button class="link-control action-remove" data-href="/application/uninstall/${guid}/${host.host}" title="Uninstall Game">
 							<i class="fas fa-trash-alt"></i>
 						</button>
 					</span>
@@ -255,6 +253,16 @@ function displayApplications(applications) {
 		});
 
 		html += `</div></div>`;
+	}
+
+	if (installedApplications === 0) {
+		applicationsList.innerHTML = `
+			<div style="grid-column: 1 / -1; text-align: center; padding: 2rem; color: #666;">
+				<i class="fas fa-inbox" style="font-size: 2rem; margin-bottom: 1rem; display: block; opacity: 0.3;"></i>
+				<p>No applications found in /var/lib/warlock</p>
+			</div>
+		`;
+		return;
 	}
 
 	applicationsList.innerHTML = html;

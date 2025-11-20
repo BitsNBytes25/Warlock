@@ -114,7 +114,7 @@ function buildOptionsForm(app_guid, host, service, options) {
  */
 window.addEventListener('DOMContentLoaded', () => {
 
-	const [app_guid, host, service] = window.location.pathname.substring(19).split('/'),
+	const {app_guid, host, service} = getPathParams('/service/configure/:app_guid/:host/:service'),
 		configurationContainer = document.getElementById('configurationContainer');
 
 	Promise.all([

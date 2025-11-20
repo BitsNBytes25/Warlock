@@ -375,6 +375,7 @@ pre.terminal {
 	border-radius: 0.5rem;
 	padding: 1rem;
 	overflow: scroll;
+	max-height: 50vh;
 }
 pre.terminal code {
 	white-space: pre-line;

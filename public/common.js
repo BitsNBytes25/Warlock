@@ -6,6 +6,7 @@
  * @property {string} guid Globally unique identifier of the application.
  * @property {string} icon Icon URL of the application.
  * @property {string} repo Repository URL fragment of the application.
+ * @property {string} branch Branch name of the application repository, or RELEASE for latest tag released.
  * @property {string} installer Installer URL fragment of the application.
  * @property {string} source Source handler for the application installer.
  * @property {string} thumbnail Thumbnail URL of the application.
@@ -395,4 +396,126 @@ async function loadHost(host) {
 				reject(error);
 			});
 	});
+}
+
+/**
+ * Stream an HTTP request and parse SSE-like events from the response.
+ *
+ * @param {string} url URL to send the request to
+ * @param {string} method HTTP method to use (default: 'POST')
+ * @param {Object} headers HTTP headers to include in the request
+ * @param {*} body Request body to send (default: null)
+ * @param {function} eventHandler Callback function to handle parsed events (event, data)
+ * @returns {Promise<void>}
+ */
+async function stream(url, method = 'POST', headers = {}, body = null, eventHandler = null) {
+	let controller = null;
+	let reader = null;
+
+	controller = new AbortController();
+	const signal = controller.signal;
+
+	const parseSSEBlock = (block) => {
+		// Parse SSE-style block (lines like "data: ..." and optionally "event: ...")
+		const lines = block.split(/\r?\n/);
+		let event = 'message';
+		const dataLines = [];
+		for (const line of lines) {
+			if (line.startsWith('event:')) {
+				event = line.slice(6).trim();
+			} else if (line.startsWith('data:')) {
+				dataLines.push(line.slice(5).trim());
+			}
+		}
+		const data = dataLines.join('\n');
+
+		if (eventHandler) {
+			eventHandler(event, data);
+		}
+	}
+
+	try {
+		const res = await fetch(url, {
+			method: method,
+			headers: headers,
+			body: body,
+			signal
+		});
+
+		if (!res.ok) {
+			const text = await res.text();
+			parseSSEBlock(`event: error\ndata: [HTTP ${res.status}] ${text}`);
+			return;
+		}
+
+		// Stream the response body and parse SSE-like chunks
+		const decoder = new TextDecoder();
+		reader = res.body.getReader();
+		let buffer = '';
+
+		while (true) {
+			if (reader === null) {
+				// Stream completed.
+				break;
+			}
+			const { done, value } = await reader.read();
+			if (done) break;
+			buffer += decoder.decode(value, { stream: true });
+
+			// Process complete blocks separated by blank line(s)
+			let sepIndex;
+			while ((sepIndex = buffer.indexOf('\n\n')) !== -1 || (sepIndex = buffer.indexOf('\r\n\r\n')) !== -1) {
+				// prefer \r\n\r\n detect above, index found already
+				const block = buffer.slice(0, sepIndex);
+				buffer = buffer.slice(sepIndex + (buffer[sepIndex] === '\r' ? 4 : 2)); // remove separator
+				if (block.trim()) parseSSEBlock(block);
+			}
+		}
+
+		// handle any trailing buffer
+		if (buffer.trim()) parseSSEBlock(buffer);
+	} catch (err) {
+		if (err.name === 'AbortError') {
+			parseSSEBlock(`event: info\ndata: [stream aborted]`);
+		} else {
+			parseSSEBlock(`event: error\ndata: [fetch error] ${err.message}`);
+		}
+	} finally {
+		if (reader) {
+			try { reader.cancel(); } catch (e) {}
+			reader = null;
+		}
+		if (controller) {
+			try { controller.abort(); } catch (e) {}
+			controller = null;
+		}
+	}
+}
+
+
+/**
+ * Extract path parameters from a template string.
+ * The behaviour of this is similar to Express.js route parameters.
+ *
+ * @param {string} urlTemplate
+ */
+function getPathParams(urlTemplate) {
+	// urlTemplate will be in the format of /some/path/:param1/:param2
+	// Where the return values will be { param1: value1, param2: value2 }
+	const params = {};
+	const templateParts = urlTemplate.split('/').filter(part => part);
+	const currentPath = window.location.pathname.split('/').filter(part => part);
+
+	if (templateParts.length !== currentPath.length) {
+		return params; // Mismatched lengths, return empty
+	}
+
+	templateParts.forEach((part, index) => {
+		if (part.startsWith(':')) {
+			const paramName = part.slice(1);
+			params[paramName] = decodeURIComponent(currentPath[index]);
+		}
+	});
+
+	return params;
 }

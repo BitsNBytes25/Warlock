@@ -137,6 +137,7 @@ app.use('/host/add', require('./routes/host_add'));
 app.use('/host/delete', require('./routes/host_delete'));
 app.use('/service/logs', require('./routes/service_logs'));
 app.use('/service/configure', require('./routes/service_configure'));
+app.use('/application/uninstall', require('./routes/application_uninstall'));
 
 
 /***************************************************************
@@ -152,6 +153,7 @@ app.use('/api/service', require('./routes/api/service'));
 app.use('/api/service/logs', require('./routes/api/service_logs'));
 app.use('/api/service/control', require('./routes/api/service_control'));
 app.use('/api/service/configs', require('./routes/api/service_configs'));
+app.use('/api/application/uninstall', require('./routes/api/application_uninstall'));
 
 
 /*// Rename file or folder endpoint

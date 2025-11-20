@@ -65,13 +65,6 @@ async function fetchService() {
 		});
 }
 
-// Load navigation component
-fetch('/components/nav')
-	.then(response => response.text())
-	.then(html => {
-		document.getElementById('nav-placeholder').innerHTML = html;
-	})
-	.catch(error => console.error('Error loading navigation:', error));
 
 /**
  * Primary handler to load the application on page load
