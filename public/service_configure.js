@@ -25,16 +25,12 @@ function buildOptionsForm(app_guid, host, service, options) {
 		label.className = 'form-label';
 		label.innerText = option.option;
 
-		// TESTING
-		option.help = 'Some helpful text for this value';
-
 		let help = null;
 		if (option.help) {
-			help = document.createElement('span');
+			help = document.createElement('p');
 			help.className = 'help-text';
 			help.innerText = option.help;
 		}
-
 
 		let input;
 		switch (option.type) {
@@ -100,9 +96,9 @@ function buildOptionsForm(app_guid, host, service, options) {
 				.then(response => response.json())
 				.then(result => {
 					if (result.success) {
-						console.debug(`Configuration option ${option.option} updated successfully.`);
+						showToast('success', `Configuration option ${option.option} updated successfully.`);
 					} else {
-						console.error(`Failed to update configuration option ${option.option}.`);
+						showToast('error', `Failed to update configuration option ${option.option}: ${result.error}`);
 					}
 				});
 		});

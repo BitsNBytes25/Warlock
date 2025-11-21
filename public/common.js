@@ -574,3 +574,67 @@ function parseTerminalCodes(data) {
 
 	return result;
 }
+
+// UI Toast helper: creates bottom-center toasts, newest on top, auto-dismiss and click-to-dismiss
+function showToast(type, message, duration = 4000) {
+	try {
+		const allowed = ['success', 'error', 'warning', 'info'];
+		const t = allowed.includes(type) ? type : 'info';
+
+		let container = document.getElementById('toast-container');
+		if (!container) {
+			container = document.createElement('div');
+			container.id = 'toast-container';
+			document.body.appendChild(container);
+		}
+
+		const toast = document.createElement('div');
+		toast.className = 'toast toast--' + t;
+		toast.setAttribute('role', 'status');
+		toast.setAttribute('aria-live', 'polite');
+		toast.textContent = message;
+
+		// Prepend so newest appears on top
+		if (container.firstChild) container.insertBefore(toast, container.firstChild);
+		else container.appendChild(toast);
+
+		// Trigger show transition
+		requestAnimationFrame(() => {
+			// small delay ensures initial styles applied
+			toast.classList.add('show');
+		});
+
+		let removed = false;
+		const cleanup = () => {
+			if (toast.parentNode) toast.parentNode.removeChild(toast);
+		};
+
+		const removeToast = () => {
+			if (removed) return;
+			removed = true;
+			toast.classList.remove('show');
+			// wait for transition to complete before removing
+			const onEnd = (ev) => {
+				if (ev.propertyName === 'transform' || ev.propertyName === 'opacity') {
+					toast.removeEventListener('transitionend', onEnd);
+					cleanup();
+				}
+			};
+			toast.addEventListener('transitionend', onEnd);
+			// Fallback in case transitionend doesn't fire
+			setTimeout(cleanup, 600);
+		};
+
+		const timer = setTimeout(removeToast, duration);
+
+		// Click to dismiss immediately
+		toast.addEventListener('click', () => {
+			clearTimeout(timer);
+			removeToast();
+		});
+	} catch (err) {
+		// Fail silently; toasts are non-critical
+		console.error('showToast error', err);
+	}
+}
+

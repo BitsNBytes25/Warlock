@@ -28,6 +28,8 @@ window.addEventListener('DOMContentLoaded', () => {
 				uninstallSpinner.style.display = 'inline-block';
 				uninstallIcon.style.display = 'none';
 
+				showToast('info', 'Uninstallation started. Check the terminal output for progress.');
+
 				stream(
 					`/api/application/uninstall/${guid}/${host}`,
 					'POST',
@@ -38,6 +40,13 @@ window.addEventListener('DOMContentLoaded', () => {
 							uninstallSpinner.style.display = 'none';
 							uninstallIcon.style.display = 'inline-block';
 							uninstallButton.classList.remove('disabled');
+
+							if (event === 'done') {
+								showToast('success', 'Uninstallation process completed.');
+							}
+							else {
+								showToast('error', 'Uninstallation process encountered an error. See terminal output for details.');
+							}
 						}
 
 						// Process terminal escape codes present in data

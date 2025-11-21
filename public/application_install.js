@@ -109,7 +109,6 @@ window.addEventListener('DOMContentLoaded', () => {
 					appUrlLabel = `${app.repo} on GitHub`;
 				}
 
-				html += `<h5>${app.title}</h5>`;
 				if (appUrl) {
 					html += `<p><strong>Source:</strong> <a href="${appUrl}" target="_blank" rel="noopener">${appUrlLabel}</a></p>`;
 				}

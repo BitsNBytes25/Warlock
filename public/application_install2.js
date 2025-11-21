@@ -129,6 +129,8 @@ window.addEventListener('DOMContentLoaded', () => {
 					}
 				});
 
+				showToast('info', 'Installation started. See terminal output for progress.');
+
 				terminalOutput.style.display = 'block';
 				stream(
 					`/api/application/install/${guid}/${host}`,
@@ -140,6 +142,13 @@ window.addEventListener('DOMContentLoaded', () => {
 							installSpinner.style.display = 'none';
 							installIcon.style.display = 'inline-block';
 							btnInstall.classList.remove('disabled');
+
+							if (event === 'done') {
+								showToast('success', 'Installation process completed.');
+							}
+							else {
+								showToast('error', 'Installation process encountered an error. See terminal output for details.');
+							}
 						}
 
 						// Process terminal escape codes present in data

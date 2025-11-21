@@ -3,10 +3,9 @@ const { validate_session } = require("../../libs/validate_session.mjs");
 const {cmdStreamer} = require("../../libs/cmd_streamer.mjs");
 const {validateHostApplication} = require("../../libs/validate_host_application.mjs");
 const {getAppInstaller} = require("../../libs/get_app_installer.mjs");
-const NodeCacheStore = require("node-cache");
+const {clearCache} = require("../../libs/cache.mjs");
 
 const router = express.Router();
-const cache = new NodeCacheStore();
 
 /**
  * POST /api/application/uninstall
@@ -44,7 +43,7 @@ router.post('/:guid/:host', validate_session, (req, res) => {
 			// Stream the command output back to the client
 			cmdStreamer(host, cmd, res).then(() => {
 				// Clear the server-side application cache
-				cache.flushAll();
+				clearCache();
 			});
 		} catch (err) {
 			return res.status(400).json({ success: false, error: err.message });

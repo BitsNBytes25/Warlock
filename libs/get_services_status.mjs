@@ -1,7 +1,5 @@
-import NodeCacheStore from 'node-cache';
 import {cmdRunner} from "./cmd_runner.mjs";
-
-const cache = new NodeCacheStore();
+import cache from "./cache.mjs";
 
 /**
  * Get the details of a single service on a given host

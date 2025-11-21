@@ -19,12 +19,25 @@
   image: https://files.eval.bz/warlock/ark_460x215.jpg
   icon: https://files.eval.bz/warlock/ark-128x128.png
   thumbnail: https://files.eval.bz/warlock/ark_460x215.jpg
-- guid: 6ee9bb12-0e21-4ca0-a2f2-75fdeb9af718
+- guid: acdf1bec-2906-c20f-5a59-b0df072c29e8
   title: VEIN
   source: github
   repo: BitsNBytes25/VEIN-Dedicated-Server
+  branch: dev
   installer: dist/installer.sh
-  header:
+  author: Charlie Powell <cdp1337@bitsnbytes.dev>
+  category: Game Server
+  supports:
+    - "Debian 12, 13"
+    - "Ubuntu 24.04"
+  syntax:
+    - "--uninstall  - Perform an uninstallation"
+    - "--dir=<path> - Use a custom installation directory instead of the default (optional)"
+    - "--skip-firewall  - Do not install or configure a system firewall"
+    - "--branch=<stable|experimental> - Install a different branch from Steam (optional)"
+    - "--non-interactive  - Run the installer in non-interactive mode (useful for scripted installs)"
   image: https://files.eval.bz/warlock/vein-1280x720.jpg
   icon: https://files.eval.bz/warlock/vein-128x128.png
   thumbnail: https://files.eval.bz/warlock/vein_616x353.jpg
+
+

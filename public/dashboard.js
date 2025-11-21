@@ -239,7 +239,10 @@ function displayApplications(applications) {
 			html += `<div class="app-install">
 					<span class="host-name">${renderHostIcon(host.host)} ${renderHostName(host.host)}</span>
 					<span class="host-actions">
-						<button class="link-control action-configure" data-href="/application/${guid}/configure/${host.host}" title="Configure Application">
+						<button class="link-control action-create" data-href="/application/install/${guid}/${host.host}" title="Reinstall/Repair Application">
+							<i class="fas fa-undo"></i>
+						</button>
+						<button class="link-control action-configure" data-href="/application/configure/${guid}/${host.host}" title="Configure Application">
 							<i class="fas fa-cog"></i>
 						</button>
 						<button class="link-control action-browse" data-href="/files/${host.host}?path=${host.path}" title="Browse Files">
@@ -257,9 +260,14 @@ function displayApplications(applications) {
 
 	if (installedApplications === 0) {
 		applicationsList.innerHTML = `
-			<div style="grid-column: 1 / -1; text-align: center; padding: 2rem; color: #666;">
-				<i class="fas fa-inbox" style="font-size: 2rem; margin-bottom: 1rem; display: block; opacity: 0.3;"></i>
-				<p>No applications found in /var/lib/warlock</p>
+			<div style="grid-column: 1 / -1;">
+				<div class="error-message">
+					<p style="text-align:center; width:100%;">
+						<i class="fas fa-gamepad" style="font-size: 2rem; margin-bottom: 1rem; display: block; opacity: 0.3;"></i>
+						<br/>
+						No applications installed yet!  Please visit the <a href="/application/install">Applications Library</a> to install your first application.
+					</p>
+				</div>
 			</div>
 		`;
 		return;
@@ -268,10 +276,29 @@ function displayApplications(applications) {
 	applicationsList.innerHTML = html;
 }
 
+function displayNoHosts() {
+	const applicationsList = document.getElementById('applicationsList');
+	applicationsList.innerHTML = `
+		<div style="grid-column: 1 / -1;">
+			<div class="error-message">
+				<p style="text-align:center; width:100%;">
+					<i class="fas fa-server" style="font-size: 2rem; margin-bottom: 1rem; display: block; opacity: 0.3;"></i>
+					<br/>
+					No hosts available. Please <a href="/host/add">add a host</a> to manage applications and services.
+				</p>
+			</div>
+		</div>
+	`;
+}
+
 
 // Load on page load
 window.addEventListener('DOMContentLoaded', () => {
 	fetchHosts().then(hosts => {
+		if (Object.values(hosts).length === 0) {
+			displayNoHosts();
+			return;
+		}
 		fetchApplications().then(applications => {
 			// Display applications
 			displayApplications(applications);

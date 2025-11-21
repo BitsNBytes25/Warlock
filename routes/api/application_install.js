@@ -6,10 +6,9 @@ const {getAppInstaller} = require("../../libs/get_app_installer.mjs");
 const {logger} = require("../../libs/logger.mjs");
 const {Host} = require("../../db");
 const {getAllApplications} = require("../../libs/get_all_applications.mjs");
-const NodeCacheStore = require('node-cache');
+const {clearCache} = require("../../libs/cache.mjs");
 
 const router = express.Router();
-const cache = new NodeCacheStore();
 
 /**
  * POST /api/application/install
@@ -64,9 +63,9 @@ router.post('/:guid/:host', validate_session, (req, res) => {
 					if (/^[a-zA-Z0-9_\-+=\/\.]+$/.test(option)) {
 						if (option.includes('=')) {
 							const [key, value] = option.split('=');
-							cliFlags += ` --${key}="${value.replace(/"/g, '\\"')}"`;
+							cliFlags += ` ${key}="${value.replace(/"/g, '\\"')}"`;
 						} else {
-							cliFlags += ` --${option}`;
+							cliFlags += ` ${option}`;
 						}
 					}
 				});
@@ -84,7 +83,8 @@ router.post('/:guid/:host', validate_session, (req, res) => {
 				// Stream the command output back to the client
 				cmdStreamer(host, cmd, res).then(() => {
 					// Clear the server-side application cache
-					cache.flushAll();
+					logger.debug('Installation complete, clearing cache');
+					clearCache();
 				});
 
 			} catch (err) {

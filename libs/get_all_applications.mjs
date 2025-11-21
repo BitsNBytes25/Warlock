@@ -1,4 +1,3 @@
-import NodeCacheStore from 'node-cache';
 import { fileURLToPath} from 'url';
 import path from 'path';
 import fs from 'fs';
@@ -6,8 +5,7 @@ import yaml from 'js-yaml';
 import {cmdRunner} from "./cmd_runner.mjs";
 import {Host} from "../db.js";
 import {logger} from "./logger.mjs";
-
-const cache = new NodeCacheStore();
+import cache from "./cache.mjs";
 
 /**
  * Get all applications from /var/lib/warlock/*.app registration files
@@ -16,6 +14,7 @@ const cache = new NodeCacheStore();
  */
 export async function getAllApplications() {
 	return new Promise((resolve, reject) => {
+		console.log(cache.keys());
 		let cachedApplications = cache.get('all_applications');
 		if (cachedApplications) {
 			logger.debug('getAllApplications: Returning cached application data');
@@ -37,6 +36,7 @@ export async function getAllApplications() {
 			});
 		}
 
+		logger.debug('getAllApplications: Loading application definitions from hosts');
 		Host.findAll().then(hosts => {
 			const hostList = hosts.map(host => host.ip),
 				cmd = 'for file in /var/lib/warlock/*.app; do if [ -f "$file" ]; then echo "$(basename "$file" ".app"):$(cat "$file")"; fi; done';

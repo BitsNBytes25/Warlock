@@ -192,7 +192,27 @@ function renderHosts(hosts) {
 	});
 }
 
+function displayNoHosts() {
+	const hostsList = document.getElementById('hostsList');
+	hostsList.innerHTML = `
+		<div style="grid-column: 1 / -1;">
+			<div class="error-message">
+				<p style="text-align:center; width:100%;">
+					<i class="fas fa-server" style="font-size: 2rem; margin-bottom: 1rem; display: block; opacity: 0.3;"></i>
+					<br/>
+					No hosts available. Please <a href="/host/add">add a host</a> to manage applications and services.
+				</p>
+			</div>
+		</div>
+	`;
+}
+
 fetchHosts().then(hosts => {
+	if (Object.values(hosts).length === 0) {
+		displayNoHosts();
+		return;
+	}
+
 	setInterval(() => {
 		fetchHosts().then(hosts => renderHosts(hosts));
 	}, 5000);
