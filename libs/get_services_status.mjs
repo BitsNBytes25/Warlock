@@ -1,5 +1,3 @@
-/*const NodeCacheStore = require('node-cache');
-const {cmdRunner} = require("./cmd_runner");*/
 import NodeCacheStore from 'node-cache';
 import {cmdRunner} from "./cmd_runner.mjs";
 

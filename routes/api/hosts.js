@@ -51,34 +51,35 @@ router.get('/', validate_session, (req, res) => {
 			let ret = {};
 			results.forEach(result => {
 				let hostInfo = {
-						connected: false,
-						hostname: '',
-						os: {
-							name: '',
-							title: '',
-							version: '',
-						},
-						cpu: {
-							model: '',
-							count: 0,
-							threads: 0,
-							usage: 0,
-							load1m: 0,
-							load5m: 0,
-							load15m: 0,
-							topProcesses: [],
-						},
-						memory: {
-							total: 0,
-							used: 0,
-							free: 0,
-							shared: 0,
-							cache: 0,
-							topProcesses: [],
-						},
-						disks: []
+					ip: '',
+					connected: false,
+					hostname: '',
+					os: {
+						name: '',
+						title: '',
+						version: '',
 					},
-					host = null;
+					cpu: {
+						model: '',
+						count: 0,
+						threads: 0,
+						usage: 0,
+						load1m: 0,
+						load5m: 0,
+						load15m: 0,
+						topProcesses: [],
+					},
+					memory: {
+						total: 0,
+						used: 0,
+						free: 0,
+						shared: 0,
+						cache: 0,
+						topProcesses: [],
+					},
+					disks: []
+				},
+				host = null;
 
 				if (result.status === 'fulfilled') {
 					const lines = result.value.stdout.split('\n');
@@ -174,6 +175,7 @@ router.get('/', validate_session, (req, res) => {
 				}
 
 				if (host) {
+					hostInfo.ip = host;
 					ret[host] = hostInfo;
 				}
 			});

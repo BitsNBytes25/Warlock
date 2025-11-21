@@ -3,8 +3,10 @@ const { validate_session } = require("../../libs/validate_session.mjs");
 const {cmdStreamer} = require("../../libs/cmd_streamer.mjs");
 const {validateHostApplication} = require("../../libs/validate_host_application.mjs");
 const {getAppInstaller} = require("../../libs/get_app_installer.mjs");
+const NodeCacheStore = require("node-cache");
 
 const router = express.Router();
+const cache = new NodeCacheStore();
 
 /**
  * POST /api/application/uninstall
@@ -40,7 +42,10 @@ router.post('/:guid/:host', validate_session, (req, res) => {
 				`else echo 'ERROR: neither curl nor wget is available on the target host' >&2; exit 2; fi | bash -s -- --non-interactive --uninstall`;
 
 			// Stream the command output back to the client
-			cmdStreamer(host, cmd, res);
+			cmdStreamer(host, cmd, res).then(() => {
+				// Clear the server-side application cache
+				cache.flushAll();
+			});
 		} catch (err) {
 			return res.status(400).json({ success: false, error: err.message });
 		}

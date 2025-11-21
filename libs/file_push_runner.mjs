@@ -1,7 +1,3 @@
-/*const { exec } = require('child_process');
-const {Host} = require("../db");
-const {logger} = require("./logger");
-const {cmdRunner} = require("./cmd_runner");*/
 import { exec } from 'child_process';
 import { Host } from "../db.js";
 import { logger } from "./logger.mjs";

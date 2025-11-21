@@ -388,10 +388,13 @@ pre.terminal code {
    ========================== */
 .form-group {
 	margin-bottom: 1.5rem;
+	display: flex;
+	flex-wrap: wrap;
 }
 
 .form-group label {
-	display: block;
+	flex: 4;
+	order: 2;
 	margin-bottom: 0.75rem;
 	font-weight: 600;
 	color: var(--header);
@@ -402,8 +405,15 @@ pre.terminal code {
 	text-shadow: 0 0 8px var(--header-shadow);
 }
 
-.form-group input, .form-group select, .form-group textarea {
-	width: 100%;
+.form-group input[type=text],
+.form-group input[type=password],
+.form-group input[type=date],
+.form-group input[type=datetime],
+.form-group input[type=number],
+.form-group select,
+.form-group textarea {
+	flex: 5 100%;
+	order: 3;
 	padding: 1rem 1.25rem;
 	border: 1px solid var(--input-border);
 	border-radius: 10px;
@@ -425,6 +435,20 @@ pre.terminal code {
 
 .form-group input::placeholder, .form-group textarea::placeholder {
 	color: var(--input-placeholder);
+}
+
+.form-group input[type=checkbox] {
+	flex: 1 1rem;
+	order: 1;
+	margin-right: 0.5rem;
+	cursor: pointer;
+}
+
+.form-group p {
+	flex: 5 100%;
+	margin-top: 0.5rem;
+	color: var(--content);
+	order: 4;
 }
 
 .btn-primary {
@@ -665,10 +689,20 @@ button.action-cancel:hover {
 	gap: 1rem;
 }
 
+#installAppHostList {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(250px, 1fr));
+	gap: 1rem;
+	margin-top: 1rem;
+}
+#installAppHostList .host-card.compatible-host {
+	cursor: pointer;
+}
+
 .application-card,
 .host-card {
 	border-radius: 12px;
-	padding: 1.5rem;
+	padding: 1rem;
 	transition: all 0.3s;
 	position: relative;
 	overflow: hidden;

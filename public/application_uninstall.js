@@ -40,6 +40,9 @@ window.addEventListener('DOMContentLoaded', () => {
 							uninstallButton.classList.remove('disabled');
 						}
 
+						// Process terminal escape codes present in data
+						data = parseTerminalCodes(data);
+
 						terminalOutput.innerHTML += data + '\n';
 						terminalOutput.scrollTop = terminalOutput.scrollHeight;
 					});

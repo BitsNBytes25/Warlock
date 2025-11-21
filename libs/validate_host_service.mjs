@@ -1,5 +1,3 @@
-/*const { getAllApplications } = require('./get_all_applications');
-const { getServicesStatus } = require('./get_services_status');*/
 import { getAllApplications } from './get_all_applications.mjs';
 import { getServicesStatus } from './get_services_status.mjs';
 

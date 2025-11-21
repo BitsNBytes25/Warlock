@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Warlock - Install Application</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/frontend.css">
+    <link rel="stylesheet" href="/themes.css">
+    <script src="/common.js"></script>
+</head>
+<body data-use-app-background="1">
+
+<%- include('partials/nav.ejs') %>
+
+<div class="main-container" style="grid-template-columns: 1fr; max-width: 800px;">
+    <main class="content-area">
+        <div class="content-header">
+            <div class="content-header-inner">
+                <h2>
+                    <i class="fas fa-add"></i>
+                    Install Application
+                </h2>
+                <p>Install <span class="app-name-placeholder">an application</span> on <span class="host-name-placeholder">a given host</span></p>
+            </div>
+        </div>
+
+        <div class="content-body">
+            <div class="info-message">
+                <p>
+                    Confirm the install options and perform the installation.
+                </p>
+            </div>
+
+            <div id="installOptions">
+                <p>This game does not provide any install options</p>
+            </div>
+
+            <br/><br/>
+            <button id="btnInstall" class="action-create">
+                <i class="fas fa-spinner fa-spin" style="display:none;" id="installSpinner"></i>
+                <i class="fas fa-plus" id="installIcon"></i>
+                Install Game
+            </button>
+
+            <br/><br/>
+            <pre class="terminal" id="output" style="display:none;"><code></code></pre>
+        </div>
+    </main>
+</div>
+
+<%- include('partials/theme-selector.ejs') %>
+
+<script src="/application_install2.js"></script>
+</body>
+</html>

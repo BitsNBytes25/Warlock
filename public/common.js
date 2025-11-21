@@ -362,7 +362,7 @@ async function loadApplication(guid) {
 
 				// Replace content from application
 				replaceAppPlaceholders(app);
-				resolve();
+				resolve(app);
 			})
 			.catch(error => {
 				reject(error);
@@ -390,7 +390,7 @@ async function loadHost(host) {
 
 				// Replace content from application
 				replaceHostPlaceholders(hostInfo);
-				resolve();
+				resolve(hostInfo);
 			})
 			.catch(error => {
 				reject(error);
@@ -518,4 +518,59 @@ function getPathParams(urlTemplate) {
 	});
 
 	return params;
+}
+
+function parseTerminalCodes(data) {
+	// Simple parsing of terminal escape codes for colors and styles
+	const ESC = '\u001b[';
+	const RESET = ESC + '0m';
+
+	const styleMap = {
+		'30': 'color: black;',
+		'31': 'color: red;',
+		'32': 'color: green;',
+		'33': 'color: yellow;',
+		'34': 'color: blue;',
+		'35': 'color: magenta;',
+		'36': 'color: cyan;',
+		'37': 'color: white;',
+		'1': 'font-weight: bold;',
+		'3': 'font-style: italic;',
+		'4': 'text-decoration: underline;',
+	};
+
+	let result = '';
+	let parts = data.split(ESC);
+
+	result += parts[0]; // initial text before any escape codes
+
+	for (let i = 1; i < parts.length; i++) {
+		let part = parts[i];
+		let codeEnd = part.indexOf('m');
+		if (codeEnd !== -1) {
+			let code = part.slice(0, codeEnd);
+			let text = part.slice(codeEnd + 1);
+
+			if (code === '0') {
+				// Reset code
+				result += '</span>' + text;
+			} else if (styleMap[code]) {
+				// Known style code
+				result += `<span style="${styleMap[code]}">` + text;
+			} else {
+				// Unknown code, just append as is
+				result += ESC + part;
+			}
+		} else {
+			// No 'm' found, just append as is
+			result += ESC + part;
+		}
+	}
+
+	// Close any unclosed spans
+	if (result.includes('<span')) {
+		result += '</span>';
+	}
+
+	return result;
 }

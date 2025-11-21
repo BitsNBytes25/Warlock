@@ -23,10 +23,9 @@ export async function validateHostApplication(host, guid) {
 							host: hostData
 						});
 					}
-
-					// If the host is not found, we can immediately reject the lookup.
-					return reject(new Error(`Host '${host}' does not have application installed with GUID '${guid}'`));
 				});
+				// If the host is not found, we can immediately reject the lookup.
+				return reject(new Error(`Host '${host}' does not have application installed with GUID '${guid}'`));
 			});
 	});
 }
