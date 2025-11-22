@@ -31,29 +31,24 @@ window.addEventListener('DOMContentLoaded', () => {
 				showToast('info', 'Uninstallation started. Check the terminal output for progress.');
 
 				stream(
-					`/api/application/uninstall/${guid}/${host}`,
-					'POST',
+					`/api/application/${guid}/${host}`,
+					'DELETE',
 					{},
 					null,
 					(event, data) => {
-						if (event === 'done' || event === 'error') {
-							uninstallSpinner.style.display = 'none';
-							uninstallIcon.style.display = 'inline-block';
-							uninstallButton.classList.remove('disabled');
-
-							if (event === 'done') {
-								showToast('success', 'Uninstallation process completed.');
-							}
-							else {
-								showToast('error', 'Uninstallation process encountered an error. See terminal output for details.');
-							}
-						}
-
-						// Process terminal escape codes present in data
-						data = parseTerminalCodes(data);
-
-						terminalOutput.innerHTML += data + '\n';
-						terminalOutput.scrollTop = terminalOutput.scrollHeight;
+						terminalOutputHelper(terminalOutput, event, data);
+					}).then(() => {
+						// Stream ended
+						showToast('success', 'Uninstallation process completed.');
+					})
+					.catch(() => {
+						showToast('error', 'Uninstallation process encountered an error. See terminal output for details.');
+					})
+					.finally(() => {
+						// Re-enable button
+						uninstallSpinner.style.display = 'none';
+						uninstallIcon.style.display = 'inline-block';
+						uninstallButton.classList.remove('disabled');
 					});
 			});
 		})

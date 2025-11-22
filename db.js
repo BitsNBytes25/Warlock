@@ -46,11 +46,11 @@ const Host = sequelize.define('Host', {
 });
 
 // Sync database - alter: true will update schema without dropping data
-/*sequelize.sync({ alter: true }).then(() => {
+sequelize.sync({ alter: true }).then(() => {
 	console.log('Database synced successfully');
 }).catch(err => {
 	console.error('Error syncing database:', err);
-});*/
+});
 
 module.exports = {
 	sequelize,

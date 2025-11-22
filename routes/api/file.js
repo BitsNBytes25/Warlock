@@ -49,8 +49,12 @@ router.get('/:host', validate_session, (req, res) => {
 			});
 		}
 		else {
-			// First check if it's a text file and get its size
-			let cmd = `[ -h "${filePath}" ] && F="$(readlink -f "${filePath}")" || F="${filePath}"; file --mime-type "$F" && stat -c%s "$F" && echo "$F"`;
+			// First check if it's a text file and get its size and basic stats
+			let cmd = `[ -h "${filePath}" ] && F="$(readlink -f "${filePath}")" || F="${filePath}"; ` +
+				`file --mime-type "$F"; ` + // mimetype, line[0]
+				`stat -c%s "$F"; ` + // filesize, line[1]
+				`echo "$F"; ` + // filename, line[2]
+				`[ -r "$F" ] && stat -c%Y "$F" || echo "0";`; // modified time, line[3]
 			cmdRunner(host, cmd).then(result => {
 				let lines = result.stdout.trim().split('\n'),
 					mimetype = lines[0] || '',
@@ -58,6 +62,7 @@ router.get('/:host', validate_session, (req, res) => {
 					cmd = null,
 					filesize = parseInt(lines[1]) || 0,
 					filename = lines[2] || '',
+					modified = parseInt(lines[3]) || 0;
 					textMimetypes = [
 						'application/json',
 						'application/xml',
@@ -92,6 +97,7 @@ router.get('/:host', validate_session, (req, res) => {
 							mimetype: mimetype,
 							size: filesize,
 							path: filename,
+							modified: modified,
 							name: path.basename(filePath),
 						});
 					})
@@ -110,6 +116,7 @@ router.get('/:host', validate_session, (req, res) => {
 						mimetype: mimetype,
 						size: filesize,
 						path: filename,
+						modified: modified,
 						name: path.basename(filePath),
 					})
 				}
@@ -121,6 +128,36 @@ router.get('/:host', validate_session, (req, res) => {
 				});
 			});
 		}
+	});
+});
+
+router.move('/:host', validate_session, (req, res) => {
+	const { oldPath, newPath } = req.body,
+		host = req.params.host;
+
+	if (!oldPath || !newPath) {
+		return res.json({
+			success: false,
+			error: 'Old path and new path are required'
+		});
+	}
+
+	logger.info('Renaming item:', oldPath, '->', newPath);
+
+	// Use mv command to rename
+	cmdRunner(host, `mv "${oldPath}" "${newPath}"`).then(() => {
+		logger.info('Item renamed successfully:', oldPath, '->', newPath);
+		res.json({
+			success: true,
+			message: 'Item renamed successfully'
+		});
+	})
+	.catch(e => {
+		logger.error('Rename error:', e);
+		return res.json({
+			success: false,
+			error: `Cannot rename item: ${e.error.message}`
+		});
 	});
 });
 

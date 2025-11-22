@@ -11,11 +11,11 @@ const {clearCache} = require("../../libs/cache.mjs");
 const router = express.Router();
 
 /**
- * POST /api/application/install
+ * PUT /api/application
  * Streams SSH output back to the client in real-time as text/event-stream (SSE-like chunks)
- * Route: POST /api/application/install/:guid/:host
+ * Route: PUT /api/application/install/:guid/:host
  */
-router.post('/:guid/:host', validate_session, (req, res) => {
+router.put('/:guid/:host', validate_session, (req, res) => {
 	const guid = req.params.guid,
 		host = req.params.host,
 		options = req.body.options || {};
@@ -94,6 +94,52 @@ router.post('/:guid/:host', validate_session, (req, res) => {
 		.catch(e => {
 			return res.status(400).json({ success: false, error: e.message });
 		});
+	}).catch(e => {
+		return res.status(400).json({ success: false, error: e.message });
+	});
+});
+
+/**
+ * DELETE /api/application
+ * Streams SSH output back to the client in real-time as text/event-stream (SSE-like chunks)
+ * Route: DELETE /api/application/:guid/:host
+ */
+router.delete('/:guid/:host', validate_session, (req, res) => {
+	const guid = req.params.guid,
+		host = req.params.host;
+
+	if (!guid || !host) {
+		return res.status(400).json({ success: false, error: 'Missing guid or host' });
+	}
+
+	// Validate that the host and application exist and are related
+	validateHostApplication(host, guid).then(async data => {
+		try {
+			// data.app should be an AppData object
+			const url = await getAppInstaller(data.app);
+			if (!url) {
+				// No installer URL available
+				return res.status(400).json({ success: false, error: 'No installer URL found for application ' + guid });
+			}
+
+			// Safely escape any single quotes in the URL for embedding in single-quoted shell literals
+			const escapedUrl = String(url).replace(/'/g, "'\\''");
+
+			// Build a command that streams the installer directly into bash to avoid writing to /tmp
+			// It prefers curl, falls back to wget, and prints a clear error if neither is available.
+			const cmd = `set -euo pipefail; ` +
+				`if command -v curl >/dev/null 2>&1; then curl -fsSL '${escapedUrl}'; ` +
+				`elif command -v wget >/dev/null 2>&1; then wget -qO- '${escapedUrl}'; ` +
+				`else echo 'ERROR: neither curl nor wget is available on the target host' >&2; exit 2; fi | bash -s -- --non-interactive --uninstall`;
+
+			// Stream the command output back to the client
+			cmdStreamer(host, cmd, res).then(() => {
+				// Clear the server-side application cache
+				clearCache();
+			});
+		} catch (err) {
+			return res.status(400).json({ success: false, error: err.message });
+		}
 	}).catch(e => {
 		return res.status(400).json({ success: false, error: e.message });
 	});

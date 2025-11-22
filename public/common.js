@@ -405,91 +405,110 @@ async function loadHost(host) {
  * @param {string} method HTTP method to use (default: 'POST')
  * @param {Object} headers HTTP headers to include in the request
  * @param {*} body Request body to send (default: null)
- * @param {function} eventHandler Callback function to handle parsed events (event, data)
+ * @param {function} messageHandler Callback function to handle parsed events (event, data)
  * @returns {Promise<void>}
  */
-async function stream(url, method = 'POST', headers = {}, body = null, eventHandler = null) {
-	let controller = null;
-	let reader = null;
+async function stream(
+	url,
+	method = 'POST',
+	headers = {},
+	body = null,
+	messageHandler = null
+) {
+	return new Promise(async (resolve, reject) => {
+		let controller = null;
+		let reader = null;
 
-	controller = new AbortController();
-	const signal = controller.signal;
+		controller = new AbortController();
+		const signal = controller.signal;
 
-	const parseSSEBlock = (block) => {
-		// Parse SSE-style block (lines like "data: ..." and optionally "event: ...")
-		const lines = block.split(/\r?\n/);
-		let event = 'message';
-		const dataLines = [];
-		for (const line of lines) {
-			if (line.startsWith('event:')) {
-				event = line.slice(6).trim();
-			} else if (line.startsWith('data:')) {
-				dataLines.push(line.slice(5).trim());
+		const parseSSEBlock = (block) => {
+			// Parse SSE-style block (lines like "data: ..." and optionally "event: ...")
+			const lines = block.split(/\r?\n/);
+			let event = 'message';
+			const dataLines = [];
+			for (const line of lines) {
+				if (line.startsWith('event:')) {
+					event = line.slice(6).trim();
+				} else if (line.startsWith('data:')) {
+					dataLines.push(line.slice(5).trim());
+				} else if (line.startsWith('stdout:')) {
+					event = 'stdout';
+					dataLines.push(line.slice(7).trim());
+				} else if (line.startsWith('stderr:')) {
+					event = 'stderr';
+					dataLines.push(line.slice(7).trim());
+				}
 			}
-		}
-		const data = dataLines.join('\n');
+			const data = dataLines.join('\n');
 
-		if (eventHandler) {
-			eventHandler(event, data);
-		}
-	}
-
-	try {
-		const res = await fetch(url, {
-			method: method,
-			headers: headers,
-			body: body,
-			signal
-		});
-
-		if (!res.ok) {
-			const text = await res.text();
-			parseSSEBlock(`event: error\ndata: [HTTP ${res.status}] ${text}`);
-			return;
-		}
-
-		// Stream the response body and parse SSE-like chunks
-		const decoder = new TextDecoder();
-		reader = res.body.getReader();
-		let buffer = '';
-
-		while (true) {
-			if (reader === null) {
-				// Stream completed.
-				break;
+			if (event === 'error') {
+				throw new Error(data);
 			}
-			const { done, value } = await reader.read();
-			if (done) break;
-			buffer += decoder.decode(value, { stream: true });
 
-			// Process complete blocks separated by blank line(s)
-			let sepIndex;
-			while ((sepIndex = buffer.indexOf('\n\n')) !== -1 || (sepIndex = buffer.indexOf('\r\n\r\n')) !== -1) {
-				// prefer \r\n\r\n detect above, index found already
-				const block = buffer.slice(0, sepIndex);
-				buffer = buffer.slice(sepIndex + (buffer[sepIndex] === '\r' ? 4 : 2)); // remove separator
-				if (block.trim()) parseSSEBlock(block);
+			if (messageHandler) {
+				messageHandler(event, data);
 			}
 		}
 
-		// handle any trailing buffer
-		if (buffer.trim()) parseSSEBlock(buffer);
-	} catch (err) {
-		if (err.name === 'AbortError') {
-			parseSSEBlock(`event: info\ndata: [stream aborted]`);
-		} else {
-			parseSSEBlock(`event: error\ndata: [fetch error] ${err.message}`);
+		try {
+			const res = await fetch(url, {
+				method: method,
+				headers: headers,
+				body: body,
+				signal
+			});
+
+			if (!res.ok) {
+				const text = await res.text();
+				return reject(`[HTTP ${res.status}] ${text}`);
+			}
+
+			// Stream the response body and parse SSE-like chunks
+			const decoder = new TextDecoder();
+			reader = res.body.getReader();
+			let buffer = '';
+
+			while (true) {
+				if (reader === null) {
+					// Stream completed.
+					break;
+				}
+				const { done, value } = await reader.read();
+				if (done) break;
+				buffer += decoder.decode(value, { stream: true });
+
+				// Process complete blocks separated by blank line(s)
+				let sepIndex;
+				while ((sepIndex = buffer.indexOf('\n\n')) !== -1 || (sepIndex = buffer.indexOf('\r\n\r\n')) !== -1) {
+					// prefer \r\n\r\n detect above, index found already
+					const block = buffer.slice(0, sepIndex);
+					buffer = buffer.slice(sepIndex + (buffer[sepIndex] === '\r' ? 4 : 2)); // remove separator
+					if (block.trim()) parseSSEBlock(block);
+				}
+			}
+
+			// handle any trailing buffer
+			if (buffer.trim()) parseSSEBlock(buffer);
+		} catch (err) {
+			if (err.name === 'AbortError') {
+				return reject(`[stream aborted]`);
+			} else {
+				return reject(`${err.message}`);
+			}
+		} finally {
+			if (reader) {
+				try { reader.cancel(); } catch (e) {}
+				reader = null;
+			}
+			if (controller) {
+				try { controller.abort(); } catch (e) {}
+				controller = null;
+			}
 		}
-	} finally {
-		if (reader) {
-			try { reader.cancel(); } catch (e) {}
-			reader = null;
-		}
-		if (controller) {
-			try { controller.abort(); } catch (e) {}
-			controller = null;
-		}
-	}
+
+		return resolve();
+	});
 }
 
 
@@ -534,13 +553,39 @@ function parseTerminalCodes(data) {
 		'35': 'color: magenta;',
 		'36': 'color: cyan;',
 		'37': 'color: white;',
+		'40': 'background-color: black;',
+		'41': 'background-color: red;',
+		'42': 'background-color: green;',
+		'43': 'background-color: yellow;',
+		'44': 'background-color: blue;',
+		'45': 'background-color: magenta;',
+		'46': 'background-color: cyan;',
+		'47': 'background-color: white;',
+		'90': 'color: gray;',
+		'91': 'color: lightred;',
+		'92': 'color: lightgreen;',
+		'93': 'color: lightyellow;',
+		'94': 'color: lightblue;',
+		'95': 'color: lightmagenta;',
+		'96': 'color: lightcyan;',
+		'97': 'color: lightwhite;',
+		'100': 'background-color: gray;',
+		'101': 'background-color: lightred;',
+		'102': 'background-color: lightgreen;',
+		'103': 'background-color: lightyellow;',
+		'104': 'background-color: lightblue;',
+		'105': 'background-color: lightmagenta;',
+		'106': 'background-color: lightcyan;',
+		'107': 'background-color: lightwhite;',
 		'1': 'font-weight: bold;',
+		'2': 'opacity: 0.8;',
 		'3': 'font-style: italic;',
 		'4': 'text-decoration: underline;',
 	};
 
 	let result = '';
 	let parts = data.split(ESC);
+	let depth = 0;
 
 	result += parts[0]; // initial text before any escape codes
 
@@ -554,12 +599,16 @@ function parseTerminalCodes(data) {
 			if (code === '0') {
 				// Reset code
 				result += '</span>' + text;
+				depth = Math.max(0, depth - 1);
 			} else if (styleMap[code]) {
 				// Known style code
 				result += `<span style="${styleMap[code]}">` + text;
+				depth += 1;
 			} else {
+				// Unknown code
+				console.debug(`Unknown terminal code: ${code}`);
 				// Unknown code, just append as is
-				result += ESC + part;
+				result += text;
 			}
 		} else {
 			// No 'm' found, just append as is
@@ -568,7 +617,7 @@ function parseTerminalCodes(data) {
 	}
 
 	// Close any unclosed spans
-	if (result.includes('<span')) {
+	for (let j = 0; j < depth; j++) {
 		result += '</span>';
 	}
 
@@ -637,4 +686,54 @@ function showToast(type, message, duration = 4000) {
 		console.error('showToast error', err);
 	}
 }
+
+/**
+ * Output data (usually text) to a terminal-like container, parsing terminal codes.
+ *
+ * @param {*} terminalOutput
+ * @param {string} event
+ * @param {string} data
+ */
+function terminalOutputHelper(terminalOutput, event, data) {
+	// Swap any < ... > to prevent HTML issues
+	data = data.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+	// Put pretty colors in place
+	data = parseTerminalCodes(data);
+
+	terminalOutput.innerHTML += `<div class="line-${event}">${data}</div>`;
+	terminalOutput.scrollTop = terminalOutput.scrollHeight;
+}
+
+
+document.addEventListener('DOMContentLoaded', () => {
+	// Add standard close events to Modals
+	document.querySelectorAll('.modal-close').forEach(button => {
+		button.addEventListener('click', (e) => {
+			const modal = e.target.closest('.modal');
+			if (modal) {
+				modal.classList.remove('show');
+			}
+		});
+	});
+
+	// Clicking outside the modal content also closes the modal
+	document.querySelectorAll('.modal-overlay').forEach(overlay => {
+		overlay.addEventListener('click', e => {
+			const modal = e.target.closest('.modal');
+			if (modal) {
+				modal.classList.remove('show');
+			}
+		});
+	});
+
+	// Pressing escape closes any open modals
+	document.addEventListener('keydown', (e) => {
+		if (e.key === 'Escape') {
+			document.querySelectorAll('.modal.show').forEach(modal => {
+				modal.classList.remove('show');
+			});
+		}
+	});
+});
 

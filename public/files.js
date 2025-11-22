@@ -5,26 +5,66 @@ const fileList = document.getElementById('fileList');
 const currentPathEl = document.getElementById('currentPath');
 const refreshBtn = document.getElementById('refreshBtn');
 const upBtn = document.getElementById('upBtn');
-const filePreview = document.getElementById('filePreview');
-const previewTitle = document.getElementById('previewTitle');
-const previewContent = document.getElementById('previewContent');
-const fileEditor = document.getElementById('fileEditor');
-const editorTitle = document.getElementById('editorTitle');
-const editorTextarea = document.getElementById('editorTextarea');
-const editorInfo = document.getElementById('editorInfo');
-const editorStats = document.getElementById('editorStats');
-const saveBtn = document.getElementById('saveBtn');
-const cancelEditBtn = document.getElementById('cancelEditBtn');
 const host = window.location.pathname.substring(7);
 
 let currentEditFile = null;
 
+/**
+ * Data for the currently open context menu, or null if none is open.
+ * @type {null|Object<path: string, name: string, isDirectory: boolean>}
+ */
+let contextMenuData = null;
+
 // Search functionality (optional - only if search element exists)
 const fileSearch = document.getElementById('fileSearch');
 const searchClear = document.getElementById('searchClear');
+const resizer = document.querySelector('.resizer');
+const browserCard = document.querySelector('.browser-card');
+const filesLayout = document.querySelector('.files-layout');
+
 let searchTimeout = null;
 let isSearching = false;
 let searchResults = null;
+
+// Buttons used throughout this interface, they usually open a Modal.
+const createFolderBtn = document.getElementById('createFolderBtn'),
+	createFileBtn = document.getElementById('createFileBtn'),
+	uploadBtn = document.getElementById('uploadBtn'),
+	fileInput = document.getElementById('fileInput'),
+	restoreBackupFileBtn = document.getElementById('restoreBackupFileBtn'),
+	saveFileBtn = document.getElementById('saveFileBtn'),
+	downloadFileBtn = document.getElementById('downloadFileBtn'),
+	viewerSearchPrev = document.getElementById('viewerSearchPrev'),
+	viewerSearchNext = document.getElementById('viewerSearchNext');
+
+// Confirmation buttons within modals
+const confirmCreateFolder = document.getElementById('confirmCreateFolder'),
+	confirmCreateFile = document.getElementById('confirmCreateFile'),
+	confirmUpload = document.getElementById('confirmUpload'),
+	confirmDeleteBtn = document.getElementById('confirmDelete'),
+	confirmRenameBtn = document.getElementById('confirmRename'),
+	confirmRestoreBtn = document.getElementById('confirmRestore');
+
+
+// Modal interfaces used throughout this interface.
+const createFolderModal = document.getElementById('createFolderModal'),
+	createFileModal = document.getElementById('createFileModal'),
+	uploadModal = document.getElementById('uploadModal'),
+	renameModal = document.getElementById('renameModal'),
+	deleteModal = document.getElementById('deleteConfirmModal'),
+	restoreConfirmModal = document.getElementById('restoreConfirmModal');
+
+const previewContent = document.getElementById('previewContent');
+
+const fileViewerCard = document.querySelector('.file-viewer-card'),
+	viewerTitle = document.getElementById('viewerTitle'),
+	viewerSearchBar = document.getElementById('viewerSearchBar'),
+	viewerActions = document.getElementById('viewerActions'),
+	viewerEmptyState = document.getElementById('viewerEmptyState'),
+	filePreviewContent = document.getElementById('filePreviewContent'),
+	fileEditorContent = document.getElementById('fileEditorContent'),
+	editorTextarea = document.getElementById('editorTextarea'),
+	editorInfo = document.getElementById('editorInfo');
 
 // Initialize
 currentPathEl.textContent = currentPath;
@@ -263,6 +303,7 @@ function getFileIcon(mimetype) {
 		'inode/directory': 'fas fa-folder',
 		'application/pdf': 'fas fa-file-pdf',
 		'application/zip': 'fas fa-file-archive',
+		'application/gzip': 'fas fa-file-archive',
 		'application/x-gzip': 'fas fa-file-archive',
 		'application/x-tar': 'fas fa-file-archive'
 	};
@@ -455,13 +496,7 @@ async function openFile(filePath, fileName) {
  * @param {FileData} fileData
  */
 function previewFile(fileData) {
-	const viewerTitle = document.getElementById('viewerTitle');
-	const viewerSearchBar = document.getElementById('viewerSearchBar');
-	const viewerActions = document.getElementById('viewerActions');
-	const viewerEmptyState = document.getElementById('viewerEmptyState');
-	const filePreviewContent = document.getElementById('filePreviewContent');
-	const fileEditorContent = document.getElementById('fileEditorContent');
-	const previewContent = document.getElementById('previewContent');
+	let html = '';
 
 	// Hide empty state and editor, show preview
 	hideLoading();
@@ -470,45 +505,50 @@ function previewFile(fileData) {
 	filePreviewContent.style.display = 'block';
 
 	// Update title and show search bar (hide actions for preview)
-	viewerTitle.innerHTML = `<i class="fas fa-file"></i> ${fileData.name}`;
+	viewerTitle.innerHTML = `${fileData.name}`;
 	viewerSearchBar.style.display = 'none';
-	viewerActions.style.display = 'none';
+	viewerActions.style.display = 'flex';
+	saveFileBtn.style.display = 'none';
+	downloadFileBtn.style.display = 'block';
+	downloadFileBtn.dataset.path = fileData.path;
 
-	document.getElementById('downloadFileBtn').dataset.path = fileData.path;
+	// Sift through .quick-path-item and see if we are currently within backups/ of one of the games installed.
+	restoreBackupFileBtn.style.display = 'none';
+	document.querySelectorAll('.quick-path-item').forEach(item => {
+		if (
+			fileData.path.startsWith(item.dataset.path + '/backups/') &&
+			fileData.path.endsWith('.tar.gz')
+		) {
+			restoreBackupFileBtn.style.display = 'block';
+			restoreBackupFileBtn.dataset.guid = item.dataset.guid;
+			restoreBackupFileBtn.dataset.filename = fileData.name;
+			restoreBackupFileBtn.dataset.host = item.dataset.host;
+			restoreBackupFileBtn.dataset.modified = getTimestamp(fileData.modified);
+
+			return false;
+		}
+	});
 
 	if (fileData.encoding === 'base64' && fileData.mimetype.startsWith('image/')) {
 		const imgSrc = `data:${fileData.mimetype};base64,${fileData.content}`;
-		previewContent.innerHTML = `
-			<div style="text-align: center; padding: 1rem;">
-				<img src="${imgSrc}" 
-					 alt="${fileData.name}" 
-					 style="max-width: 100%; max-height: 100%; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);" />
-				<div style="margin-top: 1rem; color: #94a3b8; font-size: 0.9rem;">
-					${fileData.name} - ${formatFileSize(fileData.size)}
-				</div>
-			</div>
-		`;
+		html = `<div class="file-content"><img src="${imgSrc}" alt="${fileData.name}"/></div>`;
 	}
 	else if (fileData.encoding === 'base64' && fileData.mimetype.startsWith('video/')) {
 		const videoSrc = `data:${fileData.mimetype};base64,${fileData.content}`;
-		previewContent.innerHTML = `
-			<div style="text-align: center; padding: 1rem;">
-				<video controls style="max-width: 100%; max-height: calc(100vh - 300px); border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
-					<source src="${videoSrc}" type="${fileData.mimetype}">
-					Your browser does not support the video tag.
-				</video>
-				<div style="margin-top: 1rem; color: #94a3b8; font-size: 0.9rem;">
-					${fileData.name} - ${formatFileSize(fileData.size)}
-				</div>
-			</div>
-		`;
+		html = `<div class="file-content"><video controls><source src="${videoSrc}" type="${fileData.mimetype}"></video></div>`;
 	}
 	else {
-		previewContent.innerHTML = `<div style="text-align: center; padding: 1rem;">
-		${getFileIcon(fileData.mimetype)}<br/>
-		${fileData.name} - ${formatFileSize(fileData.size)}
-</div>`;
+		html = `<div class="file-content">${getFileIcon(fileData.mimetype)}</div>`;
 	}
+
+	// All files will have some basic information displayed.
+	html += `<div class="file-info"><ul>
+	<li>File name: ${fileData.name}</li>
+	<li>File size: ${formatFileSize(fileData.size)}</li>
+	<li>Mimetype: ${fileData.mimetype}</li>
+</ul></div>`;
+
+	previewContent.innerHTML = html;
 
 }
 
@@ -520,19 +560,6 @@ function previewFile(fileData) {
 function editFile(fileData) {
 	console.log(fileData);
 	currentEditFile = { path: fileData.path, name: fileData.name };
-
-	const fileViewerCard = document.querySelector('.file-viewer-card'),
-		viewerTitle = document.getElementById('viewerTitle'),
-		viewerSearchBar = document.getElementById('viewerSearchBar'),
-		viewerActions = document.getElementById('viewerActions'),
-		viewerEmptyState = document.getElementById('viewerEmptyState'),
-		filePreviewContent = document.getElementById('filePreviewContent'),
-		fileEditorContent = document.getElementById('fileEditorContent'),
-		editorTextarea = document.getElementById('editorTextarea'),
-		editorInfo = document.getElementById('editorInfo'),
-		saveFileBtn = document.getElementById('saveFileBtn'),
-		viewerSearchPrev = document.getElementById('viewerSearchPrev'),
-		viewerSearchNext = document.getElementById('viewerSearchNext');
 
 	// Hide empty state and preview, show editor
 	hideLoading();
@@ -608,7 +635,6 @@ async function saveFile() {
 }
 
 function closeViewer() {
-	const fileViewerCard = document.querySelector('.file-viewer-card');
 	const viewerTitle = document.getElementById('viewerTitle');
 	const viewerSearchBar = document.getElementById('viewerSearchBar');
 	const viewerActions = document.getElementById('viewerActions');
@@ -628,140 +654,6 @@ function closeViewer() {
 
 	currentEditFile = null;
 }
-
-// Event listeners
-refreshBtn.addEventListener('click', () => loadDirectory(currentPath));
-
-upBtn.addEventListener('click', () => {
-	if (currentPath !== '/') {
-		const parentPath = currentPath.split('/').slice(0, -1).join('/') || '/';
-		loadDirectory(parentPath);
-	}
-});
-
-document.querySelectorAll('.quick-path-item').forEach(item => {
-	item.addEventListener('click', () => {
-		const path = item.dataset.path;
-		loadDirectory(path);
-	});
-});
-
-// Viewer event listeners
-document.getElementById('saveFileBtn').addEventListener('click', saveFile);
-
-// Editor textarea event listener for stats
-document.getElementById('editorTextarea').addEventListener('input', updateEditorStats);
-
-// Modal elements
-const createFolderBtn = document.getElementById('createFolderBtn');
-const createFileBtn = document.getElementById('createFileBtn');
-const uploadBtn = document.getElementById('uploadBtn');
-const fileInput = document.getElementById('fileInput');
-
-const createFolderModal = document.getElementById('createFolderModal');
-const createFileModal = document.getElementById('createFileModal');
-const uploadModal = document.getElementById('uploadModal');
-
-// Modal event listeners
-createFolderBtn.addEventListener('click', () => {
-	document.getElementById('folderName').value = '';
-	createFolderModal.style.display = 'flex';
-	document.getElementById('folderName').focus();
-});
-
-createFileBtn.addEventListener('click', () => {
-	document.getElementById('fileName').value = '';
-	document.getElementById('fileContent').value = '';
-	createFileModal.style.display = 'flex';
-	document.getElementById('fileName').focus();
-});
-
-uploadBtn.addEventListener('click', () => {
-	fileInput.click();
-});
-
-fileInput.addEventListener('change', (e) => {
-	if (e.target.files.length > 0) {
-		showUploadModal(e.target.files);
-	}
-});
-
-// Modal close handlers
-document.getElementById('closeFolderModal').addEventListener('click', () => {
-	createFolderModal.style.display = 'none';
-});
-
-document.getElementById('closeFileModal').addEventListener('click', () => {
-	createFileModal.style.display = 'none';
-});
-
-document.getElementById('closeUploadModal').addEventListener('click', () => {
-	uploadModal.style.display = 'none';
-});
-
-document.getElementById('cancelCreateFolder').addEventListener('click', () => {
-	createFolderModal.style.display = 'none';
-});
-
-document.getElementById('cancelCreateFile').addEventListener('click', () => {
-	createFileModal.style.display = 'none';
-});
-
-document.getElementById('cancelUpload').addEventListener('click', () => {
-	uploadModal.style.display = 'none';
-});
-
-document.getElementById('cancelDelete').addEventListener('click', () => {
-	document.getElementById('deleteConfirmModal').style.display = 'none';
-	deleteItemData = null;
-});
-
-document.getElementById('closeDeleteModal').addEventListener('click', () => {
-	document.getElementById('deleteConfirmModal').style.display = 'none';
-	deleteItemData = null;
-});
-
-document.getElementById('cancelRename').addEventListener('click', () => {
-	document.getElementById('renameModal').style.display = 'none';
-	renameItemData = null;
-});
-
-document.getElementById('closeRenameModal').addEventListener('click', () => {
-	document.getElementById('renameModal').style.display = 'none';
-	renameItemData = null;
-});
-
-
-// Context menu handlers
-document.getElementById('contextRename').addEventListener('click', showRenameModal);
-document.getElementById('contextDelete').addEventListener('click', () => {
-	if (contextMenuData) {
-		hideContextMenu();
-		confirmDelete(contextMenuData.path, contextMenuData.name, contextMenuData.isDirectory, null);
-	}
-});
-
-// Hide context menu on click outside
-document.addEventListener('click', (e) => {
-	if (!e.target.closest('#contextMenu') && !e.target.closest('.three-dot-btn')) {
-		hideContextMenu();
-	}
-});
-
-// Confirm handlers
-document.getElementById('confirmCreateFolder').addEventListener('click', createFolder);
-document.getElementById('confirmCreateFile').addEventListener('click', createFile);
-document.getElementById('confirmUpload').addEventListener('click', startUpload);
-document.getElementById('confirmDelete').addEventListener('click', performDelete);
-document.getElementById('confirmRename').addEventListener('click', performRename);
-document.getElementById('downloadFileBtn').addEventListener('click', performDownload);
-
-// Modal overlay close
-document.addEventListener('click', (e) => {
-	if (e.target.classList.contains('modal-overlay')) {
-		e.target.parentElement.style.display = 'none';
-	}
-});
 
 // New functionality functions
 async function createFolder() {
@@ -817,61 +709,42 @@ async function createFile() {
 		});
 }
 
-// Delete confirmation
-let deleteItemData = null;
+// Fetch and add application paths to quick paths
+async function loadApplicationPaths() {
+	fetchApplications()
+		.then(applications => {
+			const quickPathsContainer = document.querySelector('.quick-paths');
 
-function confirmDelete(itemPath, itemName, isDirectory, event) {
-	if (event) event.stopPropagation();
+			// Add a separator
+			const separator = document.createElement('div');
+			separator.style.cssText = 'border-top: 1px solid rgba(0, 150, 255, 0.2); margin: 1rem 0; padding-top: 1rem;';
+			separator.innerHTML = '<h4><i class="fas fa-cube"></i> Games</h4>';
+			quickPathsContainer.appendChild(separator);
 
-	deleteItemData = { path: itemPath, name: itemName, isDirectory };
+			for (const [guid, app] of Object.entries(applications)) {
+				app.hosts.forEach(hostData => {
+					if (hostData.host === host) {
+						// Extract the last folder name from the path
+						const icon = renderAppIcon(guid);
 
-	const deleteModal = document.getElementById('deleteConfirmModal');
-	const deleteItemInfo = document.getElementById('deleteItemInfo');
-
-	// Show item info
-	deleteItemInfo.innerHTML = `
-		<div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
-			<i class="fas fa-${isDirectory ? 'folder' : 'file'}" style="color: #0096ff;"></i>
-			<strong>${itemName}</strong>
-		</div>
-		<div style="font-size: 0.85rem; color: #64748b;">
-			Path: ${itemPath}
-		</div>
-		<div style="font-size: 0.85rem; color: #64748b; margin-top: 0.5rem;">
-			Type: ${isDirectory ? 'Folder (Recursive Delete)' : 'File'}
-		</div>
-	`;
-
-	deleteModal.style.display = 'flex';
-}
-
-async function performDelete() {
-	if (!deleteItemData) return;
-
-	document.getElementById('deleteConfirmModal').style.display = 'none';
-
-	fetch(`/api/file/${host}?path=${deleteItemData.path}`, {
-		method: 'DELETE',
-		headers: {
-			'Content-Type': 'application/json'
-		}
-	})
-		.then(response => response.json())
-		.then(result => {
-			console.debug(result);
-			deleteItemData = null;
-
-			if (result.success) {
-				loadDirectory(currentPath); // Refresh current directory
-			}
-			else {
-				alert(`Error deleting item: ${result.error}`);
+						const quickPathItem = document.createElement('div');
+						quickPathItem.className = 'quick-path-item';
+						quickPathItem.dataset.path = hostData.path;
+						quickPathItem.dataset.host = host;
+						quickPathItem.dataset.guid = app.guid;
+						quickPathItem.innerHTML = `
+                            ${icon}
+                            ${app.title}
+                        `;
+						quickPathItem.addEventListener('click', () => {
+							loadDirectory(hostData.path);
+						});
+						quickPathsContainer.appendChild(quickPathItem);
+					}
+				});
 			}
 		});
 }
-
-// Context menu and three-dot menu functionality
-let contextMenuData = null;
 
 function showContextMenu(event, itemPath, itemName, isDirectory) {
 	const contextMenu = document.getElementById('contextMenu');
@@ -901,21 +774,13 @@ function hideContextMenu() {
 	contextMenu.classList.remove('show');
 }
 
-// Rename functionality
-let renameItemData = null;
-
 function showRenameModal() {
 	if (!contextMenuData) return;
-
-	renameItemData = contextMenuData;
 	hideContextMenu();
 
-	const renameModal = document.getElementById('renameModal');
 	const renameNewName = document.getElementById('renameNewName');
-
-	renameNewName.value = renameItemData.name;
-
-	renameModal.style.display = 'flex';
+	renameNewName.value = contextMenuData.name;
+	renameModal.classList.add('show');
 
 	// Focus and select the input
 	setTimeout(() => {
@@ -938,7 +803,7 @@ function performDownload(e) {
 }
 
 async function performRename() {
-	if (!renameItemData) return;
+	if (!contextMenuData) return;
 
 	const newName = document.getElementById('renameNewName').value.trim();
 
@@ -947,38 +812,38 @@ async function performRename() {
 		return;
 	}
 
-	if (newName === renameItemData.name) {
-		document.getElementById('renameModal').style.display = 'none';
+	if (newName === contextMenuData.name) {
+		renameModal.classList.remove('show');
 		return;
 	}
 
-	const oldPath = renameItemData.path;
+	const oldPath = contextMenuData.path;
 	const pathParts = oldPath.split('/');
 	pathParts[pathParts.length - 1] = newName;
 	const newPath = pathParts.join('/');
 
 	try {
-		const response = await fetch('/rename-item', {
-			method: 'POST',
+		const response = await fetch(`/api/file/${host}`, {
+			method: 'MOVE',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({
 				oldPath: oldPath,
-				newPath: newPath,
-				isDirectory: renameItemData.isDirectory
+				newPath: newPath
 			})
 		});
 
 		const result = await response.json();
 
 		if (result.success) {
-			document.getElementById('renameModal').style.display = 'none';
-			renameItemData = null;
+			showToast('success', 'Item renamed successfully');
+			renameModal.classList.remove('show');
+			contextMenuData = null;
 			loadDirectory(currentPath); // Refresh current directory
 		} else {
-			alert(`Error renaming item: ${result.error}`);
+			showToast('error', `Error renaming item: ${result.error}`);
 		}
 	} catch (error) {
-		alert(`Network error: ${error.message}`);
+		showToast('error', `Network error: ${error.message}`);
 	}
 }
 
@@ -997,7 +862,7 @@ function showUploadModal(files) {
 	});
 
 	document.querySelector('.upload-status').textContent = `Ready to upload ${files.length} file(s)`;
-	uploadModal.style.display = 'flex';
+	uploadModal.classList.add('show');
 }
 
 async function startUpload() {
@@ -1041,21 +906,162 @@ async function startUpload() {
 
 	uploadStatus.textContent = 'Upload complete!';
 	setTimeout(() => {
-		uploadModal.style.display = 'none';
+		uploadModal.classList.remove('show');
 		loadDirectory(currentPath); // Refresh directory
 		fileInput.value = ''; // Reset file input
 	}, 1500);
 }
 
-// Close preview when clicking outside
-/*document.addEventListener('click', (e) => {
-	if (!filePreview.contains(e.target) && !e.target.closest('.file-item')) {
-		filePreview.style.display = 'none';
+function showDeleteModal() {
+	if (!contextMenuData) return;
+	deleteModal.querySelector('.filename').innerHTML = contextMenuData.path;
+	hideContextMenu();
+	deleteModal.classList.add('show');
+}
+
+async function performDelete() {
+	if (!contextMenuData) return;
+
+	deleteModal.classList.remove('show');
+
+	fetch(`/api/file/${host}?path=${contextMenuData.path}`, {
+		method: 'DELETE',
+		headers: {
+			'Content-Type': 'application/json'
+		}
+	})
+		.then(response => response.json())
+		.then(result => {
+			console.debug(result);
+			deleteItemData = null;
+
+			if (result.success) {
+				showToast('success', 'Item deleted successfully');
+				loadDirectory(currentPath); // Refresh current directory
+				contextMenuData = null;
+			}
+			else {
+				showToast('error', `Error deleting item: ${result.error}`);
+			}
+		});
+}
+
+async function performRestoreBackup() {
+	if (!restoreBackupFileBtn.dataset.filename) return;
+
+	const terminalOutput = restoreConfirmModal.querySelector('.terminal');
+
+	restoreConfirmModal.querySelector('.warning-message').style.display = 'none';
+	terminalOutput.style.display = 'block';
+	terminalOutput.textContent = 'Restoring backup... Please wait.\n';
+
+	stream(
+		`/api/application/backup/${restoreBackupFileBtn.dataset.guid}/${host}`,
+		'PUT',
+		{'Content-Type': 'application/json'},
+		JSON.stringify({filename: restoreBackupFileBtn.dataset.filename}),
+		(event, data) => {
+			terminalOutputHelper(terminalOutput, event, data);
+		})
+	.then(() => {
+		showToast('success', 'Backup restored successfully.');
+		loadDirectory(currentPath); // Refresh current directory
+	}).catch(e => {
+		showToast('error', 'Backup restoration process encountered an error. See terminal output for details.');
+	});
+}
+
+
+/////////// Event listeners
+
+// Refresh button functionality
+refreshBtn.addEventListener('click', () => {
+	loadDirectory(currentPath)
+});
+
+// Navigate up one directory
+upBtn.addEventListener('click', () => {
+	if (currentPath !== '/') {
+		const parentPath = currentPath.split('/').slice(0, -1).join('/') || '/';
+		loadDirectory(parentPath);
 	}
-	if (!fileEditor.contains(e.target) && !e.target.closest('.file-item')) {
-		// Don't auto-close editor to prevent accidental loss of changes
+});
+
+// Quick link navigation
+document.querySelectorAll('.quick-path-item').forEach(item => {
+	item.addEventListener('click', () => {
+		const path = item.dataset.path;
+		loadDirectory(path);
+	});
+});
+
+// Save file being edited
+saveFileBtn.addEventListener('click', saveFile);
+
+// Editor textarea event listener for stats
+document.getElementById('editorTextarea').addEventListener('input', updateEditorStats);
+
+
+// Create folder
+createFolderBtn.addEventListener('click', () => {
+	document.getElementById('folderName').value = '';
+	createFolderModal.classList.add('show');
+	document.getElementById('folderName').focus();
+});
+confirmCreateFolder.addEventListener('click', createFolder);
+
+// Create file
+createFileBtn.addEventListener('click', () => {
+	document.getElementById('fileName').value = '';
+	document.getElementById('fileContent').value = '';
+	createFileModal.classList.add('show');
+	document.getElementById('fileName').focus();
+});
+confirmCreateFile.addEventListener('click', createFile);
+
+// Upload file(s)
+uploadBtn.addEventListener('click', () => {
+	fileInput.click();
+});
+fileInput.addEventListener('change', (e) => {
+	if (e.target.files.length > 0) {
+		showUploadModal(e.target.files);
 	}
-});*/
+});
+confirmUpload.addEventListener('click', startUpload);
+
+// Rename file
+document.getElementById('contextRename').addEventListener('click', showRenameModal);
+confirmRenameBtn.addEventListener('click', performRename);
+
+// Delete file
+document.getElementById('contextDelete').addEventListener('click', showDeleteModal);
+confirmDeleteBtn.addEventListener('click', performDelete);
+
+// Restore backup file
+restoreBackupFileBtn.addEventListener('click', () => {
+	restoreConfirmModal.querySelector('.warning-message').style.display = 'flex';
+	restoreConfirmModal.querySelector('.terminal').style.display = 'none';
+	restoreConfirmModal.querySelector('.timestamp').innerHTML = restoreBackupFileBtn.dataset.modified;
+	restoreConfirmModal.classList.add('show');
+});
+confirmRestoreBtn.addEventListener('click', performRestoreBackup);
+
+
+// Hide context menu on click outside
+document.addEventListener('click', (e) => {
+	if (!e.target.closest('#contextMenu') && !e.target.closest('.three-dot-btn')) {
+		hideContextMenu();
+	}
+});
+
+// Confirm handlers
+
+
+
+
+
+downloadFileBtn.addEventListener('click', performDownload);
 
 // Search functionality for unified viewer
 let viewerMatches = [];
@@ -1215,11 +1221,6 @@ document.getElementById('viewerSearch').addEventListener('keydown', (e) => {
 });
 
 // Resizer functionality
-const resizer = document.querySelector('.resizer');
-const browserCard = document.querySelector('.browser-card');
-const fileViewerCard = document.querySelector('.file-viewer-card');
-const filesLayout = document.querySelector('.files-layout');
-
 let isResizing = false;
 let startX = 0;
 let startBrowserWidth = 0;
@@ -1284,40 +1285,7 @@ document.addEventListener('mouseup', (e) => {
 	}
 });
 
-// Fetch and add application paths to quick paths
-async function loadApplicationPaths() {
-	fetchApplications()
-		.then(applications => {
-			const quickPathsContainer = document.querySelector('.quick-paths');
 
-			// Add a separator
-			const separator = document.createElement('div');
-			separator.style.cssText = 'border-top: 1px solid rgba(0, 150, 255, 0.2); margin: 1rem 0; padding-top: 1rem;';
-			separator.innerHTML = '<h4><i class="fas fa-cube"></i> Games</h4>';
-			quickPathsContainer.appendChild(separator);
-
-			for (const [guid, app] of Object.entries(applications)) {
-				app.hosts.forEach(hostData => {
-					if (hostData.host === host) {
-						// Extract the last folder name from the path
-						const icon = renderAppIcon(guid);
-
-						const quickPathItem = document.createElement('div');
-						quickPathItem.className = 'quick-path-item';
-						quickPathItem.dataset.path = hostData.path;
-						quickPathItem.innerHTML = `
-                            ${icon}
-                            ${app.title}
-                        `;
-						quickPathItem.addEventListener('click', () => {
-							loadDirectory(hostData.path);
-						});
-						quickPathsContainer.appendChild(quickPathItem);
-					}
-				});
-			}
-		});
-}
 
 // Check for path parameter in URL
 const urlParams = new URLSearchParams(window.location.search);

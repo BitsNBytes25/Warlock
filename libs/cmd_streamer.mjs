@@ -52,22 +52,29 @@ export async function cmdStreamer(target, cmd, res) {
 		const process = spawn(spawnCommand, spawnArgs);
 
 		// Helper to send data to client as SSE data: lines prefixed with "data: " and double newline
-		function sendData(chunk) {
+		function sendData(pipe, chunk) {
 			const lines = String(chunk).split(/\r?\n/);
 			for (const line of lines) {
 				if (line.length === 0) continue;
-				res.write(`data: ${line}\n\n`);
+				res.write(`${pipe}: ${line}\n\n`);
 			}
 		}
 
-		process.stdout.on('data', (chunk) => sendData(chunk));
-		process.stderr.on('data', (chunk) => sendData(chunk));
+		process.stdout.on('data', (chunk) => sendData('stdout', chunk));
+		process.stderr.on('data', (chunk) => sendData('stderr', chunk));
 
 		process.on('close', (code, signal) => {
 			logger.debug('close', code, signal);
-			res.write(`event: done\ndata: exit ${code}${signal ? ' signal ' + signal : ''}\n\n`);
-			res.end();
-			resolve();
+			if (code !== 0) {
+				res.write(`event: error\ndata: Exit code of ${code} indicated an error\n\n`);
+				res.end();
+				reject();
+			}
+			else {
+				res.write(`event: done\ndata: exit ${code}${signal ? ' signal ' + signal : ''}\n\n`);
+				res.end();
+				resolve();
+			}
 		});
 
 		process.on('error', (err) => {

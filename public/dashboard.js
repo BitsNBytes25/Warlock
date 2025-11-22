@@ -217,14 +217,13 @@ function displayApplications(applications) {
 
 		installedApplications += 1;
 
+		html += `<div class="application-card">`;
+
 		if (thumbnail) {
-			thumbnail = '<img class="app-thumbnail" src="' + thumbnail + '" alt="' + displayName + ' Thumbnail">';
+			html += `<img class="app-thumbnail" title="${displayName}" src="${thumbnail}" alt="${displayName} Thumbnail">`;
 		}
-
-
-		html += `
-			<div class="application-card">
-				${thumbnail ? thumbnail : ''}
+		else {
+			html += `
 				<div class="app-title">
 					<div class="app-icon">
 						${icon}
@@ -232,8 +231,10 @@ function displayApplications(applications) {
 					<div class="app-name">
 						<h4>${displayName}</h4>
 					</div>
-				</div>
-				<div class="app-installs">`;
+				</div>`;
+		}
+
+		html += `<div class="app-installs">`;
 
 		app.hosts.forEach(host => {
 			html += `<div class="app-install">

@@ -29,6 +29,7 @@
 	--content-hover-border: rgba(0, 212, 255, 1);
 	--content-shadow: rgba(0, 212, 255, 0.65);
 	--terminal: #02aa02;
+	--terminal-error: #ff4c4c;
 	--terminal-bg: rgba(0, 0, 0, 1);
 	--terminal-border: rgba(0, 150, 255, 0.3);
 	--button-config: white;
@@ -372,7 +373,7 @@ table td {
 	color: var(--table);
 }
 
-pre.terminal {
+.terminal {
 	color: var(--terminal);
 	background: var(--terminal-bg);
 	border: 1px solid var(--terminal-border);
@@ -380,11 +381,13 @@ pre.terminal {
 	padding: 1rem;
 	overflow: scroll;
 	max-height: 50vh;
-}
-pre.terminal code {
-	white-space: pre-line;
 	font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+	white-space: pre-line;
 }
+.terminal .line-stderr {
+	color: var(--terminal-error);
+}
+
 
 
 /* ==========================
@@ -1045,6 +1048,39 @@ button.action-cancel:hover {
 	height: calc(100vh - 80px);
 	flex-direction: column;
 }
+.file-viewer-card .file-preview {
+	display: none;
+	flex: 1;
+	overflow: auto;
+	padding: 1.5rem;
+	background: var(--content-bg);
+	color: var(--content);
+}
+.file-viewer-card .file-preview .file-icon {
+	font-size: 4rem;
+	margin-bottom: 1rem;
+}
+.file-viewer-card .file-preview .file-content {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	height: 100%;
+}
+.file-viewer-card .file-preview .file-content img {
+	max-width: 100%;
+	max-height: 100%;
+	border-radius: 8px;
+	box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+.file-viewer-card .file-preview .file-content video {
+	max-width: 100%; max-height: calc(100vh - 300px); border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+.file-viewer-card .file-preview .file-info {
+	margin: 1rem 0;
+}
+.file-viewer-card .file-preview .file-info ul {
+	list-style: none;
+}
 
 .file-browser {
 	display: grid;
@@ -1525,9 +1561,12 @@ button.action-cancel:hover {
 	width: 100%;
 	height: 100%;
 	z-index: 1000;
-	display: flex;
 	align-items: center;
 	justify-content: center;
+	display: none;
+}
+.modal.show {
+	display: flex;
 }
 
 .modal-overlay {
@@ -1549,12 +1588,12 @@ button.action-cancel:hover {
 	width: 90%;
 	max-width: 500px;
 	max-height: 80vh;
-	overflow: hidden;
+	overflow: scroll;
 	backdrop-filter: blur(20px);
 }
 
 .modal-header {
-	padding: 1.5rem;
+	padding: 1rem 1.5rem;
 	border-bottom: 1px solid var(--content-border);
 	background: var(--header-bg-1);
 	display: flex;
@@ -1570,9 +1609,10 @@ button.action-cancel:hover {
 	display: flex;
 	align-items: center;
 	gap: 0.75rem;
+	margin: 0;
 }
 
-.modal-close {
+.modal-header .modal-close {
 	background: none;
 	border: none;
 	color: var(--nav);
@@ -1583,7 +1623,7 @@ button.action-cancel:hover {
 	transition: all 0.3s ease;
 }
 
-.modal-close:hover {
+.modal-header .modal-close:hover {
 	color: var(--nav-hover);
 	background: var(--nav-hover-bg);
 }

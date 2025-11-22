@@ -154,50 +154,8 @@ app.use('/api/service', require('./routes/api/service'));
 app.use('/api/service/logs', require('./routes/api/service_logs'));
 app.use('/api/service/control', require('./routes/api/service_control'));
 app.use('/api/service/configs', require('./routes/api/service_configs'));
-app.use('/api/application/uninstall', require('./routes/api/application_uninstall'));
-app.use('/api/application/install', require('./routes/api/application_install'));
-
-
-/*// Rename file or folder endpoint
-app.post('/rename-item', (req, res) => {
-    const { oldPath, newPath, isDirectory } = req.body;
-    
-    if (!oldPath || !newPath) {
-        return res.json({
-            success: false,
-            error: 'Old path and new path are required'
-        });
-    }
-    
-    logger.info('Renaming item:', oldPath, '->', newPath);
-    
-    // Use mv command to rename
-    const renameCommand = buildSSHCommand(`mv "${oldPath}" "${newPath}" && echo "Renamed successfully"`);
-    
-    exec(renameCommand, (error, stdout, stderr) => {
-        if (error) {
-            logger.error('Rename error:', error);
-            return res.json({
-                success: false,
-                error: `Cannot rename item: ${error.message}`
-            });
-        }
-        
-        if (stderr && stderr.trim()) {
-            logger.error('Rename stderr:', stderr);
-            return res.json({
-                success: false,
-                error: `Rename error: ${stderr.trim()}`
-            });
-        }
-        
-        logger.info('Item renamed successfully:', oldPath, '->', newPath);
-        res.json({
-            success: true,
-            message: 'Item renamed successfully'
-        });
-    });
-});*/
+app.use('/api/application', require('./routes/api/application'));
+app.use('/api/application/backup', require('./routes/api/application_backup'));
 
 
 
@@ -224,10 +182,10 @@ app.post('/search-files', (req, res) => {
         find . -maxdepth 10 \\( -type f -o -type d \\) ! -name ".*" -iname "*${query}*" 2>/dev/null | while read item; do
             fullpath="${path}/\${item#./}"
             if [ -d "$fullpath" ]; then
-                echo "DIR|\$fullpath|\$(basename "$fullpath")"
+                echo "DIR|$fullpath|$(basename "$fullpath")"
             else
-                size=\$(stat -c %s "$fullpath" 2>/dev/null || echo 0)
-                echo "FILE|\$fullpath|\$(basename "$fullpath")|\$size"
+                size=$(stat -c %s "$fullpath" 2>/dev/null || echo 0)
+                echo "FILE|$fullpath|$(basename "$fullpath")|$size"
             fi
         done | head -100
     `);

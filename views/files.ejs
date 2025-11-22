@@ -104,6 +104,14 @@
                                 <i class="fas fa-save"></i>
                                 Save
                             </button>
+                            <button id="downloadFileBtn" class="action-download">
+                                <i class="fas fa-download"></i>
+                                Download
+                            </button>
+                            <button id="restoreBackupFileBtn" class="action-restore">
+                                <i class="fas fa-undo"></i>
+                                Restore Backup
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -126,15 +134,8 @@
                 </div>
                 
                 <!-- File Preview (for viewing) -->
-                <div id="filePreviewContent" style="display: none; flex: 1; overflow: auto; padding: 1.5rem; background: rgba(0, 0, 0, 0.3);">
+                <div id="filePreviewContent" class="file-preview">
                     <div id="previewContent"></div>
-
-                    <div id="viewerActions" class="action-buttons">
-                        <button id="downloadFileBtn" class="action-download">
-                            <i class="fas fa-download"></i>
-                            Download
-                        </button>
-                    </div>
                 </div>
                 
                 <!-- File Editor (for editing) -->
@@ -151,12 +152,12 @@
     </div>
 
     <!-- Create Folder Modal -->
-    <div id="createFolderModal" class="modal" style="display: none;">
+    <div id="createFolderModal" class="modal">
         <div class="modal-overlay"></div>
         <div class="modal-content">
             <div class="modal-header">
                 <h3><i class="fas fa-folder-plus"></i> Create New Folder</h3>
-                <button class="modal-close" id="closeFolderModal">
+                <button class="modal-close">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
@@ -167,11 +168,11 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="btn-nav" id="confirmCreateFolder">
+                <button class="action-create" id="confirmCreateFolder">
                     <i class="fas fa-folder-plus"></i>
                     Create Folder
                 </button>
-                <button class="btn-nav btn-secondary" id="cancelCreateFolder">
+                <button class="action-cancel modal-close">
                     <i class="fas fa-times"></i>
                     Cancel
                 </button>
@@ -180,12 +181,12 @@
     </div>
 
     <!-- Create File Modal -->
-    <div id="createFileModal" class="modal" style="display: none;">
+    <div id="createFileModal" class="modal">
         <div class="modal-overlay"></div>
         <div class="modal-content">
             <div class="modal-header">
                 <h3><i class="fas fa-file"></i> Create New File</h3>
-                <button class="modal-close" id="closeFileModal">
+                <button class="modal-close">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
@@ -204,7 +205,7 @@
                     <i class="fas fa-save"></i>
                     Create File
                 </button>
-                <button class="action-cancel" id="cancelCreateFile">
+                <button class="action-cancel modal-close">
                     <i class="fas fa-times"></i>
                     Cancel
                 </button>
@@ -213,27 +214,21 @@
     </div>
 
     <!-- Delete Confirmation Modal -->
-    <div id="deleteConfirmModal" class="modal" style="display: none;">
+    <div id="deleteConfirmModal" class="modal">
         <div class="modal-overlay"></div>
         <div class="modal-content">
             <div class="modal-header">
                 <h3><i class="fas fa-exclamation-triangle"></i> Confirm Deletion</h3>
-                <button class="modal-close" id="closeDeleteModal">
+                <button class="modal-close">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
             <div class="modal-body">
-                <div style="background: rgba(220, 38, 38, 0.1); border: 1px solid rgba(220, 38, 38, 0.3); border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem;">
-                    <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
-                        <i class="fas fa-exclamation-triangle" style="font-size: 2.5rem; color: #ef4444;"></i>
-                        <div>
-                            <p style="color: #fca5a5; margin: 0; font-size: 0.9rem;">This will permanently delete the item and all its contents!</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label>You are about to delete:</label>
-                    <div id="deleteItemInfo" style="background: rgba(0, 150, 255, 0.1); padding: 1rem; border-radius: 8px; font-family: 'Courier New', monospace; color: #87ceeb; margin-top: 0.5rem;">
+                <div class="warning-message">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <div>
+                        <p>This will permanently delete the item and all its contents!</p>
+                        <p class="filename"></p>
                     </div>
                 </div>
             </div>
@@ -242,7 +237,7 @@
                     <i class="fas fa-trash"></i>
                     Delete Permanently
                 </button>
-                <button class="action-cancel" id="cancelDelete">
+                <button class="action-cancel modal-close">
                     <i class="fas fa-times"></i>
                     Cancel
                 </button>
@@ -251,12 +246,12 @@
     </div>
 
     <!-- Rename Modal -->
-    <div id="renameModal" class="modal" style="display: none;">
+    <div id="renameModal" class="modal">
         <div class="modal-overlay"></div>
         <div class="modal-content">
             <div class="modal-header">
                 <h3><i class="fas fa-edit"></i> Rename Item</h3>
-                <button class="modal-close" id="closeRenameModal">
+                <button class="modal-close">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
@@ -265,7 +260,6 @@
                     <div style="display: flex; align-items: center; gap: 1rem;">
                         <i class="fas fa-exclamation-triangle" style="font-size: 1.5rem; color: #fbbf24;"></i>
                         <div>
-                            <h4 style="color: #fbbf24; margin: 0 0 0.5rem 0; font-size: 1rem;">⚠️ Caution</h4>
                             <p style="color: #fcd34d; margin: 0; font-size: 0.85rem;">Renaming files or folders may break applications or scripts that depend on the current name or path!</p>
                         </div>
                     </div>
@@ -280,7 +274,7 @@
                     <i class="fas fa-edit"></i>
                     Rename
                 </button>
-                <button class="btn-nav btn-secondary" id="cancelRename">
+                <button class="action-cancel modal-close">
                     <i class="fas fa-times"></i>
                     Cancel
                 </button>
@@ -302,12 +296,12 @@
     </div>
 
     <!-- Upload Progress Modal -->
-    <div id="uploadModal" class="modal" style="display: none;">
+    <div id="uploadModal" class="modal">
         <div class="modal-overlay"></div>
         <div class="modal-content">
             <div class="modal-header">
                 <h3><i class="fas fa-cloud-upload-alt"></i> Upload Files</h3>
-                <button class="modal-close" id="closeUploadModal">
+                <button class="modal-close">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
@@ -325,7 +319,41 @@
                     <i class="fas fa-cloud-upload-alt"></i>
                     Start Upload
                 </button>
-                <button class="btn-nav btn-secondary" id="cancelUpload">
+                <button class="action-cancel modal-close">
+                    <i class="fas fa-times"></i>
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Restore Backup (and confirmation) Modal -->
+    <div id="restoreConfirmModal" class="modal">
+        <div class="modal-overlay"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-undo"></i> Restore Backup</h3>
+                <button class="modal-close">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="warning-message">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <p>
+                        Warning: Restoring a backup will overwrite the current game environment!
+                        <br/><br/>
+                        Restore file from <span class="timestamp">unknown date</span>
+                    </p>
+                </div>
+                <div class="terminal"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="action-restore" id="confirmRestore">
+                    <i class="fas fa-undo"></i>
+                    Confirm Restore
+                </button>
+                <button class="action-cancel modal-close">
                     <i class="fas fa-times"></i>
                     Cancel
                 </button>

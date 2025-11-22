@@ -133,29 +133,21 @@ window.addEventListener('DOMContentLoaded', () => {
 
 				terminalOutput.style.display = 'block';
 				stream(
-					`/api/application/install/${guid}/${host}`,
-					'POST',
+					`/api/application/${guid}/${host}`,
+					'PUT',
 					{'Content-Type': 'application/json'},
 					JSON.stringify({options: options}),
 					(event, data) => {
-						if (event === 'done' || event === 'error') {
-							installSpinner.style.display = 'none';
-							installIcon.style.display = 'inline-block';
-							btnInstall.classList.remove('disabled');
-
-							if (event === 'done') {
-								showToast('success', 'Installation process completed.');
-							}
-							else {
-								showToast('error', 'Installation process encountered an error. See terminal output for details.');
-							}
-						}
-
-						// Process terminal escape codes present in data
-						data = parseTerminalCodes(data);
-
-						terminalOutput.innerHTML += data + '\n';
-						terminalOutput.scrollTop = terminalOutput.scrollHeight;
+						terminalOutputHelper(terminalOutput, event, data);
+					}).then(() => {
+						// Stream ended
+						showToast('success', 'Installation process completed.');
+					}).catch(err => {
+						showToast('error', 'Installation process encountered an error. See terminal output for details.');
+					}).finally(() => {
+						installSpinner.style.display = 'none';
+						installIcon.style.display = 'inline-block';
+						btnInstall.classList.remove('disabled');
 					});
 			});
 
