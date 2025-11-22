@@ -14,6 +14,7 @@ function createServicesTable() {
 						<th>Host</th>
 						<th>Game</th>
 						<th>Server Name</th>
+						<th>On-Boot</th>
 						<th>Status</th>
 						<th>Port</th>
 						<th>Players</th>
@@ -59,15 +60,16 @@ function populateServicesTable(servicesWithStats) {
 			app_guid = record.app,
 			host = record.host,
 			row = table.querySelector('tr.service[data-host="' + host.host + '"][data-service="' + service.service + '"]'),
-			fields = ['host', 'icon', 'name', 'status', 'port', 'players', 'memory', 'cpu', 'actions'],
+			fields = ['host', 'icon', 'name', 'enabled', 'status', 'port', 'players', 'memory', 'cpu', 'actions'],
 			statusIcon = '',
 			actionButtons = [],
+			enabledField = '',
 			appIcon = renderAppIcon(app_guid);
 
 		if (service.pre_exec || service.start_exec) {
 			// Service has run in the past, so it should have log files available!
 			actionButtons.push(`
-<button data-href="/service/logs/${app_guid}/${host.host}/${service.service}" class="link-control action-logs">
+<button title="View Logs" data-href="/service/logs/${app_guid}/${host.host}/${service.service}" class="link-control action-logs">
 	<i class="fas fa-align-justify"></i> Logs
 </button>`);
 		}
@@ -75,25 +77,25 @@ function populateServicesTable(servicesWithStats) {
 		if (service.status === 'running') {
 			statusIcon = '<i class="fas fa-check-circle"></i>';
 			actionButtons.push(`
-<button data-host="${host.host}" data-service="${service.service}" data-action="stop" data-guid="${app_guid}" class="service-control action-stop">
+<button title="Stop Game" data-host="${host.host}" data-service="${service.service}" data-action="stop" data-guid="${app_guid}" class="service-control action-stop">
 	<i class="fas fa-stop"></i> Stop
 </button>`);
 		}
 		else if (service.status === 'stopped') {
 			statusIcon = '<i class="fas fa-times-circle"></i>';
 			actionButtons.push(`
-<button data-href="/service/configure/${app_guid}/${host.host}/${service.service}" class="link-control action-configure">
+<button title="Configure Game" data-href="/service/configure/${app_guid}/${host.host}/${service.service}" class="link-control action-configure">
 	<i class="fas fa-cog"></i> Config
 </button>`);
 			actionButtons.push(`
-<button data-host="${host.host}" data-service="${service.service}" data-action="start" data-guid="${app_guid}" class="service-control action-start">
+<button title="Start Game" data-host="${host.host}" data-service="${service.service}" data-action="start" data-guid="${app_guid}" class="service-control action-start">
 	<i class="fas fa-play"></i> Start
 </button>`);
 		}
 		else if (service.status === 'starting') {
 			statusIcon = '<i class="fas fa-sync-alt fa-spin"></i>';
 			actionButtons.push(`
-<button data-host="${host.host}" data-service="${service.service}" data-action="stop" data-guid="${app_guid}" class="service-control action-stop">
+<button title="Stop Game" data-host="${host.host}" data-service="${service.service}" data-action="stop" data-guid="${app_guid}" class="service-control action-stop">
 	<i class="fas fa-stop"></i> Stop
 </button>`);
 		}
@@ -102,6 +104,18 @@ function populateServicesTable(servicesWithStats) {
 		}
 		else {
 			statusIcon = '<i class="fas fa-question-circle"></i>';
+		}
+
+		if (service.enabled) {
+			enabledField = `
+<button title="Enabled at Boot, click to disable" data-host="${host.host}" data-service="${service.service}" data-action="disable" data-guid="${app_guid}" class="service-control action-start">
+				<i class="fas fa-check-circle"></i>
+			</button>`;
+		} else {
+			enabledField = `
+<button title="Disabled at Boot, click to enable" data-host="${host.host}" data-service="${service.service}" data-action="enable" data-guid="${app_guid}" class="service-control action-stop">
+				<i class="fas fa-times-circle"></i>
+			</button>`;
 		}
 
 		if (!row) {
@@ -148,7 +162,11 @@ function populateServicesTable(servicesWithStats) {
 					val = statusIcon + ' ' + service[field].toUpperCase();
 					cell.className = field + ' status-' + service[field];
 				}
-			} else if (field === 'players') {
+			}
+			else if (field === 'enabled') {
+				val = enabledField;
+			}
+			else if (field === 'players') {
 				val = service.player_count || 0;
 				if (service.max_players) {
 					val += ' / ' + service.max_players;
