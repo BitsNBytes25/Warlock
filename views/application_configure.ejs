@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Warlock - Game Configuration</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/frontend.css">
+    <link rel="stylesheet" href="/themes.css">
+    <script src="/common.js"></script>
+</head>
+<body data-use-app-background="1">
+<%- include('partials/nav.ejs') %>
+
+    <div class="main-container" style="grid-template-columns: 1fr; max-width: 800px;">
+        <main class="content-area">
+            <div class="content-header">
+                <div class="content-header-inner">
+                    <h2>
+                        <i class="fas fa-server"></i>
+                        Game Configuration
+                    </h2>
+                    <p>
+                        Manage all configuration options for <span class="app-name-placeholder">APPLICATION NAME</span>
+                        on <span class="host-name-placeholder">HOSTNAME OR IP</span>
+                        <br/><br/>
+                        Changes are applied immediately upon modification.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="content-body">
+                <h3>Automated Updates</h3>
+                <div class="warning-message" id="automatedUpdatesDisabledMessage" style="display:none;">
+                    Automatic updates are NOT enabled!
+                </div>
+                <div class="success-message" id="automatedUpdatesEnabledMessage" style="display:none;">
+                    Automatic updates are enabled.
+                </div>
+                <div>
+                    <button class="action-edit" id="configureAutoUpdateBtn">
+                        <i class="fas fa-clock"></i>
+                        Configure Automatic Updates
+                    </button>
+                </div>
+
+                <br/><br/>
+
+                <h3>Game Configuration</h3>
+                <div id="configurationContainer" style="margin-bottom: 2rem;">
+                    <!-- Configuration interface will be inserted here -->
+                </div>
+            </div>
+        </main>
+    </div>
+
+<!-- Automatic Update Check Cron Configuration Modal -->
+<div id="autoUpdateModal" class="modal">
+    <div class="modal-overlay"></div>
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-clock"></i> Automatic Update Configuration</h3>
+            <button class="modal-close">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label for="autoBackupSchedule">Schedule</label>
+                <select id="autoBackupSchedule" name="schedule">
+                    <option value="disabled">Disabled</option>
+                    <option value="hourly">Hourly</option>
+                    <option value="daily">Daily</option>
+                    <option value="weekly">Weekly</option>
+                </select>
+            </div>
+
+            <div class="form-group" id="autoBackupWeeklyDayRow">
+                <label for="autoBackupWeeklyDay">Weekly Day</label>
+                <select id="autoBackupWeeklyDay" name="weekly_day">
+                    <option value="mon">Monday</option>
+                    <option value="tue">Tuesday</option>
+                    <option value="wed">Wednesday</option>
+                    <option value="thu">Thursday</option>
+                    <option value="fri">Friday</option>
+                    <option value="sat">Saturday</option>
+                    <option value="sun">Sunday</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="autoBackupTime">Time</label>
+                <input type="time" id="autoBackupTime" name="time" value="02:00">
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="action-save" id="saveAutoUpdateBtn">
+                <i class="fas fa-save"></i>
+                Save Configuration
+            </button>
+            <button class="action-cancel modal-close">
+                <i class="fas fa-times"></i>
+                Cancel
+            </button>
+        </div>
+    </div>
+</div>
+
+<%- include('partials/theme-selector.ejs') %>
+<script src="/application_configure.js"></script>
+</body>
+</html>
