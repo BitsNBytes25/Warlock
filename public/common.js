@@ -723,6 +723,148 @@ function convertTimestampToDateTimeString(unixTime) {
 	return date.toLocaleString();
 }
 
+async function loadCronJob(host, identifier, target) {
+	return new Promise((resolve, reject) => {
+		if (target && !target.dataset.autoEventsAdded) {
+			// Add change event to schedule selector to show/hide relevant fields
+			let schedule, time, day;
+			schedule = target.querySelector('[name="schedule"]');
+			time = target.querySelector('[name="time"]');
+			day = target.querySelector('[name="weekly_day"]');
+			target.dataset.autoEventsAdded = '1';
+
+			schedule.addEventListener('change', () => {
+				if (autoBackupSchedule.value === 'weekly') {
+					time.closest('.form-group').style.display = 'flex';
+					day.closest('.form-group').style.display = 'flex';
+				}
+				else if (autoBackupSchedule.value === 'daily') {
+					time.closest('.form-group').style.display = 'flex';
+					day.closest('.form-group').style.display = 'none';
+				}
+				else if (autoBackupSchedule.value === 'hourly') {
+					time.closest('.form-group').style.display = 'none';
+					day.closest('.form-group').style.display = 'none';
+				}
+				else {
+					time.closest('.form-group').style.display = 'none';
+					day.closest('.form-group').style.display = 'none';
+				}
+			});
+		}
+
+		fetch(`/api/cron/${host}`, { method: 'GET' })
+			.then(r => r.json())
+			.then(data => {
+				if (!data.success) {
+					return reject(data);
+				}
+
+				let schedule, time, day;
+				if (target) {
+					// Load the form elements for the target UI, (optionally)
+					schedule = target.querySelector('[name="schedule"]');
+					time = target.querySelector('[name="time"]');
+					day = target.querySelector('[name="weekly_day"]');
+				}
+
+				const jobs = data.jobs || [];
+				const job = jobs.find(j => j.identifier === identifier);
+				if (!job) {
+					if (schedule) {
+						schedule.value = 'disabled';
+						schedule.dispatchEvent(new CustomEvent('change'));
+					}
+
+					return resolve(null);
+				}
+				else {
+					// parse schedule
+					const parts = job.schedule.split(/\s+/);
+					if (parts.length >= 5) {
+						const minute = parts[0].padStart(2, '0');
+						const hour = parts[1].padStart(2, '0');
+
+						if (parts[1] === '*') {
+							// 0 * * * *
+							if (schedule) {
+								schedule.value = 'hourly';
+								schedule.dispatchEvent(new CustomEvent('change'));
+							}
+						}
+						else if (parts[2] === '*' && parts[3] === '*' && parts[4] === '*') {
+							// X X * * *
+							if (time) {
+								time.value = `${hour}:${minute}`;
+							}
+							if (schedule) {
+								schedule.value = 'daily';
+								schedule.dispatchEvent(new CustomEvent('change'));
+							}
+						}
+						else if (parts[2] === '*' && parts[3] === '*') {
+							// X X * * DOW
+							if (time) {
+								time.value = `${hour}:${minute}`;
+							}
+							if (day) {
+								// map day number to option
+								const dowNum = parts[4];
+								const dowMap = {
+									'0': 'sun',
+									'1': 'mon',
+									'2': 'tue',
+									'3': 'wed',
+									'4': 'thu',
+									'5': 'fri',
+									'6': 'sat',
+									'7': 'sun'
+								};
+								day.value = dowMap[dowNum] || 'sun';
+							}
+							if (schedule) {
+								schedule.value = 'weekly';
+								schedule.dispatchEvent(new CustomEvent('change'));
+							}
+						}
+					}
+
+					return resolve(job);
+				}
+			})
+			.catch(() => {
+				// ignore fetch errors; show defaults
+			});
+	});
+}
+
+function parseCronSchedule(target) {
+	const schedule = target.querySelector('[name="schedule"]'),
+		time = target.querySelector('[name="time"]'),
+		day = target.querySelector('[name="weekly_day"]');
+
+	if (schedule.value === 'disabled') {
+		return 'DISABLED';
+	}
+	else if (schedule.value === 'hourly') {
+		return '0 * * * *';
+	}
+	else if (schedule.value === 'daily') {
+		const [hour, minute] = time.value.split(':');
+		return `${parseInt(minute, 10)} ${parseInt(hour, 10)} * * *`;
+	}
+	else if (schedule.value === 'weekly') {
+		const [hour, minute] = time.value.split(':');
+		const dow = day.value; // mon, tue...
+		const dowMap = {'sun': '0', 'mon': '1', 'tue': '2', 'wed': '3', 'thu': '4', 'fri': '5', 'sat': '6'};
+		return `${parseInt(minute, 10)} ${parseInt(hour, 10)} * * ${dowMap[dow]}`;
+	}
+	else {
+		console.warn('Unknown schedule type selected:', schedule.value);
+		return 'DISABLED';
+	}
+}
+
 
 document.addEventListener('DOMContentLoaded', () => {
 	// Add standard close events to Modals

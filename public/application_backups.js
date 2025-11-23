@@ -11,12 +11,10 @@ const backupsList = document.getElementById('backupsList'),
 	automatedBackupsEnabledMessage = document.getElementById('automatedBackupsEnabledMessage'),
 	autoBackupModal = document.getElementById('autoBackupModal'),
 	autoBackupSchedule = document.getElementById('autoBackupSchedule'),
-	autoBackupTime = document.getElementById('autoBackupTime'),
-	autoBackupWeeklyDay = document.getElementById('autoBackupWeeklyDay'),
 	autoBackupKeep = document.getElementById('autoBackupKeep'),
 	saveAutoBackupBtn = document.getElementById('saveAutoBackupBtn');
 
-let backupPath, automaticBackups;
+let backupPath;
 
 /**
  * Render a single backup file item
@@ -103,83 +101,29 @@ async function loadAutomaticBackupConfig() {
 	if (!loadedHost) {
 		return;
 	}
+	const identifier = `${loadedApplication}_backup`;
 
-	const autoBackupWeeklyDayRow = document.getElementById('autoBackupWeeklyDayRow');
-	const autoBackupHost = document.getElementById('autoBackupHost');
-	const autoBackupGuid = document.getElementById('autoBackupGuid');
-	const saveAutoBackupBtn = document.getElementById('saveAutoBackupBtn');
-
-	autoBackupSchedule.value = 'disabled';
-	autoBackupTime.closest('.form-group').style.display = 'none';
-	autoBackupWeeklyDay.closest('.form-group').style.display = 'none';
-	autoBackupKeep.closest('.form-group').style.display = 'none';
-
-	fetch(`/api/cron/${loadedHost}`, { method: 'GET' })
-		.then(r => r.json())
-		.then(data => {
-			console.log(data);
-			if (!data.success) {
-				automaticBackups = [];
+	loadCronJob(loadedHost, identifier, autoBackupModal).then(job => {
+		if (job) {
+			automatedBackupsDisabledMessage.style.display = 'none';
+			automatedBackupsEnabledMessage.style.display = 'flex';
+			// parse command for max-backups
+			if (job.command) {
+				const m = job.command.match(/--max-backups=(\d+)/);
+				if (m) autoBackupKeep.value = parseInt(m[1], 10) || 0;
 			}
-			const identifier = `${loadedApplication}_backup`;
-			const jobs = data.jobs || [];
-			const job = jobs.find(j => j.identifier === identifier);
-			if (!job) {
-				automatedBackupsDisabledMessage.style.display = 'flex';
-				automatedBackupsEnabledMessage.style.display = 'none';
-				autoBackupSchedule.value = 'disabled';
-				autoBackupWeeklyDayRow.style.display = 'none';
-			} else {
-				automatedBackupsDisabledMessage.style.display = 'none';
-				automatedBackupsEnabledMessage.style.display = 'flex';
-				// parse schedule
-				if (job.schedule && job.schedule.startsWith('@')) {
-					// treat @daily as daily
-					if (job.schedule === '@daily') {
-						autoBackupSchedule.value = 'daily';
-					} else {
-						autoBackupSchedule.value = 'daily';
-					}
-					// time unknown for @special; keep default
-				} else if (job.schedule) {
-					const parts = job.schedule.split(/\s+/);
-					if (parts.length >= 5) {
-						const minute = parts[0].padStart(2, '0');
-						const hour = parts[1].padStart(2, '0');
-						autoBackupTime.value = `${hour}:${minute}`;
-						if (parts[4] && parts[4] !== '*') {
-							autoBackupSchedule.value = 'weekly';
-							autoBackupWeeklyDay.closest('.form-group').style.display = 'flex';
-							autoBackupTime.closest('.form-group').style.display = 'flex';
-							autoBackupKeep.closest('.form-group').style.display = 'flex';
-							// map day number to option
-							const dowNum = parts[4];
-							const dowMap = { '0': 'sun', '1': 'mon', '2': 'tue', '3': 'wed', '4': 'thu', '5': 'fri', '6': 'sat', '7': 'sun' };
-							autoBackupWeeklyDay.value = dowMap[dowNum] || 'sun';
-						} else {
-							autoBackupSchedule.value = 'daily';
-							autoBackupWeeklyDay.closest('.form-group').style.display = 'none';
-							autoBackupTime.closest('.form-group').style.display = 'flex';
-							autoBackupKeep.closest('.form-group').style.display = 'flex';
-						}
-					}
-				}
-
-				// parse command for max-backups
-				if (job.command) {
-					const m = job.command.match(/--max-backups=(\d+)/);
-					if (m) autoBackupKeep.value = parseInt(m[1], 10) || 0;
-				}
-			}
-		})
-		.catch(() => {
-			// ignore fetch errors; show defaults
-		});
+		}
+		else {
+			automatedBackupsDisabledMessage.style.display = 'flex';
+			automatedBackupsEnabledMessage.style.display = 'none';
+		}
+	}).catch(e => {
+		console.error('Error loading cron job:', e);
+		showToast('error', 'Error loading automatic backup configuration.');
+	})
 }
 
 async function saveAutomaticBackupConfig() {
-	const scheduleSel = autoBackupSchedule.value;
-	const time = autoBackupTime.value || '02:00';
 	const keep = parseInt(autoBackupKeep.value, 10) || 0;
 	const guid = loadedApplication;
 	const identifier = `${loadedApplication}_backup`;
@@ -190,7 +134,9 @@ async function saveAutomaticBackupConfig() {
 		return;
 	}
 
-	if (scheduleSel === 'disabled') {
+	const schedule = parseCronSchedule(autoBackupModal);
+
+	if (schedule === 'DISABLED') {
 		// Delete existing identifier
 		fetch(`/api/cron/${loadedHost}`, {
 			method: 'DELETE',
@@ -211,24 +157,13 @@ async function saveAutomaticBackupConfig() {
 		return;
 	}
 
-	// Build cron schedule string
-	const [hour, minute] = time.split(':');
-	let cronSchedule = `${parseInt(minute, 10)} ${parseInt(hour, 10)}`;
-	if (scheduleSel === 'weekly') {
-		const dow = autoBackupWeeklyDay.value; // mon, tue...
-		const dowMap = {'sun': '0', 'mon': '1', 'tue': '2', 'wed': '3', 'thu': '4', 'fri': '5', 'sat': '6'};
-		cronSchedule += ` * * ${dowMap[dow]}`;
-	} else {
-		cronSchedule += ` * * *`;
-	}
-
 	// Build command
 	const command = `${gameDir}/manage.py --backup --max-backups=${keep}`;
 
 	fetch(`/api/cron/${loadedHost}`, {
 		method: 'POST',
 		headers: {'Content-Type': 'application/json'},
-		body: JSON.stringify({schedule: cronSchedule, command, identifier})
+		body: JSON.stringify({schedule, command, identifier})
 	})
 		.then(r => r.json())
 		.then(response => {
@@ -337,24 +272,6 @@ window.addEventListener('DOMContentLoaded', () => {
 
 			configureAutoBackupBtn.addEventListener('click', () => {
 				autoBackupModal.classList.add('show');
-			});
-
-			autoBackupSchedule.addEventListener('change', () => {
-				if (autoBackupSchedule.value === 'weekly') {
-					autoBackupTime.closest('.form-group').style.display = 'flex';
-					autoBackupWeeklyDay.closest('.form-group').style.display = 'flex';
-					autoBackupKeep.closest('.form-group').style.display = 'flex';
-				}
-				else if (autoBackupSchedule.value === 'daily') {
-					autoBackupTime.closest('.form-group').style.display = 'flex';
-					autoBackupWeeklyDay.closest('.form-group').style.display = 'none';
-					autoBackupKeep.closest('.form-group').style.display = 'flex';
-				}
-				else {
-					autoBackupTime.closest('.form-group').style.display = 'none';
-					autoBackupWeeklyDay.closest('.form-group').style.display = 'none';
-					autoBackupKeep.closest('.form-group').style.display = 'none';
-				}
 			});
 
 			saveAutoBackupBtn.addEventListener('click', () => {
