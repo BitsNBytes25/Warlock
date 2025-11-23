@@ -264,7 +264,7 @@ function renderHostIcon(host) {
 	let hostInfo = hostData && hostData[host] || null;
 
 	if (hostInfo && hostInfo.connected && hostInfo.os.name) {
-		return '<img src="/media/logos/servers/' + hostInfo.os.name.toLowerCase() + '.svg" alt="' + hostInfo.os.title + ' Icon" title="' + hostInfo.os.title + '">';
+		return '<img src="/assets/media/logos/servers/' + hostInfo.os.name.toLowerCase() + '.svg" alt="' + hostInfo.os.title + ' Icon" title="' + hostInfo.os.title + '">';
 	}
 	else {
 		return '<i class="fas fa-desktop" title="Disconnected"></i>';

@@ -22,9 +22,9 @@ function displayHostsWithApplications(hosts, applications) {
 			thumbnailFallback = [];
 
 		if (hostData.os.name && hostData.os.version) {
-			thumbnail = `/media/wallpapers/servers/${hostData.os.name.toLowerCase()}_${hostData.os.version.toLowerCase()}.webp`;
+			thumbnail = `/assets/media/wallpapers/servers/${hostData.os.name.toLowerCase()}_${hostData.os.version.toLowerCase()}.webp`;
 		}
-		thumbnailFallback = '/media/wallpapers/servers/generic.webp';
+		thumbnailFallback = '/assets/media/wallpapers/servers/generic.webp';
 
 		if (thumbnail) {
 			thumbnail = '<img class="os-thumbnail" src="' + thumbnail + '" alt="' + displayName + ' Thumbnail" onerror="this.onerror=null;this.src=\'' + thumbnailFallback + '\';">';

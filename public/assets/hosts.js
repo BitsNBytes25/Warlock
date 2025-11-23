@@ -14,13 +14,13 @@ function renderHost(host, hostData) {
 	const thumbnail = document.createElement('img');
 	thumbnail.className = 'os-thumbnail';
 	if (hostData.os.name && hostData.os.version) {
-		thumbnail.src = `/media/wallpapers/servers/${hostData.os.name.toLowerCase()}_${hostData.os.version.toLowerCase()}.webp`;
-		thumbnail.dataset.fallback = '/media/wallpapers/servers/generic.webp';
+		thumbnail.src = `/assets/media/wallpapers/servers/${hostData.os.name.toLowerCase()}_${hostData.os.version.toLowerCase()}.webp`;
+		thumbnail.dataset.fallback = '/assets/media/wallpapers/servers/generic.webp';
 		thumbnail.alt = hostData.os.name;
 		thumbnail.onerror = "this.onerror=null;this.src=this.dataset.fallback;";
 	}
 	else {
-		thumbnail.src = '/media/wallpapers/servers/generic.webp';
+		thumbnail.src = '/assets/media/wallpapers/servers/generic.webp';
 	}
 
 	// Hostname

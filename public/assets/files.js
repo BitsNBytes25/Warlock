@@ -742,7 +742,7 @@ async function loadApplicationPaths() {
 							appsAdded = true;
 							target = appsDOM;
 							if (pathData.app === 'steam') {
-								icon = '<img src="/media/logos/apps/steam.webp" alt="Steam"/>';
+								icon = '<img src="/assets/media/logos/apps/steam.webp" alt="Steam"/>';
 							}
 							else {
 								icon = '<i class="fas fa-cube"></i>';
