@@ -231,7 +231,7 @@ function displayApplications(applications) {
 		let //pathParts = app.path.split('/').filter(part => part.length > 0),
 			displayName = app.title || guid,
 			icon = renderAppIcon(guid),
-			thumbnail = app.thumbnail || null;
+			thumbnail = getAppThumbnail(guid);
 
 		installedApplications += 1;
 

@@ -221,19 +221,120 @@ async function fetchHosts() {
 }
 
 /**
+ * Get the base repository URL for an application.
+ *
+ * @param {string} guid
+ * @returns {string|null}
+ */
+function getRepoURL(guid) {
+	let appData = applicationData && applicationData[guid] || null;
+
+	if (!appData) {
+		return null;
+	}
+
+	// Probably hosted from the original repo, so prepend that data.
+	if (appData.source === 'github') {
+		// We don't have the time to determine the latest release tag, so just use main
+		// This is not suitable for the application files which should be the exact release,
+		// but will be fine for static assets.
+		let branch = 'main';
+		if (appData.branch) {
+			if (appData.branch !== 'RELEASE') {
+				// Developer specifically set a branch
+				branch = appData.branch;
+			}
+		}
+		return `https://raw.githubusercontent.com/${appData.repo}/${branch}`;
+	}
+	else {
+		// Unsupported source
+		return null;
+	}
+}
+
+/**
  * Get the rendered HTML for an application icon.
  *
  * @param {string} guid
  * @returns {string}
  */
 function renderAppIcon(guid) {
-	let appData = applicationData && applicationData[guid] || null;
+	let appData = applicationData && applicationData[guid] || null,
+		url;
 
 	if (appData && appData.icon) {
-		return '<img src="' + appData.icon + '" alt="' + appData.title + ' Icon" title="' + appData.title + '">';
+		url = appData.icon;
+		if (!url.includes('://')) {
+			// Probably hosted from the original repo, so prepend that data.
+			url = getRepoURL(guid);
+			if (url) {
+				url += '/' + appData.icon;
+			}
+		}
+	}
+
+	if (url) {
+		return `<img src="${url}" alt="${appData.title} Icon" title="${appData.title} Icon">`;
 	}
 	else {
 		return '<i class="fas fa-cube" style="font-size: 1.5rem; color: white;"></i>';
+	}
+}
+
+/**
+ * Get the URL source for an application thumbnail.
+ *
+ * @param {string} guid
+ * @returns {string|null}
+ */
+function getAppThumbnail(guid) {
+	let appData = applicationData && applicationData[guid] || null,
+		url;
+
+	if (appData && appData.thumbnail) {
+		url = appData.thumbnail;
+		if (!url.includes('://')) {
+			// Probably hosted from the original repo, so prepend that data.
+			url = getRepoURL(guid);
+			if (url) {
+				return `${url}/${appData.thumbnail}`;
+			}
+		}
+		else {
+			return url;
+		}
+	}
+	else {
+		return null;
+	}
+}
+
+/**
+ * Get the URL source for an application full-size image.
+ *
+ * @param {string} guid
+ * @returns {string|null}
+ */
+function getAppImage(guid) {
+	let appData = applicationData && applicationData[guid] || null,
+		url;
+
+	if (appData && appData.image) {
+		url = appData.image;
+		if (!url.includes('://')) {
+			// Probably hosted from the original repo, so prepend that data.
+			url = getRepoURL(guid);
+			if (url) {
+				return `${url}/${appData.image}`;
+			}
+		}
+		else {
+			return url;
+		}
+	}
+	else {
+		return null;
 	}
 }
 
@@ -318,7 +419,10 @@ function replaceAppPlaceholders(app) {
 	});
 
 	if (document.body.dataset.useAppBackground && app.image) {
-		document.body.style.backgroundImage = `url(${app.image})`;
+		let url = getAppImage(app.guid);
+		if (url) {
+			document.body.style.backgroundImage = `url(${url})`;
+		}
 	}
 
 	if (

@@ -36,8 +36,8 @@
     - "--skip-firewall  - Do not install or configure a system firewall"
     - "--branch=<stable|experimental> - Install a different branch from Steam (optional)"
     - "--non-interactive  - Run the installer in non-interactive mode (useful for scripted installs)"
-  image: https://files.eval.bz/warlock/vein-1280x720.jpg
-  icon: https://files.eval.bz/warlock/vein-128x128.png
-  thumbnail: https://files.eval.bz/warlock/vein_616x353.jpg
+  image: media/vein-1280x720.jpg
+  icon: media/vein-128x128.png
+  thumbnail: media/vein_616x353.jpg
 
 
