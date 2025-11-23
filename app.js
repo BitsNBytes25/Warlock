@@ -141,6 +141,7 @@ app.use('/application/uninstall', require('./routes/application_uninstall'));
 app.use('/application/install', require('./routes/application_install'));
 app.use('/application/backups', require('./routes/application_backups'));
 app.use('/application/configure', require('./routes/application_configure'));
+app.use('/settings', require('./routes/settings'));
 
 
 /***************************************************************
@@ -161,6 +162,7 @@ app.use('/api/application/backup', require('./routes/api/application_backup'));
 app.use('/api/application/configs', require('./routes/api/application_configs'));
 app.use('/api/quickpaths', require('./routes/api/quickpaths'));
 app.use('/api/cron', require('./routes/api/cron'));
+app.use('/api/users', require('./routes/api/users'));
 
 
 

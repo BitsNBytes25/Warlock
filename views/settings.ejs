@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Warlock - Settings</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/frontend.css">
+    <link rel="stylesheet" href="/themes.css">
+    <script src="/common.js"></script>
+</head>
+<body>
+
+<%- include('partials/nav.ejs') %>
+
+<div class="main-container" style="grid-template-columns: 1fr; max-width: 1000px;">
+    <main class="content-area">
+        <div class="content-header">
+            <div class="content-header-inner">
+                <h2>
+                    <i class="fas fa-users-cog"></i>
+                    Settings
+                </h2>
+                <div class="content-header-buttons">
+                    <button id="btnCreateUser" class="action-create">
+                        <i class="fas fa-user-plus"></i> Create User
+                    </button>
+                </div>
+                <p>Manage platform users</p>
+            </div>
+        </div>
+
+        <div class="content-body">
+            <h3>Users</h3>
+            <div id="usersContainer">
+                <table class="table users-table">
+                    <thead>
+                        <tr><th>Username</th><th>Created</th><th>Actions</th></tr>
+                    </thead>
+                    <tbody id="usersTableBody">
+                        <tr><td colspan="3">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- Create/Edit User Modal -->
+<div id="userModal" class="modal">
+    <div class="modal-overlay"></div>
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 id="userModalTitle">Create User</h3>
+            <button class="modal-close"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label for="inputUsername">Username</label>
+                <input id="inputUsername" type="text" />
+            </div>
+            <div class="form-group" id="passwordRow">
+                <label for="inputPassword">Password</label>
+                <input id="inputPassword" type="password" />
+            </div>
+            <input type="hidden" id="inputUserId" />
+        </div>
+        <div class="modal-footer">
+            <button id="saveUserBtn" class="action-save">Save</button>
+            <button class="action-cancel modal-close">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<!-- Change Password Modal -->
+<div id="changePasswordModal" class="modal">
+    <div class="modal-overlay"></div>
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Change Password</h3>
+            <button class="modal-close"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label for="newPassword">New Password</label>
+                <input id="newPassword" type="password" />
+            </div>
+            <input type="hidden" id="pwdUserId" />
+        </div>
+        <div class="modal-footer">
+            <button id="savePasswordBtn" class="action-save">Set Password</button>
+            <button class="action-cancel modal-close">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div id="userDeleteModal" class="modal">
+    <div class="modal-overlay"></div>
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Confirm Delete</h3>
+            <button class="modal-close"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body">
+            <p>Are you sure you want to delete this user?</p>
+            <input type="hidden" id="delUserId" />
+        </div>
+        <div class="modal-footer">
+            <button id="confirmDeleteUserBtn" class="action-remove">Delete</button>
+            <button class="action-cancel modal-close">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<%- include('partials/theme-selector.ejs') %>
+
+<script src="/settings.js"></script>
+</body>
+</html>
