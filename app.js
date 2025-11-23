@@ -163,7 +163,7 @@ app.use('/api/application/configs', require('./routes/api/application_configs'))
 app.use('/api/quickpaths', require('./routes/api/quickpaths'));
 app.use('/api/cron', require('./routes/api/cron'));
 app.use('/api/users', require('./routes/api/users'));
-
+app.use('/api/firewall', require('./routes/api/firewall'));
 
 
 /*// Recursive file search endpoint

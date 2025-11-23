@@ -1,0 +1,28 @@
+meta {
+  name: ADD Host Firewall rule
+  type: http
+  seq: 10
+}
+
+post {
+  url: {{host}}/api/firewall/:host
+  body: json
+  auth: inherit
+}
+
+params:path {
+  host: 45.26.230.248
+}
+
+body:json {
+  {
+    "action": "ALLOW",
+    "to": "1337",
+    "proto": "tcp",
+    "comment": "Test Port"
+  }
+}
+
+settings {
+  encodeUrl: true
+}

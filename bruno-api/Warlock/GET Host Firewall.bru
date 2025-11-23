@@ -1,0 +1,19 @@
+meta {
+  name: GET Host Firewall
+  type: http
+  seq: 9
+}
+
+get {
+  url: {{host}}/api/firewall/:host
+  body: none
+  auth: inherit
+}
+
+params:path {
+  host: 45.26.230.248
+}
+
+settings {
+  encodeUrl: true
+}

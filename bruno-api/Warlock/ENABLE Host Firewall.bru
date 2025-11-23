@@ -1,0 +1,19 @@
+meta {
+  name: ENABLE Host Firewall
+  type: http
+  seq: 12
+}
+
+post {
+  url: {{host}}/api/firewall/enable/:host
+  body: none
+  auth: inherit
+}
+
+params:path {
+  host: 45.26.230.248
+}
+
+settings {
+  encodeUrl: true
+}
