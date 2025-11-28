@@ -57,12 +57,28 @@ The server runs on port 3000 by default, but you can set a custom port using the
 PORT=8000 npm start
 ```
 
-## Adding More Pages
+## Games Supported
 
-To add more HTML pages:
+* [ARK Survival Ascended](https://github.com/cdp1337/ARKSurvivalAscended-Linux)
+* [Minecraft](https://github.com/BitsNBytes25/Minecraft-Installer)
+* [VEIN](https://github.com/BitsNBytes25/VEIN-Dedicated-Server)
 
-1. Create new HTML files in the `public/` directory
-2. Add corresponding routes in `app.js` if needed (optional for static files)
-3. Update navigation links in existing HTML pages
+To add a new game, [check out the Template Repo](https://github.com/BitsNBytes25/Warlock-Game-Template)
+for example code and instructions on getting started!
 
-Enjoy building with Express! 🚀
+## Links and Contact
+
+* [Volleyball coach-turned-developer Micah](https://micahtml.com/)
+* [Bits n Bytes Community](https://bitsnbytes.dev)
+* [Donate to this project](https://ko-fi.com/bitsandbytes)
+* [Join our Discord](https://discord.gg/jyFsweECPb)
+* [Follow us on Mastodon](https://social.bitsnbytes.dev/@sitenews)
+
+## AI / LLM Disclaimer
+
+Warlock was originally generated with various models including GPT-5 and Claude Sonnet 4.5
+via Copilot's integration feature.
+
+Then it was effectively rewritten because generated code is absolutely rubbish and horribly unmaintainable.
+
+After wasting a week just un-fraking the generated code, now we just use those AI models to generate tiny snippets of code throughout this project.
