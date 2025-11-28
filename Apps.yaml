@@ -42,5 +42,23 @@
   image: media/vein-1280x720.jpg
   icon: media/vein-128x128.png
   thumbnail: media/vein_616x353.jpg
-
+- guid: 700798f0-35be-bc6c-da84-62c510dfbd06
+  title: Minecraft
+  source: github
+  repo: BitsNBytes25/Minecraft-Installer
+  branch: dev
+  installer: dist/installer.sh
+  author: Charlie Powell <cdp1337@bitsnbytes.dev>
+  category: Game Server
+  supports:
+    - "Debian 12, 13"
+    - "Ubuntu 24.04"
+  syntax:
+    - "--uninstall  - Perform an uninstallation"
+    - "--dir=<path> - Use a custom installation directory instead of the default (optional)"
+    - "--skip-firewall  - Do not install or configure a system firewall"
+    - "--non-interactive  - Run the installer in non-interactive mode (useful for scripted installs)"
+  image: media/minecraft-1280x720.webp
+  icon: media/minecraft-128x128.webp
+  thumbnail: media/minecraft-713x499.webp
 

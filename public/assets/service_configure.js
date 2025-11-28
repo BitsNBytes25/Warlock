@@ -32,8 +32,27 @@ function buildOptionsForm(app_guid, host, service, options) {
 			help.innerText = option.help;
 		}
 
+		// Support for configs with a list of options instead of freeform input
+		if ('options' in option && Array.isArray(option.options) && option.options.length > 0) {
+			option.type = 'select';
+		}
+
 		let input;
 		switch (option.type) {
+			case 'select':
+				input = document.createElement('select');
+				input.className = 'form-select';
+				input.id = `config-${option.option}`;
+				option.options.forEach(opt => {
+					let optElement = document.createElement('option');
+					optElement.value = opt;
+					optElement.text = opt;
+					if (opt === option.value) {
+						optElement.selected = true;
+					}
+					input.appendChild(optElement);
+				});
+				break;
 			case 'bool':
 				input = document.createElement('input');
 				input.type = 'checkbox';
