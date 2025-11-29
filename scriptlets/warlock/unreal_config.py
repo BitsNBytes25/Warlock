@@ -219,6 +219,7 @@ class UnrealConfig(BaseConfig):
 		"""
 		result = {}
 		key = ''
+		sub_key = ''
 		buffer = ''
 		quote = None
 		group = None
@@ -242,23 +243,49 @@ class UnrealConfig(BaseConfig):
 				continue
 			elif c == ')' and group is not None:
 				group = None
-				if buffer != '':
+				#if buffer != '':
+				if sub_key != '':
+					if isinstance(vals, list):
+						# This needs to be a dictionary in this case.
+						vals = {}
+					vals[sub_key] = buffer
+					sub_key = ''
+				else:
 					vals.append(buffer)
-				result[key] = vals
+
+				if key == '':
+					# This is a list of values, not a dictionary.
+					if isinstance(result, dict):
+						result = []
+					result.append(vals)
+				else:
+					result[key] = vals
 				vals = []
 				buffer = ''
 				key = ''
 				continue
 
 			if c == '=' and buffer != '':
-				key = buffer
+				if group is not None:
+					# When inside a group, this indicates it's a dict.
+					sub_key = buffer
+				else:
+					key = buffer
 				buffer = ''
-			elif c == ',' and group is None:
-				result[key] = buffer
-				buffer = ''
-				key = ''
-			elif c == ',' and group is not None:
-				vals.append(buffer)
+			elif c == ',':
+				if sub_key != '':
+					if isinstance(vals, list):
+						# This needs to be a dictionary in this case.
+						vals = {}
+					vals[sub_key] = buffer
+					sub_key = ''
+				elif key != '':
+					if group is not None:
+						# Inside a group, usually a list
+						vals.append(buffer)
+					else:
+						result[key] = buffer
+						key = ''
 				buffer = ''
 			else:
 				buffer += c
@@ -274,17 +301,30 @@ class UnrealConfig(BaseConfig):
 		:return:
 		"""
 		parts = []
-		for key in struct_data:
-			value = struct_data[key]
-			if isinstance(value, list):
-				val_str = '(' + ','.join(value) + ')'
-			elif value == '' or ':' in value or ',' in value:
-				# Needs quoting
-				val_str = '"%s"' % value.replace('"', '\\"')
-			else:
-				val_str = value
-			parts.append('%s=%s' % (key, val_str))
-		return '(' + ','.join(parts) + ')'
+		if isinstance(struct_data, list):
+			# List of values
+			for value in struct_data:
+				if isinstance(value, dict):
+					val_str = self._pack_struct(value)
+				elif value == '' or ':' in value or ',' in value:
+					# Needs quoting
+					val_str = '"%s"' % value.replace('"', '\\"')
+				else:
+					val_str = value
+				parts.append(val_str)
+			return '(' + ','.join(parts) + ')'
+		else:
+			for key in struct_data:
+				value = struct_data[key]
+				if isinstance(value, list):
+					val_str = '(' + ','.join(value) + ')'
+				elif value == '' or ':' in value or ',' in value or '_' in value:
+					# Needs quoting
+					val_str = '"%s"' % value.replace('"', '\\"')
+				else:
+					val_str = value
+				parts.append('%s=%s' % (key, val_str))
+			return '(' + ','.join(parts) + ')'
 
 	def fetch(self) -> str:
 		"""

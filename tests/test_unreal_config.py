@@ -175,6 +175,19 @@ PlayedMaps=NewMap2_WP
             expected = f.read()
         self.assertEqual(expected, cfg.fetch())
 
+    def test_ark(self):
+        """
+        ARK has some complicated datatypes we need to support.
+        :return:
+        """
+        cfg = UnrealConfig('test', os.path.join(here, 'data', 'unreal_ark.ini'))
+        cfg.load()
+
+        # Ensure the generated data matches expectations
+        with open(cfg.path, 'r') as f:
+            expected = f.read()
+        self.assertEqual(expected, cfg.fetch())
+
 
 if __name__ == '__main__':
     unittest.main()
