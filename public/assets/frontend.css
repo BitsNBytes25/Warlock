@@ -412,6 +412,11 @@ table td {
 	text-shadow: 0 0 8px var(--header-shadow);
 }
 
+.form-group .form-values label {
+	color: var(--input);
+	line-height: 2rem;
+}
+
 .form-group input[type=text],
 .form-group input[type=password],
 .form-group input[type=date],
@@ -419,7 +424,8 @@ table td {
 .form-group input[type=time],
 .form-group input[type=number],
 .form-group select,
-.form-group textarea {
+.form-group textarea,
+.form-group .form-values {
 	flex: 20 100%;
 	order: 3;
 	padding: 1rem 1.25rem;

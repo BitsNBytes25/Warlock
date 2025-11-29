@@ -17,11 +17,12 @@ function buildOptionsForm(app_guid, host, service, options) {
 	}
 
 	options.forEach(option => {
-		let formGroup = document.createElement('div');
+		let formGroup = document.createElement('div'),
+			id = `config-${option.option.toLowerCase().replace(' ', '-')}`;
 		formGroup.className = 'form-group';
 
 		let label = document.createElement('label');
-		label.htmlFor = `config-${option.option}`;
+		label.htmlFor = id;
 		label.className = 'form-label';
 		label.innerText = option.option;
 
@@ -34,7 +35,13 @@ function buildOptionsForm(app_guid, host, service, options) {
 
 		// Support for configs with a list of options instead of freeform input
 		if ('options' in option && Array.isArray(option.options) && option.options.length > 0) {
-			option.type = 'select';
+			if (option.type === 'list') {
+				// List of options should be a checkbox group.
+				option.type = 'checkboxes';
+			}
+			else {
+				option.type = 'select';
+			}
 		}
 
 		let input;
@@ -42,7 +49,7 @@ function buildOptionsForm(app_guid, host, service, options) {
 			case 'select':
 				input = document.createElement('select');
 				input.className = 'form-select';
-				input.id = `config-${option.option}`;
+				input.id = id;
 				option.options.forEach(opt => {
 					let optElement = document.createElement('option');
 					optElement.value = opt;
@@ -53,11 +60,38 @@ function buildOptionsForm(app_guid, host, service, options) {
 					input.appendChild(optElement);
 				});
 				break;
+			case 'checkboxes':
+				input = document.createElement('div');
+				input.className = 'form-values';
+				input.id = id;
+				option.options.forEach(opt => {
+					let checkboxDiv = document.createElement('div');
+					checkboxDiv.className = 'form-check';
+
+					let checkboxInput = document.createElement('input');
+					checkboxInput.type = 'checkbox';
+					checkboxInput.className = 'form-check-input';
+					checkboxInput.id = `${id}-${opt.toLowerCase().replace(' ', '-')}`;
+					checkboxInput.value = opt;
+					if (Array.isArray(option.value) && option.value.includes(opt)) {
+						checkboxInput.checked = true;
+					}
+
+					let checkboxLabel = document.createElement('label');
+					checkboxLabel.className = 'form-check-label';
+					checkboxLabel.htmlFor = `${id}-${opt.toLowerCase().replace(' ', '-')}`;
+					checkboxLabel.innerText = opt;
+
+					checkboxDiv.appendChild(checkboxInput);
+					checkboxDiv.appendChild(checkboxLabel);
+					input.appendChild(checkboxDiv);
+				});
+				break;
 			case 'bool':
 				input = document.createElement('input');
 				input.type = 'checkbox';
 				input.className = 'form-check-input';
-				input.id = `config-${option.option}`;
+				input.id = id;
 				input.checked = option.value === true || option.value === 'true';
 				break;
 			case 'int':
@@ -65,13 +99,13 @@ function buildOptionsForm(app_guid, host, service, options) {
 				input = document.createElement('input');
 				input.type = 'number';
 				input.className = 'form-control';
-				input.id = `config-${option.option}`;
+				input.id = id;
 				input.value = option.value;
 				break;
 			case 'text':
 				input = document.createElement('textarea');
 				input.className = 'form-control';
-				input.id = `config-${option.option}`;
+				input.id = id;
 				input.value = option.value;
 				break;
 			case 'str':
@@ -79,7 +113,7 @@ function buildOptionsForm(app_guid, host, service, options) {
 				input = document.createElement('input');
 				input.type = 'text';
 				input.className = 'form-control';
-				input.id = `config-${option.option}`;
+				input.id = id;
 				input.value = option.value;
 				break;
 		}
@@ -94,13 +128,27 @@ function buildOptionsForm(app_guid, host, service, options) {
 		// Add event handler on input to live-save changes to the backend
 		input.addEventListener('change', (event) => {
 			let newValue;
-			if (option.type === 'bool') {
+
+			if (event.target.closest('.form-values')) {
+				// This is a checkboxes group
+				newValue = [];
+				let group = event.target.closest('.form-values');
+				group.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+					if (checkbox.checked) {
+						newValue.push(checkbox.value);
+					}
+				});
+			}
+			else if (option.type === 'bool') {
 				newValue = event.target.checked;
-			} else if (option.type === 'int') {
+			}
+			else if (option.type === 'int') {
 				newValue = parseInt(event.target.value, 10);
-			} else if (option.type === 'float') {
+			}
+			else if (option.type === 'float') {
 				newValue = parseFloat(event.target.value);
-			} else {
+			}
+			else {
 				newValue = event.target.value;
 			}
 
