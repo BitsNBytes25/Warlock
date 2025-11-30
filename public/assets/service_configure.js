@@ -71,7 +71,7 @@ function buildOptionsForm(app_guid, host, service, options) {
 					let checkboxInput = document.createElement('input');
 					checkboxInput.type = 'checkbox';
 					checkboxInput.className = 'form-check-input';
-					checkboxInput.id = `${id}-${opt.toLowerCase().replace(' ', '-')}`;
+					checkboxInput.id = `${id}-${String(opt).toLowerCase().replace(' ', '-')}`;
 					checkboxInput.value = opt;
 					if (Array.isArray(option.value) && option.value.includes(opt)) {
 						checkboxInput.checked = true;
@@ -79,7 +79,7 @@ function buildOptionsForm(app_guid, host, service, options) {
 
 					let checkboxLabel = document.createElement('label');
 					checkboxLabel.className = 'form-check-label';
-					checkboxLabel.htmlFor = `${id}-${opt.toLowerCase().replace(' ', '-')}`;
+					checkboxLabel.htmlFor = `${id}-${String(opt).toLowerCase().replace(' ', '-')}`;
 					checkboxLabel.innerText = opt;
 
 					checkboxDiv.appendChild(checkboxInput);
