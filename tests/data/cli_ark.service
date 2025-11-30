@@ -1,0 +1,2 @@
+[Service]
+ExecStart=/path/to/proton run ArkAscendedServer.exe Ark?listen?SessionName="My Ark Server"?RCONPort=32330 -Flag1=Value1 -Flag2="Some value 2"

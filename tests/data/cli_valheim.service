@@ -1,0 +1,2 @@
+[Service]
+ExecStart=/home/steam/Valheim/AppFiles/valheim_server.x86_64 -name "My server" -port 2456 -world Dedicated -password secret -crossplay -modifier raids none
