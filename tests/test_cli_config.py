@@ -35,6 +35,26 @@ class TestCLIConfig(unittest.TestCase):
 				data_orig = f.read()
 			self.assertEqual(data_orig, data_new)
 
+	def test_similar_arguments(self):
+		cfg = CLIConfig('test')
+		cfg.add_option('Modifier - Player Events', 'flag', 'setkey playerevents', False, 'bool')
+		cfg.add_option('Modifier - Passive Mobs', 'flag', 'setkey passivemobs', False, 'bool')
+		cfg.add_option('Modifier - No Map', 'flag', 'setkey nomap', False, 'bool')
+		cfg.load('-setkey passivemobs')
+
+		self.assertFalse(cfg.get_value('Modifier - Player Events'))
+		self.assertTrue(cfg.get_value('Modifier - Passive Mobs'))
+		self.assertFalse(cfg.get_value('Modifier - No Map'))
+
+		cfg.set_value('Modifier - Player Events', True)
+		cfg.set_value('Modifier - No Map', True)
+
+		self.assertTrue(cfg.get_value('Modifier - Player Events'))
+		self.assertTrue(cfg.get_value('Modifier - Passive Mobs'))
+		self.assertTrue(cfg.get_value('Modifier - No Map'))
+
+		self.assertEqual('-setkey playerevents -setkey passivemobs -setkey nomap', str(cfg))
+
 	def test_valheim(self):
 		cfg = CLIConfig('test', os.path.join(here, 'data', 'cli_valheim.service'))
 		cfg.format = 'ExecStart=/home/steam/Valheim/AppFiles/valheim_server.x86_64 %OPTIONS%'

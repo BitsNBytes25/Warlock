@@ -211,6 +211,11 @@ class CLIConfig(BaseConfig):
 						elif len(opt_val) == 0:
 							opt_val = ''
 						break
+			elif opt_val != '':
+				# Check for single-value extensions
+				if (opt_key + ' ' + opt_val) in opts:
+					option = opts[opt_key + ' ' + opt_val]
+					opt_val = ''
 
 			if option is None:
 				print('Could not find option for key: %s' % (opt_key, ), file=sys.stderr)
