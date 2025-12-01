@@ -5,6 +5,7 @@ const bodyParser = require('body-parser');
 const {Host} = require("../db");
 const {get_ssh_key} = require("../libs/get_ssh_key.mjs");
 const {exec} = require('child_process');
+const {hostPostAdd} = require("../libs/host_post_add.mjs");
 
 const router = express.Router();
 const csrfProtection = csrf({ cookie: true });
@@ -80,7 +81,13 @@ router.post('/', parseForm, csrfProtection, (req, res) => {
 				// If successful, add the host to the database
 				Host.create({ ip })
 					.then(newHost => {
-						return res.redirect('/hosts');
+						// Perform any operations required on the host
+						hostPostAdd.then(() => {
+							return res.redirect('/hosts');
+						}).catch(e => {
+							console.error('Error during post-add operations:', e);
+							return res.redirect('/hosts');
+						});
 					})
 					.catch(err => {
 						console.error('Error adding host to database:', err);

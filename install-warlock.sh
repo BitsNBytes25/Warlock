@@ -197,7 +197,7 @@ server {
     listen 80;
     server_name $FQDN;
 
-    client_max_body_size 100M;
+    client_max_body_size 1G;
     proxy_request_buffering off;
     proxy_buffering off;
     proxy_pass_request_body on;

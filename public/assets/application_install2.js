@@ -3,25 +3,33 @@
  */
 
 function parseSyntaxLine(line) {
+	let option, hasValue, valType, desc, defaultValue;
+
 	if (!line || !line.trim()) return null;
 	const trimmed = line.trim();
 	// separate the option token (first token) from the description
 	const m = trimmed.match(/^(\S+)(?:\s+(.*))?$/);
 	if (!m) return null;
 	const token = m[1];
-	let desc = m[2] ? m[2].trim() : '';
+	desc = m[2] ? m[2].trim() : '';
 	if (desc.startsWith('-')) {
 		desc = desc.replace(/^-+\s*/, '');
 	}
-	const hasValue = token.includes('=');
-	let valType = null;
-	let option = token;
+	if (desc.includes('DEFAULT=')) {
+		defaultValue = desc.match(/DEFAULT=([^\s]+)/);
+		if (defaultValue) {
+			defaultValue = defaultValue[1];
+		}
+	}
+	hasValue = token.includes('=');
+	valType = null;
+	option = token;
 	if (hasValue) {
 		const parts = token.split(/=(.+)/);
 		option = parts[0];
 		valType = parts[1] ? parts[1].replace(/^<|>$/g, '') : null;
 	}
-	return { option, hasValue, valType, desc };
+	return { option, hasValue, valType, desc, defaultValue };
 }
 
 function createOptionElement(spec) {
@@ -37,15 +45,32 @@ function createOptionElement(spec) {
 	wrapper.appendChild(label);
 
 	if (spec.hasValue) {
-		const input = document.createElement('input');
+		let input;
 		if (spec.valType) {
-			if (['number', 'int', 'float'].includes(spec.valType.toLowerCase())) {
+			if (spec.valType.includes('|')) {
+				// Select dropdown to pick which option to use
+				input = document.createElement('select');
+				const options = spec.valType.split('|').map(opt => opt.trim());
+				for (const opt of options) {
+					const optionEl = document.createElement('option');
+					if (spec.defaultValue && spec.defaultValue === opt) {
+						optionEl.selected = true;
+					}
+					optionEl.value = opt;
+					optionEl.textContent = opt;
+					input.appendChild(optionEl);
+				}
+			}
+			else if (['number', 'int', 'float'].includes(spec.valType.toLowerCase())) {
+				input = document.createElement('input');
 				input.type = 'number';
 			}
 			else {
+				input = document.createElement('input');
 				input.type = 'text';
 			}
 		}
+
 		input.id = safeId;
 		input.name = spec.option;
 		input.className = 'install-option-input';

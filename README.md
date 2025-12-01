@@ -24,6 +24,9 @@ Warlock/
 
 ## Getting Started
 
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt install nodejs nginx git -y
+
 sudo ./install-warlock.sh
 # or run under a service user:
 sudo ./install-warlock.sh --user warlock
@@ -69,6 +72,8 @@ PORT=8000 npm start
 
 * [ARK Survival Ascended](https://github.com/cdp1337/ARKSurvivalAscended-Linux)
 * [Minecraft](https://github.com/BitsNBytes25/Minecraft-Installer)
+* [Palworld](https://github.com/BitsNBytes25/Palworld-Installer)
+* [Valheim](https://github.com/BitsNBytes25/Valheim-Installer)
 * [VEIN](https://github.com/BitsNBytes25/VEIN-Dedicated-Server)
 
 To add a new game, [check out the Template Repo](https://github.com/BitsNBytes25/Warlock-Game-Template)
