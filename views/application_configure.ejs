@@ -36,12 +36,30 @@
                     Automatic updates are NOT enabled!
                 </div>
                 <div class="success-message" id="automatedUpdatesEnabledMessage" style="display:none;">
-                    Automatic updates are enabled.
+                    <p>
+                        Automatic updates are enabled - game will check for updates and <strong>if updates are present</strong> will restart to apply them automatically.
+                    </p>
                 </div>
                 <div>
                     <button class="action-edit" id="configureAutoUpdateBtn">
                         <i class="fas fa-clock"></i>
                         Configure Automatic Updates
+                    </button>
+                </div>
+
+                <br/><br/>
+
+                <h3>Automated Restarts</h3>
+                <div class="warning-message" id="automatedRestartsDisabledMessage" style="display:none;">
+                    Automatic restarts are NOT enabled!
+                </div>
+                <div class="success-message" id="automatedRestartsEnabledMessage" style="display:none;">
+                    Automatic restarts are enabled - game will restart (and update if necessary) automatically on a set schedule.
+                </div>
+                <div>
+                    <button class="action-edit" id="configureAutoRestartBtn">
+                        <i class="fas fa-power-off"></i>
+                        Configure Automatic Restarts
                     </button>
                 </div>
 
@@ -120,6 +138,58 @@
         </div>
         <div class="modal-footer">
             <button class="action-save" id="saveAutoUpdateBtn">
+                <i class="fas fa-save"></i>
+                Save Configuration
+            </button>
+            <button class="action-cancel modal-close">
+                <i class="fas fa-times"></i>
+                Cancel
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Automatic Restart Cron Configuration Modal -->
+<div id="autoRestartModal" class="modal">
+    <div class="modal-overlay"></div>
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-power-off"></i> Automatic Restart Configuration</h3>
+            <button class="modal-close">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label for="autoRestartSchedule">Schedule</label>
+                <select id="autoRestartSchedule" name="schedule">
+                    <option value="disabled">Disabled</option>
+                    <option value="hourly">Hourly</option>
+                    <option value="daily">Daily</option>
+                    <option value="weekly">Weekly</option>
+                </select>
+            </div>
+
+            <div class="form-group" id="autoRestartWeeklyDayRow">
+                <label for="autoRestartWeeklyDay">Weekly Day</label>
+                <select id="autoRestartWeeklyDay" name="weekly_day">
+                    <option value="mon">Monday</option>
+                    <option value="tue">Tuesday</option>
+                    <option value="wed">Wednesday</option>
+                    <option value="thu">Thursday</option>
+                    <option value="fri">Friday</option>
+                    <option value="sat">Saturday</option>
+                    <option value="sun">Sunday</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="autoRestartTime">Time</label>
+                <input type="time" id="autoRestartTime" name="time" value="02:00">
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="action-save" id="saveAutoRestartBtn">
                 <i class="fas fa-save"></i>
                 Save Configuration
             </button>

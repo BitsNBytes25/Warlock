@@ -862,15 +862,15 @@ async function loadCronJob(host, identifier, target) {
 			target.dataset.autoEventsAdded = '1';
 
 			schedule.addEventListener('change', () => {
-				if (autoBackupSchedule.value === 'weekly') {
+				if (schedule.value === 'weekly') {
 					time.closest('.form-group').style.display = 'flex';
 					day.closest('.form-group').style.display = 'flex';
 				}
-				else if (autoBackupSchedule.value === 'daily') {
+				else if (schedule.value === 'daily') {
 					time.closest('.form-group').style.display = 'flex';
 					day.closest('.form-group').style.display = 'none';
 				}
-				else if (autoBackupSchedule.value === 'hourly') {
+				else if (schedule.value === 'hourly') {
 					time.closest('.form-group').style.display = 'none';
 					day.closest('.form-group').style.display = 'none';
 				}
