@@ -423,6 +423,7 @@ table td {
 .form-group input[type=datetime],
 .form-group input[type=time],
 .form-group input[type=number],
+.form-group input[type=search],
 .form-group select,
 .form-group textarea,
 .form-group .form-values {

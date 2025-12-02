@@ -201,9 +201,25 @@ window.addEventListener('DOMContentLoaded', () => {
 						.then(response => response.json())
 						.then(result => {
 							if (result.success && result.configs) {
-								const configs = result.configs;
-								console.debug(configs);
+								const configs = result.configs,
+									quickSearch = document.getElementById('quick-search');
+								configurationContainer.innerHTML = '';
 								buildOptionsForm(app_guid, host, service, configs);
+
+								quickSearch.removeAttribute('disabled');
+								quickSearch.addEventListener('keyup', e => {
+									const searchTerm = e.target.value.toLowerCase();
+									const configItems = configurationContainer.getElementsByClassName('form-group');
+
+									Array.from(configItems).forEach(item => {
+										const label = item.getElementsByTagName('label')[0];
+										if (label.innerText.toLowerCase().includes(searchTerm)) {
+											item.style.display = '';
+										} else {
+											item.style.display = 'none';
+										}
+									});
+								});
 							}
 							else {
 								configurationContainer.innerHTML = `<div class="error-message" role="alert">Unable to load service configuration, game may not support this feature.</div>`;
@@ -214,6 +230,6 @@ window.addEventListener('DOMContentLoaded', () => {
 		})
 		.catch(e => {
 			console.error(e);
-			configurationContainer.innerHTML = '<div class="alert alert-danger" role="alert">Error loading application or host data.</div>';
+			configurationContainer.innerHTML = '<div class="alert error-message" role="alert">Error loading application or host data.</div>';
 		});
 });

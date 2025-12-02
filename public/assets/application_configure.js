@@ -17,7 +17,7 @@ function buildOptionsForm(app_guid, host, options) {
 	let target = document.getElementById('configurationContainer');
 
 	if (options.length === 0) {
-		target.innerHTML = '<div class="alert alert-info" role="alert">No configuration options available for this service.</div>';
+		target.innerHTML = '<div class="alert warning-message" role="alert">No configuration options available for this service.</div>';
 		return;
 	}
 
@@ -227,10 +227,34 @@ window.addEventListener('DOMContentLoaded', () => {
 				.then(response => response.json())
 				.then(result => {
 					if (result.success && result.configs) {
-						const configs = result.configs;
-						console.debug(configs);
+						const configs = result.configs,
+							quickSearch = document.getElementById('quick-search');
+						configurationContainer.innerHTML = '';
 						buildOptionsForm(guid, host, configs);
+
+						quickSearch.removeAttribute('disabled');
+						quickSearch.addEventListener('keyup', e => {
+							const searchTerm = e.target.value.toLowerCase();
+							const configItems = configurationContainer.getElementsByClassName('form-group');
+
+							Array.from(configItems).forEach(item => {
+								const label = item.getElementsByTagName('label')[0];
+								if (label.innerText.toLowerCase().includes(searchTerm)) {
+									item.style.display = '';
+								} else {
+									item.style.display = 'none';
+								}
+							});
+						});
 					}
+					else {
+						configurationContainer.innerHTML = `<div class="error-message" role="alert">Unable to load service configuration, game may not support this feature.</div>`;
+						console.error(result.error);
+					}
+				})
+				.catch(e => {
+					console.error('Error loading configuration options:', e);
+					configurationContainer.innerHTML = '<div class="alert error-message" role="alert">Error loading configuration options.<br/>' + String(e) + '</div>';
 				});
 
 			// Pull automatic update checks
