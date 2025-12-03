@@ -1046,6 +1046,57 @@ if ('serviceWorker' in navigator) {
 	window.addEventListener('load', () => {
 		navigator.serviceWorker.register('/service-worker.js').then(reg => {
 			console.log('ServiceWorker registered', reg.scope);
+
+			// If there's an updated worker waiting, ask it to skip waiting so it becomes active
+			if (reg.waiting) {
+				reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+			}
+
+			reg.addEventListener('updatefound', () => {
+				const newWorker = reg.installing;
+				console.log('Service worker update found.');
+				newWorker.addEventListener('statechange', () => {
+					if (newWorker.state === 'installed') {
+						// A new worker is installed and waiting. Ask it to activate immediately.
+						if (reg.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+					}
+				});
+			});
+
+			// Listen for messages from the service worker
+			navigator.serviceWorker.addEventListener('message', (evt) => {
+				if (evt.data && evt.data.type === 'SW_ACTIVATED') {
+					console.log('Service Worker activated, version:', evt.data.version);
+					// Optionally reload the page to ensure the new SW controls it
+					window.location.reload();
+				}
+			});
+
+			// Check remote service-worker version and auto-update if changed
+			(async () => {
+				try {
+					const resp = await fetch('/service-worker.js', { cache: 'no-store' });
+					if (resp.ok) {
+						const text = await resp.text();
+						const m = text.match(/\bSW_VERSION\s*=\s*['"]([^'"]+)['"]/);
+						if (m && m[1]) {
+							const remoteVersion = m[1];
+							const localVersion = localStorage.getItem('warlock_sw_version');
+							if (localVersion !== remoteVersion) {
+								console.log('Service worker version changed:', localVersion, '=>', remoteVersion);
+								// Ask the registration to update (will fetch new SW file)
+								try { await reg.update(); } catch (e) { console.warn('reg.update failed', e); }
+								// If the new worker is already waiting, activate it
+								if (reg.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+								// store the new version; activation handler will perform reload when ready
+								localStorage.setItem('warlock_sw_version', remoteVersion);
+							}
+						}
+					}
+				} catch (e) {
+					console.warn('Could not check service-worker version', e);
+				}
+			})();
 		}).catch(err => {
 			console.warn('ServiceWorker registration failed:', err);
 		});

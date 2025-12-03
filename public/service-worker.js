@@ -3,7 +3,9 @@
 // forward streaming endpoints (SSE/chunked responses) directly to the network
 // so the page can receive streaming bodies unbuffered.
 
-const CACHE_NAME = 'warlock-20251203.002';
+// Version string for this service worker; bumping this (or changing the file) will trigger an update.
+const SW_VERSION = '20251203.003';
+const CACHE_NAME = 'warlock-' + SW_VERSION;
 const PRECACHE_URLS = [
 	'/assets/application_backups.js',
 	'/assets/application_configure.js',
@@ -34,13 +36,34 @@ self.addEventListener('install', event => {
 });
 
 self.addEventListener('activate', event => {
-	event.waitUntil(self.clients.claim());
+	// Claim clients immediately so the SW starts controlling pages
+	event.waitUntil(
+		(async () => {
+			await self.clients.claim();
+			// Optionally remove old caches that don't match current cache name
+			const keys = await caches.keys();
+			await Promise.all(keys.map(k => {
+				if (k !== CACHE_NAME) return caches.delete(k);
+				return Promise.resolve(true);
+			}));
+			// Broadcast activation and version to all clients so they can react
+			const allClients = await self.clients.matchAll({ includeUncontrolled: true });
+			for (const client of allClients) {
+				client.postMessage({ type: 'SW_ACTIVATED', version: SW_VERSION });
+			}
+		})()
+	);
 });
 
 function shouldBypassRequest(request) {
 
-	// Skip anything to /api
-	if (request.url.startsWith('/api/')) return true;
+	try {
+		const url = new URL(request.url);
+		// Path-based bypass for API endpoints
+		if (url.pathname.startsWith('/api/')) return true;
+	} catch (e) {
+		// Fall back to no path-based bypass if URL parsing fails
+	}
 
 	try {
 		const bypassHeader = request.headers.get('x-bypass-service-worker');
@@ -88,4 +111,3 @@ self.addEventListener('message', event => {
 		self.skipWaiting();
 	}
 });
-
