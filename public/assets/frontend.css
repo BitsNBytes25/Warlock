@@ -1631,6 +1631,9 @@ button.action-cancel:hover {
 	overflow: scroll;
 	backdrop-filter: blur(20px);
 }
+.modal.wide .modal-content {
+	max-width: 80vw;
+}
 
 .modal-header {
 	padding: 1rem 1.5rem;
