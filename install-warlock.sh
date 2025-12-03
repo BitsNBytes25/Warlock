@@ -202,6 +202,12 @@ server {
     proxy_buffering off;
     proxy_pass_request_body on;
 
+    # Serve the service worker at root so it can control site-wide scope
+    location = /service-worker.js {
+        alias $INSTALL_DIR/public/service-worker.js;
+        access_log off;
+    }
+
     # Serve static assets directly from the install directory
     location /assets/ {
         alias $INSTALL_DIR/public/assets/;

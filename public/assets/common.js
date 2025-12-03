@@ -580,9 +580,14 @@ async function stream(
 		}
 
 		try {
+			// Ensure streaming requests bypass the service worker by setting a special header.
+			// Do not modify caller-provided headers object directly; clone it first.
+			const reqHeaders = Object.assign({}, headers || {});
+			reqHeaders['x-bypass-service-worker'] = '1';
+
 			const res = await fetch(url, {
 				method: method,
-				headers: headers,
+				headers: reqHeaders,
 				body: body,
 				signal
 			});
@@ -1025,3 +1030,14 @@ document.addEventListener('DOMContentLoaded', () => {
 	});
 });
 
+
+// Register a basic service worker to allow controlled caching and to bypass streaming endpoints
+if ('serviceWorker' in navigator) {
+	window.addEventListener('load', () => {
+		navigator.serviceWorker.register('/service-worker.js').then(reg => {
+			console.log('ServiceWorker registered', reg.scope);
+		}).catch(err => {
+			console.warn('ServiceWorker registration failed:', err);
+		});
+	});
+}
