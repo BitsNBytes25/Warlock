@@ -194,6 +194,8 @@ async function loadAllServicesAndStats() {
 		else {
 			console.warn('Service stream error:', data);
 		}
+	}, true).catch(e => {
+		console.error(e);
 	});
 }
 

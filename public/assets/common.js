@@ -534,6 +534,7 @@ async function loadHost(host) {
  * @param {Object} headers HTTP headers to include in the request
  * @param {*} body Request body to send (default: null)
  * @param {function} messageHandler Callback function to handle parsed events (event, data)
+ * @param {bool} reconnect Whether to attempt reconnection on disconnect (default: false)
  * @returns {Promise<void>}
  */
 async function stream(
@@ -541,107 +542,116 @@ async function stream(
 	method = 'POST',
 	headers = {},
 	body = null,
-	messageHandler = null
+	messageHandler = null,
+	reconnect = false
 ) {
-	return new Promise(async (resolve, reject) => {
-		let controller = null;
-		let reader = null;
+	let controller = null;
+	let reader = null;
 
-		controller = new AbortController();
-		const signal = controller.signal;
+	controller = new AbortController();
+	const signal = controller.signal;
 
-		const parseSSEBlock = (block) => {
-			// Parse SSE-style block (lines like "data: ..." and optionally "event: ...")
-			const lines = block.split(/\r?\n/);
-			let event = 'message';
-			const dataLines = [];
-			for (const line of lines) {
-				if (line.startsWith('event:')) {
-					event = line.slice(6).trim();
-				} else if (line.startsWith('data:')) {
-					dataLines.push(line.slice(5).trim());
-				} else if (line.startsWith('stdout:')) {
-					event = 'stdout';
-					dataLines.push(line.slice(7).trim());
-				} else if (line.startsWith('stderr:')) {
-					event = 'stderr';
-					dataLines.push(line.slice(7).trim());
-				}
+	const parseSSEBlock = (block) => {
+		// Parse SSE-style block (lines like "data: ..." and optionally "event: ...")
+		const lines = block.split(/\r?\n/);
+		let event = 'message';
+		const dataLines = [];
+		for (const line of lines) {
+			if (line.startsWith('event:')) {
+				event = line.slice(6).trim();
+			} else if (line.startsWith('data:')) {
+				dataLines.push(line.slice(5).trim());
+			} else if (line.startsWith('stdout:')) {
+				event = 'stdout';
+				dataLines.push(line.slice(7).trim());
+			} else if (line.startsWith('stderr:')) {
+				event = 'stderr';
+				dataLines.push(line.slice(7).trim());
 			}
-			const data = dataLines.join('\n');
+		}
+		const data = dataLines.join('\n');
 
-			if (event === 'error') {
-				throw new Error(data);
+		if (event === 'error') {
+			console.error(data);
+		}
+
+		if (messageHandler) {
+			messageHandler(event, data);
+		}
+	}
+
+	try {
+		// Ensure streaming requests bypass the service worker by setting a special header.
+		// Do not modify caller-provided headers object directly; clone it first.
+		const reqHeaders = Object.assign({}, headers || {});
+		reqHeaders['x-bypass-service-worker'] = '1';
+
+		const res = await fetch(url, {
+			method: method,
+			headers: reqHeaders,
+			body: body,
+			signal
+		}).catch(e => {
+			console.error(e);
+		});
+
+		if (!res.ok) {
+			const text = await res.text();
+			messageHandler('error', `[HTTP ${res.status}] ${text}`);
+			return;
+		}
+
+		// Stream the response body and parse SSE-like chunks
+		const decoder = new TextDecoder();
+		reader = res.body.getReader();
+		let buffer = '';
+
+		while (true) {
+			if (reader === null) {
+				// Stream completed.
+				break;
 			}
+			const { done, value } = await reader.read();
+			if (done) break;
+			buffer += decoder.decode(value, { stream: true });
 
-			if (messageHandler) {
-				messageHandler(event, data);
+			// Process complete blocks separated by blank line(s)
+			let sepIndex;
+			while ((sepIndex = buffer.indexOf('\n\n')) !== -1 || (sepIndex = buffer.indexOf('\r\n\r\n')) !== -1) {
+				// prefer \r\n\r\n detect above, index found already
+				const block = buffer.slice(0, sepIndex);
+				buffer = buffer.slice(sepIndex + (buffer[sepIndex] === '\r' ? 4 : 2)); // remove separator
+				if (block.trim()) parseSSEBlock(block);
 			}
 		}
 
-		try {
-			// Ensure streaming requests bypass the service worker by setting a special header.
-			// Do not modify caller-provided headers object directly; clone it first.
-			const reqHeaders = Object.assign({}, headers || {});
-			reqHeaders['x-bypass-service-worker'] = '1';
 
-			const res = await fetch(url, {
-				method: method,
-				headers: reqHeaders,
-				body: body,
-				signal
-			});
-
-			if (!res.ok) {
-				const text = await res.text();
-				return reject(`[HTTP ${res.status}] ${text}`);
-			}
-
-			// Stream the response body and parse SSE-like chunks
-			const decoder = new TextDecoder();
-			reader = res.body.getReader();
-			let buffer = '';
-
-			while (true) {
-				if (reader === null) {
-					// Stream completed.
-					break;
-				}
-				const { done, value } = await reader.read();
-				if (done) break;
-				buffer += decoder.decode(value, { stream: true });
-
-				// Process complete blocks separated by blank line(s)
-				let sepIndex;
-				while ((sepIndex = buffer.indexOf('\n\n')) !== -1 || (sepIndex = buffer.indexOf('\r\n\r\n')) !== -1) {
-					// prefer \r\n\r\n detect above, index found already
-					const block = buffer.slice(0, sepIndex);
-					buffer = buffer.slice(sepIndex + (buffer[sepIndex] === '\r' ? 4 : 2)); // remove separator
-					if (block.trim()) parseSSEBlock(block);
-				}
-			}
-
-			// handle any trailing buffer
-			if (buffer.trim()) parseSSEBlock(buffer);
-		} catch (err) {
-			if (err.name === 'AbortError') {
-				return reject(`[stream aborted]`);
-			} else {
-				return reject(`${err.message}`);
-			}
-		} finally {
-			if (reader) {
-				try { reader.cancel(); } catch (e) {}
-				reader = null;
-			}
-			if (controller) {
-				try { controller.abort(); } catch (e) {}
-				controller = null;
-			}
+		// handle any trailing buffer
+		if (buffer.trim()) parseSSEBlock(buffer);
+	} catch (err) {
+		if (err.name === 'AbortError') {
+			messageHandler('close', 'Stream aborted by client.');
+		} else {
+			messageHandler('error', err.message);
+		}
+	} finally {
+		if (reader) {
+			try { reader.cancel(); } catch (e) {}
+			reader = null;
+		}
+		if (controller) {
+			try { controller.abort(); } catch (e) {}
+			controller = null;
 		}
 
-		return resolve();
-	});
+		if (reconnect) {
+			// small delay before reconnecting
+			setTimeout(() => {
+				stream(url, method, headers, body, messageHandler, reconnect);
+			}, 15000);
+			return;
+		}
+	}
 }
 
 

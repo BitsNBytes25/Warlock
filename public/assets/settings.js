@@ -137,4 +137,3 @@ document.getElementById('confirmDeleteUserBtn').addEventListener('click', async 
 
 // initial load
 loadUsers();
-
