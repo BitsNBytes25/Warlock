@@ -33,7 +33,7 @@ export function get_ssh_key() {
 		// Auto-create an ECDSA key by default
 		const keyPath = path.join(sshDir, 'id_ecdsa');
 		execSync(`ssh-keygen -q -t ecdsa -b 521 -f "${keyPath}" -N "" -C "warlock-generated-key"`);
-		pubKeyPath = keyPath;
+		pubKeyPath = keyPath + '.pub';
 	}
 
 	let data = fs.readFileSync(pubKeyPath, 'utf8');
