@@ -50,12 +50,21 @@
             <br/><br/>
 
             <h3>Current Backups</h3>
+            <button class="link-control action-upload" id="uploadBtn">
+                <i class="fas fa-upload"></i>
+                Upload Local Backup
+            </button>
+            <br/>
+            <br/>
             <div id="backupsList">
                 <div><i class="fas fa-spinner fa-spin"></i> Loading...</div>
             </div>
         </div>
     </main>
 </div>
+
+<!-- Upload Progress Modal -->
+<input type="file" id="fileInput" style="display: none;" accept=".tar.gz" />
 
 <!-- Perform Backup Modal -->
 <div id="backupModal" class="modal wide">
@@ -90,7 +99,7 @@
 </div>
 
 <!-- Restore Backup Modal -->
-<div id="restoreModal" class="modal">
+<div id="restoreModal" class="modal wide">
     <div class="modal-overlay"></div>
     <div class="modal-content">
         <div class="modal-header">

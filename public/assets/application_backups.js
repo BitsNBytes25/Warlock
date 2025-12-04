@@ -12,7 +12,9 @@ const backupsList = document.getElementById('backupsList'),
 	autoBackupModal = document.getElementById('autoBackupModal'),
 	autoBackupSchedule = document.getElementById('autoBackupSchedule'),
 	autoBackupKeep = document.getElementById('autoBackupKeep'),
-	saveAutoBackupBtn = document.getElementById('saveAutoBackupBtn');
+	saveAutoBackupBtn = document.getElementById('saveAutoBackupBtn'),
+	uploadBtn = document.getElementById('uploadBtn'),
+	fileInput = document.getElementById('fileInput');
 
 let backupPath;
 
@@ -177,6 +179,48 @@ async function saveAutomaticBackupConfig() {
 		})
 		.catch(() => showToast('error', 'Error saving schedule'));
 }
+
+async function startUpload() {
+	const files = fileInput.files;
+	if (!files.length) return;
+
+	showToast('info', 'Starting upload, please wait a moment...');
+
+	for (let i = 0; i < files.length; i++) {
+		const file = files[i];
+
+		try {
+			// Send raw file content
+			const response = await fetch(`/api/file/${loadedHost}?path=${backupPath}/${file.name}`, {
+				method: 'PUT',
+				headers: {
+					'Content-Type': 'application/octet-stream'
+				},
+				body: file
+			});
+
+			const result = await response.json();
+
+			if (!result.success) {
+				showToast('error', `Error uploading ${file.name}: ${result.error}`);
+			}
+			else {
+				showToast('success', `Successfully uploaded ${result.success}`);
+				loadBackupsList();
+			}
+		} catch (error) {
+			showToast('error', `Network error uploading ${file.name}: ${error.message}`);
+		}
+	}
+}
+
+// Upload file(s)
+uploadBtn.addEventListener('click', () => {
+	fileInput.click();
+});
+fileInput.addEventListener('change', (e) => {
+	startUpload();
+});
 
 /**
  * Primary handler to load the application on page load
