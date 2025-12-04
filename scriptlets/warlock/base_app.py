@@ -236,6 +236,16 @@ class BaseApp:
 		"""
 		return False
 
+	def post_update(self):
+		"""
+		Perform any post-update actions needed for this game
+
+		Called immediately after an update is performed but before services are restarted.
+
+		:return:
+		"""
+		pass
+
 	def send_discord_message(self, message: str):
 		"""
 		Send a message to the configured Discord webhook

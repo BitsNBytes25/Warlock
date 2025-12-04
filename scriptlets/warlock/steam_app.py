@@ -1,6 +1,6 @@
 import os
 import time
-
+import subprocess
 from scriptlets.warlock.base_app import *
 from scriptlets.steam.steamcmd_check_app_update import *
 
@@ -12,6 +12,8 @@ class SteamApp(BaseApp):
 	def __init__(self):
 		super().__init__()
 		self.steam_id = ''
+		self.steam_branch = 'public'
+		self.steam_branch_password = ''
 
 	def check_update_available(self) -> bool:
 		"""
@@ -62,9 +64,17 @@ class SteamApp(BaseApp):
 			'anonymous',
 			'+app_update',
 			self.steam_id,
-			'validate',
-			'+quit'
 		]
+
+		if self.steam_branch != 'public':
+			cmd.append('-beta')
+			cmd.append(self.steam_branch)
+			if self.steam_branch_password != '':
+				cmd.append('-betapassword')
+				cmd.append(self.steam_branch_password)
+
+		cmd.append('validate')
+		cmd.append('+quit')
 
 		if os.geteuid() == 0:
 			stat_info = os.stat(here)
@@ -76,6 +86,9 @@ class SteamApp(BaseApp):
 			] + cmd
 
 		res = subprocess.run(cmd)
+
+		# Allow the game to perform any post-update tasks
+		self.post_update()
 
 		if len(services) > 0:
 			print('Update completed, restarting previously running services...')
