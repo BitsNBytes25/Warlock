@@ -228,6 +228,14 @@ class BaseApp:
 		"""
 		return False
 
+	def update(self) -> bool:
+		"""
+		Update the game server
+
+		:return:
+		"""
+		return False
+
 	def send_discord_message(self, message: str):
 		"""
 		Send a message to the configured Discord webhook

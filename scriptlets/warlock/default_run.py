@@ -116,6 +116,11 @@ def run_manager(game):
 		action='store_true'
 	)
 	parser.add_argument(
+		'--update',
+		help='Update the game server to the latest version',
+		action='store_true'
+	)
+	parser.add_argument(
 		'--get-services',
 		help='List the available service instances for this game (JSON encoded)',
 		action='store_true'
@@ -193,6 +198,8 @@ def run_manager(game):
 		sys.exit(0 if game.restore(args.restore) else 1)
 	elif args.check_update:
 		sys.exit(0 if game.check_update_available() else 1)
+	elif args.update:
+		sys.exit(0 if game.update() else 1)
 	elif args.get_services:
 		menu_get_services(game)
 	elif args.get_configs:
