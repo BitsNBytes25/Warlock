@@ -161,6 +161,7 @@ app.use('/api/service/configs', require('./routes/api/service_configs'));
 app.use('/api/application', require('./routes/api/application'));
 app.use('/api/application/backup', require('./routes/api/application_backup'));
 app.use('/api/application/configs', require('./routes/api/application_configs'));
+app.use('/api/application/update', require('./routes/api/application_update'));
 app.use('/api/quickpaths', require('./routes/api/quickpaths'));
 app.use('/api/cron', require('./routes/api/cron'));
 app.use('/api/users', require('./routes/api/users'));

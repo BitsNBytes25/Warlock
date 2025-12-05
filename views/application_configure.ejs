@@ -40,7 +40,11 @@
                         Automatic updates are enabled - game will check for updates and <strong>if updates are present</strong> will restart to apply them automatically.
                     </p>
                 </div>
-                <div>
+                <div class="button-group">
+                    <button class="action-update" id="openUpdateBtn">
+                        <i class="fas fa-circle-up"></i>
+                        Update Game
+                    </button>
                     <button class="action-edit" id="configureAutoUpdateBtn">
                         <i class="fas fa-clock"></i>
                         Configure Automatic Updates
@@ -96,6 +100,38 @@
             </div>
         </main>
     </div>
+
+<!-- Update Modal -->
+<div id="updateModal" class="modal wide">
+    <div class="modal-overlay"></div>
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-circle-up"></i> Update Game</h3>
+            <button class="modal-close">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div class="warning-message">
+                <i class="fas fa-exclamation-triangle"></i>
+                <p>
+                    Warning: Updating a game will pause the game during the procedure.
+                </p>
+            </div>
+            <div class="terminal"></div>
+        </div>
+        <div class="modal-footer">
+            <button class="action-update" id="confirmUpdateBtn">
+                <i class="fas fa-circle-up"></i>
+                Confirm Update
+            </button>
+            <button class="action-cancel modal-close">
+                <i class="fas fa-times"></i>
+                Cancel
+            </button>
+        </div>
+    </div>
+</div>
 
 <!-- Automatic Update Check Cron Configuration Modal -->
 <div id="autoUpdateModal" class="modal">

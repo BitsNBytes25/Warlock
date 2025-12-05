@@ -121,6 +121,18 @@
 	}
 }
 
+@keyframes pulse {
+	0% {
+		transform: scale(1);
+	}
+	50% {
+		transform: scale(2);
+	}
+	100% {
+		transform: scale(1);
+	}
+}
+
 
 /* ==========================
    Base / Reset
@@ -380,7 +392,7 @@ table td {
 	border-radius: 0.5rem;
 	padding: 1rem;
 	overflow: scroll;
-	max-height: 50vh;
+	max-height: 40vh;
 	font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
 	white-space: pre-line;
 }
@@ -824,6 +836,10 @@ button.action-cancel:hover {
 .host-card .app-install .app-actions {
 	flex: 1;
 	text-align: right;
+}
+
+.application-card .app-install .host-actions .update-available i {
+	animation: pulse 4s infinite;
 }
 
 .application-card .app-title {

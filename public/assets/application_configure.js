@@ -7,7 +7,10 @@ const autoUpdateModal = document.getElementById('autoUpdateModal'),
 	configureAutoRestartBtn = document.getElementById('configureAutoRestartBtn'),
 	automatedRestartsDisabledMessage = document.getElementById('automatedRestartsDisabledMessage'),
 	automatedRestartsEnabledMessage = document.getElementById('automatedRestartsEnabledMessage'),
-	saveAutoRestartBtn = document.getElementById('saveAutoRestartBtn');
+	saveAutoRestartBtn = document.getElementById('saveAutoRestartBtn'),
+	openUpdateBtn = document.getElementById('openUpdateBtn'),
+	updateModal = document.getElementById('updateModal'),
+	confirmUpdateBtn = document.getElementById('confirmUpdateBtn');
 
 /**
  * Build the HTML for configuration options received from the server
@@ -353,6 +356,33 @@ window.addEventListener('DOMContentLoaded', () => {
 			});
 			saveAutoRestartBtn.addEventListener('click', () => {
 				saveAutomaticRestarts();
+			});
+
+			openUpdateBtn.addEventListener('click', () => {
+				updateModal.classList.add('show');
+			});
+			confirmUpdateBtn.addEventListener('click', () => {
+				confirmUpdateBtn.classList.add('disabled');
+				const icon = confirmUpdateBtn.querySelector('i'),
+					classes = icon.className;
+				icon.className = 'fas fa-spinner fa-spin';
+
+				stream(
+					`/api/application/update/${guid}/${host}`,
+					'POST',
+					{},
+					'',
+					(event, data) => {
+						terminalOutputHelper(updateModal.querySelector('.terminal'), event, data);
+					}).then(() => {
+					// Stream ended
+					showToast('success', 'Update process completed.');
+				}).catch(err => {
+					showToast('error', 'Update process encountered an error. See terminal output for details.');
+				}).finally(() => {
+					icon.className = classes;
+					confirmUpdateBtn.classList.remove('disabled');
+				});
 			});
 		});
 });

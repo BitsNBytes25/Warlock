@@ -37,10 +37,12 @@ export async function cmdRunner(target, cmd, extraFields = {}) {
 
 			exec(sshCommand, cmdOptions, (error, stdout, stderr) => {
 				if (error) {
-					logger.error('cmdRunner: Received error:', stderr || error);
+					logger.debug('cmdRunner exit code:', error.code);
 					if (stderr) {
+						logger.debug('cmdRunner stderr:', stderr);
 						return reject({error: new Error(stderr), stdout, stderr, extraFields});
-					} else {
+					}
+					else {
 						return reject({error, stdout, stderr, extraFields});
 					}
 				}

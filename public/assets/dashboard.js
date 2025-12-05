@@ -223,7 +223,7 @@ function displayApplications(applications) {
 
 		installedApplications += 1;
 
-		html += `<div class="application-card">`;
+		html += `<div class="application-card" data-guid="${guid}">`;
 
 		if (thumbnail) {
 			html += `<img class="app-thumbnail" title="${displayName}" src="${thumbnail}" alt="${displayName} Thumbnail">`;
@@ -243,7 +243,7 @@ function displayApplications(applications) {
 		html += `<div class="app-installs">`;
 
 		app.hosts.forEach(host => {
-			html += `<div class="app-install">
+			html += `<div class="app-install" data-host="${host.host}">
 					<span class="host-name">${renderHostIcon(host.host)} ${renderHostName(host.host)}</span>
 					<span class="host-actions">
 						<button class="link-control action-create" data-href="/application/install/${guid}/${host.host}" title="Reinstall/Repair Game">
@@ -301,6 +301,34 @@ function displayNoHosts() {
 	`;
 
 	document.getElementById('servicesContainer').innerHTML = '';
+}
+
+function checkForUpdates() {
+	document.querySelectorAll('.app-install .update-available').forEach(btn => {
+		btn.classList.remove('update-available');
+		btn.title = 'Configure Game';
+		btn.querySelector('i').className = 'fas fa-cog';
+	});
+
+	fetch('/api/applications/updates').then(response => response.json()).then(data => {
+		if (data.success) {
+			const updates = data.updates || [];
+			updates.forEach(update => {
+				const appCard = document.querySelector(`.application-card[data-guid="${update.guid}"]`),
+					hostInstall = appCard ? appCard.querySelector(`.app-install[data-host="${update.host}"]`) : null;
+
+				if (hostInstall) {
+					// Update the settings button to indicate an update is available
+					const configButton = hostInstall.querySelector('.action-configure');
+					if (configButton && !configButton.classList.contains('update-available')) {
+						configButton.classList.add('update-available');
+						configButton.title = 'Configure Game (Update Available)';
+						configButton.querySelector('i').className = 'fas fa-circle-up';
+					}
+				}
+			});
+		}
+	});
 }
 
 
@@ -363,6 +391,9 @@ window.addEventListener('DOMContentLoaded', () => {
 					noServicesAvailable();
 				}
 			}, 1000);
+
+			setTimeout(checkForUpdates, 10*1000); // Check for updates after 10 seconds
+			setInterval(checkForUpdates, 60*15*1000); // Check for updates every 15 minutes
 		}).catch(error => {
 			document.getElementById('applicationsList').innerHTML = `<div style="grid-column:1/-1;"><p class="error-message">${error}</p></div>`;
 			console.error('Error fetching applications:', error);
