@@ -213,7 +213,7 @@ async function saveAutomaticUpdates() {
 	}
 
 	// Build command
-	const command = `${gameDir}/manage.py --check-updates && ${gameDir}/manage.py --update`;
+	const command = `${gameDir}/manage.py --check-update && ${gameDir}/manage.py --update`;
 
 	fetch(`/api/cron/${loadedHost}`, {
 		method: 'POST',
