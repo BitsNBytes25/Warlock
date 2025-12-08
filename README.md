@@ -31,6 +31,15 @@ By default it will install nginx as a frontend, taking over the default web serv
 
 You can skip the nginx integration by passing `--skip-nginx` to the install script.
 
+## Supported Platforms
+
+Warlock supports any Linux distribution, but at the moment most games expect
+Ubuntu or Debian.
+
+Since Warlock does not _need_ to be on the same server as your game hosts,
+you are free to run Warlock on an Arch server (for example)
+and have Debian / Ubuntu game hosts in the cluster.
+
 ## First Run
 
 When you first install Warlock, you need to set up an admin user via the web interface.
@@ -49,6 +58,13 @@ Warlock is designed to manage multiple server hosts from a single interface,
 allowing you to install games on whichever system you choose.
 
 ![Warlock Server Hosts](docs/media/warlock-hosts.webp)
+
+To add a new server host, you will need to enter its IP address
+and ensure it can be reached via SSH from the Warlock server.
+
+Connection from the web management server and game hosts is performed via SSH,
+and you will be presented with a command to run on your game host to authorize
+the Warlock server to connect.
 
 
 ## Server Files
