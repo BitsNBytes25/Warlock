@@ -2,7 +2,6 @@
   title: ARK Survival Ascended
   source: github
   repo: cdp1337/ARKSurvivalAscended-Linux
-  branch: dev
   installer: dist/server-install-debian12.sh
   author: Charlie Powell <cdp1337@bitsnbytes.dev>
   category: Game Server
@@ -65,7 +64,6 @@
   title: Valheim
   source: github
   repo: BitsNBytes25/Valheim-Installer
-  branch: main
   installer: dist/installer.sh
   author: Charlie Powell <cdp1337@bitsnbytes.dev>
   category: Game Server

@@ -1,72 +1,81 @@
-# Warlock Express App
+# Warlock Game Manager
 
-A simple Express.js application that serves HTML pages.
+Server game manager that supports your fleet of servers and games.
 
 ## Features
 
-- Express.js server setup
-- Static file serving from public directory
-- Multiple HTML pages with routing
-- Basic CSS styling included
-- Development server with nodemon support
+- Simple game installer
+- Game configuration management
+- Firewall and port management
+- Backup and restore functionality
+- User-friendly web interface
 
-## Project Structure
-
-```
-Warlock/
-├── app.js              # Main Express server file
-├── package.json        # Dependencies and scripts
-├── public/            # Static files directory
-│   ├── index.html     # Home page
-│   └── about.html     # About page
-└── README.md          # This file
-```
+![Warlock Dashboard](docs/media/warlock-dashboard.webp)
 
 ## Getting Started
 
-curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
-sudo apt install nodejs nginx git -y
-
-sudo ./install-warlock.sh
-# or run under a service user:
-sudo ./install-warlock.sh --user warlock
-
-sudo ./uninstall-warlock.sh
-
-
-
-1. **Install dependencies:**
-   ```bash
-   npm install
-   ```
-
-2. **Start the production server:**
-   ```bash
-   npm start
-   ```
-
-3. **Start the development server (with auto-reload):**
-   ```bash
-   npm run dev
-   ```
-
-## Usage
-
-- Visit `http://localhost:3000` to see the home page
-- Visit `http://localhost:3000/about` to see the about page
-
-## Available Scripts
-
-- `npm start` - Starts the production server
-- `npm run dev` - Starts the development server with nodemon (auto-restart on file changes)
-
-## Server Configuration
-
-The server runs on port 3000 by default, but you can set a custom port using the PORT environment variable:
+To install Warlock on a server, do the following as root:
 
 ```bash
-PORT=8000 npm start
+mkdir -p /var/www
+chmod a+rx /var/www
+cd /var/www
+git clone https://github.com/BitsNBytes25/Warlock.git
+cd Warlock
+./install-warlock.sh
 ```
+
+This will install Node and all required dependencies and set up Warlock to run as a service.
+
+By default it will install nginx as a frontend, taking over the default web server.
+
+You can skip the nginx integration by passing `--skip-nginx` to the install script.
+
+## First Run
+
+When you first install Warlock, you need to set up an admin user via the web interface.
+Access your site by its IP or hostname you setup, (recommended to use a domain with SSL/TLS),
+and you will be presented with an interface to create your first admin user.
+
+Once created, you can create additional users and add server hosts to your cluster.
+
+By default `localhost` is added as a server host, so you can start installing games right away
+on the server on which you install Warlock.
+You are free to remove that host from the management interface if you wish to only install games on remote servers.
+
+## Server Hosts
+
+Warlock is designed to manage multiple server hosts from a single interface,
+allowing you to install games on whichever system you choose.
+
+![Warlock Server Hosts](docs/media/warlock-hosts.webp)
+
+
+## Server Files
+
+Warlock provides a basic file management interface for uploading, downloading, and editing configuration files.
+This can be useful for various administration tasks.
+
+![Warlock File Manager](docs/media/warlock-files.webp)
+![Warlock File Manager](docs/media/warlock-host-files.webp)
+
+## Installing Games
+
+Supported games can be installed by selecting the desired game server
+and selecting a compatible server host.
+
+![Warlock Install Game](docs/media/warlock-installer.webp)
+
+## Managing Games
+
+Once installed, games and their instances will show on the dashboard,
+along with links to start, stop, and configure them.
+
+![Warlock Manage Games](docs/media/warlock-dashboard.webp)
+
+Some games, (like ARK Survival Ascended) install multiple map instances,
+with each instance being configurable and manageable separately.
+
 
 ## Games Supported
 
