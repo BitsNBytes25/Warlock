@@ -137,6 +137,11 @@ def run_manager(game):
 		nargs=2
 	)
 	parser.add_argument(
+		'--get-ports',
+		help='Get the network ports used by all game services (JSON encoded)',
+		action='store_true'
+	)
+	parser.add_argument(
 		'--logs',
 		help='Print the latest logs from the game service',
 		action='store_true'
@@ -220,6 +225,28 @@ def run_manager(game):
 			})
 		print(json.dumps(opts))
 		sys.exit(0)
+	elif args.get_ports:
+		ports = []
+		for svc in services:
+			if not getattr(svc, 'get_port_definitions', None):
+				continue
+
+			for port_dat in svc.get_port_definitions():
+				port_def = {}
+				if isinstance(port_dat[0], int):
+					# Port statically assigned and cannot be changed
+					port_def['value'] = port_dat[0]
+					port_def['config'] = None
+				else:
+					port_def['value'] = svc.get_option_value(port_dat[0])
+					port_def['config'] = port_dat[0]
+
+				port_def['service'] = svc.service
+				port_def['protocol'] = port_dat[1]
+				port_def['description'] = port_dat[2]
+				ports.append(port_def)
+		print(json.dumps(ports))
+		sys.exit(0)
 	elif args.set_config != None:
 		option, value = args.set_config
 		if args.service == 'ALL':
@@ -244,3 +271,4 @@ def run_manager(game):
 				sys.exit(1)
 			svc = services[0]
 			menu_service(svc)
+

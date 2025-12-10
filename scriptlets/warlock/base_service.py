@@ -517,6 +517,20 @@ class BaseService:
 		"""
 		pass
 
+	def get_port_definitions(self) -> list:
+		"""
+		Get a list of port definitions for this service
+
+		Each entry in the returned list should contain 3 items:
+
+		* Config name or integer of port (for non-definable ports)
+		* 'UDP' or 'TCP'
+		* Description of the port purpose
+
+		:return:
+		"""
+		pass
+
 	def start(self):
 		"""
 		Start this service in systemd
@@ -705,3 +719,4 @@ class BaseService:
 
 		self.stop()
 		self.start()
+
