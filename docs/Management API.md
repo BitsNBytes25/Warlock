@@ -2,19 +2,37 @@
 
 Applications compatible with Warlock are expected to have the following endpoints:
 
+## Backup / Restore Functions
+
 * `--backup`: Backup all player data and store to default location
 * `--restore <FILEPATH>`: Restore all player data from a source file
+* `--max-backups <NUMBER>`: (Optional) When used with `--backup`, limit the number of stored backups to the specified number
+
+## Update Functions
+
 * `--check-update`: Check for updates
-* `--get-services`: Get all services and their status
-* `--get-configs`: Get all game-level configuration options and their values
+* `--update`: Update the application to the latest version
+
+## Discovery Functions
+
+* `--get-services`: Get all services and their status (JSON data)
+* `--get-configs`: Get all game-level configuration options and their values (JSON data)
+* `--get-ports`: Get all used ports by the application (JSON data)
+
+## Configuration Functions
+
 * `--set-config <KEY> <VALUE>`: Set a game-level configuration option to a new value
 
-Additionally the following service-specific endpoints are expected when used with the `--service <SERVICE>` argument included:
+## Service Management
+
+Additionally, the following service-specific endpoints are expected when used with the `--service <SERVICE>` argument included:
 
 * `--service <SERVICE>`: Specify the service to manage for service-specific tasks
 
 * `--get-configs`: Get the current configuration of the service
 * `--set-config <KEY> <VALUE>`: Set an instance-specific configuration option to a new value
+* `--pre-stop`: Perform any necessary pre-stop tasks (e.g., warn players, save map, etc.)
+* `--post-start`: Perform any necessary post-start tasks (e.g., initialize mods, notify players, etc.)
 
 
 ## Application Start/Stop/Restart

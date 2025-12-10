@@ -1,0 +1,19 @@
+meta {
+  name: GET Host Ports
+  type: http
+  seq: 13
+}
+
+get {
+  url: {{host}}/api/ports/:host
+  body: none
+  auth: inherit
+}
+
+params:path {
+  host: 45.26.230.248
+}
+
+settings {
+  encodeUrl: true
+}

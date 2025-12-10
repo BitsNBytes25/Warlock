@@ -60,6 +60,24 @@
   image: media/palworld-1920x1080.webp
   icon: media/palworld-128x128.webp
   thumbnail: media/palworld-640x360.webp
+- guid: dd73094b-b84e-475b-b47a-1a97b5b2d850
+  title: Project Zomboid
+  source: github
+  repo: BitsNBytes25/Zomboid-Installer
+  installer: dist/installer.sh
+  author: Charlie Powell <cdp1337@bitsnbytes.dev>
+  category: Game Server
+  supports:
+    - "Debian 12, 13"
+    - "Ubuntu 24.04"
+  syntax:
+    - "--uninstall  - Perform an uninstallation"
+    - "--dir=<src> - Use a custom installation directory instead of the default (optional)"
+    - "--skip-firewall  - Do not install or configure a system firewall"
+    - "--non-interactive  - Run the installer in non-interactive mode (useful for scripted installs)"
+  image: media/zomboid-1920x1080.webp
+  icon: media/zomboid-128x128.webp
+  thumbnail: media/zomboid-640x360.webp
 - guid: 33201d07-4d80-c271-28d5-82548dde0a67
   title: Valheim
   source: github

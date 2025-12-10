@@ -525,7 +525,7 @@ button, a.button {
 	font-size: 0.85rem;
 	transition: all 0.3s;
 	color: var(--button);
-	background: linear-gradient(160deg, var(--button-bg-1) 0%, var(--button-bg-2) 100%);
+	background: linear-gradient(177deg, var(--button-bg-1) 0%, var(--button-bg-2) 100%);
 }
 a.button {
 	display: inline-block;
@@ -560,7 +560,7 @@ button.disabled, a.button.disabled {
 }
 
 button.action-configure, a.button.action-configure {
-	background: linear-gradient(160deg, var(--button-config-bg-1) 0%, var(--button-config-bg-2) 100%);
+	background: linear-gradient(177deg, var(--button-config-bg-1) 0%, var(--button-config-bg-2) 100%);
 	color: var(--button-config);
 }
 button.action-configure:hover, a.button.action-configure:hover {
@@ -568,7 +568,7 @@ button.action-configure:hover, a.button.action-configure:hover {
 }
 
 button.action-create, a.button.action-create {
-	background: linear-gradient(160deg, var(--button-create-bg-1) 0%, var(--button-create-bg-2) 100%);
+	background: linear-gradient(177deg, var(--button-create-bg-1) 0%, var(--button-create-bg-2) 100%);
 	color: var(--button-create);
 }
 button.action-create:hover, a.button.action-create:hover {
@@ -576,7 +576,7 @@ button.action-create:hover, a.button.action-create:hover {
 }
 
 button.action-start, a.button.action-start {
-	background: linear-gradient(160deg, var(--button-start-bg-1) 0%, var(--button-start-bg-2) 100%);
+	background: linear-gradient(177deg, var(--button-start-bg-1) 0%, var(--button-start-bg-2) 100%);
 	color: var(--button-start);
 }
 button.action-start:hover, a.button.action-start:hover {
@@ -584,7 +584,7 @@ button.action-start:hover, a.button.action-start:hover {
 }
 
 button.action-stop, a.button.action-stop {
-	background: linear-gradient(160deg, var(--button-stop-bg-1) 0%, var(--button-stop-bg-2) 100%);
+	background: linear-gradient(177deg, var(--button-stop-bg-1) 0%, var(--button-stop-bg-2) 100%);
 	color: var(--button-stop);
 }
 button.action-stop:hover, a.button.action-stop:hover {
@@ -592,7 +592,7 @@ button.action-stop:hover, a.button.action-stop:hover {
 }
 
 button.action-browse, a.button.action-browse {
-	background: linear-gradient(160deg, var(--button-browse-bg-1) 0%, var(--button-browse-bg-2) 100%);
+	background: linear-gradient(177deg, var(--button-browse-bg-1) 0%, var(--button-browse-bg-2) 100%);
 	color: var(--button-browse);
 }
 button.action-browse:hover, a.button.action-browse:hover {
@@ -600,7 +600,7 @@ button.action-browse:hover, a.button.action-browse:hover {
 }
 
 button.action-remove, a.button.action-remove {
-	background: linear-gradient(160deg, var(--button-remove-bg-1) 0%, var(--button-remove-bg-2) 100%);
+	background: linear-gradient(177deg, var(--button-remove-bg-1) 0%, var(--button-remove-bg-2) 100%);
 	color: var(--button-remove);
 }
 button.action-remove:hover, a.button.action-remove:hover {
@@ -608,7 +608,7 @@ button.action-remove:hover, a.button.action-remove:hover {
 }
 
 button.action-save, a.button.action-save {
-	background: linear-gradient(160deg, var(--button-save-bg-1) 0%, var(--button-save-bg-2) 100%);
+	background: linear-gradient(177deg, var(--button-save-bg-1) 0%, var(--button-save-bg-2) 100%);
 	color: var(--button-save);
 }
 button.action-save:hover, a.button.action-save:hover {
@@ -616,7 +616,7 @@ button.action-save:hover, a.button.action-save:hover {
 }
 
 button.action-cancel, a.button.action-cancel {
-	background: linear-gradient(160deg, var(--button-cancel-bg-1) 0%, var(--button-cancel-bg-2) 100%);
+	background: linear-gradient(177deg, var(--button-cancel-bg-1) 0%, var(--button-cancel-bg-2) 100%);
 	color: var(--button-cancel);
 }
 button.action-cancel:hover, a.button.action-cancel:hover {
@@ -681,10 +681,19 @@ button.action-cancel:hover, a.button.action-cancel:hover {
 	animation: blinker 4s infinite;
 }
 
-#services-table td.icon {
+.ports-table .form-group {
+	margin: 0;
+}
+.ports-table .form-group input {
+	max-width: 8rem;
+}
+
+#services-table td.icon,
+.ports-table td.icon {
 	padding: 0.15rem 0.75rem;
 }
-#services-table td.icon img {
+#services-table td.icon img,
+.ports-table td.icon img {
 	max-width: 2.5rem;
 	max-height: 2.5rem;
 	border-radius: 0.5rem;
