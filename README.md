@@ -98,6 +98,7 @@ with each instance being configurable and manageable separately.
 * [ARK Survival Ascended](https://github.com/cdp1337/ARKSurvivalAscended-Linux)
 * [Minecraft](https://github.com/BitsNBytes25/Minecraft-Installer)
 * [Palworld](https://github.com/BitsNBytes25/Palworld-Installer)
+* [Project Zomboid](https://github.com/BitsNBytes25/Zomboid-Installer)
 * [Valheim](https://github.com/BitsNBytes25/Valheim-Installer)
 * [VEIN](https://github.com/BitsNBytes25/VEIN-Dedicated-Server)
 
