@@ -42,12 +42,12 @@ export async function validateHostService(host, guid, service) {
 								return reject(new Error(`Error retrieving services for application '${guid}' on host '${host}': ${error.message}`));
 							});
 					}
-
-					if (!found) {
-						// If the host is not found, we can immediately reject the lookup.
-						return reject(new Error(`Host '${host}' does not have application installed with GUID '${guid}'`));
-					}
 				});
+
+				if (!found) {
+					// If the host is not found, we can immediately reject the lookup.
+					return reject(new Error(`Host '${host}' does not have application installed with GUID '${guid}'`));
+				}
 			});
 	});
 }
