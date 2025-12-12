@@ -19,6 +19,11 @@ Applications compatible with Warlock are expected to have the following endpoint
 * `--get-configs`: Get all game-level configuration options and their values (JSON data)
 * `--get-ports`: Get all used ports by the application (JSON data)
 
+## Status Functions
+
+* `--has-players`: Check if this service (or services) has any players currently connected.  Returns 0 (true) if players are connected and 1 (false) if no players
+* `--is-running`: Check if the application is currently running.  Returns 0 (true) if running and 1 (false) if not running
+
 ## Configuration Functions
 
 * `--set-config <KEY> <VALUE>`: Set a game-level configuration option to a new value

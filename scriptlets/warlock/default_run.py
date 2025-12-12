@@ -90,6 +90,11 @@ def run_manager(game):
 		help='Check if any game service is currently running (exit code 0 = yes, 1 = no)',
 		action='store_true'
 	)
+	parser.add_argument(
+		'--has-players',
+		help='Check if any players are currently connected to any game service (exit code 0 = yes, 1 = no)',
+		action='store_true'
+	)
 
 	# Backup/restore operations
 	parser.add_argument(
@@ -259,6 +264,21 @@ def run_manager(game):
 			print('First-run configuration is not supported for this game.', file=sys.stderr)
 			sys.exit(1)
 		menu_first_run(game)
+	elif args.has_players:
+		has_players = False
+		for svc in services:
+			c = svc.get_player_count()
+			if c is not None and c > 0:
+				has_players = True
+				break
+		sys.exit(0 if has_players else 1)
+	elif args.is_running:
+		is_running = False
+		for svc in services:
+			if svc.is_running():
+				is_running = True
+				break
+		sys.exit(0 if is_running else 1)
 	else:
 		if len(services) > 1:
 			if not callable(getattr(sys.modules[__name__], 'menu_main', None)):
@@ -271,4 +291,5 @@ def run_manager(game):
 				sys.exit(1)
 			svc = services[0]
 			menu_service(svc)
+
 
