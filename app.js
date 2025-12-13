@@ -55,29 +55,17 @@
 const express = require('express');
 const path = require('path');
 const dotenv = require('dotenv');
-//const { exec } = require('child_process');
-//const multer = require('multer');
-//const fs = require('fs');
-//const yaml = require('js-yaml');
-//const NodeCacheStore = require('node-cache');
-//const cache = new NodeCacheStore();
 
 const app = express();
 const PORT = process.env.PORT || 3077;
-//const passport = require('passport');
-//const LocalStrategy = require('passport-local');
-//const {User} = require("./db");
-//const csrf = require('csurf');
 const cookieParser = require('cookie-parser');
 const session = require('express-session');
 const {logger} = require("./libs/logger.mjs");
 const {push_analytics} = require("./libs/push_analytics.mjs");
-//const SQLiteStore = require('connect-sqlite3')(session);
+const {sequelize} = require("./db.js");
 
 // Load environment variables
 dotenv.config();
-//require('dotenv').config();
-
 
 
 app.set('view engine', 'ejs')
@@ -94,10 +82,6 @@ app.use(session({
 /***************************************************************
  **               Common Functions
  ***************************************************************/
-
-
-// @todo Make filePullRunner which uses process.spawn to receive a remote file in its entirety.
-// Use tar on remote server and tar on local server to drop contents into a local /tmp file for reading.
 
 // Middleware
 app.use(express.json());
@@ -152,6 +136,14 @@ app.use('/api/ports', require('./routes/api/ports'));
 
 // Start the server
 app.listen(PORT, '127.0.0.1', () => {
+
+    // Ensure the sqlite database is up to date with the schema.
+    sequelize.sync({ alter: true }).then(() => {
+        logger.info('Database synchronized');
+    }).catch(err => {
+        logger.error('Database synchronization error:', err);
+    });
+
     logger.info(`Listening on ${PORT}`);
 
     // Send a tracking snippet to our analytics server so we can monitor basic usage.
