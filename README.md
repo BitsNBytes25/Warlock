@@ -17,6 +17,13 @@ Server game manager that supports your fleet of servers and games.
 To install Warlock on a server, do the following as root:
 
 ```bash
+# Debian/Ubuntu
+apt install git
+# Fedora/RHEL
+dnf install git
+# Arch Linux
+pacman -S git
+
 mkdir -p /var/www
 chmod a+rx /var/www
 cd /var/www

@@ -11,6 +11,7 @@ ENV_FILE="$INSTALL_DIR/.env"
 SERVICE_USER=root
 CONFIGURE_NGINX=1
 FQDN=""
+SSL=0
 
 print_help() {
   cat <<EOF
@@ -128,7 +129,7 @@ if [[ "$VERSION" -lt 20 ]]; then
 fi
 
 if [ $CONFIGURE_NGINX -eq 1 ]; then
-	if ! which -s nginx; then
+	if ! which nginx; then
     	echo "Warning: Nginx not found in PATH.  Attempting auto install" >&2
     	case "$DISTRO" in
 			"ubuntu"|"debian")
@@ -147,7 +148,7 @@ if [ $CONFIGURE_NGINX -eq 1 ]; then
 		esac
     fi
 
-    if ! which -s certbot; then
+    if ! which certbot; then
 		echo "Warning: certbot not found in PATH.  Attempting auto install" >&2
 		case "$DISTRO" in
 			"ubuntu"|"debian")
@@ -173,6 +174,12 @@ if [ $CONFIGURE_NGINX -eq 1 ]; then
 	if [ -n "$FQDN" ]; then
 		echo "Using existing FQDN from nginx config: $FQDN"
 	else
+		echo "Warlock is access via a web browser by either an IP address or a domain name."
+		echo "If you have a domain name pointed to this server, please enter it here."
+		echo ""
+		echo "This will enable SSL certificate generation via certbot."
+		echo "If you do not have a domain name, just press ENTER to continue."
+		echo ""
 		echo "What is the fully qualified domain name (FQDN) for this server? (used in nginx config and SSL registration)"
 		read -r FQDN
 	fi
@@ -304,9 +311,13 @@ NGINX
 		echo "Nginx configuration OK — reloading nginx"
 		systemctl reload nginx || echo "Warning: failed to reload nginx" >&2
 
-		if which -s certbot && [ "$FQDN" != "_" ]; then
+		if which certbot && [ "$FQDN" != "_" ]; then
 			echo "Attempting to obtain/renew SSL certificate via certbot for $FQDN"
-			certbot --nginx -d "$FQDN" --non-interactive --agree-tos --redirect || echo "Warning: certbot failed to obtain/renew certificate" >&2
+			if certbot --nginx -d "$FQDN" --non-interactive --agree-tos --redirect; then
+				SSL=1
+			else
+				echo "Warning: certbot failed to obtain/renew certificate" >&2
+			fi
 		else
 			echo "Note: certbot not found; skipping SSL certificate setup."
 		fi
@@ -323,5 +334,18 @@ systemctl --no-pager status warlock.service --lines=10 || true
 
 echo "Recent journal entries (last 50 lines):"
 journalctl -u warlock.service -n 50 --no-pager || true
+
+echo "You can access the Warlock web interface at:"
+if [ "$FQDN" != "_" ]; then
+	for IP in $(hostname -I); do
+		echo "http://$IP/"
+	done
+else
+	if [ $SSL -eq 1 ]; then
+		echo "https://$FQDN/"
+	else
+		echo "http://$FQDN/"
+	fi
+fi
 
 echo "Installation complete. To uninstall, run: sudo ./uninstall-warlock.sh"
