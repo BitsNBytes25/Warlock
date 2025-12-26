@@ -251,9 +251,6 @@ function displayApplications(applications) {
 			html += `<div class="app-install" data-host="${host.host}">
 					<span class="host-name">${renderHostIcon(host.host)} ${renderHostName(host.host)}</span>
 					<span class="host-actions">
-						<button class="link-control action-create" data-href="/application/install/${guid}/${host.host}" title="Reinstall/Repair Game">
-							<i class="fas fa-undo"></i>
-						</button>
 						<button class="link-control action-backup" data-href="/application/backups/${guid}/${host.host}" title="Game Backups">
 							<i class="fas fa-floppy-disk"></i>
 						</button>

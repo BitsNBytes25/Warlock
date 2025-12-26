@@ -10,132 +10,9 @@ const autoUpdateModal = document.getElementById('autoUpdateModal'),
 	saveAutoRestartBtn = document.getElementById('saveAutoRestartBtn'),
 	openUpdateBtn = document.getElementById('openUpdateBtn'),
 	updateModal = document.getElementById('updateModal'),
-	confirmUpdateBtn = document.getElementById('confirmUpdateBtn');
+	confirmUpdateBtn = document.getElementById('confirmUpdateBtn'),
+	reinstallBtn = document.getElementById('reinstallBtn');
 
-/**
- * Build the HTML for configuration options received from the server
- *
- * Populates to the container with the ID configurationContainer on the main page
- *
- * @param {string} app_guid
- * @param {string} host
- * @param {AppConfigOption[]} options
- */
-function buildOptionsForm(app_guid, host, options) {
-	let target = document.getElementById('configurationContainer');
-
-	if (options.length === 0) {
-		target.innerHTML = '<div class="alert warning-message" role="alert">No configuration options available for this service.</div>';
-		return;
-	}
-
-	options.forEach(option => {
-		let formGroup = document.createElement('div');
-		formGroup.className = 'form-group';
-
-		let label = document.createElement('label');
-		label.htmlFor = `config-${option.option}`;
-		label.className = 'form-label';
-		label.innerText = option.option;
-
-		let help = null;
-		if (option.help) {
-			help = document.createElement('p');
-			help.className = 'help-text';
-			help.innerText = option.help;
-		}
-
-		// Support for configs with a list of options instead of freeform input
-		if ('options' in option && Array.isArray(option.options) && option.options.length > 0) {
-			option.type = 'select';
-		}
-
-		let input;
-		switch (option.type) {
-			case 'select':
-				input = document.createElement('select');
-				input.className = 'form-select';
-				input.id = `config-${option.option}`;
-				option.options.forEach(opt => {
-					let optElement = document.createElement('option');
-					optElement.value = opt;
-					optElement.text = opt;
-					if (opt === option.value) {
-						optElement.selected = true;
-					}
-					input.appendChild(optElement);
-				});
-				break;
-			case 'bool':
-				input = document.createElement('input');
-				input.type = 'checkbox';
-				input.className = 'form-check-input';
-				input.id = `config-${option.option}`;
-				input.checked = option.value === true || option.value === 'true';
-				break;
-			case 'int':
-			case 'float':
-				input = document.createElement('input');
-				input.type = 'number';
-				input.className = 'form-control';
-				input.id = `config-${option.option}`;
-				input.value = option.value;
-				break;
-			case 'text':
-				input = document.createElement('textarea');
-				input.className = 'form-control';
-				input.id = `config-${option.option}`;
-				input.value = option.value;
-				break;
-			case 'str':
-			default:
-				input = document.createElement('input');
-				input.type = 'text';
-				input.className = 'form-control';
-				input.id = `config-${option.option}`;
-				input.value = option.value;
-				break;
-		}
-
-		formGroup.appendChild(label);
-		if (help) {
-			formGroup.appendChild(help);
-		}
-		formGroup.appendChild(input);
-		target.appendChild(formGroup);
-
-		// Add event handler on input to live-save changes to the backend
-		input.addEventListener('change', (event) => {
-			let newValue;
-			if (option.type === 'bool') {
-				newValue = event.target.checked;
-			} else if (option.type === 'int') {
-				newValue = parseInt(event.target.value, 10);
-			} else if (option.type === 'float') {
-				newValue = parseFloat(event.target.value);
-			} else {
-				newValue = event.target.value;
-			}
-
-			// Send update to backend
-			fetch(`/api/application/configs/${app_guid}/${host}`, {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json'
-				},
-				body: JSON.stringify({ [option.option]: newValue })
-			})
-				.then(response => response.json())
-				.then(result => {
-					if (result.success) {
-						showToast('success', `Configuration option ${option.option} updated successfully.`);
-					} else {
-						showToast('error', `Failed to update configuration option ${option.option}: ${result.error}`);
-					}
-				});
-		});
-	});
-}
 
 async function loadAutomaticUpdates() {
 	if (!loadedHost) {
@@ -292,57 +169,21 @@ async function saveAutomaticRestarts() {
  */
 window.addEventListener('DOMContentLoaded', () => {
 
-	const {guid, host} = getPathParams('/application/configure/:guid/:host'),
-		configurationContainer = document.getElementById('configurationContainer');
+	const {guid, host} = getPathParams('/application/configure/:guid/:host');
 
 	Promise.all([
 		loadApplication(guid),
 		loadHost(host)
 	])
 		.then(() => {
-			// Pull the configs from the service
-			fetch(`/api/application/configs/${guid}/${host}`, {
-				method: 'GET',
-				headers: {
-					'Content-Type': 'application/json'
-				}
-			})
-				.then(response => response.json())
-				.then(result => {
-					if (result.success && result.configs) {
-						const configs = result.configs,
-							quickSearch = document.getElementById('quick-search');
-						configurationContainer.innerHTML = '';
-						buildOptionsForm(guid, host, configs);
-
-						quickSearch.removeAttribute('disabled');
-						quickSearch.addEventListener('keyup', e => {
-							const searchTerm = e.target.value.toLowerCase();
-							const configItems = configurationContainer.getElementsByClassName('form-group');
-
-							Array.from(configItems).forEach(item => {
-								const label = item.getElementsByTagName('label')[0];
-								if (label.innerText.toLowerCase().includes(searchTerm)) {
-									item.style.display = '';
-								} else {
-									item.style.display = 'none';
-								}
-							});
-						});
-					}
-					else {
-						configurationContainer.innerHTML = `<div class="error-message" role="alert">Unable to load service configuration, game may not support this feature.</div>`;
-						console.error(result.error);
-					}
-				})
-				.catch(e => {
-					console.error('Error loading configuration options:', e);
-					configurationContainer.innerHTML = '<div class="alert error-message" role="alert">Error loading configuration options.<br/>' + String(e) + '</div>';
-				});
-
 			// Pull automatic update checks
 			loadAutomaticUpdates();
 			loadAutomaticRestarts();
+
+			reinstallBtn.classList.remove('disabled');
+			reinstallBtn.addEventListener('click', () => {
+				window.location.href = `/application/install/${guid}/${host}`;
+			});
 
 			configureAutoUpdateBtn.addEventListener('click', () => {
 				autoUpdateModal.classList.add('show');

@@ -24,7 +24,13 @@ function buildOptionsForm(app_guid, host, service, options) {
 		let label = document.createElement('label');
 		label.htmlFor = id;
 		label.className = 'form-label';
-		label.innerText = option.option;
+		if (service) {
+			label.innerHTML = option.option;
+		}
+		else {
+			label.innerHTML = '<i class="fas fa-globe" title="Option affects all instances"></i> ' + option.option;
+		}
+
 
 		let help = null;
 		if (option.help) {
@@ -118,6 +124,8 @@ function buildOptionsForm(app_guid, host, service, options) {
 				break;
 		}
 
+		input.dataset.service = service;
+
 		formGroup.appendChild(label);
 		if (help) {
 			formGroup.appendChild(help);
@@ -153,7 +161,16 @@ function buildOptionsForm(app_guid, host, service, options) {
 			}
 
 			// Send update to backend
-			fetch(`/api/service/configs/${app_guid}/${host}/${service}`, {
+
+			// Support both service-level and application-level configs
+			let target;
+			if (event.target.dataset.service) {
+				target = `/api/service/configs/${app_guid}/${host}/${service}`;
+			}
+			else {
+				target = `/api/application/configs/${app_guid}/${host}`;
+			}
+			fetch(target, {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json'
@@ -200,31 +217,47 @@ window.addEventListener('DOMContentLoaded', () => {
 					})
 						.then(response => response.json())
 						.then(result => {
+							configurationContainer.innerHTML = '';
+
 							if (result.success && result.configs) {
-								const configs = result.configs,
-									quickSearch = document.getElementById('quick-search');
-								configurationContainer.innerHTML = '';
+								const configs = result.configs;
 								buildOptionsForm(app_guid, host, service, configs);
+							}
 
-								quickSearch.removeAttribute('disabled');
-								quickSearch.addEventListener('keyup', e => {
-									const searchTerm = e.target.value.toLowerCase();
-									const configItems = configurationContainer.getElementsByClassName('form-group');
+							// Pull the configs for the application (shared by all services)
+							fetch(`/api/application/configs/${app_guid}/${host}`, {
+								method: 'GET',
+								headers: {
+									'Content-Type': 'application/json'
+								}
+							})
+								.then(response => response.json())
+								.then(result => {
+									if (result.success && result.configs) {
+										const configs = result.configs;
+										buildOptionsForm(app_guid, host, '', configs);
+									}
 
-									Array.from(configItems).forEach(item => {
-										const label = item.getElementsByTagName('label')[0];
-										if (label.innerText.toLowerCase().includes(searchTerm)) {
-											item.style.display = '';
-										} else {
-											item.style.display = 'none';
-										}
+									const quickSearch = document.getElementById('quick-search');
+									quickSearch.removeAttribute('disabled');
+									quickSearch.addEventListener('keyup', e => {
+										const searchTerm = e.target.value.toLowerCase();
+										const configItems = configurationContainer.getElementsByClassName('form-group');
+
+										Array.from(configItems).forEach(item => {
+											const label = item.getElementsByTagName('label')[0];
+											if (label.innerText.toLowerCase().includes(searchTerm)) {
+												item.style.display = '';
+											} else {
+												item.style.display = 'none';
+											}
+										});
 									});
+
+									if (configurationContainer.querySelectorAll('input').length === 0) {
+										configurationContainer.innerHTML = '<div class="alert alert-info" role="alert">No configuration options available for this service or application.</div>';
+									}
 								});
-							}
-							else {
-								configurationContainer.innerHTML = `<div class="error-message" role="alert">Unable to load service configuration, game may not support this feature.</div>`;
-								console.error(result.error);
-							}
 						});
 				});
 		})
