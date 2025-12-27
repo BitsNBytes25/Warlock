@@ -1,3 +1,5 @@
+let serviceRunning = false;
+
 /**
  * Build the HTML for configuration options received from the server
  *
@@ -65,6 +67,9 @@ function buildOptionsForm(app_guid, host, service, options) {
 					}
 					input.appendChild(optElement);
 				});
+				if (serviceRunning) {
+					input.disabled = true;
+				}
 				break;
 			case 'checkboxes':
 				input = document.createElement('div');
@@ -81,6 +86,9 @@ function buildOptionsForm(app_guid, host, service, options) {
 					checkboxInput.value = opt;
 					if (Array.isArray(option.value) && option.value.includes(opt)) {
 						checkboxInput.checked = true;
+					}
+					if (serviceRunning) {
+						checkboxInput.readOnly = true;
 					}
 
 					let checkboxLabel = document.createElement('label');
@@ -99,6 +107,9 @@ function buildOptionsForm(app_guid, host, service, options) {
 				input.className = 'form-check-input';
 				input.id = id;
 				input.checked = option.value === true || option.value === 'true';
+				if (serviceRunning) {
+					input.disabled = true;
+				}
 				break;
 			case 'int':
 			case 'float':
@@ -107,12 +118,20 @@ function buildOptionsForm(app_guid, host, service, options) {
 				input.className = 'form-control';
 				input.id = id;
 				input.value = option.value;
+				if (serviceRunning) {
+					input.readOnly = true;
+					input.disabled = true;
+				}
 				break;
 			case 'text':
 				input = document.createElement('textarea');
 				input.className = 'form-control';
 				input.id = id;
 				input.value = option.value;
+				if (serviceRunning) {
+					input.readOnly = true;
+					input.disabled = true;
+				}
 				break;
 			case 'str':
 			default:
@@ -121,6 +140,10 @@ function buildOptionsForm(app_guid, host, service, options) {
 				input.className = 'form-control';
 				input.id = id;
 				input.value = option.value;
+				if (serviceRunning) {
+					input.readOnly = true;
+					input.disabled = true;
+				}
 				break;
 		}
 
@@ -135,6 +158,10 @@ function buildOptionsForm(app_guid, host, service, options) {
 
 		// Add event handler on input to live-save changes to the backend
 		input.addEventListener('change', (event) => {
+			if (serviceRunning) {
+				return;
+			}
+
 			let newValue;
 
 			if (event.target.closest('.form-values')) {
@@ -207,6 +234,12 @@ window.addEventListener('DOMContentLoaded', () => {
 					document.querySelectorAll('.service-service-placeholder').forEach(el => {
 						el.innerHTML = serviceData.service;
 					});
+
+					if (serviceData.status !== 'stopped') {
+						document.getElementById('optionsMessageNormal').style.display = 'none';
+						document.getElementById('optionsMessageActive').style.display = 'block';
+						serviceRunning = true;
+					}
 
 					// Pull the configs from the service
 					fetch(`/api/service/configs/${app_guid}/${host}/${service}`, {

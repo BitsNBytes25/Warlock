@@ -27,6 +27,11 @@ function populateServicesTable(servicesWithStats) {
 </button>`);
 		}
 
+		actionButtons.push(`
+<button title="Configure Game" data-href="/service/configure/${app_guid}/${host.host}/${service.service}" class="link-control action-configure">
+	<i class="fas fa-cog"></i> Config
+</button>`);
+
 		if (service.status === 'running') {
 			statusIcon = '<i class="fas fa-check-circle"></i>';
 			actionButtons.push(`
@@ -36,10 +41,6 @@ function populateServicesTable(servicesWithStats) {
 		}
 		else if (service.status === 'stopped') {
 			statusIcon = '<i class="fas fa-times-circle"></i>';
-			actionButtons.push(`
-<button title="Configure Game" data-href="/service/configure/${app_guid}/${host.host}/${service.service}" class="link-control action-configure">
-	<i class="fas fa-cog"></i> Config
-</button>`);
 			actionButtons.push(`
 <button title="Start Game" data-host="${host.host}" data-service="${service.service}" data-action="start" data-guid="${app_guid}" class="service-control action-start">
 	<i class="fas fa-play"></i> Start
