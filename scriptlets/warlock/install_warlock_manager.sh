@@ -5,14 +5,18 @@
 #   GAME_USER    - User account to install the game under
 #   GAME_DIR     - Directory to install the game into
 #
+# @param $1 Repo Name (e.g., user/repo)
+# @param $2 Branch Name (default: main)
+#
 function install_warlock_manager() {
 	print_header "Performing install_management"
 
 	# Install management console and its dependencies
 	local SRC=""
 	local REPO="$1"
+	local BRANCH="${2:-main}"
 
-	SRC="https://raw.githubusercontent.com/${REPO}/refs/heads/main/dist/manage.py"
+	SRC="https://raw.githubusercontent.com/${REPO}/refs/heads/${BRANCH}/dist/manage.py"
 
 	if ! download "$SRC" "$GAME_DIR/manage.py"; then
 		echo "Could not download management script!" >&2
