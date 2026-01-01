@@ -29,6 +29,12 @@ function parseSyntaxLine(line) {
 		option = parts[0];
 		valType = parts[1] ? parts[1].replace(/^<|>$/g, '') : null;
 	}
+
+	if (option === '--branch') {
+		// Special case for --branch to indicate it's a git branch
+		valType = '|'; // will be populated later
+	}
+
 	return { option, hasValue, valType, desc, defaultValue };
 }
 
@@ -127,6 +133,27 @@ window.addEventListener('DOMContentLoaded', () => {
 				const el = createOptionElement(parsed);
 				installOptions.appendChild(el);
 				added++;
+
+				if (parsed.option === '--branch') {
+					// Pull the branches available from appData.source (usually "github") and appData.repo (repo author/name)
+					getRepoBranches(appData.source, appData.repo).then(branches => {
+						let target = document.getElementById('opt---branch');
+						target.innerHTML = '';
+						branches.forEach(branch => {
+							const optionEl = document.createElement('option');
+							optionEl.value = branch.branch;
+							optionEl.textContent = `${branch.branch[0].toUpperCase()}${branch.branch.substring(1)} - Released ${branch.date}`;
+							if (branch.default) {
+								optionEl.selected = true;
+								optionEl.textContent += ' (default)';
+							}
+
+							target.appendChild(optionEl);
+						});
+					}).catch(err => {
+						console.error('Error fetching branches:', err);
+					});
+				}
 			}
 
 			if (added === 0) {

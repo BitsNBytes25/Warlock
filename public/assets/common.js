@@ -254,6 +254,76 @@ function getRepoURL(guid) {
 }
 
 /**
+ * Get a list of branches and their last commit date for a given repo, if supported.
+ *
+ * @param {string} source Usually "github"
+ * @param {string} repo Repository identifier, usually "author/name"
+ * @returns {Promise<[{branch:string, date:string, default:bool}]>} Array of branch names and their last commit date.
+ */
+async function getRepoBranches(source, repo) {
+	return new Promise((resolve, reject) => {
+		if (source === 'github') {
+			fetch(`https://api.github.com/repos/${repo}/branches`, {
+				method: 'GET',
+				headers: {
+					'Content-Type': 'application/json'
+				}
+			})
+				.then(response => response.json())
+				.then(response => {
+					let branches = [],
+						promises = [],
+						urlToBranch = {},
+						// Branches which should get set as default, IN ORDER of the preference.
+						defaultBranches = ['stable', 'main', 'master'];
+					response.forEach(branch => {
+						if (typeof(urlToBranch[branch.commit.url]) !== 'undefined') {
+							// Multiple branches point to the same commit, skip duplicate fetch
+							if (defaultBranches.includes(branch.name)) {
+								// Prefer the more stable name
+								urlToBranch[branch.commit.url] = branch.name;
+							}
+						}
+						else {
+							urlToBranch[branch.commit.url] = branch.name;
+							promises.push(fetch(branch.commit.url, {method: 'GET', headers: { 'Content-Type': 'application/json'} }).then(r => r.json()));
+						}
+					});
+
+					Promise.allSettled(promises).then(results => {
+						results.forEach(result => {
+							if (result.status === 'fulfilled') {
+								branches.push({
+									branch: urlToBranch[result.value.url],
+									date: result.value.commit.committer.date,
+									default: false
+								});
+							}
+						});
+
+						// Sort branches by date descending
+						branches.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+						// Mark default branch
+						for (let defBranch of defaultBranches) {
+							let found = branches.find(b => b.branch === defBranch);
+							if (found) {
+								found.default = true;
+								break;
+							}
+						}
+
+						resolve(branches);
+					});
+				})
+				.catch(error => {
+					reject(error);
+				});
+		}
+	});
+}
+
+/**
  * Get the rendered HTML for an application icon.
  *
  * @param {string} guid
