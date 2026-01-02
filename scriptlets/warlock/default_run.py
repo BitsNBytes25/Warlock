@@ -5,6 +5,34 @@ from scriptlets._common.get_wan_ip import *
 
 
 def menu_get_services(game):
+	"""
+	Get the list of all services for this game in JSON format
+
+	:param game:
+	:return:
+	"""
+	services = game.get_services()
+	stats = {}
+	for svc in services:
+		svc_stats = {
+			'service': svc.service,
+			'name': svc.get_name(),
+			'ip': get_wan_ip(),
+			'port': svc.get_port(),
+			'enabled': svc.is_enabled(),
+			'max_players': svc.get_player_max(),
+		}
+		stats[svc.service] = svc_stats
+	print(json.dumps(stats))
+
+
+def menu_get_metrics(game):
+	"""
+	Get performance metrics for all services for this game in JSON format
+
+	:param game:
+	:return:
+	"""
 	services = game.get_services()
 	stats = {}
 	for svc in services:
@@ -132,7 +160,7 @@ def run_manager(game):
 	)
 	parser.add_argument(
 		'--get-configs',
-		help='List the available configuration files for this game (JSON encoded)',
+		help='List the available configuration files for this game or instance (JSON encoded)',
 		action='store_true'
 	)
 	parser.add_argument(
@@ -154,6 +182,11 @@ def run_manager(game):
 	parser.add_argument(
 		'--first-run',
 		help='Perform first-run configuration for setting up the game server initially',
+		action='store_true'
+	)
+	parser.add_argument(
+		'--get-metrics',
+		help='Get performance metrics from the game server (JSON encoded)',
 		action='store_true'
 	)
 	args = parser.parse_args()
@@ -212,6 +245,8 @@ def run_manager(game):
 		sys.exit(0 if game.update() else 1)
 	elif args.get_services:
 		menu_get_services(game)
+	elif args.get_metrics:
+		menu_get_metrics(game)
 	elif args.get_configs:
 		opts = []
 		if args.service == 'ALL':
