@@ -19,38 +19,32 @@ export async function getLatestServiceMetrics(app_guid, host, service) {
 		cpu_usage: 'N/A'
 	};
 
-	for (let key of Object.keys(metrics)) {
 		let res = await Metric.findOne({
 			where: {
 				ip: host,
 				app_guid,
-				service,
-				metric_title: key
+				service
 			},
 			order: [['timestamp', 'DESC']],
 			raw: true
 		});
 
 		if (res) {
-			if (key === 'cpu_usage' ) {
-				metrics[key] = res.metric_value + '%';
-			}
-			else if (key === 'memory_usage') {
-				if (res.metric_value > 1024) {
-					metrics[key] = (res.metric_value / 1024).toFixed(2) + ' GB';
+			
+				metrics.cpu_usage = res.cpu_usage + '%';
+			
+				if (res.memory_usage > 1024) {
+					metrics.memory_usage = (res.memory_usage / 1024).toFixed(2) + ' GB';
 				}
 				else {
-					metrics[key] = res.metric_value + ' MB';
+					metrics.memory_usage = res.memory_usage + ' MB';
 				}
-			}
-			else if (key === 'status') {
-				metrics[key] = res.metric_value === 1 ? 'running' : 'stopped';
-			}
-			else {
-				metrics[key] = res.metric_value;
-			}
+			
+				metrics.status = res.status === 1 ? 'running' : 'stopped';
+				metrics.player_count = res.player_count;
+				metrics.response_time = res.response_time + ' ms';
+							
 		}
-	}
 
 	return metrics;
 }

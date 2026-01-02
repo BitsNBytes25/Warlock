@@ -550,12 +550,26 @@ function renderCharts(metrics, timeframe) {
 	};
 
 	metrics.forEach(metric => {
-		if (groupedMetrics[metric.metric_title]) {
-			groupedMetrics[metric.metric_title].push({
-				timestamp: metric.timestamp * 1000, // Convert to milliseconds
-				value: metric.metric_value
-			});
-		}
+		groupedMetrics['cpu_usage'].push({
+			timestamp: metric.timestamp * 1000, // Convert to milliseconds
+			value: metric.cpu_usage
+		});
+		groupedMetrics['memory_usage'].push({
+			timestamp: metric.timestamp * 1000,
+			value: metric.memory_usage
+		});
+		groupedMetrics['player_count'].push({
+			timestamp: metric.timestamp * 1000,
+			value: metric.player_count
+		});
+		groupedMetrics['status'].push({
+			timestamp: metric.timestamp * 1000,
+			value: metric.status
+		});
+		groupedMetrics['response_time'].push({
+			timestamp: metric.timestamp * 1000,
+			value: metric.response_time
+		});
 	});
 
 	// Destroy existing charts

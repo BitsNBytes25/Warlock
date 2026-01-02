@@ -40,6 +40,10 @@ export function MetricsPollTask() {
 								}
 
 								let metrics = {
+									timestamp: timestamp,
+									app_guid: result.value.app.guid,
+									service: svc.service,
+									ip: result.value.host.host,
 									response_time: result.value.response_time,
 									player_count: svc.player_count || 0,
 									status: svc.status === 'running' ? 1 : 0,
@@ -47,16 +51,9 @@ export function MetricsPollTask() {
 									cpu_usage: parseFloat(svc.cpu_usage) || 0
 								};
 
-								for (let key in metrics) {
-									Metric.create({
-										ip: result.value.host.host,
-										metric_title: key,
-										app_guid: result.value.app.guid,
-										service: svc.service,
-										metric_value: metrics[key],
-										timestamp
-									});
-								}
+								Metric.create(metrics).catch(e => {
+									logger.warn(`MetricsPollTask: Error saving metrics for service '${svc.service}' on app '${result.value.app.guid}' at host '${result.value.host.host}':`, e.message);
+								});
 							}
 						}
 					});

@@ -1,5 +1,6 @@
 const { Sequelize, DataTypes} = require('sequelize');
 const bcrypt = require('bcrypt');
+const { stat } = require('fs');
 
 const sequelize = new Sequelize({
 	dialect: 'sqlite',
@@ -61,10 +62,6 @@ const Metric = sequelize.define('Metric', {
 		type: DataTypes.STRING,
 		allowNull: false
 	},
-	metric_title: {
-		type: DataTypes.STRING,
-		allowNull: false
-	},
 	app_guid: {
 		type: DataTypes.STRING,
 		allowNull: false
@@ -73,14 +70,31 @@ const Metric = sequelize.define('Metric', {
 		type: DataTypes.STRING,
 		allowNull: false
 	},
-	metric_value: {
-		type: DataTypes.FLOAT,
-		allowNull: false
-	},
 	timestamp: {
 		type: DataTypes.INTEGER,
 		allowNull: false
+	},
+	cpu_usage: {
+		type: DataTypes.INTEGER,
+		allowNull: true
+	},
+	memory_usage: {
+		type: DataTypes.INTEGER,
+		allowNull: true
+	},
+	player_count: {
+		type: DataTypes.INTEGER,
+		allowNull: true
+	},
+	response_time: {
+		type: DataTypes.INTEGER,
+		allowNull: true
+	},
+	status: {
+		type: DataTypes.INTEGER,
+		allowNull: true
 	}
+
 }, {
 	indexes: [
 		{ fields: ['ip', 'service', 'timestamp'] },
