@@ -77,6 +77,7 @@
     - "--dir=<src> - Use a custom installation directory instead of the default (optional)"
     - "--skip-firewall  - Do not install or configure a system firewall"
     - "--non-interactive  - Run the installer in non-interactive mode (useful for scripted installs)"
+    - "--branch=<str> - Use a specific branch of the management script repository DEFAULT=main"
   image: media/zomboid-1920x1080.webp
   icon: media/zomboid-128x128.webp
   thumbnail: media/zomboid-640x360.webp
