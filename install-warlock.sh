@@ -277,6 +277,7 @@ server {
     proxy_request_buffering off;
     proxy_buffering off;
     proxy_pass_request_body on;
+    proxy_read_timeout 10m;
 
     # Serve the service worker at root so it can control site-wide scope
     location = /service-worker.js {
