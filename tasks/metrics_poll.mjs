@@ -51,7 +51,7 @@ export function MetricsPollTask() {
 									player_count: svc.player_count || 0,
 									status: svc.status === 'running' ? 1 : 0,
 									memory_usage: memoryValue,
-									cpu_usage: parseFloat(svc.cpu_usage) || 0
+									cpu_usage: parseInt(svc.cpu_usage) || 0
 								};
 
 								Metric.create(metrics).catch(e => {
