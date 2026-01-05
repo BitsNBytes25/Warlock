@@ -19,12 +19,20 @@ export async function getApplicationMetrics(appData, hostData, service = null) {
 			requestStartTime = Date.now();
 		let cmd;
 
-		if (service) {
-			cmd = `${hostData.path}/manage.py --service ${service} --get-metrics`
+		if (hostData.options.includes('get-metrics')) {
+			// Application supports service-level metrics collection
+			if (service) {
+				cmd = `${hostData.path}/manage.py --service ${service} --get-metrics`
+			}
+			else {
+				cmd = `${hostData.path}/manage.py --get-metrics`
+			}
 		}
 		else {
-			cmd = `${hostData.path}/manage.py --get-metrics`
+			// Fallback to general status of all services
+			cmd = `${hostData.path}/manage.py --get-services`
 		}
+
 
 		cmdRunner(hostData.host, cmd)
 			.then(async result => {

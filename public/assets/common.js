@@ -20,6 +20,7 @@
  * @typedef {Object} HostAppData
  * @property {string} host Hostname or IP of host.
  * @property {string} path Path where the application is installed on the host.
+ * @property {Array<string>} options List of available options supported by the application installation on this host.
  *
  */
 

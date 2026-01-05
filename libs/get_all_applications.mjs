@@ -6,6 +6,7 @@ import {cmdRunner} from "./cmd_runner.mjs";
 import {Host} from "../db.js";
 import {logger} from "./logger.mjs";
 import cache from "./cache.mjs";
+import {lookup} from "passport-local/lib/utils.js";
 
 /**
  * Get all applications from /var/lib/warlock/*.app registration files
@@ -14,7 +15,6 @@ import cache from "./cache.mjs";
  */
 export async function getAllApplications() {
 	return new Promise((resolve, reject) => {
-		console.log(cache.keys());
 		let cachedApplications = cache.get('all_applications');
 		if (cachedApplications) {
 			logger.debug('getAllApplications: Returning cached application data');
@@ -46,7 +46,8 @@ export async function getAllApplications() {
 				return reject(new Error('No hosts found in database.'));
 			}
 
-			let promises = [];
+			let promises = [],
+				lookupPromises = [];
 
 			hostList.forEach(host => {
 				promises.push(cmdRunner(host, cmd, {host}));
@@ -61,8 +62,7 @@ export async function getAllApplications() {
 
 							for (let line of stdout.split('\n')) {
 								if (line.trim()) {
-									let [guid, path] = line.split(':').map(s => s.trim()),
-										appData = {path: path.trim(), host: target};
+									let [guid, path] = line.split(':').map(s => s.trim());
 
 									// Add some data from the local apps definition if it's available
 									if (!applications[guid]) {
@@ -73,17 +73,66 @@ export async function getAllApplications() {
 											hosts: []
 										};
 									}
-									applications[guid]['hosts'].push(appData);
+
+									lookupPromises.push(
+										getApplicationOptions(target, path.trim())
+											.then(appData => {
+												applications[guid]['hosts'].push(appData);
+											})
+									);
 								}
 							}
 						}
 					});
 
-					// Cache the applications for 1 day
-					cache.set('all_applications', applications, 86400);
-					logger.debug('getAllApplications: Application Definitions Loaded', applications);
-					return resolve(applications);
+					Promise.allSettled(lookupPromises)
+						.then(() => {
+							// Cache the applications for 1 day
+							cache.set('all_applications', applications, 86400);
+							logger.debug('getAllApplications: Application Definitions Loaded', applications);
+							return resolve(applications);
+						});
 				});
 		});
+	});
+}
+
+/**
+ * Execute manage.py on the host with --help to retrieve the options available in this version of the application.
+ *
+ * Required because some game managers may support different options.
+ *
+ * @param {string} host Host IP or name
+ * @param {string} path Path to the application on the host
+ * @returns {Object<host:string, path:string, options:Array<string>>}
+ */
+async function getApplicationOptions(host, path) {
+	return new Promise((resolve, reject) => {
+		cmdRunner(host, `${path}/manage.py --help`)
+			.then(result => {
+				let options = [];
+				const helpText = result.stdout;
+
+				// Simple parsing of the help text to find available options
+				const optionRegex = /--([a-zA-Z0-9_-]+)(\s+<[^>]+>)?/g;
+				let match;
+				while ((match = optionRegex.exec(helpText)) !== null) {
+					options.push(match[1]);
+				}
+
+				resolve({
+					host: host,
+					path: path,
+					options: options
+				});
+			})
+			.catch(error => {
+				logger.warn(`getApplicationOptions: Error retrieving options for app at ${host}: ${error.message}`);
+				resolve({
+					host: host,
+					path: path,
+					options: []
+				});
+			});
 	});
 }
