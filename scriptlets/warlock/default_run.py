@@ -1,7 +1,137 @@
 import argparse
 import json
 import sys
+import time
+import os
+import logging
 from scriptlets._common.get_wan_ip import *
+
+
+def menu_delayed_action_game(game, action):
+	"""
+	If players are logged in, send 5-minute notifications for an hour before stopping the server
+
+	This action applies to ALL game instances under this application.
+
+	:param game:
+	:param action:
+	:return:
+	"""
+
+	if not action in ['stop', 'restart']:
+		print('ERROR - Invalid action for delayed action: %s' % action, file=sys.stderr)
+		return
+
+	if os.geteuid() != 0:
+		print('ERROR - Unable to stop game service unless run with sudo', file=sys.stderr)
+		return
+
+	msg = game.get_option_value('%s_delayed' % action)
+	if msg == '':
+		msg = 'Server will %s in {time} minutes. Please prepare to log off safely.' % action
+
+	start = round(time.time())
+	services_running = []
+	services = game.get_services()
+
+	print('Issuing %s for all services, please wait as this will give players up to an hour to log off safely.' % action)
+
+	while True:
+		still_running = False
+		minutes_left = 55 - ((round(time.time()) - start) // 60)
+
+		for service in services:
+			if service.is_running():
+				still_running = True
+				if service.service not in services_running:
+					services_running.append(service)
+
+				player_count = service.get_player_count()
+
+				if player_count == 0 or player_count is None:
+					# No players online, stop the service
+					print('No players detected on %s, stopping service now.' % service.service)
+					service.stop()
+				else:
+					# Still online, check to see if we should send a message
+					if '{time}' in msg:
+						msg = msg.replace('{time}', str(minutes_left))
+
+					if minutes_left <= 5:
+						# Once the timer hits 5 minutes left, drop to the standard stop procedure.
+						service.stop()
+
+					if minutes_left % 5 == 0 and minutes_left > 5:
+						# Send the warning every 5 minutes
+						service.send_message(msg)
+
+		if minutes_left % 5 == 0 and minutes_left > 5:
+			print('%s minutes remaining before %s.' % (str(minutes_left), action))
+
+		if not still_running or minutes_left <= 0:
+			# No services are running, stop the timer
+			break
+
+		time.sleep(60)
+
+	if action == 'restart':
+		# Now that all services have been stopped, restart any that were running before
+		for service in services:
+			if service.service in services_running:
+				service.start()
+
+
+def menu_delayed_action(service, action):
+	"""
+	If players are logged in, send 5-minute notifications for an hour before stopping the server
+
+	:param service:
+	:param action:
+	:return:
+	"""
+
+	if not action in ['stop', 'restart']:
+		print('ERROR - Invalid action for delayed action: %s' % action, file=sys.stderr)
+		return
+
+	if os.geteuid() != 0:
+		print('ERROR - Unable to stop game service unless run with sudo', file=sys.stderr)
+		return
+
+	start = round(time.time())
+	msg = service.game.get_option_value('%s_delayed' % action)
+	if msg == '':
+		msg = 'Server will %s in {time} minutes. Please prepare to log off safely.' % action
+
+	print('Issuing %s for %s, please wait as this will give players up to an hour to log off safely.' % (action, service.service))
+
+	while True:
+		minutes_left = 55 - ((round(time.time()) - start) // 60)
+		player_count = service.get_player_count()
+
+		if player_count == 0 or player_count is None:
+			# No players online, stop the timer
+			break
+
+		if '{time}' in msg:
+			msg = msg.replace('{time}', str(minutes_left))
+
+		if minutes_left <= 5:
+			# Once the timer hits 5 minutes left, drop to the standard stop procedure.
+			break
+
+		if minutes_left % 5 == 0:
+			service.send_message(msg)
+
+		if minutes_left % 5 == 0 and minutes_left > 5:
+			print('%s minutes remaining before %s.' % (str(minutes_left), action))
+
+		time.sleep(60)
+
+	if action == 'stop':
+		service.stop()
+	else:
+		service.restart()
 
 
 def menu_get_services(game):
@@ -79,6 +209,12 @@ def menu_get_metrics(game):
 def run_manager(game):
 	parser = argparse.ArgumentParser('manage.py')
 
+	parser.add_argument(
+		'--debug',
+		help='Enable debug logging output',
+		action='store_true'
+	)
+
 	# Service specification - some options can only be performed on a given service
 	parser.add_argument(
 		'--service',
@@ -121,6 +257,16 @@ def run_manager(game):
 	parser.add_argument(
 		'--has-players',
 		help='Check if any players are currently connected to any game service (exit code 0 = yes, 1 = no)',
+		action='store_true'
+	)
+	parser.add_argument(
+		'--delayed-stop',
+		help='Send a 1-hour warning to players before stopping the game server',
+		action='store_true'
+	)
+	parser.add_argument(
+		'--delayed-restart',
+		help='Send a 1-hour warning to players before restarting the game server',
 		action='store_true'
 	)
 
@@ -190,6 +336,9 @@ def run_manager(game):
 		action='store_true'
 	)
 	args = parser.parse_args()
+
+	if args.debug:
+		logging.basicConfig(level=logging.DEBUG)
 
 	services = game.get_services()
 
@@ -314,6 +463,16 @@ def run_manager(game):
 				is_running = True
 				break
 		sys.exit(0 if is_running else 1)
+	elif args.delayed_stop:
+		if len(services) > 1:
+			menu_delayed_action_game(game, 'stop')
+		else:
+			menu_delayed_action(services[0], 'stop')
+	elif args.delayed_restart:
+		if len(services) > 1:
+			menu_delayed_action_game(game, 'restart')
+		else:
+			menu_delayed_action(services[0], 'restart')
 	else:
 		if len(services) > 1:
 			if not callable(getattr(sys.modules[__name__], 'menu_main', None)):

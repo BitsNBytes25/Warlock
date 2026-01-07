@@ -13,6 +13,8 @@ const autoUpdateModal = document.getElementById('autoUpdateModal'),
 	confirmUpdateBtn = document.getElementById('confirmUpdateBtn'),
 	reinstallBtn = document.getElementById('reinstallBtn');
 
+let applicationOptions = [];
+
 
 async function loadAutomaticUpdates() {
 	if (!loadedHost) {
@@ -144,7 +146,13 @@ async function saveAutomaticRestarts() {
 	}
 
 	// Build command
-	const command = `${gameDir}/manage.py --restart`;
+	// if this service supports delayed-restart, use that instead
+	let command;
+	if (applicationOptions.includes('delayed-restart')) {
+		command = `${gameDir}/manage.py --delayed-restart`;
+	} else {
+		command = `${gameDir}/manage.py --restart`;
+	}
 
 	fetch(`/api/cron/${loadedHost}`, {
 		method: 'POST',
@@ -172,7 +180,12 @@ window.addEventListener('DOMContentLoaded', () => {
 	const {guid, host} = getPathParams('/application/configure/:guid/:host');
 
 	Promise.all([
-		loadApplication(guid),
+		loadApplication(guid).then(appData => {
+			let hostData = appData.hosts.filter(h => h.host === host)[0];
+			if (hostData) {
+				applicationOptions = hostData.options || [];
+			}
+		}),
 		loadHost(host)
 	])
 		.then(() => {

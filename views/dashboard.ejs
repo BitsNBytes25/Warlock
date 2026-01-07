@@ -197,6 +197,48 @@
         </div>
     </div>
 
+    <!-- Stop/Restart Modal -->
+    <div id="stopModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-stop"></i> Stop/Restart Service</h3>
+                <button class="modal-close">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+
+                <div class="info-message">
+                    <p>
+                        Choose whether to stop or restart this service.<br/><br/>
+                        Additionally, (if supported), you may delay the action for up to 1 hour to allow players to finish their sessions.
+                        Delayed stops/restarts will notify players in-game at regular intervals before the action is performed.
+                    </p>
+                </div>
+
+                <div class="button-group">
+
+                    <button title="Stop Game" data-action="stop" class="service-control action-stop">
+                        <i class="fas fa-stop"></i><br/><span>Stop Now</span>
+                    </button>
+
+                    <button title="Send 1-hour timer to stop" data-action="delayed-stop" class="service-control action-stop">
+                        <i class="fas fa-clock"></i><br/><span>Delayed Stop</span>
+                    </button>
+
+                    <button title="Restart Game" data-action="restart" class="service-control action-restart">
+                        <i class="fas fa-undo"></i><br/><span>Restart Now</span>
+                    </button>
+
+                    <button title="Send 1-hour timer to restart" data-action="delayed-restart" class="service-control action-restart">
+                        <i class="fas fa-clock"></i><br/><span>Delayed Restart</span>
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
 	<%- include('partials/theme-selector.ejs') %>
     <script src="/assets/dashboard.js"></script>
 </body>

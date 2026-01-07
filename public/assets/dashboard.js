@@ -1,4 +1,5 @@
-const servicesContainer = document.getElementById('servicesContainer');
+const servicesContainer = document.getElementById('servicesContainer'),
+	stopModal = document.getElementById('stopModal');
 
 // Metrics Modal Functionality
 let metricsCharts = {};
@@ -25,7 +26,9 @@ function populateServicesTable(servicesWithStats) {
 		statusIcon = '',
 		actionButtons = [],
 		enabledField = '',
-		appIcon = renderAppIcon(app_guid);
+		appIcon = renderAppIcon(app_guid),
+		supportsDelayedStop = servicesWithStats.host.options.includes('delayed-stop') ? '1' : '0',
+		supportsDelayedRestart = servicesWithStats.host.options.includes('delayed-restart') ? '1' : '0';
 
 	actionButtons.push(`
 <button title="View Logs" data-href="/service/logs/${app_guid}/${host.host}/${service.service}" class="link-control action-logs">
@@ -45,7 +48,7 @@ function populateServicesTable(servicesWithStats) {
 	if (service.status === 'running') {
 		statusIcon = '<i class="fas fa-check-circle"></i>';
 		actionButtons.push(`
-<button title="Stop Game" data-host="${host.host}" data-service="${service.service}" data-action="stop" data-guid="${app_guid}" class="service-control action-stop">
+<button title="Stop Game" data-host="${host.host}" data-service="${service.service}" data-guid="${app_guid}" data-support-delayed-stop="${supportsDelayedStop}" data-support-delayed-restart="${supportsDelayedRestart}" class="open-stop-modal action-stop">
 <i class="fas fa-stop"></i><span>Stop</span>
 </button>`);
 	}
@@ -254,23 +257,27 @@ function loadAllServicesAndStats() {
  */
 function streamServiceStats(app_guid, host, service, target_state) {
 	// What's the target state for this service to stop streaming?
-	let targetKey, targetValue;
+	let targetKey, targetValue, targetStateMessage;
 
 	if (target_state === 'start') {
 		targetKey = 'status';
 		targetValue = 'running';
+		targetStateMessage = 'Service has started successfully.';
 	}
 	else if (target_state === 'stop') {
 		targetKey = 'status';
 		targetValue = 'stopped';
+		targetStateMessage = 'Service has stopped successfully.';
 	}
 	else if (target_state === 'enable') {
 		targetKey = 'enabled';
 		targetValue = true;
+		targetStateMessage = 'Service has been enabled to start on-boot.';
 	}
 	else if (target_state === 'disable') {
 		targetKey = 'enabled';
 		targetValue = false;
+		targetStateMessage = 'Service has been disabled from starting on-boot.';
 	}
 	else {
 		console.error('Invalid target state for streaming service stats:', target_state);
@@ -289,6 +296,7 @@ function streamServiceStats(app_guid, host, service, target_state) {
 				if (parsed.service[targetKey] === targetValue) {
 					// Remove from live services
 					liveServices = liveServices.filter(s => s !== (app_guid + '|' + host + '|' + service));
+					showToast('success', targetStateMessage);
 					return false;
 				}
 			}
@@ -458,14 +466,24 @@ document.addEventListener('click', e => {
 				return;
 			}
 
-			btn.classList.add('disabled');
-			if (btn.closest('tr')) {
-				btn.closest('tr').classList.add('updating');
-			}
+			stopModal.classList.remove('show');
 
-			serviceAction(guid, host, service, action).then(() => {
-				streamServiceStats(guid, host, service, action);
-			});
+			if (action === 'delayed-stop' || action === 'delayed-restart') {
+				// Delayed actions do not trigger live stats streaming
+				serviceAction(guid, host, service, action).then(() => {
+					showToast('success', `Sent ${action.replace('-', ' ')} command to ${service}, task may take up to an hour to complete.`);
+				});
+			}
+			else {
+				btn.classList.add('disabled');
+				if (btn.closest('tr')) {
+					btn.closest('tr').classList.add('updating');
+				}
+
+				serviceAction(guid, host, service, action).then(() => {
+					streamServiceStats(guid, host, service, action);
+				});
+			}
 		}
 		else if (e.target.classList.contains('link-control') || e.target.closest('.link-control')) {
 			let btn = e.target.classList.contains('link-control') ? e.target : e.target.closest('.link-control'),
@@ -483,6 +501,40 @@ document.addEventListener('click', e => {
 
 			e.preventDefault();
 			openMetricsModal(host, service, guid);
+		}
+		else if (e.target.classList.contains('open-stop-modal') || e.target.closest('.open-stop-modal')) {
+			let btn = e.target.classList.contains('open-stop-modal') ? e.target : e.target.closest('.open-stop-modal'),
+				service = btn.dataset.service,
+				host = btn.dataset.host,
+				guid = btn.dataset.guid,
+				supportsDelayedStop = btn.dataset.supportDelayedStop === '1',
+				supportsDelayedRestart = btn.dataset.supportDelayedRestart === '1';
+
+			stopModal.classList.add('show');
+			stopModal.querySelectorAll('.service-control').forEach(el => {
+				let action = el.dataset.action;
+
+				if (action === 'delayed-stop') {
+					if (supportsDelayedStop) {
+						el.style.display = 'inline-block';
+					} else {
+						el.style.display = 'none';
+					}
+				}
+				if (action === 'delayed-restart') {
+					if (supportsDelayedRestart) {
+						el.style.display = 'inline-block';
+					} else {
+						el.style.display = 'none';
+					}
+				}
+
+				el.dataset.service = service;
+				el.dataset.host = host;
+				el.dataset.guid = guid;
+			});
+
+			// stopModal
 		}
 	}
 

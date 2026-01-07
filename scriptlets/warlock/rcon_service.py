@@ -13,6 +13,9 @@ class RCONService(BaseService):
 		:param cmd:
 		:return: None if RCON not available, or the result of the command
 		"""
+		# Some game servers don't handle RCON very well, so try a few times before giving up.
+		retry = 6
+
 		if not (self.is_running() or self.is_starting() or self.is_stopping()):
 			# If service is not running, don't even try to connect.
 			return None
@@ -32,12 +35,19 @@ class RCONService(BaseService):
 			print("RCON password is not set!  Please populate get_api_password definition.", file=sys.stderr)
 			return None
 
-		try:
-			with Client('127.0.0.1', port, passwd=password, timeout=2) as client:
-				return client.run(cmd).strip()
-		except Exception as e:
-			print(str(e), file=sys.stderr)
-			return None
+		counter = 0
+		while counter < retry:
+			counter += 1
+			try:
+				with Client('127.0.0.1', port, passwd=password, timeout=5) as client:
+					ret = client.run(cmd, enforce_id=False).strip()
+					client.close()
+					return ret
+			except Exception as e:
+				print('Failed to establish RCON connection (attempt %s): %s' % (str(counter), str(e)), file=sys.stderr)
+
+		print('All RCON connection attempts failed.', file=sys.stderr)
+		return None
 
 	def is_api_enabled(self) -> bool:
 		"""

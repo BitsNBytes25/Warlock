@@ -1715,6 +1715,8 @@ button.action-cancel:hover, a.button.action-cancel:hover {
 	align-items: center;
 	justify-content: center;
 	display: none;
+	background: #0f0708cf;
+	backdrop-filter: blur(2px);
 }
 .modal.show {
 	display: flex;
