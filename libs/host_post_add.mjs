@@ -12,14 +12,14 @@ export async function hostPostAdd(host) {
 		// Ensure `file` is installed.  Most distros have it by default, but some minimal installs may not.
 		// This is required for proper OS detection later.
 		const installFileCmds = {
-			'debian': 'which -s file || apt-get install -y file',
-			'ubuntu': 'which -s file ||  apt-get install -y file',
-			'centos': 'which -s file || yum install -y file',
-			'rocky': 'which -s file || yum install -y file',
-			'almalinux': 'which -s file || yum install -y file',
-			'amazon linux': 'which -s file || yum install -y file',
-			'fedora': 'which -s file || dnf install -y file',
-			'arch': 'which -s file || pacman -Sy --noconfirm file',
+			'debian': 'which file || apt-get install -y file',
+			'ubuntu': 'which file ||  apt-get install -y file',
+			'centos': 'which file || yum install -y file',
+			'rocky': 'which file || yum install -y file',
+			'almalinux': 'which file || yum install -y file',
+			'amazon linux': 'which file || yum install -y file',
+			'fedora': 'which file || dnf install -y file',
+			'arch': 'which file || pacman -Sy --noconfirm file',
 		};
 
 		// Query the server for the OS type; this will determine which install command to use.

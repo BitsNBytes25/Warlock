@@ -9,6 +9,7 @@ const {getAllApplications} = require("../../libs/get_all_applications.mjs");
 const {clearCache} = require("../../libs/cache.mjs");
 const {push_analytics} = require("../../libs/push_analytics.mjs");
 const {cmdRunner} = require("../../libs/cmd_runner.mjs");
+const {buildRemoteExec} = require("../../libs/build_remote_exec.mjs");
 
 const router = express.Router();
 
@@ -46,32 +47,19 @@ router.put('/:guid/:host', validate_session, (req, res) => {
 
 			try {
 				// data.app should be an AppData object
-				let cliFlags = '--non-interactive',
-					branch = null,
-					url = null;
+				let branch = null,
+					url = null,
+					cmdData = null;
 
-				// Append any additional options as CLI flags
-				options.forEach(option => {
-					// Simple validation to avoid injection
-					if (/^[a-zA-Z0-9_\-+=\/\.]+$/.test(option)) {
-						if (option.includes('=')) {
-							const [key, value] = option.split('=');
-							cliFlags += ` ${key}="${value.replace(/"/g, '\\"')}"`;
-
-							if (key === '--branch') {
-								// This is used to determine the install source, (if provided).
-								branch = value;
-							}
-						} else {
-							cliFlags += ` ${option}`;
+				if (appData.source && appData.source.toLowerCase() === 'github' && appData.repo) {
+					// Check to see if the user submitted a branch for this installer
+					options.forEach(option => {
+						if (option.startsWith('--branch') && option.includes('=')) {
+							// This is used to determine the install source, (if provided).
+							branch = option.split('=')[1];
 						}
-					}
-				});
-
-				if (branch) {
-					// Branch was specified, we can use that to determine the installer URL
-					// This is only relevant for GitHub-sourced applications
-					if (appData.source && appData.source.toLowerCase() === 'github' && appData.repo) {
+					});
+					if (branch) {
 						url = `https://raw.githubusercontent.com/${appData.repo}/refs/heads/${branch}/${appData.installer}`;
 					}
 				}
@@ -89,21 +77,15 @@ router.put('/:guid/:host', validate_session, (req, res) => {
 					});
 				}
 
-				// Safely escape any single quotes in the URL for embedding in single-quoted shell literals
-				const escapedUrl = String(url).replace(/'/g, "'\\''");
+				// Use buildRemoteExec to build the actual command to pass to the guest.
+				cmdData = buildRemoteExec(url, Array.prototype.concat(options, ['--non-interactive']));
 
-				logger.info(`Installing ${appData.title} on host ${host} with flags ${cliFlags}`);
+				logger.debug(cmdData);
+				logger.info(`Installing ${appData.title} on host ${host} with flags ${cmdData.parameters.join(', ')}`);
 				push_analytics(`App Install / ${appData.title}`);
 
-				// Build a command that streams the installer directly into bash to avoid writing to /tmp
-				// It prefers curl, falls back to wget, and prints a clear error if neither is available.
-				const cmd = `if command -v curl >/dev/null 2>&1; then curl -fsSL "${escapedUrl}"; ` +
-					`elif command -v wget >/dev/null 2>&1; then wget -qO- "${escapedUrl}"; ` +
-					`else echo "ERROR: neither curl nor wget is available on the target host" >&2; exit 2; fi | bash -s -- ${cliFlags}`;
-
-				logger.debug(cmd);
 				// Stream the command output back to the client
-				cmdStreamer(host, cmd, res).then(() => {
+				cmdStreamer(host, cmdData.cmd, res).then(() => {
 					// Clear the server-side application cache
 					logger.debug('Installation complete, clearing cache');
 					clearCache();
@@ -153,19 +135,15 @@ router.delete('/:guid/:host', validate_session, (req, res) => {
 				else {
 					// Installer does not exist on remote host, use the streaming method
 					const url = await getAppInstaller(data.app);
+
+
 					if (!url) {
 						// No installer URL available
 						return res.status(400).json({ success: false, error: 'No installer URL found for application ' + guid });
 					}
-
-					// Safely escape any single quotes in the URL for embedding in single-quoted shell literals
-					const escapedUrl = String(url).replace(/'/g, "'\\''");
-
-					// Build a command that streams the installer directly into bash to avoid writing to /tmp
-					// It prefers curl, falls back to wget, and prints a clear error if neither is available.
-					cmd = `if command -v curl >/dev/null 2>&1; then curl -fsSL "${escapedUrl}"; ` +
-						`elif command -v wget >/dev/null 2>&1; then wget -qO- "${escapedUrl}"; ` +
-						`else echo "ERROR: neither curl nor wget is available on the target host" >&2; exit 2; fi | bash -s -- --non-interactive --uninstall`;
+					// Use buildRemoteExec to build the actual command to pass to the guest.
+					const cmdData = buildRemoteExec(url, ['--non-interactive', '--uninstall']);
+					cmd = cmdData.cmd;
 				}
 
 				// Stream the command output back to the client

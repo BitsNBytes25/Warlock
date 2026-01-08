@@ -3,6 +3,7 @@ const { validate_session } = require("../../libs/validate_session.mjs");
 const { cmdRunner } = require("../../libs/cmd_runner.mjs");
 const { Host } = require('../../db');
 const { logger } = require('../../libs/logger.mjs');
+const {buildRemoteExec} = require("../../libs/build_remote_exec.mjs");
 
 const router = express.Router();
 
@@ -63,7 +64,7 @@ router.get('/:host', validate_session, (req, res) => {
 		let rules = [],
 			status = 'unknown';
 
-		cmdRunner(host, 'which -s ufw && ufw status || echo "Status: NOT INSTALLED"').then(result => {
+		cmdRunner(host, 'which ufw && ufw status || echo "Status: NOT INSTALLED"').then(result => {
 			result.stdout.split('\n').forEach(line => {
 				line = line.trim();
 				if (line.startsWith('Status:')) {
@@ -227,7 +228,7 @@ router.post('/enable/:host', validate_session, (req, res) => {
 			return res.json({ success: false, error: 'Requested host is not in the configured HOSTS list' });
 		}
 
-		cmdRunner(host, 'which -s ufw && ufw --force enable || echo "UFW is not installed, cannot enable"')
+		cmdRunner(host, 'which ufw && ufw --force enable || echo "UFW is not installed, cannot enable"')
 			.then(result => {
 				return res.json({ success: true, stdout: result.stdout, stderr: result.stderr });
 			}).catch(e => {
@@ -244,13 +245,32 @@ router.post('/disable/:host', validate_session, (req, res) => {
 			return res.json({ success: false, error: 'Requested host is not in the configured HOSTS list' });
 		}
 
-		cmdRunner(host, 'which -s ufw && ufw --force disable || echo "UFW is not installed, cannot disable"')
+		cmdRunner(host, 'which ufw && ufw --force disable || echo "UFW is not installed, cannot disable"')
 			.then(result => {
 				return res.json({ success: true, stdout: result.stdout, stderr: result.stderr });
 			}).catch(e => {
 				logger.error('Error enabling ufw:', e);
 				return res.json({ success: false, error: 'Failed to disable UFW' });
 			});
+	});
+});
+
+router.post('/install/:host', validate_session, (req, res) => {
+	const host = req.params.host;
+	Host.count({ where: { ip: host } }).then(count => {
+		if (count === 0) {
+			return res.json({ success: false, error: 'Requested host is not in the configured HOSTS list' });
+		}
+
+		let cmdData = buildRemoteExec('https://raw.githubusercontent.com/eVAL-Agency/ScriptsCollection/refs/heads/main/dist/ufw/linux_install_ufw.sh');
+
+		cmdRunner(host, cmdData.cmd)
+			.then(result => {
+				return res.json({ success: true, stdout: result.stdout, stderr: result.stderr });
+			}).catch(e => {
+			logger.error('Error installing ufw:', e);
+			return res.json({ success: false, error: 'Failed to installing UFW' });
+		});
 	});
 });
 

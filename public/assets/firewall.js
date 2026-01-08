@@ -6,9 +6,10 @@ const {host} = getPathParams('/host/firewall/:host'),
 	btnPauseFirewall = document.getElementById('btnPauseFirewall'),
 	btnEnableFirewall = document.getElementById('btnEnableFirewall'),
 	portsTableBody = document.getElementById('portsTableBody'),
-	globalRules = [];
+	installFirewallBtn = document.getElementById('installFirewallBtn');
 
-let firewallActive = false;
+let firewallActive = false,
+	globalRules = [];
 
 function sanitizeForPreview(text){
 	return (text || '').replace(/[<>\n\r]/g, '');
@@ -16,6 +17,7 @@ function sanitizeForPreview(text){
 
 function renderRules(rules){
 	tableBody.innerHTML = '';
+	globalRules = [];
 	if (!rules || rules.length === 0){
 		tableBody.innerHTML = '<tr><td colspan="6">No rules configured</td></tr>';
 		return;
@@ -97,6 +99,7 @@ async function fetchRules(){
 				statusNotInstalled.style.display = 'none';
 				btnEnableFirewall.style.display = 'none';
 				btnPauseFirewall.style.display = 'inline-block';
+				addBtn.classList.remove('disabled');
 				firewallActive = true;
 			}
 			else if (resp.status === 'inactive') {
@@ -105,6 +108,7 @@ async function fetchRules(){
 				statusNotInstalled.style.display = 'none';
 				btnEnableFirewall.style.display = 'inline-block';
 				btnPauseFirewall.style.display = 'none';
+				addBtn.classList.remove('disabled');
 				firewallActive = false;
 			}
 			else {
@@ -113,6 +117,7 @@ async function fetchRules(){
 				statusNotInstalled.style.display = 'flex';
 				btnEnableFirewall.style.display = 'none';
 				btnPauseFirewall.style.display = 'none';
+				addBtn.classList.add('disabled');
 				firewallActive = false;
 			}
 
@@ -331,8 +336,15 @@ async function fetchPorts() {
 						addBtn.dataset.protocol = port.protocol;
 						addBtn.dataset.comment = port.description;
 						addBtn.innerHTML = '<i class="fas fa-plus"></i> Allow Globally';
-						addBtn.addEventListener('click', () => {
-							addRule('ALLOW', addBtn.dataset.port, 'any', addBtn.dataset.protocol, addBtn.dataset.comment);
+						if (!firewallActive) {
+							addBtn.className = 'disabled';
+						}
+						addBtn.addEventListener('click', el => {
+							let btn = el.target.closest('button');
+							if (btn.classList.contains('disabled')) {
+								return;
+							}
+							addRule('ALLOW', btn.dataset.port, 'any', btn.dataset.protocol, btn.dataset.comment);
 						});
 						tdAction.appendChild(addBtn);
 
@@ -358,6 +370,9 @@ async function fetchPorts() {
 
     // Add rule wiring
     addBtn.addEventListener('click', () => {
+		if (addBtn.classList.contains('disabled')) {
+			return;
+		}
 		addModal.classList.add('show');
 	});
     document.getElementById('saveRuleBtn').addEventListener('click', () => {
@@ -395,12 +410,23 @@ async function fetchPorts() {
 	btnPauseFirewall.addEventListener('click', () => {
 		fetch(`/api/firewall/disable/${host}`, { method: 'POST' }).then(() => {
 			fetchRules();
+			fetchPorts();
 		});
 	});
 
 	btnEnableFirewall.addEventListener('click', () => {
 		fetch(`/api/firewall/enable/${host}`, { method: 'POST' }).then(() => {
 			fetchRules();
+			fetchPorts();
+		});
+	});
+
+	installFirewallBtn.addEventListener('click', () => {
+		showToast('info', 'Installing firewall on target host; this may take a minute...');
+
+		fetch(`/api/firewall/install/${host}`, { method: 'POST' }).then(() => {
+			fetchRules();
+			fetchPorts();
 		});
 	});
 

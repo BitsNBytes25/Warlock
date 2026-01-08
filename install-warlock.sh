@@ -119,7 +119,7 @@ read -r
 DISTRO="$(lsb_release -i 2>/dev/null | sed "s#.*:\t##" | tr '[:upper:]' '[:lower:]')"
 
 # Locate node
-if ! which -s node; then
+if ! which node; then
 	echo "Node.js binary not found in PATH. Attempting installation" >&2
 	case "$DISTRO" in
 		"ubuntu"|"debian")
