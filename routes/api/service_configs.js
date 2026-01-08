@@ -2,6 +2,7 @@ const express = require('express');
 const {validate_session} = require("../../libs/validate_session.mjs");
 const {cmdRunner} = require("../../libs/cmd_runner.mjs");
 const {validateHostService} = require("../../libs/validate_host_service.mjs");
+const cache = require("../../libs/cache.mjs");
 
 const router = express.Router();
 
@@ -36,7 +37,11 @@ router.get('/:guid/:host/:service', validate_session, (req, res) => {
 });
 
 router.post('/:guid/:host/:service', async (req, res) => {
-	validateHostService(req.params.host, req.params.guid, req.params.service)
+	const host = req.params.host,
+		guid = req.params.guid,
+		service = req.params.service;
+
+	validateHostService(host, guid, service)
 		.then(dat => {
 			const configUpdates = req.body;
 			const updatePromises = [];
@@ -48,6 +53,10 @@ router.post('/:guid/:host/:service', async (req, res) => {
 			}
 			Promise.all(updatePromises)
 				.then(result => {
+
+					// Clear the cache data for this service, useful for keys like name or port.
+					cache.default.set(`services_${guid}_${host}`, null, 1); // Invalidate cache
+
 					return res.json({
 						success: true,
 					});

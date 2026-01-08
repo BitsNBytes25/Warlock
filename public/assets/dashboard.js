@@ -141,26 +141,8 @@ function populateServicesTable(servicesWithStats) {
 			}
 		}
 		else if (field === 'status') {
-			// Check if this service has an exec/pre-exec error
-			let error = false;
-			if (service.pre_exec && service.pre_exec.status !== null && service.pre_exec.status !== 0) {
-				error = true;
-			}
-
-			if (service.start_exec && service.start_exec.status !== null) {
-				if (service.start_exec.status !== 0 && service.start_exec.status !== 15) {
-					error = true;
-				}
-			}
-
-			if (error) {
-				val = statusIcon + ' ' + 'ERROR';
-				cell.className = field + ' status-error';
-			}
-			else {
-				val = statusIcon + ' ' + service[field].toUpperCase();
-				cell.className = field + ' status-' + service[field];
-			}
+			val = statusIcon + ' ' + service[field].toUpperCase();
+			cell.className = field + ' status-' + service[field];
 		}
 		else if (field === 'enabled') {
 			val = enabledField;
@@ -268,6 +250,11 @@ function streamServiceStats(app_guid, host, service, target_state) {
 		targetKey = 'status';
 		targetValue = 'stopped';
 		targetStateMessage = 'Service has stopped successfully.';
+	}
+	else if (target_state === 'restart') {
+		targetKey = 'status';
+		targetValue = 'running';
+		targetStateMessage = 'Service has restarted successfully.';
 	}
 	else if (target_state === 'enable') {
 		targetKey = 'enabled';
@@ -458,7 +445,8 @@ document.addEventListener('click', e => {
 				service = btn.dataset.service,
 				action = btn.dataset.action,
 				host = btn.dataset.host,
-				guid = btn.dataset.guid;
+				guid = btn.dataset.guid,
+				tr = servicesContainer.querySelector(`tr[data-host="${host}"][data-service="${service}"]`);
 
 			e.preventDefault();
 
@@ -476,8 +464,13 @@ document.addEventListener('click', e => {
 			}
 			else {
 				btn.classList.add('disabled');
-				if (btn.closest('tr')) {
-					btn.closest('tr').classList.add('updating');
+				if (tr) {
+					tr.classList.add('updating');
+					// Swap the icon to a spinner to indicate a status change
+					let icon = tr.querySelector('td.status i');
+					if (icon) {
+						icon.className = 'fas fa-sync-alt fa-spin';
+					}
 				}
 
 				serviceAction(guid, host, service, action).then(() => {
@@ -532,6 +525,7 @@ document.addEventListener('click', e => {
 				el.dataset.service = service;
 				el.dataset.host = host;
 				el.dataset.guid = guid;
+				el.classList.remove('disabled');
 			});
 
 			// stopModal
