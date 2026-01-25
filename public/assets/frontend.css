@@ -1141,16 +1141,6 @@ button.link-control span {
 	display: block;
 	color: var(--content);
 }
-#services-table.card-view .status.status-running {
-	color: var(--status-running);
-}
-#services-table.card-view .status.status-starting {
-	color: var(--status-starting);
-	animation: blinker 4s infinite;
-}
-#services-table.card-view .status.status-stopped {
-	color: var(--status-stopped);
-}
 #services-table.card-view .port {
 	order: 5;
 	z-index: 2;
@@ -1202,6 +1192,29 @@ button.link-control span {
 	border-top: 1px solid var(--table-border);
 	flex: 2 100%;
 	padding: 1rem;
+}
+
+/** </editor-fold> **/
+
+/** <editor-fold desc="Service Status Colors"> **/
+
+#services-table.card-view .status.status-running,
+.service-details-overview .service-status.status-running {
+	color: var(--status-running);
+}
+#services-table.card-view .status.status-starting,
+.service-details-overview .service-status.status-starting{
+	color: var(--status-starting);
+	animation: blinker 4s infinite;
+}
+#services-table.card-view .status.status-stopped,
+.service-details-overview .service-status.status-stopped{
+	color: var(--status-stopped);
+}
+#services-table.card-view .status.status-stopping,
+.service-details-overview .service-status.status-stopping{
+	color: var(--status-stopped);
+	animation: blinker 4s infinite;
 }
 
 /** </editor-fold> **/
@@ -2874,12 +2887,14 @@ button.link-control span {
 }
 
 @media (max-width: 900px) {
+	/* Switch dashboard cards to single column */
 	#services-table.card-view .service {
 		flex: 1 100%;
 	}
 }
 
 @media (max-width: 700px) {
+	/* General content header to kick buttons down to new line */
 	.content-header-inner h2 {
 		flex: 3 100%;
 		order: 1;
@@ -2891,6 +2906,33 @@ button.link-control span {
 	.content-header-inner .content-header-buttons {
 		flex: 3 100%;
 		order: 3;
+	}
+
+	/* Reorder service details to fit better */
+	.service-details-overview {
+		grid-template-areas: 'status status cpu cpu memory memory' 'status-v status-v cpu-v cpu-v memory-v memory-v' 'players players players port port port' 'players-v players-v players-v port-v port-v port-v';
+	}
+	.service-details-overview dt {
+		text-align: center;
+	}
+	.service-details-overview dd {
+		text-align: center;
+	}
+}
+
+@media (max-width: 500px) {
+	/* Display service details in single column */
+	.service-details-overview {
+		display: flex;
+		flex-wrap: wrap;
+	}
+	.service-details-overview dt {
+		flex: 1 40%;
+		text-align: right;
+	}
+	.service-details-overview dd {
+		flex: 1 40%;
+		text-align: left;
 	}
 }
 
