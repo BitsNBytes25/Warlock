@@ -135,7 +135,8 @@
 	--table-row-bg-1: rgba(30, 41, 59, 0.4);
 	--table-row-bg-2: rgba(15, 23, 42, 0.4);
 	--table-border: rgba(99, 102, 241, 0.3);
-	
+	--table-row-hover: rgba(14, 28, 62, 0.6);
+
 	/* Input Fields */
 	--input: #cbd5e1;
 	--input-placeholder: #64748b;
@@ -149,7 +150,7 @@
 	/* Status Colors */
 	--status-running: #10b981;
 	--status-starting: #f59e0b;
-	--status-stopped: #94a3b8;
+	--status-stopped: #bc9498;
 	--status-stopping: #f97316;
 	
 	--status-neutral: #60a5fa;
@@ -990,11 +991,221 @@ button.link-control span {
 	margin-right: 1rem;
 }
 
+/** <editor-fold desc="Services Table - Modern Design"> **/
+
+#services-table .header {
+	background: linear-gradient(135deg, var(--table-header-bg-1) 0%, var(--table-header-bg-2) 100%);
+	border-bottom: 1px solid var(--table-border);
+	color: var(--table-header);
+	border-radius: 1rem 1rem 0 0;
+}
+
+#services-table.table-view .header,
+#services-table.table-view .service {
+	display: grid;
+	align-items: center;
+	grid-template-areas: 'host icon name enabled status port players memory cpu actions';
+	grid-template-columns: 1fr 4rem 1fr 6rem 9rem 5rem 5rem 5rem 3rem 12rem;
+	gap: 2rem;
+	padding: 0.5rem 0;
+	border-bottom: 1px solid var(--table-border);
+}
+#services-table.table-view .service {
+	background-color: var(--table-row-bg-1);
+}
+#services-table.table-view .service:nth-child(even) {
+	background-color: var(--table-row-bg-2);
+}
+#services-table.table-view .service:hover {
+	background-color: var(--table-row-hover);
+}
+
+#services-table.table-view .thumbnail {
+	display: none;
+}
+#services-table.table-view .host {
+	grid-area: host;
+	padding-left: 1rem;
+}
+#services-table.table-view .icon {
+	grid-area: icon;
+	text-align: center;
+}
+#services-table.table-view .name {
+	grid-area: name;
+}
+#services-table.table-view .enabled {
+	grid-area: enabled;
+	text-align: center;
+}
+#services-table.table-view .status {
+	grid-area: status;
+	text-align: center;
+}
+#services-table.table-view .port {
+	grid-area: port;
+	text-align: center;
+}
+#services-table.table-view .players {
+	grid-area: players;
+	text-align: center;
+}
+#services-table.table-view .memory {
+	grid-area: memory;
+	text-align: right;
+}
+#services-table.table-view .cpu {
+	grid-area: cpu;
+	text-align: right;
+}
+#services-table.table-view .actions {
+	grid-area: actions;
+	text-align: center;
+	padding-right: 1rem;
+}
+
+#services-table.card-view .header {
+	display: none;
+}
+
+#services-table.card-view .body {
+	display: flex;
+	gap: 2rem;
+	flex-wrap: wrap;
+}
+
+#services-table.card-view .service {
+	display: flex;
+	background-color: var(--table-row-bg-1);
+	border: 1px solid var(--table-border);
+	border-radius: 12px;
+	padding: 0 1.5rem 1rem;
+	margin-bottom: 1rem;
+	transition: all 0.2s ease;
+	flex-wrap: wrap;
+	position: relative;
+	flex: 1 30%;
+	overflow: hidden;
+}
+
+#services-table.card-view .thumbnail {
+	position: absolute;
+	width: 100%;
+	height: 6rem;
+	margin: 0 -1.5rem;
+	overflow: hidden;
+	z-index: 1;
+}
+#services-table.card-view .thumbnail img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	/* image should be partially transparent with a black overlay filter */
+	filter: brightness(0.4);
+}
+
+#services-table.card-view .icon {
+	display: none;
+}
+#services-table.card-view .name {
+	order: 1;
+	z-index: 2;
+	flex: 4 100%;
+	height: 2.5rem;
+	font-weight: bold;
+	font-size: 1.5rem;
+}
+#services-table.card-view .host {
+	order: 2;
+	z-index: 2;
+	flex: 4 100%;
+	height: 4rem;
+}
+#services-table.card-view .enabled {
+	display: none;
+}
+#services-table.card-view .status {
+	order: 4;
+	z-index: 2;
+	flex: 2 40%;
+	margin-bottom: 1rem;
+}
+#services-table.card-view .status:before {
+	content: 'STATUS';
+	opacity: 0.5;
+	display: block;
+	color: var(--content);
+}
+#services-table.card-view .status.status-running {
+	color: var(--status-running);
+}
+#services-table.card-view .status.status-starting {
+	color: var(--status-starting);
+	animation: blinker 4s infinite;
+}
+#services-table.card-view .status.status-stopped {
+	color: var(--status-stopped);
+}
+#services-table.card-view .port {
+	order: 5;
+	z-index: 2;
+	flex: 2 40%;
+	margin-bottom: 1rem;
+}
+#services-table.card-view .port:before {
+	content: 'PORT';
+	opacity: 0.5;
+	display: block;
+}
+#services-table.card-view .players {
+	order: 6;
+	z-index: 2;
+	flex: 2 40%;
+	margin-bottom: 1rem;
+}
+#services-table.card-view .players:before {
+	content: 'PLAYERS';
+	display: block;
+	opacity: 0.5;
+}
+#services-table.card-view .memory {
+	order: 7;
+	z-index: 2;
+	flex: 1 20%;
+	margin-bottom: 1rem;
+}
+#services-table.card-view .memory:before {
+	content: 'MEM';
+	opacity: 0.5;
+	display: block;
+}
+#services-table.card-view .cpu {
+	order: 8;
+	z-index: 2;
+	flex: 1 20%;
+	margin-bottom: 1rem;
+}
+#services-table.card-view .cpu:before {
+	content: 'CPU';
+	opacity: 0.5;
+	display: block;
+}
+#services-table.card-view .actions {
+	order: 9;
+	z-index: 2;
+	margin-left: auto;
+	border-top: 1px solid var(--table-border);
+	flex: 2 100%;
+	padding: 1rem;
+}
+
+/** </editor-fold> **/
+
 #services-table td.icon,
 .ports-table td.icon {
 	padding: 0.15rem 0.75rem;
 }
-#services-table td.icon img,
+#services-table .icon img,
 .ports-table td.icon img {
 	max-width: 2.5rem;
 	max-height: 2.5rem;
@@ -1033,10 +1244,6 @@ button.link-control span {
 }
 #services-table td.actions button:hover span {
 	opacity: 1;
-}
-
-#services-table .status {
-	text-align: center;
 }
 
 #services-table td.status.status-running,
@@ -2242,6 +2449,7 @@ button.link-control span {
 	gap: 1rem;
 	background-color: var(--navbar-bg);
 	margin-bottom: 2rem;
+	opacity: 0.7;
 }
 
 .tabs-header a {

@@ -24,6 +24,12 @@
                         Fleet Services
                     </h2>
                     <div class="content-header-buttons">
+                        <button data-view="card-view" class="action-view view-changer" title="Card View">
+                            <i class="fas fa-th-large"></i>
+                        </button>
+                        <button data-view="table-view" class="action-view view-changer" title="List View">
+                            <i class="fas fa-list"></i>
+                        </button>
                         <button class="link-control action-create" data-href="/application/install">
                             <i class="fas fa-plus"></i>
                             Install Game
@@ -34,115 +40,24 @@
             </div>
             
             <div class="content-body">
-
-                <!-- Applications List -->
-                <div id="applicationsContainer">
-                    <h3>
-                        <i class="fas fa-th-large"></i>
-                        Installed Games
-                    </h3>
-                    <div id="applicationsList" style="">
-                        <!-- Applications will be inserted here -->
-                        <div class="application-card">
-                            <img class="app-thumbnail" title="Loading..." src="/assets/media/generic/controller.webp" alt="Loading...">
-                            <div class="app-installs">
-                                <div class="app-install">
-                                    <span class="host-name">Loading...</span>
-                                    <span class="host-actions">
-                                        <button class="action-create"><i class="fas fa-undo"></i></button>
-                                        <button class="action-backup"><i class="fas fa-floppy-disk"></i></button>
-                                        <button class="action-configure"><i class="fas fa-cog"></i></button>
-                                        <button class="action-browse"><i class="fas fa-folder"></i></button>
-                                        <button class="action-remove"><i class="fas fa-trash-alt"></i></button>
-					                </span>
-                                </div>
-                            </div>
+                <div id="servicesContainer" style="margin-bottom: 2rem;">
+                    <div id="services-table">
+                        <div class="header">
+                            <div class="host">Host</div>
+                            <div class="icon">Game</div>
+                            <div class="name">Server Name</div>
+                            <div class="enabled">On-Boot</div>
+                            <div class="status">Status</div>
+                            <div class="port">Port</div>
+                            <div class="players">Players</div>
+                            <div class="memory">Memory</div>
+                            <div class="cpu">CPU</div>
+                            <div class="actions">Actions</div>
                         </div>
-                        <div class="application-card">
-                            <img class="app-thumbnail" title="Loading..." src="/assets/media/generic/controller.webp" alt="Loading...">
-                            <div class="app-installs">
-                                <div class="app-install">
-                                    <span class="host-name">Loading...</span>
-                                    <span class="host-actions">
-                                        <button class="action-create"><i class="fas fa-undo"></i></button>
-                                        <button class="action-backup"><i class="fas fa-floppy-disk"></i></button>
-                                        <button class="action-configure"><i class="fas fa-cog"></i></button>
-                                        <button class="action-browse"><i class="fas fa-folder"></i></button>
-                                        <button class="action-remove"><i class="fas fa-trash-alt"></i></button>
-					                </span>
-                                </div>
-                            </div>
+                        <div class="body">
+
                         </div>
                     </div>
-                </div>
-
-                <div id="servicesContainer" style="margin-bottom: 2rem;">
-                    <table id="services-table">
-                        <thead>
-                        <tr class="header">
-                            <th class="host">Host</th>
-                            <th class="icon">Game</th>
-                            <th class="name">Server Name</th>
-                            <th class="enabled">On-Boot</th>
-                            <th class="status">Status</th>
-                            <th class="port">Port</th>
-                            <th class="players">Players</th>
-                            <th class="memory">Memory</th>
-                            <th class="cpu">CPU</th>
-                            <th class="actions">Actions</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        <tr class="service service-loading" data-updated="0">
-                            <td class="host">Loading</td>
-                            <td class="icon"><img src="/assets/media/generic/controller.webp" alt="loading" title="Loading Icon"></td>
-                            <td class="name">Please wait</td>
-                            <td class="enabled"></td>
-                            <td class="status status-stopped"><i class="fas fa-spin fa-spinner"></i> LOADING...</td>
-                            <td class="port">1234</td>
-                            <td class="players">0 / 69</td>
-                            <td class="memory">N/A</td>
-                            <td class="cpu">N/A</td>
-                            <td class="actions"></td>
-                        </tr>
-                        <tr class="service service-loading" data-updated="0">
-                            <td class="host">Loading</td>
-                            <td class="icon"><img src="/assets/media/generic/controller.webp" alt="loading" title="Loading Icon"></td>
-                            <td class="name">Please wait</td>
-                            <td class="enabled"></td>
-                            <td class="status status-stopped"><i class="fas fa-spin fa-spinner"></i> LOADING...</td>
-                            <td class="port">1234</td>
-                            <td class="players">0 / 69</td>
-                            <td class="memory">N/A</td>
-                            <td class="cpu">N/A</td>
-                            <td class="actions"></td>
-                        </tr>
-                        <tr class="service service-loading" data-updated="0">
-                            <td class="host">Loading</td>
-                            <td class="icon"><img src="/assets/media/generic/controller.webp" alt="loading" title="Loading Icon"></td>
-                            <td class="name">Please wait</td>
-                            <td class="enabled"></td>
-                            <td class="status status-stopped"><i class="fas fa-spin fa-spinner"></i> LOADING...</td>
-                            <td class="port">1234</td>
-                            <td class="players">0 / 69</td>
-                            <td class="memory">N/A</td>
-                            <td class="cpu">N/A</td>
-                            <td class="actions"></td>
-                        </tr>
-                        <tr class="service service-loading" data-updated="0">
-                            <td class="host">Loading</td>
-                            <td class="icon"><img src="/assets/media/generic/controller.webp" alt="loading" title="Loading Icon"></td>
-                            <td class="name">Please wait</td>
-                            <td class="enabled"></td>
-                            <td class="status status-stopped"><i class="fas fa-spin fa-spinner"></i> LOADING...</td>
-                            <td class="port">1234</td>
-                            <td class="players">0 / 69</td>
-                            <td class="memory">N/A</td>
-                            <td class="cpu">N/A</td>
-                            <td class="actions"></td>
-                        </tr>
-                        </tbody>
-                    </table>
                     <!-- Services table will be inserted here -->
                 </div>
             </div>
