@@ -55,66 +55,78 @@
 	/* Buttons - Modern Flat Design */
 	--button-active-shadow: rgba(99, 102, 241, 0.3);
 	--button: #ffffff;
-	--button-bg-1: #6366f1;
-	--button-bg-2: #4f46e5;
+	--button-bg-1: #0f1228; /* muted, darker */
+	--button-bg-2: #262842; /* muted, slightly lighter for hover */
 	--button-shadow: rgba(0, 0, 0, 0.1);
-	
+	--button-border: #4f46e5; /* vibrant indigo border */
+
 	/* Action Buttons */
 	--button-config: #ffffff;
-	--button-config-bg-1: #3b82f6;
-	--button-config-bg-2: #2563eb;
+	--button-config-bg-1: #07263f; /* muted blue */
+	--button-config-bg-2: #103a5a;
 	--button-config-shadow: rgba(59, 130, 246, 0.3);
-	
+	--button-config-border: #3b82f6; /* vibrant blue border */
+
 	--button-create: #ffffff;
-	--button-create-bg-1: #10b981;
-	--button-create-bg-2: #059669;
+	--button-create-bg-1: #062b20; /* muted green */
+	--button-create-bg-2: #0b4b39;
 	--button-create-shadow: rgba(16, 185, 129, 0.3);
-	
+	--button-create-border: #10b981; /* vibrant green border */
+
 	--button-start: #ffffff;
-	--button-start-bg-1: #10b981;
-	--button-start-bg-2: #059669;
+	--button-start-bg-1: #062b20; /* same muted green as create */
+	--button-start-bg-2: #0b4b39;
 	--button-start-shadow: rgba(16, 185, 129, 0.3);
-	
+	--button-start-border: #10b981; /* vibrant green border */
+
 	--button-stop: #ffffff;
-	--button-stop-bg-1: #ef4444;
-	--button-stop-bg-2: #dc2626;
+	--button-stop-bg-1: #3a1515; /* muted red */
+	--button-stop-bg-2: #5a1a1a;
 	--button-stop-shadow: rgba(239, 68, 68, 0.3);
-	
+	--button-stop-border: #ef4444; /* vibrant red border */
+
 	--button-browse: #ffffff;
-	--button-browse-bg-1: #8b5cf6;
-	--button-browse-bg-2: #7c3aed;
+	--button-browse-bg-1: #2f2548; /* muted purple */
+	--button-browse-bg-2: #3f2f69;
 	--button-browse-shadow: rgba(139, 92, 246, 0.3);
-	
+	--button-browse-border: #8b5cf6; /* vibrant purple border */
+
 	--button-remove: #ffffff;
-	--button-remove-bg-1: #f87171;
-	--button-remove-bg-2: #dc2626;
+	--button-remove-bg-1: #3a1515; /* same muted red as stop */
+	--button-remove-bg-2: #5a1a1a;
 	--button-remove-shadow: rgba(239, 68, 68, 0.3);
-	
+	--button-remove-border: #ef4444; /* vibrant red border */
+
 	--button-save: #ffffff;
-	--button-save-bg-1: #10b981;
-	--button-save-bg-2: #059669;
+	--button-save-bg-1: #062b20; /* same muted green as create/start */
+	--button-save-bg-2: #0b4b39;
 	--button-save-shadow: rgba(16, 185, 129, 0.3);
-	
+	--button-save-border: #10b981; /* vibrant green border */
+
 	--button-cancel: #ffffff;
-	--button-cancel-bg-1: #64748b;
-	--button-cancel-bg-2: #475569;
+	--button-cancel-bg-1: #20252b; /* muted gray */
+	--button-cancel-bg-2: #2f353b;
 	--button-cancel-shadow: rgba(100, 116, 139, 0.3);
-	
+	--button-cancel-border: #64748b; /* vibrant gray border */
+
 	--button-update: #ffffff;
-	--button-update-bg-1: #f59e0b;
-	--button-update-bg-2: #d97706;
+	--button-update-bg-1: #3b2b09; /* muted orange */
+	--button-update-bg-2: #6a4a07;
 	--button-update-shadow: rgba(245, 158, 11, 0.3);
-	
+	--button-update-border: #f59e0b; /* vibrant orange border */
+
 	--button-backup: #ffffff;
-	--button-backup-bg-1: #06b6d4;
-	--button-backup-bg-2: #0891b2;
+	--button-backup-bg-1: #06343a; /* muted teal */
+	--button-backup-bg-2: #0b5a66;
 	--button-backup-shadow: rgba(6, 182, 212, 0.3);
-	
+	--button-backup-border: #06b6d4; /* vibrant teal border */
+
 	--button-edit: #ffffff;
-	--button-edit-bg-1: #6366f1;
-	--button-edit-bg-2: #4f46e5;
+	--button-edit-bg-1: #0f1228; /* same as primary muted */
+	--button-edit-bg-2: #262842;
 	--button-edit-shadow: rgba(99, 102, 241, 0.3);
-	
+	--button-edit-border: #4f46e5; /* vibrant indigo border */
+
 	/* Tables - Modern Design */
 	--table-header: #f8fafc;
 	--table-header-bg-1: rgba(99, 102, 241, 0.8);
@@ -669,7 +681,7 @@ table td {
 
 
 button, a.button {
-	border: none;
+	border: 1px solid var(--button-border);
 	padding: 0.5rem 0.875rem;
 	border-radius: 6px;
 	cursor: pointer;
@@ -687,7 +699,7 @@ a.button {
 	text-decoration: none;
 }
 button:hover, a.button:hover {
-	transform: translateY(-1px);
+	transform: translateY(-2px);
 	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 button:active, a.button:active {
@@ -699,7 +711,6 @@ button.disabled, a.button.disabled {
 	cursor: not-allowed;
 	transform: none;
 	box-shadow: none;
-	pointer-events: none;
 }
 button.active, a.button.active {
 	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
@@ -713,25 +724,28 @@ button.active, a.button.active {
 	margin: 0;
 	border-radius: 0;
 	flex: 1;
-	border-right: 1px solid var(--input-border);
+	border-width: 1px 0;
 }
 .button-group button:first-of-type {
 	border-radius: 5px 0 0 5px;
+	border-width: 1px 0 1px 1px;
 }
 .button-group button:last-of-type {
 	border-radius: 0 5px 5px 0;
-	border-right: 0 none;
+	border-width: 1px 1px 1px 0;
 }
 
 button.action-configure, a.button.action-configure,
 button.action-edit, a.button.action-edit {
 	background: var(--button-config-bg-1);
 	color: var(--button-config);
+	border-color: var(--button-config-border);
 }
 button.action-configure:hover, a.button.action-configure:hover,
 button.action-edit:hover, a.button.action-edit:hover {
 	background: var(--button-config-bg-2);
 	box-shadow: 0 2px 8px var(--button-config-shadow);
+	border-color: var(--button-config-border);
 }
 
 button.action-configure i, button.action-configure span,
@@ -742,10 +756,12 @@ button.action-edit i, button.action-edit span {
 button.action-create, a.button.action-create {
 	background: var(--button-create-bg-1);
 	color: var(--button-create);
+	border-color: var(--button-create-border);
 }
 button.action-create:hover, a.button.action-create:hover {
 	background: var(--button-create-bg-2);
 	box-shadow: 0 2px 8px var(--button-create-shadow);
+	border-color: var(--button-create-border);
 }
 
 button.action-create i, button.action-create span {
@@ -755,10 +771,12 @@ button.action-create i, button.action-create span {
 button.action-start, a.button.action-start {
 	background: var(--button-start-bg-1);
 	color: var(--button-start);
+	border-color: var(--button-start-border);
 }
 button.action-start:hover, a.button.action-start:hover {
 	background: var(--button-start-bg-2);
 	box-shadow: 0 2px 8px var(--button-start-shadow);
+	border-color: var(--button-start-border);
 }
 
 button.action-start i, button.action-start span {
@@ -768,10 +786,12 @@ button.action-start i, button.action-start span {
 button.action-stop, a.button.action-stop {
 	background: var(--button-stop-bg-1);
 	color: var(--button-stop);
+	border-color: var(--button-stop-border);
 }
 button.action-stop:hover, a.button.action-stop:hover {
 	background: var(--button-stop-bg-2);
 	box-shadow: 0 2px 8px var(--button-stop-shadow);
+	border-color: var(--button-stop-border);
 }
 
 button.action-stop i, button.action-stop span {
@@ -781,10 +801,12 @@ button.action-stop i, button.action-stop span {
 button.action-browse, a.button.action-browse {
 	background: var(--button-browse-bg-1);
 	color: var(--button-browse);
+	border-color: var(--button-browse-border);
 }
 button.action-browse:hover, a.button.action-browse:hover {
 	background: var(--button-browse-bg-2);
 	box-shadow: 0 2px 8px var(--button-browse-shadow);
+	border-color: var(--button-browse-border);
 }
 
 button.action-browse i, button.action-browse span {
@@ -794,10 +816,12 @@ button.action-browse i, button.action-browse span {
 button.action-remove, a.button.action-remove {
 	background: var(--button-remove-bg-1);
 	color: var(--button-remove);
+	border-color: var(--button-remove-border);
 }
 button.action-remove:hover, a.button.action-remove:hover {
 	background: var(--button-remove-bg-2);
 	box-shadow: 0 2px 8px var(--button-remove-shadow);
+	border-color: var(--button-remove-border);
 }
 
 button.action-remove i, button.action-remove span {
@@ -807,10 +831,12 @@ button.action-remove i, button.action-remove span {
 button.action-save, a.button.action-save {
 	background: var(--button-save-bg-1);
 	color: var(--button-save);
+	border-color: var(--button-save-border);
 }
 button.action-save:hover, a.button.action-save:hover {
 	background: var(--button-save-bg-2);
 	box-shadow: 0 2px 8px var(--button-save-shadow);
+	border-color: var(--button-save-border);
 }
 
 button.action-save i, button.action-save span {
@@ -820,10 +846,12 @@ button.action-save i, button.action-save span {
 button.action-cancel, a.button.action-cancel {
 	background: var(--button-cancel-bg-1);
 	color: var(--button-cancel);
+	border-color: var(--button-cancel-border);
 }
 button.action-cancel:hover, a.button.action-cancel:hover {
 	background: var(--button-cancel-bg-2);
 	box-shadow: 0 2px 8px var(--button-cancel-shadow);
+	border-color: var(--button-cancel-border);
 }
 
 button.action-cancel i, button.action-cancel span {
@@ -833,10 +861,12 @@ button.action-cancel i, button.action-cancel span {
 button.action-update, a.button.action-update {
 	background: var(--button-update-bg-1);
 	color: var(--button-update);
+	border-color: var(--button-update-border);
 }
 button.action-update:hover, a.button.action-update:hover {
 	background: var(--button-update-bg-2);
 	box-shadow: 0 2px 8px var(--button-update-shadow);
+	border-color: var(--button-update-border);
 }
 
 button.action-update i, button.action-update span {
@@ -846,10 +876,12 @@ button.action-update i, button.action-update span {
 button.action-backup, a.button.action-backup {
 	background: var(--button-backup-bg-1);
 	color: var(--button-backup);
+	border-color: var(--button-backup-border);
 }
 button.action-backup:hover, a.button.action-backup:hover {
 	background: var(--button-backup-bg-2);
 	box-shadow: 0 2px 8px var(--button-backup-shadow);
+	border-color: var(--button-backup-border);
 }
 
 /* Ensure icon visibility in link-control buttons */
@@ -1219,7 +1251,6 @@ button.link-control span {
 .application-card .host-actions button,
 .host-card .host-actions button {
 	padding: 0.25rem 0.5rem;
-	border: none;
 	border-radius: 5px;
 	cursor: pointer;
 	font-weight: 500;
@@ -2040,20 +2071,6 @@ button.link-control span {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
-}
-
-button.link-control {
-	padding: 0.5rem 0.875rem;
-/* 	border-radius: 6px; */
-	border: none;
-	cursor: pointer;
-	font-weight: 500;
-	font-size: 0.875rem;
-	transition: all 0.2s ease;
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	gap: 0.375rem;
 }
 
 .upload-progress {
