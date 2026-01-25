@@ -12,6 +12,7 @@ const autoUpdateModal = document.getElementById('autoUpdateModal'),
 	updateModal = document.getElementById('updateModal'),
 	confirmUpdateBtn = document.getElementById('confirmUpdateBtn'),
 	reinstallBtn = document.getElementById('reinstallBtn'),
+	uninstallBtn = document.getElementById('uninstallBtn'),
 	delayedUpdate = document.getElementById('delayedUpdate'),
 	autoUpdateSchedule = document.getElementById('autoUpdateSchedule'),
 	automatedStartDisabledMessage = document.getElementById('automatedStartDisabledMessage'),
@@ -198,6 +199,10 @@ function loadServiceSettings() {
 // Events
 reinstallBtn.addEventListener('click', () => {
 	window.location.href = `/application/install/${loadedApplication}/${loadedHost}`;
+});
+
+uninstallBtn.addEventListener('click', () => {
+	window.location.href = `/application/uninstall/${loadedApplication}/${loadedHost}`;
 });
 
 configureAutoUpdateBtn.addEventListener('click', () => {
