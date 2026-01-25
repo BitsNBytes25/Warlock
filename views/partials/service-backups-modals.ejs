@@ -1,0 +1,189 @@
+
+<!-- Upload Progress Modal -->
+<input type="file" id="fileBackupInput" style="display: none;" accept=".tar.gz" />
+
+<!-- Perform Backup Modal -->
+<div id="backupModal" class="modal wide">
+    <div class="modal-overlay"></div>
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-floppy-disk"></i> Backup Game</h3>
+            <button class="modal-close">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div class="warning-message">
+                <i class="fas fa-exclamation-triangle"></i>
+                <p>
+                    Warning: Performing a backup usually stops the game during the procedure.
+                </p>
+            </div>
+            <div class="terminal"></div>
+        </div>
+        <div class="modal-footer">
+            <button class="action-restore" id="confirmBackupBtn">
+                <i class="fas fa-floppy-disk"></i>
+                Confirm Backup
+            </button>
+            <button class="action-cancel modal-close">
+                <i class="fas fa-times"></i>
+                Cancel
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Restore Backup Modal -->
+<div id="restoreModal" class="modal wide">
+    <div class="modal-overlay"></div>
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-undo"></i> Restore Game</h3>
+            <button class="modal-close">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div class="warning-message">
+                <i class="fas fa-exclamation-triangle"></i>
+                <p>
+                    Warning: Restoring a backup will overwrite the current game environment!
+                </p>
+            </div>
+            <div class="terminal"></div>
+        </div>
+        <div class="modal-footer">
+            <button class="action-restore" id="confirmRestoreBtn">
+                <i class="fas fa-undo"></i>
+                Confirm Restore
+            </button>
+            <button class="action-cancel modal-close">
+                <i class="fas fa-times"></i>
+                Cancel
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div id="deleteBackupModal" class="modal">
+    <div class="modal-overlay"></div>
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-exclamation-triangle"></i> Confirm Deletion</h3>
+            <button class="modal-close">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div class="warning-message">
+                <i class="fas fa-exclamation-triangle"></i>
+                <div>
+                    <p>This will permanently delete the backup archive!</p>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="action-remove" id="confirmDeleteBackupBtn">
+                <i class="fas fa-trash"></i>
+                Delete Permanently
+            </button>
+            <button class="action-cancel modal-close">
+                <i class="fas fa-times"></i>
+                Cancel
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Automatic Backup Cron Configuration Modal -->
+<div id="autoBackupModal" class="modal">
+    <div class="modal-overlay"></div>
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-clock"></i> Automatic Backup Configuration</h3>
+            <button class="modal-close">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label for="autoBackupSchedule">Schedule</label>
+                <select id="autoBackupSchedule" name="schedule">
+                    <option value="disabled">Disabled</option>
+                    <option value="hourly">Hourly</option>
+                    <option value="daily">Daily</option>
+                    <option value="weekly">Weekly</option>
+                </select>
+            </div>
+
+            <div class="form-group" id="autoBackupWeeklyDayRow">
+                <label for="autoBackupWeeklyDay">Weekly Day</label>
+                <select id="autoBackupWeeklyDay" name="weekly_day">
+                    <option value="mon">Monday</option>
+                    <option value="tue">Tuesday</option>
+                    <option value="wed">Wednesday</option>
+                    <option value="thu">Thursday</option>
+                    <option value="fri">Friday</option>
+                    <option value="sat">Saturday</option>
+                    <option value="sun">Sunday</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="autoBackupTime">Time</label>
+                <input type="time" id="autoBackupTime" name="time" value="02:00">
+            </div>
+
+            <div class="form-group">
+                <label for="autoBackupKeep">Number of backups to keep</label>
+                <input type="number" id="autoBackupKeep" name="keep" min="0">
+            </div>
+
+            <!-- Hidden fields to be populated by client-side script when opening modal -->
+            <input type="hidden" id="autoBackupHost" name="host" value="">
+            <input type="hidden" id="autoBackupGuid" name="guid" value="">
+        </div>
+        <div class="modal-footer">
+            <button class="link-control action-save" id="saveAutoBackupBtn">
+                <i class="fas fa-save"></i>
+                Save Configuration
+            </button>
+            <button class="action-cancel modal-close">
+                <i class="fas fa-times"></i>
+                Cancel
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Rename Modal -->
+<div id="renameBackupModal" class="modal">
+    <div class="modal-overlay"></div>
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-edit"></i> Rename Item</h3>
+            <button class="modal-close">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label for="renameNewName">New Name:</label>
+                <input type="text" id="renameNewName" placeholder="Enter new name..." />
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-nav btn-action" id="confirmBackupRename">
+                <i class="fas fa-edit"></i>
+                Rename
+            </button>
+            <button class="action-cancel modal-close">
+                <i class="fas fa-times"></i>
+                Cancel
+            </button>
+        </div>
+    </div>
+</div>
+

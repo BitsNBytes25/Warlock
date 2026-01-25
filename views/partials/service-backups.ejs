@@ -1,0 +1,31 @@
+<h3>Automated Backups</h3>
+<div class="warning-message" id="automatedBackupsDisabledMessage" style="display:none;">
+    Automatic backups are NOT enabled!
+</div>
+<div class="success-message" id="automatedBackupsEnabledMessage" style="display:none;">
+    Automatic backups are enabled.
+</div>
+<div>
+    <button class="action-edit" id="configureAutoBackupBtn">
+        <i class="fas fa-clock"></i>
+        Configure Automatic Backups
+    </button>
+</div>
+
+<br/><br/>
+
+<h3>Current Backups</h3>
+<button class="link-control action-backup" id="performBackupBtn">
+    <i class="fas fa-floppy-disk"></i>
+    Backup Now
+</button>
+<button class="link-control action-upload" id="uploadBackupBtn">
+    <i class="fas fa-upload"></i>
+    Upload Local Backup
+</button>
+<br/>
+<br/>
+<div id="backupsList">
+    <div><i class="fas fa-spinner fa-spin"></i> Loading...</div>
+</div>
+

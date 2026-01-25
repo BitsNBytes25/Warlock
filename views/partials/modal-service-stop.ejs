@@ -1,0 +1,50 @@
+<!-- Stop Modal -->
+<div id="stopModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-stop"></i> Stop Service</h3>
+            <button class="modal-close">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+
+            <div class="info-message">
+                <p>
+                    Choose whether to stop immediately (with a 5 minute warning for active players) or (if supported) with a 1-hour warning.
+                </p>
+            </div>
+
+            <div>
+                <button title="Stop Game" data-action="stop" class="service-control action-stop">
+                    <i class="fas fa-stop"></i> <span>Stop Now</span>
+                </button>
+
+                <button title="Send 1-hour timer to stop" data-action="delayed-stop" class="service-control action-stop">
+                    <i class="fas fa-clock"></i> <span>Delayed Stop</span>
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+    const stopModal = document.getElementById('stopModal');
+
+    function openServiceStopModal(guid, host, service) {
+		stopModal.classList.add('show');
+		stopModal.querySelectorAll('.service-control').forEach(el => {
+			let action = el.dataset.action;
+			if (checkHostAppHasOption(guid, host, action)) {
+				el.style.display = 'inline-flex';
+				el.dataset.guid = guid;
+				el.dataset.host = host;
+				el.dataset.service = service;
+            }
+			else {
+				el.style.display = 'none';
+            }
+        });
+    }
+</script>

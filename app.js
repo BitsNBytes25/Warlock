@@ -104,6 +104,7 @@ app.use('/host/delete', require('./routes/host_delete'));
 app.use('/host/firewall', require('./routes/host_firewall'));
 app.use('/service/logs', require('./routes/service_logs'));
 app.use('/service/configure', require('./routes/service_configure'));
+app.use('/service/details', require('./routes/service_details'));
 app.use('/application/uninstall', require('./routes/application_uninstall'));
 app.use('/application/install', require('./routes/application_install'));
 app.use('/application/backups', require('./routes/application_backups'));

@@ -4,8 +4,8 @@ const backupsList = document.getElementById('backupsList'),
 	confirmBackupBtn = document.getElementById('confirmBackupBtn'),
 	confirmRestoreBtn = document.getElementById('confirmRestoreBtn'),
 	restoreModal = document.getElementById('restoreModal'),
-	deleteModal = document.getElementById('deleteModal'),
-	confirmDeleteBtn = document.getElementById('confirmDeleteBtn'),
+	deleteBackupModal = document.getElementById('deleteBackupModal'),
+	confirmDeleteBackupBtn = document.getElementById('confirmDeleteBackupBtn'),
 	configureAutoBackupBtn = document.getElementById('configureAutoBackupBtn'),
 	automatedBackupsDisabledMessage = document.getElementById('automatedBackupsDisabledMessage'),
 	automatedBackupsEnabledMessage = document.getElementById('automatedBackupsEnabledMessage'),
@@ -13,11 +13,11 @@ const backupsList = document.getElementById('backupsList'),
 	autoBackupSchedule = document.getElementById('autoBackupSchedule'),
 	autoBackupKeep = document.getElementById('autoBackupKeep'),
 	saveAutoBackupBtn = document.getElementById('saveAutoBackupBtn'),
-	uploadBtn = document.getElementById('uploadBtn'),
-	fileInput = document.getElementById('fileInput'),
-	renameModal = document.getElementById('renameModal'),
+	uploadBackupBtn = document.getElementById('uploadBackupBtn'),
+	fileBackupInput = document.getElementById('fileBackupInput'),
+	renameBackupModal = document.getElementById('renameBackupModal'),
 	renameInput = document.getElementById('renameNewName'),
-	confirmRenameBtn = document.getElementById('confirmRename');
+	confirmBackupRenameBtn = document.getElementById('confirmBackupRename');
 
 let backupPath;
 
@@ -66,7 +66,7 @@ function renderBackupFile(fileData) {
 		renameInput.value = filename;
 		renameInput.dataset.extension = extension;
 		renameInput.dataset.path = fileData.path;
-		renameModal.classList.add('show');
+		openModal(renameBackupModal);
 	});
 	fileItem.querySelector('.action-download').addEventListener('click', () => {
 		window.open(`/api/file/${loadedHost}?path=${fileData.path}&download=1`, '_blank');
@@ -75,11 +75,11 @@ function renderBackupFile(fileData) {
 		confirmRestoreBtn.dataset.file = fileData.name;
 		restoreModal.querySelector('.warning-message').style.display = 'flex';
 		restoreModal.querySelector('.terminal').style.display = 'none';
-		restoreModal.classList.add('show');
+		openModal(restoreModal);
 	});
 	fileItem.querySelector('.action-remove').addEventListener('click', () => {
-		confirmDeleteBtn.dataset.path = fileData.path;
-		deleteModal.classList.add('show');
+		confirmDeleteBackupBtn.dataset.path = fileData.path;
+		openModal(deleteBackupModal);
 	});
 
 	return fileItem;
@@ -102,7 +102,7 @@ async function performRename() {
 	newName =  path + '/' + newName + renameInput.dataset.extension;
 
 	if (newName === oldName) {
-		renameModal.classList.remove('show');
+		closeModal(renameBackupModal);
 		return;
 	}
 
@@ -120,7 +120,7 @@ async function performRename() {
 
 		if (result.success) {
 			showToast('success', 'Item renamed successfully');
-			renameModal.classList.remove('show');
+			closeModal(renameModal);
 			loadBackupsList();
 		} else {
 			showToast('error', `Error renaming item: ${result.error}`);
@@ -218,7 +218,7 @@ async function saveAutomaticBackupConfig() {
 			.then(response => {
 				if (response.success) {
 					showToast('success', 'Automatic backups disabled.');
-					autoBackupModal.classList.remove('show');
+					closeModal(autoBackupModal);
 					loadAutomaticBackupConfig();
 				} else {
 					showToast('error', `Failed to disable automatic backups: ${response.error}`);
@@ -240,7 +240,7 @@ async function saveAutomaticBackupConfig() {
 		.then(response => {
 			if (response.success) {
 				showToast('success', 'Automatic backup scheduled.');
-				autoBackupModal.classList.remove('show');
+				closeModal(autoBackupModal);
 				loadAutomaticBackupConfig();
 			} else {
 				showToast('error', `Failed to save schedule: ${response.error}`);
@@ -250,7 +250,7 @@ async function saveAutomaticBackupConfig() {
 }
 
 async function startUpload() {
-	const files = fileInput.files;
+	const files = fileBackupInput.files;
 	if (!files.length) return;
 
 	showToast('info', 'Starting upload, please wait a moment...');
@@ -283,119 +283,104 @@ async function startUpload() {
 	}
 }
 
+function loadBackups() {
+	backupPath = loadedApplicationData.hosts.filter(h => h.host === loadedHost)[0].path + '/backups';
+
+	loadAutomaticBackupConfig();
+	loadBackupsList();
+}
+
+
 // Upload file(s)
-uploadBtn.addEventListener('click', () => {
-	fileInput.click();
+uploadBackupBtn.addEventListener('click', () => {
+	fileBackupInput.click();
 });
-fileInput.addEventListener('change', (e) => {
+fileBackupInput.addEventListener('change', (e) => {
 	startUpload();
 });
 
-/**
- * Primary handler to load the application on page load
- */
-window.addEventListener('DOMContentLoaded', () => {
+confirmBackupRenameBtn.addEventListener('click', () => {
+	performRename();
+});
 
-	const {guid, host} = getPathParams('/application/backups/:guid/:host');
+performBackupBtn.addEventListener('click', () => {
+	openModal(backupModal);
+	backupModal.querySelector('.warning-message').style.display = 'flex';
+	backupModal.querySelector('.terminal').style.display = 'none';
+});
 
-	Promise.all([
-		loadApplication(guid),
-		loadHost(host)
-	])
+confirmBackupBtn.addEventListener('click', () => {
+	const terminalOutput = backupModal.querySelector('.terminal');
+
+	backupModal.querySelector('.warning-message').style.display = 'none';
+	terminalOutput.textContent = 'Performing backup... Please wait.\n';
+	terminalOutput.style.display = 'block';
+	stream(
+		`/api/application/backup/${loadedApplication}/${loadedHost}`,
+		'POST',
+		{'Content-Type': 'application/json'},
+		null,
+		(event, data) => {
+			terminalOutputHelper(terminalOutput, event, data);
+		})
 		.then(() => {
-
-			backupPath = applicationData[guid].hosts.filter(h => h.host === host)[0].path + '/backups';
-
-			loadAutomaticBackupConfig();
+			showToast('success', 'Backup completed successfully.');
 			loadBackupsList();
+		}).catch(() => {
+		showToast('error', 'Backup process encountered an error. See terminal output for details.');
+	});
+});
 
-			confirmRenameBtn.addEventListener('click', () => {
-				performRename();
-			});
+confirmRestoreBtn.addEventListener('click', () => {
+	const terminalOutput = restoreModal.querySelector('.terminal'),
+		fileName = confirmRestoreBtn.dataset.file;
 
-			performBackupBtn.addEventListener('click', () => {
-				backupModal.classList.add('show');
-				backupModal.querySelector('.warning-message').style.display = 'flex';
-				backupModal.querySelector('.terminal').style.display = 'none';
-			});
+	restoreModal.querySelector('.warning-message').style.display = 'none';
+	terminalOutput.textContent = `Restoring backup '${fileName}'... Please wait.\n`;
+	terminalOutput.style.display = 'block';
+	stream(
+		`/api/application/backup/${loadedApplication}/${loadedHost}`,
+		'PUT',
+		{'Content-Type': 'application/json'},
+		JSON.stringify({filename: fileName}),
+		(event, data) => {
+			terminalOutputHelper(terminalOutput, event, data);
+		})
+		.then(() => {
+			showToast('success', 'Restore completed successfully.');
+		}).catch(() => {
+		showToast('error', 'Restore process encountered an error. See terminal output for details.');
+	});
+});
 
-			confirmBackupBtn.addEventListener('click', () => {
-				const terminalOutput = backupModal.querySelector('.terminal');
+confirmDeleteBackupBtn.addEventListener('click', () => {
+	const filePath = confirmDeleteBackupBtn.dataset.path;
 
-				backupModal.querySelector('.warning-message').style.display = 'none';
-				terminalOutput.textContent = 'Performing backup... Please wait.\n';
-				terminalOutput.style.display = 'block';
-				stream(
-					`/api/application/backup/${loadedApplication}/${loadedHost}`,
-					'POST',
-					{'Content-Type': 'application/json'},
-					null,
-					(event, data) => {
-						terminalOutputHelper(terminalOutput, event, data);
-					})
-					.then(() => {
-						showToast('success', 'Backup completed successfully.');
-						loadBackupsList();
-					}).catch(() => {
-						showToast('error', 'Backup process encountered an error. See terminal output for details.');
-					});
-			});
-
-			confirmRestoreBtn.addEventListener('click', () => {
-				const terminalOutput = restoreModal.querySelector('.terminal'),
-					fileName = confirmRestoreBtn.dataset.file;
-
-				restoreModal.querySelector('.warning-message').style.display = 'none';
-				terminalOutput.textContent = `Restoring backup '${fileName}'... Please wait.\n`;
-				terminalOutput.style.display = 'block';
-				stream(
-					`/api/application/backup/${loadedApplication}/${loadedHost}`,
-					'PUT',
-					{'Content-Type': 'application/json'},
-					JSON.stringify({filename: fileName}),
-					(event, data) => {
-						terminalOutputHelper(terminalOutput, event, data);
-					})
-					.then(() => {
-						showToast('success', 'Restore completed successfully.');
-					}).catch(() => {
-						showToast('error', 'Restore process encountered an error. See terminal output for details.');
-					});
-			});
-
-			confirmDeleteBtn.addEventListener('click', () => {
-				const filePath = confirmDeleteBtn.dataset.path;
-
-				fetch(`/api/file/${loadedHost}?path=${filePath}`, {
-					method: 'DELETE',
-					headers: {
-						'Content-Type': 'application/json'
-					}
-				})
-					.then(response => response.json())
-					.then(data => {
-						if (data.success) {
-							showToast('success', `Backup '${filePath}' deleted successfully.`);
-							deleteModal.classList.remove('show');
-							loadBackupsList();
-						} else {
-							showToast('error', `Failed to delete backup: ${data.error}`);
-						}
-					})
-					.catch(e => {
-						showToast('error', `Error deleting backup: ${e.message}`);
-					});
-			});
-
-			configureAutoBackupBtn.addEventListener('click', () => {
-				autoBackupModal.classList.add('show');
-			});
-
-			saveAutoBackupBtn.addEventListener('click', () => {
-				saveAutomaticBackupConfig();
-			});
-		}).catch(e => {
-			console.error(e);
-			document.querySelector('.content-body').innerHTML = '<div class="alert alert-danger" role="alert">Error loading application or host data.</div>';
+	fetch(`/api/file/${loadedHost}?path=${filePath}`, {
+		method: 'DELETE',
+		headers: {
+			'Content-Type': 'application/json'
+		}
+	})
+		.then(response => response.json())
+		.then(data => {
+			if (data.success) {
+				showToast('success', `Backup '${filePath}' deleted successfully.`);
+				closeModal(deleteBackupModal);
+				loadBackupsList();
+			} else {
+				showToast('error', `Failed to delete backup: ${data.error}`);
+			}
+		})
+		.catch(e => {
+			showToast('error', `Error deleting backup: ${e.message}`);
 		});
+});
+
+configureAutoBackupBtn.addEventListener('click', () => {
+	openModal(autoBackupModal);
+});
+
+saveAutoBackupBtn.addEventListener('click', () => {
+	saveAutomaticBackupConfig();
 });

@@ -1,5 +1,3 @@
-let serviceRunning = false;
-
 /**
  * Build the HTML for configuration options received from the server
  *
@@ -11,7 +9,8 @@ let serviceRunning = false;
  * @param {AppConfigOption[]} options
  */
 function buildOptionsForm(app_guid, host, service, options) {
-	let target = document.getElementById('configurationContainer');
+	let target = document.getElementById('configurationContainer'),
+		serviceRunning = loadedServiceData.status !== 'stopped';
 
 	if (options.length === 0) {
 		target.innerHTML = '<div class="alert alert-info" role="alert">No configuration options available for this service.</div>';
@@ -159,7 +158,7 @@ function buildOptionsForm(app_guid, host, service, options) {
 
 		// Add event handler on input to live-save changes to the backend
 		input.addEventListener('change', (event) => {
-			if (serviceRunning) {
+			if (loadedServiceData.status !== 'stopped') {
 				return;
 			}
 
@@ -217,86 +216,88 @@ function buildOptionsForm(app_guid, host, service, options) {
 	});
 }
 
-/**
- * Primary handler to load the application on page load
- */
-window.addEventListener('DOMContentLoaded', () => {
-
-	const {app_guid, host, service} = getPathParams('/service/configure/:app_guid/:host/:service'),
+async function loadServiceConfigure() {
+	const app_guid = loadedApplication || null,
+		host = loadedHost || null,
+		service = loadedService || null,
 		configurationContainer = document.getElementById('configurationContainer');
 
-	Promise.all([
-		loadApplication(app_guid),
-		loadHost(host)
-	])
-		.then(() => {
-			fetchService(app_guid, host, service)
-				.then(serviceData => {
-					document.querySelectorAll('.service-service-placeholder').forEach(el => {
-						el.innerHTML = serviceData.service;
-					});
+	if (!host || !service || !app_guid) {
+		console.error('Host, service, or app guid not specified for loading service configuration');
+		return;
+	}
 
-					if (serviceData.status !== 'stopped') {
-						document.getElementById('optionsMessageNormal').style.display = 'none';
-						document.getElementById('optionsMessageActive').style.display = 'block';
-						serviceRunning = true;
+	// Pull the configs from the service
+	fetch(`/api/service/configs/${app_guid}/${host}/${service}`, {
+		method: 'GET',
+		headers: {
+			'Content-Type': 'application/json'
+		}
+	})
+		.then(response => response.json())
+		.then(result => {
+			configurationContainer.innerHTML = '';
+
+			if (result.success && result.configs) {
+				const configs = result.configs;
+				buildOptionsForm(app_guid, host, service, configs);
+			}
+
+			// Pull the configs for the application (shared by all services)
+			fetch(`/api/application/configs/${app_guid}/${host}`, {
+				method: 'GET',
+				headers: {
+					'Content-Type': 'application/json'
+				}
+			})
+				.then(response => response.json())
+				.then(result => {
+					if (result.success && result.configs) {
+						const configs = result.configs;
+						buildOptionsForm(app_guid, host, '', configs);
 					}
 
-					// Pull the configs from the service
-					fetch(`/api/service/configs/${app_guid}/${host}/${service}`, {
-						method: 'GET',
-						headers: {
-							'Content-Type': 'application/json'
-						}
-					})
-						.then(response => response.json())
-						.then(result => {
-							configurationContainer.innerHTML = '';
+					const quickSearch = document.getElementById('quick-search');
+					quickSearch.removeAttribute('disabled');
+					quickSearch.addEventListener('keyup', e => {
+						const searchTerm = e.target.value.toLowerCase();
+						const configItems = configurationContainer.getElementsByClassName('form-group');
 
-							if (result.success && result.configs) {
-								const configs = result.configs;
-								buildOptionsForm(app_guid, host, service, configs);
+						Array.from(configItems).forEach(item => {
+							const label = item.getElementsByTagName('label')[0];
+							if (label.innerText.toLowerCase().includes(searchTerm)) {
+								item.style.display = '';
+							} else {
+								item.style.display = 'none';
 							}
-
-							// Pull the configs for the application (shared by all services)
-							fetch(`/api/application/configs/${app_guid}/${host}`, {
-								method: 'GET',
-								headers: {
-									'Content-Type': 'application/json'
-								}
-							})
-								.then(response => response.json())
-								.then(result => {
-									if (result.success && result.configs) {
-										const configs = result.configs;
-										buildOptionsForm(app_guid, host, '', configs);
-									}
-
-									const quickSearch = document.getElementById('quick-search');
-									quickSearch.removeAttribute('disabled');
-									quickSearch.addEventListener('keyup', e => {
-										const searchTerm = e.target.value.toLowerCase();
-										const configItems = configurationContainer.getElementsByClassName('form-group');
-
-										Array.from(configItems).forEach(item => {
-											const label = item.getElementsByTagName('label')[0];
-											if (label.innerText.toLowerCase().includes(searchTerm)) {
-												item.style.display = '';
-											} else {
-												item.style.display = 'none';
-											}
-										});
-									});
-
-									if (configurationContainer.querySelectorAll('input').length === 0) {
-										configurationContainer.innerHTML = '<div class="alert alert-info" role="alert">No configuration options available for this service or application.</div>';
-									}
-								});
 						});
+					});
+
+					if (configurationContainer.querySelectorAll('input').length === 0) {
+						configurationContainer.innerHTML = '<div class="alert alert-info" role="alert">No configuration options available for this service or application.</div>';
+					}
 				});
-		})
-		.catch(e => {
-			console.error(e);
-			configurationContainer.innerHTML = '<div class="alert error-message" role="alert">Error loading application or host data.</div>';
 		});
+}
+
+document.addEventListener('serviceStatusChange', e => {
+	if (e.detail.value !== 'stopped') {
+		document.getElementById('optionsMessageNormal').style.display = 'none';
+		document.getElementById('optionsMessageActive').style.display = 'block';
+	}
+	else {
+		document.getElementById('optionsMessageNormal').style.display = 'block';
+		document.getElementById('optionsMessageActive').style.display = 'none';
+	}
+
+	document.getElementById('configurationContainer').querySelectorAll('input, select, textarea').forEach(el => {
+		if (e.detail.value !== 'stopped') {
+			el.readOnly = true;
+			el.disabled = true;
+		}
+		else {
+			el.readOnly = false;
+			el.disabled = false;
+		}
+	});
 });

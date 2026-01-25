@@ -128,6 +128,34 @@ let loadedApplication = null;
 let loadedHost = null;
 
 /**
+ * Service identifier of the currently loaded service.
+ *
+ * @type {string|null}
+ */
+let loadedService = null;
+
+/**
+ * Loaded application data for the currently loaded application.
+ *
+ * @type {AppData|null}
+ */
+let loadedApplicationData = null;
+
+/**
+ * Loaded host data for the currently loaded host.
+ *
+ * @type {HostData|null}
+ */
+let loadedHostData = null;
+
+/**
+ * Loaded service data for the currently loaded service.
+ *
+ * @type {ServiceData|null}
+ */
+let loadedServiceData = null;
+
+/**
  * Fetches the list of services from the backend API.
  *
  * @returns {Promise<[{app: AppData, host: HostAppData, service: ServiceData}]>} A promise that resolves to an array of AppDetails objects.
@@ -502,6 +530,15 @@ function formatFileSize(bytes) {
 	return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
 }
 
+/**
+ * Perform a service action (start, stop, restart, etc) via the backend API.
+ *
+ * @param guid
+ * @param host
+ * @param service
+ * @param action
+ * @returns {Promise<unknown>}
+ */
 async function serviceAction(guid, host, service, action) {
 	return new Promise((resolve, reject) => {
 		fetch(`/api/service/control/${guid}/${host}/${service}`, {
@@ -563,6 +600,21 @@ function replaceHostPlaceholders(host) {
 }
 
 /**
+ * Replace all placeholders in the document with service-specific data.
+ *
+ * @param service
+ */
+function replaceServicePlaceholders(service) {
+	document.querySelectorAll('.service-service-placeholder').forEach(el => {
+		el.innerHTML = service.service;
+	});
+
+	document.querySelectorAll('.service-name-placeholder').forEach(el => {
+		el.innerHTML = service.name;
+	});
+}
+
+/**
  * Load application data for the given GUID.
  *
  * @param {string} guid
@@ -579,6 +631,7 @@ async function loadApplication(guid) {
 				}
 
 				loadedApplication = guid;
+				loadedApplicationData = app;
 
 				// Replace content from application
 				replaceAppPlaceholders(app);
@@ -607,10 +660,68 @@ async function loadHost(host) {
 				}
 
 				loadedHost = host;
+				loadedHostData = hostInfo;
 
 				// Replace content from application
 				replaceHostPlaceholders(hostInfo);
 				resolve(hostInfo);
+			})
+			.catch(error => {
+				reject(error);
+			});
+	});
+}
+
+/**
+ * Load service data for the given application GUID, host, and service identifier.
+ *
+ * @param app_guid
+ * @param host
+ * @param service
+ * @returns {Promise<ServiceData>}
+ */
+async function loadService(app_guid, host, service) {
+	return new Promise((resolve, reject) => {
+		fetchService(app_guid, host, service)
+			.then(serviceData => {
+
+				// Check to see if state changes occurred; if so we should notify anything listening.
+				let oldStatus = loadedServiceData ? loadedServiceData.status : null;
+				let oldEnabled = loadedServiceData ? loadedServiceData.enabled : null;
+				if (serviceData.status !== oldStatus) {
+					document.dispatchEvent(
+						new CustomEvent(
+							'serviceStatusChange',
+							{
+								detail: {
+									previous: oldStatus,
+									value: serviceData.status
+								}
+							}
+						)
+					);
+				}
+				if (serviceData.enabled !== oldEnabled) {
+					document.dispatchEvent(
+						new CustomEvent(
+							'serviceEnabledChange',
+							{
+								detail: {
+									previous: oldEnabled,
+									value: serviceData.enabled
+								}
+							}
+						)
+					);
+				}
+
+				loadedService = serviceData.service;
+				loadedServiceData = serviceData;
+
+				// Replace content from service
+				replaceServicePlaceholders(serviceData);
+
+				resolve(serviceData);
 			})
 			.catch(error => {
 				reject(error);
@@ -1139,6 +1250,41 @@ function parseCronSchedule(target) {
 	}
 }
 
+/**
+ * Check if a given application on a given host has a specific option enabled.
+ *
+ * @param guid
+ * @param host
+ * @param option
+ * @returns {*|boolean}
+ */
+function checkHostAppHasOption(guid, host, option) {
+	const appData = applicationData && applicationData[guid] || null;
+
+	if (!appData) {
+		// App data not loaded yet or not found
+		return false;
+	}
+
+	const appHostData = appData.hosts.find(h => h.host === host);
+	if (!appHostData) {
+		// No specific host data for this host
+		return false;
+	}
+
+	return appHostData.options && appHostData.options.includes(option);
+}
+
+function openModal(modal) {
+	modal.classList.add('show');
+	document.body.style.overflow = 'hidden';
+}
+
+function closeModal(modal) {
+	modal.classList.remove('show');
+	document.body.style.overflow = '';
+}
+
 
 document.addEventListener('DOMContentLoaded', () => {
 	// Add standard close events to Modals
@@ -1146,7 +1292,7 @@ document.addEventListener('DOMContentLoaded', () => {
 		button.addEventListener('click', (e) => {
 			const modal = e.target.closest('.modal');
 			if (modal) {
-				modal.classList.remove('show');
+				closeModal(modal);
 			}
 		});
 	});
@@ -1156,7 +1302,7 @@ document.addEventListener('DOMContentLoaded', () => {
 		overlay.addEventListener('click', e => {
 			const modal = e.target.closest('.modal');
 			if (modal) {
-				modal.classList.remove('show');
+				closeModal(modal);
 			}
 		});
 	});
@@ -1165,7 +1311,7 @@ document.addEventListener('DOMContentLoaded', () => {
 	document.addEventListener('keydown', (e) => {
 		if (e.key === 'Escape') {
 			document.querySelectorAll('.modal.show').forEach(modal => {
-				modal.classList.remove('show');
+				closeModal(modal);
 			});
 		}
 	});

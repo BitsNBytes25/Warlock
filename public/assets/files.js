@@ -1,27 +1,13 @@
-let currentPath = '/home/steam';
-let isLoading = false;
-
 const fileList = document.getElementById('fileList');
 const currentPathEl = document.getElementById('currentPath');
 const refreshBtn = document.getElementById('refreshBtn');
 const upBtn = document.getElementById('upBtn');
-const host = window.location.pathname.substring(7);
 const contextMenu = document.getElementById('contextMenu');
-
-let currentEditFile = null;
-
-/**
- * Data for the currently open context menu, or null if none is open.
- * @type {null|Object<path: string, name: string, isDirectory: boolean>}
- */
-let contextMenuData = null;
+let contextMenuTarget = null;
 
 // Search functionality (optional - only if search element exists)
 const fileSearch = document.getElementById('fileSearch');
 const searchClear = document.getElementById('searchClear');
-const resizer = document.querySelector('.resizer');
-const browserCard = document.querySelector('.browser-card');
-const filesLayout = document.querySelector('.files-layout');
 
 let searchTimeout = null;
 let isSearching = false;
@@ -32,9 +18,9 @@ const createFolderBtn = document.getElementById('createFolderBtn'),
 	createFileBtn = document.getElementById('createFileBtn'),
 	uploadBtn = document.getElementById('uploadBtn'),
 	fileInput = document.getElementById('fileInput'),
-	restoreBackupFileBtn = document.getElementById('restoreBackupFileBtn'),
-	saveFileBtn = document.getElementById('saveFileBtn'),
-	downloadFileBtn = document.getElementById('downloadFileBtn'),
+	fileEditorSaveBtn = document.getElementById('fileEditorSaveBtn'),
+	fileEditorDownloadBtn = document.getElementById('fileEditorDownloadBtn'),
+	confirmCompressFolder = document.getElementById('confirmCompressFolder'),
 	viewerSearchPrev = document.getElementById('viewerSearchPrev'),
 	viewerSearchNext = document.getElementById('viewerSearchNext');
 
@@ -43,8 +29,7 @@ const confirmCreateFolder = document.getElementById('confirmCreateFolder'),
 	confirmCreateFile = document.getElementById('confirmCreateFile'),
 	confirmUpload = document.getElementById('confirmUpload'),
 	confirmDeleteBtn = document.getElementById('confirmDelete'),
-	confirmRenameBtn = document.getElementById('confirmRename'),
-	confirmRestoreBtn = document.getElementById('confirmRestore');
+	confirmRenameBtn = document.getElementById('confirmRename');
 
 
 // Modal interfaces used throughout this interface.
@@ -53,80 +38,70 @@ const createFolderModal = document.getElementById('createFolderModal'),
 	uploadModal = document.getElementById('uploadModal'),
 	renameModal = document.getElementById('renameModal'),
 	deleteModal = document.getElementById('deleteConfirmModal'),
-	restoreConfirmModal = document.getElementById('restoreConfirmModal');
+	fileEditorModal = document.getElementById('fileEditorModal');
 
-const previewContent = document.getElementById('previewContent');
 
-const fileViewerCard = document.querySelector('.file-viewer-card'),
-	viewerTitle = document.getElementById('viewerTitle'),
-	viewerSearchBar = document.getElementById('viewerSearchBar'),
-	viewerActions = document.getElementById('viewerActions'),
-	viewerEmptyState = document.getElementById('viewerEmptyState'),
-	filePreviewContent = document.getElementById('filePreviewContent'),
-	fileEditorContent = document.getElementById('fileEditorContent'),
-	editorTextarea = document.getElementById('editorTextarea'),
-	editorInfo = document.getElementById('editorInfo'),
-	editorContainer = document.getElementById('editorContainer');
+const fileEditorTextarea = document.getElementById('fileEditorTextarea'),
+	fileEditorContainer = document.getElementById('fileEditorContainer');
+
+const fileEditorStatus = document.getElementById('fileEditorStatus');
+const renameNewName = document.getElementById('renameNewName');
+const compressFolderModal = document.getElementById('compressFolderModal');
 
 // CodeMirror instance
 let codeMirrorEditor = null;
 
-// Initialize
-currentPathEl.textContent = currentPath;
-
 /**
- * Detect file syntax mode based on file extension
- * @param {string} filename - The name of the file
- * @returns {string} - CodeMirror mode string
+ * Detect file syntax mode based on file mimetype and ensure the proper mode is loaded
+ *
+ * @param {string} mimetype - The mimetype of the file
+ * @returns {string|null} - CodeMirror mode string
  */
-function detectSyntaxMode(filename) {
-	const ext = filename.split('.').pop().toLowerCase();
-	
-	const modeMap = {
-		'js': 'javascript',
-		'jsx': 'javascript',
-		'ts': 'javascript',
-		'tsx': 'javascript',
-		'css': 'css',
-		'scss': 'text/x-scss',
-		'less': 'text/x-less',
-		'html': 'htmlmixed',
-		'htm': 'htmlmixed',
-		'xml': 'xml',
-		'php': 'application/x-httpd-php',
-		'py': 'python',
-		'sh': 'application/x-sh',
-		'bash': 'application/x-sh',
-		'zsh': 'application/x-sh',
-		'yml': 'yaml',
-		'yaml': 'yaml',
-		'json': 'application/json',
-		'jsonc': 'application/json',
-		'conf': 'text/x-nginx-conf',
-		'nginx': 'text/x-nginx-conf',
-		'dockerfile': 'text/x-dockerfile',
-		'docker': 'text/x-dockerfile',
-		'sql': 'text/x-sql',
-		'rb': 'text/x-ruby',
-		'go': 'text/x-go',
-		'java': 'text/x-java',
-		'c': 'text/x-csrc',
-		'cpp': 'text/x-c++src',
-		'h': 'text/x-csrc',
-		'md': 'text/x-markdown',
-		'markdown': 'text/x-markdown'
-	};
-	
-	return modeMap[ext] || 'null';
+async function detectSyntaxMode(mimetype) {
+	return new Promise((resolve, reject) => {
+		const modeMap = {
+			'text/x-script.python': 'python',
+			'application/json': 'json',
+			'application/yaml': 'yaml',
+			'text/x-shellscript': 'shell',
+		};
+
+		let mode = modeMap[mimetype] || null,
+			modeSource = mode;
+
+		if (mode) {
+			if (mode === 'json') {
+				modeSource = 'javascript';
+				mode = 'application/json';
+			}
+
+			// Ensure the mode is loaded
+			if (!document.head.querySelector('script[data-codemirror-mode="' + modeSource + '"]')) {
+				const modeScript = document.createElement('script');
+				modeScript.src = `/assets/codemirror/mode/${modeSource}/${modeSource}.js`;
+				modeScript.dataset.codemirrorMode = modeSource;
+				modeScript.onload = () => {
+					resolve(mode);
+				}
+				document.head.appendChild(modeScript);
+			}
+			else {
+				resolve(mode);
+			}
+		}
+		else {
+			resolve(mode);
+		}
+	});
 }
 
 /**
  * Initialize CodeMirror editor
  */
 function initializeCodeMirror() {
-	if (!editorContainer) return;
+	if (!fileEditorTextarea) return;
 	
-	codeMirrorEditor = CodeMirror(editorContainer, {
+	codeMirrorEditor = CodeMirror.fromTextArea(fileEditorTextarea, {
 		lineNumbers: true,
 		mode: 'null',
 		theme: 'material-darker',
@@ -159,32 +134,18 @@ function initializeCodeMirror() {
  * Will also hide any preview/editing windows that may happen to be open.
  */
 function showLoading() {
-	let viewerLoadingState = document.getElementById('viewerLoadingState'),
-		viewerEmptyState = document.getElementById('viewerEmptyState'),
-		filePreviewContent = document.getElementById('filePreviewContent'),
-		fileEditorContent = document.getElementById('fileEditorContent');
+	fileList.innerHTML = '<div class="loading-spinner"></div>';
 
-	// Reset viewer state
-	viewerLoadingState.style.display = 'flex';
-	viewerEmptyState.style.display = 'none';
-	filePreviewContent.style.display = 'none';
-	fileEditorContent.style.display = 'none';
-
-	isLoading = true;
 	refreshBtn.disabled = true;
-	refreshBtn.innerHTML = '<div class="loading-spinner"></div> Loading...';
+	refreshBtn.innerHTML = '<i class="fas fa-spin fa-spinner"></i> Loading...';
 }
 
 /**
  * Hide the loading UI to allow an edit/view window to be displayed instead
  */
 function hideLoading() {
-	let viewerLoadingState = document.getElementById('viewerLoadingState');
-	isLoading = false;
 	refreshBtn.disabled = false;
 	refreshBtn.innerHTML = '<i class="fas fa-sync-alt"></i> Refresh';
-
-	viewerLoadingState.style.display = 'none';
 }
 
 function showError(message) {
@@ -202,7 +163,7 @@ async function performRecursiveSearch(query) {
 	if (!query || query.length < 2) {
 		// If search is cleared or too short, show current directory files
 		if (searchResults) {
-			loadDirectory(currentPath);
+			loadDirectory();
 			searchResults = null;
 		}
 		return;
@@ -217,7 +178,7 @@ async function performRecursiveSearch(query) {
 	fileList.innerHTML = `
                 <div style="text-align: center; color: #0096ff; padding: 2rem; grid-column: 1 / -1;">
                     <div class="loading-spinner" style="display: inline-block; margin-bottom: 1rem;"></div>
-                    <div>Searching in ${currentPath} and subdirectories...</div>
+                    <div>Searching in ${currentPathEl.textContent} and subdirectories...</div>
                 </div>
             `;
 
@@ -389,7 +350,11 @@ function getFileIcon(mimetype) {
 		'application/zip': 'fas fa-file-archive',
 		'application/gzip': 'fas fa-file-archive',
 		'application/x-gzip': 'fas fa-file-archive',
-		'application/x-tar': 'fas fa-file-archive'
+		'application/x-tar': 'fas fa-file-archive',
+		'application/yaml': 'fas fa-file-lines',
+		'text/x-script.python': 'fas fa-file-code',
+		'text/x-shellscript': 'fas fa-file-code',
+		'application/json': 'fas fa-file-lines',
 	};
 
 	// Approximate / generic matches by group
@@ -436,10 +401,15 @@ function getPermissions(mode) {
 }
 
 async function loadDirectory(path) {
-	closeViewer();
 	showLoading();
-	currentPath = path;
-	currentPathEl.textContent = path;
+
+	if (path) {
+		currentPathEl.textContent = path;
+	}
+	else {
+		// Allow the path to be loaded from the application state, (useful for just refreshing the file list)
+		path = currentPathEl.textContent;
+	}
 
 	// Clear search when changing directories (if search exists)
 	if (window.fileSearch) {
@@ -447,9 +417,7 @@ async function loadDirectory(path) {
 		searchResults = null;
 	}
 
-	window.history.pushState(null, '', window.location.pathname + '?path=' + path);
-
-	fetch(`/api/files/${host}?path=${path}`, {
+	fetch(`/api/files/${loadedHost}?path=${path}`, {
 		method: 'GET',
 		headers: {
 			'Content-Type': 'application/json'
@@ -497,7 +465,7 @@ function displayFiles(files) {
 				<div class="file-size">${file.size === null ? '-' : formatFileSize(file.size)}</div>
 				<div class="file-modified">${convertTimestampToDateTimeString(file.modified)}</div>
 				
-				<button class="three-dot-btn" onclick="showThreeDotMenu('${file.path}', '${file.name}', ${file.type === 'directory'}, event)" title="More options">
+				<button class="three-dot-btn" title="More options">
 					<i class="fas fa-ellipsis-v"></i>
 				</button>
 
@@ -510,37 +478,54 @@ function displayFiles(files) {
 	document.querySelectorAll('.file-item').forEach(el => {
 		el.addEventListener('click', e => {
 			if (e.target.classList.contains('three-dot-btn') || e.target.closest('.three-dot-btn')) {
-				// Three-dot button clicked, so ignore row click
+				// Three-dot button clicked
+				showContextMenu(e);
 				return;
 			}
 
 			e.preventDefault();
-			let item = e.target.classList.contains('file-item') ? e.target : e.target.closest('.file-item'),
-				name = item.dataset.name,
-				path = item.dataset.path,
-				type = item.dataset.type;
+			let item = e.target.closest('.file-item');
 
-			if (type === 'directory') {
-				loadDirectory(path);
+			if (!item) {
+				return;
+			}
+
+			if (item.dataset.mimetype === 'inode/directory') {
+				loadDirectory(item.dataset.path);
 			}
 			else {
-				openFile(path, name);
+				openFile(item);
 			}
 		});
 
 		// Add right-click context menu
-		el.addEventListener('contextmenu', (e) => {
-			e.preventDefault();
-			showContextMenu(e, el.dataset.path, el.dataset.name, el.dataset.type === 'directory');
-		});
+		el.addEventListener('contextmenu', showContextMenu);
 	});
 }
 
-async function openFile(filePath, fileName) {
-	closeViewer();
-	showLoading();
+/**
+ * Open a file for viewing or editing
+ *
+ * @param {HTMLDivElement} fileItem
+ * @returns {Promise<void>}
+ */
+async function openFile(fileItem) {
+	let filePath = fileItem.dataset.path;
 
-	fetch(`/api/file/${host}?path=${filePath}`, {
+	openModal(fileEditorModal);
+	fileEditorContainer.innerHTML = '<div class="loading-spinner"></div> Loading file...';
+	fileEditorModal.querySelector('h3').innerHTML = '<i class="fas fa-edit"></i> Edit File';
+	fileEditorTextarea.value = '';
+	if (codeMirrorEditor) {
+		codeMirrorEditor.setValue('');
+	}
+	fileEditorSaveBtn.dataset.path = '';
+	fileEditorSaveBtn.style.display = 'none';
+	fileEditorDownloadBtn.dataset.path = '';
+	fileEditorDownloadBtn.style.display = 'none';
+	fileEditorStatus.style.display = 'none';
+
+	fetch(`/api/file/${loadedHost}?path=${filePath}`, {
 		method: 'GET',
 		headers: {
 			'Content-Type': 'application/json'
@@ -548,8 +533,6 @@ async function openFile(filePath, fileName) {
 	})
 		.then(response => response.json())
 		.then(result => {
-			console.debug(result);
-
 			if (result.success) {
 				if (result.encoding === 'raw') {
 					editFile(result);
@@ -569,38 +552,21 @@ async function openFile(filePath, fileName) {
  * @param {FileData} fileData
  */
 function previewFile(fileData) {
+	// Clear previous content
+	fileEditorContainer.innerText = '';
+	// Populate editor
+	fileEditorTextarea.value = '';
+	fileEditorModal.querySelector('h3').innerHTML = '<i class="fas fa-eye"></i> Viewing ' + fileData.name;
+
+	fileEditorDownloadBtn.dataset.path = fileData.path;
+	fileEditorDownloadBtn.style.display = 'inline-flex';
+
+	let cm = fileEditorModal.querySelector('.CodeMirror');
+	if (cm) {
+		cm.style.display = 'none';
+	}
+
 	let html = '';
-
-	// Hide empty state and editor, show preview
-	hideLoading();
-	viewerEmptyState.style.display = 'none';
-	fileEditorContent.style.display = 'none';
-	filePreviewContent.style.display = 'block';
-
-	// Update title and show search bar (hide actions for preview)
-	viewerTitle.innerHTML = `${fileData.name}`;
-	viewerSearchBar.style.display = 'none';
-	viewerActions.style.display = 'flex';
-	saveFileBtn.style.display = 'none';
-	downloadFileBtn.style.display = 'block';
-	downloadFileBtn.dataset.path = fileData.path;
-
-	// Sift through .quick-path-item and see if we are currently within backups/ of one of the games installed.
-	restoreBackupFileBtn.style.display = 'none';
-	document.querySelectorAll('.quick-path-item').forEach(item => {
-		if (
-			fileData.path.startsWith(item.dataset.path + '/backups/') &&
-			fileData.path.endsWith('.tar.gz')
-		) {
-			restoreBackupFileBtn.style.display = 'block';
-			restoreBackupFileBtn.dataset.guid = item.dataset.guid;
-			restoreBackupFileBtn.dataset.filename = fileData.name;
-			restoreBackupFileBtn.dataset.host = item.dataset.host;
-			restoreBackupFileBtn.dataset.modified = convertTimestampToDateTimeString(fileData.modified);
-
-			return false;
-		}
-	});
 
 	if (fileData.encoding === 'base64' && fileData.mimetype.startsWith('image/')) {
 		const imgSrc = `data:${fileData.mimetype};base64,${fileData.content}`;
@@ -621,8 +587,7 @@ function previewFile(fileData) {
 	<li>Mimetype: ${fileData.mimetype}</li>
 </ul></div>`;
 
-	previewContent.innerHTML = html;
-
+	fileEditorContainer.innerHTML = html;
 }
 
 /**
@@ -631,46 +596,35 @@ function previewFile(fileData) {
  * @param {FileData} fileData
  */
 function editFile(fileData) {
-	console.log(fileData);
-	currentEditFile = { path: fileData.path, name: fileData.name };
+	detectSyntaxMode(fileData.mimetype).then(syntaxMode => {
+		// Clear previous content
+		fileEditorContainer.innerText = '';
+		// Populate editor
+		fileEditorTextarea.value = fileData.content;
+		fileEditorModal.querySelector('h3').innerHTML = '<i class="fas fa-edit"></i> Editing ' + fileData.name;
+		fileEditorSaveBtn.dataset.path = fileData.path;
+		fileEditorSaveBtn.style.display = 'inline-flex';
+		fileEditorStatus.style.display = 'block';
 
-	// Initialize CodeMirror if not already initialized
-	if (!codeMirrorEditor) {
-		initializeCodeMirror();
-	}
+		let cm = fileEditorModal.querySelector('.CodeMirror');
+		if (cm) {
+			cm.style.display = 'block';
+		}
 
-	// Hide empty state and preview, show editor
-	hideLoading();
-	viewerEmptyState.style.display = 'none';
-	filePreviewContent.style.display = 'none';
-	fileEditorContent.style.display = 'flex';
+		// Initialize CodeMirror if not already initialized
+		if (!codeMirrorEditor) {
+			initializeCodeMirror();
+		}
 
-	// Detect and set syntax mode based on file extension
-	const syntaxMode = detectSyntaxMode(fileData.name);
-	codeMirrorEditor.setOption('mode', syntaxMode);
-	codeMirrorEditor.setValue(fileData.content);
-	codeMirrorEditor.clearHistory();
-
-	// Update title and show search bar and actions
-	viewerTitle.innerHTML = `<i class="fas fa-edit"></i> ${currentEditFile.name}`;
-	viewerSearchBar.style.display = 'flex';
-	viewerActions.style.display = 'flex';
-
-	saveFileBtn.style.display = 'block';
-	downloadFileBtn.style.display = 'none';
-	restoreBackupFileBtn.style.display = 'none';
-
-	editorTextarea.value = fileData.content;
-	editorTextarea.disabled = false;
-	saveFileBtn.disabled = false;
-	viewerSearchPrev.classList.add('disabled');
-	viewerSearchNext.classList.add('disabled');
-	editorInfo.textContent = `Ready to edit • Syntax: ${syntaxMode !== 'null' ? syntaxMode : 'plain text'}`;
-	updateEditorStats();
+		// Detect and set syntax mode based on file extension
+		codeMirrorEditor.setOption('mode', syntaxMode);
+		codeMirrorEditor.setValue(fileData.content);
+		codeMirrorEditor.clearHistory();
+	});
 }
 
 function updateEditorStats() {
-	const editorStats = document.getElementById('editorStats');
+
 	let content, lines, chars, words;
 	
 	// Use CodeMirror if available, otherwise fall back to textarea
@@ -678,90 +632,52 @@ function updateEditorStats() {
 		content = codeMirrorEditor.getValue();
 		lines = codeMirrorEditor.lineCount();
 	} else {
-		const editorTextarea = document.getElementById('editorTextarea');
-		content = editorTextarea.value;
+		content = fileEditorTextarea.value;
 		lines = content.split('\n').length;
 	}
 	
 	chars = content.length;
 	words = content.trim() ? content.trim().split(/\s+/).length : 0;
 
-	editorStats.textContent = `${lines} lines, ${words} words, ${chars} characters`;
+	fileEditorStatus.textContent = `${lines} lines, ${words} words, ${chars} characters`;
 }
 
 async function saveFile() {
-	if (!currentEditFile) return;
+	fileEditorSaveBtn.disabled = true;
+	fileEditorSaveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
 
-	const saveFileBtn = document.getElementById('saveFileBtn');
-	const editorInfo = document.getElementById('editorInfo');
-
-	saveFileBtn.disabled = true;
-	saveFileBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
-	editorInfo.textContent = 'Saving file...';
-
-	try {
-		// Get content from CodeMirror if available, otherwise from textarea
-		let content;
-		if (codeMirrorEditor) {
-			content = codeMirrorEditor.getValue();
-		} else {
-			content = document.getElementById('editorTextarea').value;
-		}
-
-		const response = await fetch(`/api/file/${host}?path=${currentEditFile.path}`, {
-			method: 'PUT',
-			headers: {
-				'Content-Type': 'text/plain',
-			},
-			body: content
-		});
-
-		const result = await response.json();
-
-		if (result.success) {
-			editorInfo.innerHTML = '<span style="color: #059669;"><i class="fas fa-check"></i> File saved successfully!</span>';
-
-			// Show success message briefly
-			setTimeout(() => {
-				editorInfo.textContent = 'Ready to edit';
-			}, 3000);
-		} else {
-			editorInfo.innerHTML = `<span style="color: #dc2626;"><i class="fas fa-exclamation-triangle"></i> Save failed: ${result.error}</span>`;
-		}
-	} catch (error) {
-		editorInfo.innerHTML = `<span style="color: #dc2626;"><i class="fas fa-exclamation-triangle"></i> Network error: ${error.message}</span>`;
-	} finally {
-		saveFileBtn.disabled = false;
-		saveFileBtn.innerHTML = '<i class="fas fa-save"></i> Save';
-	}
-}
-
-function closeViewer() {
-	const viewerTitle = document.getElementById('viewerTitle');
-	const viewerSearchBar = document.getElementById('viewerSearchBar');
-	const viewerActions = document.getElementById('viewerActions');
-	const viewerEmptyState = document.getElementById('viewerEmptyState');
-	const filePreviewContent = document.getElementById('filePreviewContent');
-	const fileEditorContent = document.getElementById('fileEditorContent');
-
-	// Hide all viewer content and show empty state
-	filePreviewContent.style.display = 'none';
-	fileEditorContent.style.display = 'none';
-	viewerEmptyState.style.display = 'flex';
-	viewerSearchBar.style.display = 'none';
-	viewerActions.style.display = 'none';
-
-	// Reset title
-	viewerTitle.innerHTML = '<i class="fas fa-file"></i> File Viewer';
-
-	currentEditFile = null;
-	
-	// Refresh CodeMirror if available
+	// Get content from CodeMirror if available, otherwise from textarea
+	let content;
 	if (codeMirrorEditor) {
-		setTimeout(() => {
-			codeMirrorEditor.refresh();
-		}, 0);
+		content = codeMirrorEditor.getValue();
+	} else {
+		content = fileEditorTextarea.value;
 	}
+
+	fetch(`/api/file/${loadedHost}?path=${fileEditorSaveBtn.dataset.path}`, {
+		method: 'PUT',
+		headers: {
+			'Content-Type': 'text/plain',
+		},
+		body: content
+	})
+		.then(response => response.json())
+		.then(result => {
+			if (result.success) {
+				showToast('success', 'File saved successfully!');
+				loadDirectory();
+			}
+			else {
+				showToast('error', `Save failed: ${result.error}`);
+			}
+		})
+		.catch(error => {
+			showToast('error', `Save failed: ${error}`);
+		})
+		.finally(() => {
+			fileEditorSaveBtn.disabled = false;
+			fileEditorSaveBtn.innerHTML = '<i class="fas fa-save"></i> Save Changes';
+		});
 }
 
 // New functionality functions
@@ -772,14 +688,14 @@ async function createFolder() {
 		return;
 	}
 
-	fetch(`/api/file/${host}?path=${currentPath}&name=${folderName}&isdir=1`, {
+	fetch(`/api/file/${loadedHost}?path=${currentPathEl.textContent}&name=${folderName}&isdir=1`, {
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' }
 	}).then(response => response.json())
 		.then(result => {
 			if (result.success) {
 				createFolderModal.style.display = 'none';
-				loadDirectory(currentPath); // Refresh current directory
+				loadDirectory(); // Refresh current directory
 			} else {
 				alert(`Error creating folder: ${result.error}`);
 			}
@@ -798,7 +714,7 @@ async function createFile() {
 	const fileName = document.getElementById('fileName').value.trim();
 	const fileContent = document.getElementById('fileContent').value;
 
-	fetch(`/api/file/${host}?path=${currentPath}&name=${fileName}`, {
+	fetch(`/api/file/${loadedHost}?path=${currentPathEl.textContent}&name=${fileName}`, {
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
 		body: JSON.stringify({ content: fileContent })
@@ -807,7 +723,7 @@ async function createFile() {
 		.then(result => {
 			if (result.success) {
 				createFileModal.style.display = 'none';
-				loadDirectory(currentPath); // Refresh current directory
+				loadDirectory(); // Refresh current directory
 			}
 			else {
 				alert(`Error creating file: ${result.error}`);
@@ -818,103 +734,13 @@ async function createFile() {
 		});
 }
 
-// Fetch and add application paths to quick paths
-async function loadApplicationPaths() {
-	fetchApplications()
-		.then(applications => {
-			fetch(`/api/quickpaths/${host}`, {
-				method: 'GET',
-				headers: {
-					'Content-Type': 'application/json'
-				}
-			}).then(response => response.json())
-				.then(quickPaths => {
-					const gamesDOM = document.createElement('div'),
-						appsDOM = document.createElement('div'),
-						homesDOM = document.createElement('div'),
-						gamesSep = document.createElement('div'),
-						appsSep = document.createElement('div'),
-						homesSep = document.createElement('div');
-
-					let gamesAdded = false,
-						appsAdded = false,
-						homesAdded = false;
-
-					gamesSep.style.cssText = 'border-top: 1px solid rgba(0, 150, 255, 0.2); margin: 1rem 0; padding-top: 1rem;';
-					gamesSep.innerHTML = '<h4><i class="fas fa-gamepad"></i> Games</h4>';
-					gamesDOM.appendChild(gamesSep);
-
-					appsSep.style.cssText = 'border-top: 1px solid rgba(0, 150, 255, 0.2); margin: 1rem 0; padding-top: 1rem;';
-					appsSep.innerHTML = '<h4><i class="fas fa-cube"></i> Applications</h4>';
-					appsDOM.appendChild(appsSep);
-
-					homesSep.style.cssText = 'border-top: 1px solid rgba(0, 150, 255, 0.2); margin: 1rem 0; padding-top: 1rem;';
-					homesSep.innerHTML = '<h4><i class="fas fa-users"></i> Homes</h4>';
-					homesDOM.appendChild(homesSep);
-
-					quickPaths.paths.forEach(pathData => {
-						let icon, title, path, target, guid;
-
-						if (pathData.type === 'app') {
-							appsAdded = true;
-							target = appsDOM;
-							if (pathData.app === 'steam') {
-								icon = '<img src="/assets/media/logos/apps/steam.webp" alt="Steam"/>';
-							}
-							else {
-								icon = '<i class="fas fa-cube"></i>';
-							}
-
-							title = pathData.title || pathData.app;
-							path = pathData.path;
-						}
-						else if (pathData.type === 'game') {
-							gamesAdded = true;
-							target = gamesDOM;
-							guid = pathData.guid;
-							icon = renderAppIcon(pathData.guid);
-							title = applications[pathData.guid].title || pathData.guid;
-							path = pathData.path;
-						}
-						else if (pathData.type === 'home') {
-							homesAdded = true;
-							target = homesDOM;
-							icon = pathData.path === '/root' ? '<i class="fas fa-user-ninja"></i>' : '<i class="fas fa-user"></i>';
-							title = pathData.title || 'Home';
-							path = pathData.path;
-						}
-
-						const quickPathItem = document.createElement('div');
-						quickPathItem.className = 'quick-path-item';
-						quickPathItem.dataset.path = path;
-						quickPathItem.dataset.host = host;
-						quickPathItem.dataset.guid = guid;
-						quickPathItem.innerHTML = `${icon} ${title}`;
-						quickPathItem.addEventListener('click', () => {
-							loadDirectory(path);
-						});
-						target.appendChild(quickPathItem);
-					});
-
-					const quickPathsContainer = document.querySelector('.quick-paths');
-					if (gamesAdded) {
-						quickPathsContainer.appendChild(gamesDOM);
-					}
-					if (appsAdded) {
-						quickPathsContainer.appendChild(appsDOM);
-					}
-					if (homesAdded) {
-						quickPathsContainer.appendChild(homesDOM);
-					}
-				});
-		});
-}
-
+/**
+ * Populate the context menu with relevant actions based on the file item
+ *
+ * @param fileItem
+ */
 function populateContextMenu(fileItem) {
-	let isArchive = false,
-		mimetype = fileItem.dataset.mimetype || '';
-
-	isArchive = [
+	const archives = [
 		'application/zip',
 		'application/gzip',
 		'application/x-gzip',
@@ -923,46 +749,119 @@ function populateContextMenu(fileItem) {
 		'application/x-rar-compressed',
 		'application/x-bzip2',
 		'application/x-xz'
-	].includes(mimetype);
+	];
 
-	contextMenu.querySelector('.action-extract').style.display = isArchive ? 'flex' : 'none';
+	const texts = [
+		'text/plain',
+		'text/html',
+		'text/css',
+		'text/javascript',
+		'application/json',
+		'application/javascript',
+		'application/xml',
+		'application/yaml',
+		'text/x-script.python',
+		'application/x-httpd-php'
+	];
+
+	let mimetype = fileItem.dataset.mimetype || '',
+		isArchive = archives.includes(mimetype),
+		isDirectory = mimetype === 'inode/directory',
+		isText = mimetype.startsWith('text/') || texts.includes(mimetype),
+		btnOpen = contextMenu.querySelector('[data-action="open"]'),
+		btnEdit = contextMenu.querySelector('[data-action="edit"]'),
+		btnExtract = contextMenu.querySelector('[data-action="extract"]'),
+		btnCompress = contextMenu.querySelector('[data-action="compress"]'),
+		btnDownload = contextMenu.querySelector('[data-action="download"]');
+
+	if (isDirectory) {
+		btnEdit.style.display = 'none';
+		btnOpen.style.display = 'flex';
+		btnExtract.style.display = 'none';
+		btnCompress.style.display = 'flex';
+		btnDownload.style.display = 'none';
+	}
+	else if (isArchive) {
+		btnEdit.style.display = 'none';
+		btnOpen.style.display = 'none';
+		btnExtract.style.display = 'flex';
+		btnCompress.style.display = 'none';
+		btnDownload.style.display = 'flex';
+	}
+	else if (isText) {
+		btnEdit.style.display = 'flex';
+		btnOpen.style.display = 'none';
+		btnExtract.style.display = 'none';
+		btnCompress.style.display = 'none';
+		btnDownload.style.display = 'flex';
+	}
+	else {
+		btnEdit.style.display = 'none';
+		btnOpen.style.display = 'none';
+		btnExtract.style.display = 'none';
+		btnCompress.style.display = 'none';
+		btnDownload.style.display = 'flex';
+	}
+
+	contextMenuTarget = fileItem;
 }
 
-function showContextMenu(event, itemPath, itemName, isDirectory) {
-	contextMenuData = { path: itemPath, name: itemName, isDirectory };
+/**
+ * Show context menu for a file item
+ * @param event
+ */
+function showContextMenu(event) {
+	event.preventDefault();
 
-	populateContextMenu(event.target.closest('.file-item'));
+	let row = event.target.closest('.file-item'),
+		bounding = row.getBoundingClientRect(),
+		newX = event.clientX - bounding.left,
+		newY = fileList.offsetTop + row.offsetTop + row.offsetHeight,
+		maxY = fileList.offsetTop + fileList.offsetHeight,
+		maxX = fileList.offsetWidth;
 
-	// Position the context menu at mouse position
-	contextMenu.style.left = event.pageX + 'px';
-	contextMenu.style.top = event.pageY + 'px';
+	// Hide any previously-selected items first
+	fileList.querySelectorAll('.file-item.active').forEach(item => {
+		item.classList.remove('active');
+	});
+
+	populateContextMenu(row);
+	row.classList.add('active');
+
+	// Position the context menu at mouse/row position
+	contextMenu.style.left = newX + 'px';
+	contextMenu.style.top = newY + 'px';
 	contextMenu.classList.add('show');
+
+	// Ensure menu doesn't overflow outside the container
+	if (newY + contextMenu.offsetHeight > maxY) {
+		newY = maxY - contextMenu.offsetHeight;
+		contextMenu.style.top = newY + 'px';
+	}
+	if (newX + contextMenu.offsetWidth > maxX) {
+		newX = maxX - contextMenu.offsetWidth;
+		contextMenu.style.left = newX + 'px';
+	}
 }
 
-function showThreeDotMenu(itemPath, itemName, isDirectory, event) {
-	if (event) event.stopPropagation();
-	contextMenuData = { path: itemPath, name: itemName, isDirectory };
-
-	populateContextMenu(event.target.closest('.file-item'));
-
-	// Position the context menu near the three-dot button
-	const rect = event.target.closest('.three-dot-btn').getBoundingClientRect();
-	contextMenu.style.left = (rect.left - 150) + 'px';
-	contextMenu.style.top = (rect.bottom + 5) + 'px';
-	contextMenu.classList.add('show');
-}
-
+/**
+ * Hide the context menu
+ */
 function hideContextMenu() {
 	contextMenu.classList.remove('show');
+	fileList.querySelectorAll('.file-item.active').forEach(item => {
+		item.classList.remove('active');
+	});
+	contextMenuTarget = null;
 }
 
 function showRenameModal() {
-	if (!contextMenuData) return;
-	hideContextMenu();
+	renameNewName.value = contextMenuTarget.dataset.name;
+	renameNewName.dataset.path = contextMenuTarget.dataset.path;
+	renameNewName.dataset.name = contextMenuTarget.dataset.name;
+	openModal(renameModal);
 
-	const renameNewName = document.getElementById('renameNewName');
-	renameNewName.value = contextMenuData.name;
-	renameModal.classList.add('show');
+	hideContextMenu();
 
 	// Focus and select the input
 	setTimeout(() => {
@@ -981,60 +880,55 @@ function performDownload(e) {
 	else if(e.target.closest('[data-path]')) {
 		filePath = e.target.closest('[data-path]').dataset.path;
 	}
-	else if(contextMenuData) {
-		filePath = contextMenuData.path;
+	else if (contextMenuTarget) {
+		filePath = contextMenuTarget.dataset.path;
 	}
 	else {
 		return;
 	}
 
 	hideContextMenu();
-	window.open(`/api/file/${host}?path=${filePath}&download=1`, '_blank');
+	window.open(`/api/file/${loadedHost}?path=${filePath}&download=1`, '_blank');
 }
 
 async function performRename() {
-	if (!contextMenuData) return;
-
-	const newName = document.getElementById('renameNewName').value.trim();
+	const newName = renameNewName.value.trim();
 
 	if (!newName) {
 		alert('Please enter a new name');
 		return;
 	}
 
-	if (newName === contextMenuData.name) {
-		renameModal.classList.remove('show');
+	if (newName === renameNewName.dataset.name) {
+		closeModal(renameModal);
 		return;
 	}
 
-	const oldPath = contextMenuData.path;
+	const oldPath = renameNewName.dataset.path;
 	const pathParts = oldPath.split('/');
 	pathParts[pathParts.length - 1] = newName;
 	const newPath = pathParts.join('/');
 
-	try {
-		const response = await fetch(`/api/file/${host}`, {
-			method: 'MOVE',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({
-				oldPath: oldPath,
-				newPath: newPath
-			})
+	fetch(`/api/file/${loadedHost}`, {
+		method: 'MOVE',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify({
+			oldPath: oldPath,
+			newPath: newPath
+		})
+	})
+		.then(response => response.json())
+		.then(result => {
+			if (result.success) {
+				showToast('success', 'Item renamed successfully');
+				closeModal(renameModal);
+				loadDirectory(); // Refresh current directory
+			} else {
+				showToast('error', `Error renaming item: ${result.error}`);
+			}
+		}).catch(error => {
+			showToast('error', `Network error: ${error.message}`);
 		});
-
-		const result = await response.json();
-
-		if (result.success) {
-			showToast('success', 'Item renamed successfully');
-			renameModal.classList.remove('show');
-			contextMenuData = null;
-			loadDirectory(currentPath); // Refresh current directory
-		} else {
-			showToast('error', `Error renaming item: ${result.error}`);
-		}
-	} catch (error) {
-		showToast('error', `Network error: ${error.message}`);
-	}
 }
 
 function showUploadModal(files) {
@@ -1071,7 +965,7 @@ async function startUpload() {
 
 		try {
 			// Send raw file content
-			const response = await fetch(`/api/file/${host}?path=${currentPath}/${file.name}`, {
+			const response = await fetch(`/api/file/${loadedHost}?path=${currentPathEl.textContent}/${file.name}`, {
 				method: 'PUT',
 				headers: {
 					'Content-Type': 'application/octet-stream'
@@ -1097,25 +991,25 @@ async function startUpload() {
 	uploadStatus.textContent = 'Upload complete!';
 	setTimeout(() => {
 		uploadModal.classList.remove('show');
-		loadDirectory(currentPath); // Refresh directory
+		loadDirectory(); // Refresh directory
 		fileInput.value = ''; // Reset file input
 	}, 1500);
 }
 
 function showDeleteModal() {
-	if (!contextMenuData) return;
-	deleteModal.querySelector('.filename').innerHTML = contextMenuData.path;
+	deleteModal.querySelector('.filename').innerHTML = contextMenuTarget.dataset.path;
+	deleteModal.dataset.path = contextMenuTarget.dataset.path;
 	hideContextMenu();
-	deleteModal.classList.add('show');
+	openModal(deleteModal);
 }
 
 async function performExtract() {
-	if (!contextMenuData) return;
+	let path = contextMenuTarget.dataset.path;
 
-	showToast('info', `Extracting ${contextMenuData.path}, please wait a moment.`);
+	showToast('info', `Extracting ${path}, please wait a moment.`);
 	hideContextMenu();
 
-	fetch(`/api/file/extract/${host}?path=${contextMenuData.path}`, {
+	fetch(`/api/file/extract/${loadedHost}?path=${path}`, {
 		method: 'POST',
 		headers: {
 			'Content-Type': 'application/json'
@@ -1125,8 +1019,7 @@ async function performExtract() {
 		.then(result => {
 			if (result.success) {
 				showToast('success', result.message);
-				loadDirectory(currentPath); // Refresh current directory
-				contextMenuData = null;
+				loadDirectory(); // Refresh current directory
 			}
 			else {
 				showToast('error', `Error extracting archive: ${result.error}`);
@@ -1135,11 +1028,9 @@ async function performExtract() {
 }
 
 async function performDelete() {
-	if (!contextMenuData) return;
+	closeModal(deleteModal);
 
-	deleteModal.classList.remove('show');
-
-	fetch(`/api/file/${host}?path=${contextMenuData.path}`, {
+	fetch(`/api/file/${loadedHost}?path=${deleteModal.dataset.path}`, {
 		method: 'DELETE',
 		headers: {
 			'Content-Type': 'application/json'
@@ -1147,13 +1038,9 @@ async function performDelete() {
 	})
 		.then(response => response.json())
 		.then(result => {
-			console.debug(result);
-			deleteItemData = null;
-
 			if (result.success) {
 				showToast('success', 'Item deleted successfully');
-				loadDirectory(currentPath); // Refresh current directory
-				contextMenuData = null;
+				loadDirectory(); // Refresh current directory
 			}
 			else {
 				showToast('error', `Error deleting item: ${result.error}`);
@@ -1161,60 +1048,60 @@ async function performDelete() {
 		});
 }
 
-async function performRestoreBackup() {
-	if (!restoreBackupFileBtn.dataset.filename) return;
-
-	const terminalOutput = restoreConfirmModal.querySelector('.terminal');
-
-	restoreConfirmModal.querySelector('.warning-message').style.display = 'none';
-	terminalOutput.style.display = 'block';
-	terminalOutput.textContent = 'Restoring backup... Please wait.\n';
-
-	stream(
-		`/api/application/backup/${restoreBackupFileBtn.dataset.guid}/${host}`,
-		'PUT',
-		{'Content-Type': 'application/json'},
-		JSON.stringify({filename: restoreBackupFileBtn.dataset.filename}),
-		(event, data) => {
-			terminalOutputHelper(terminalOutput, event, data);
-		})
-	.then(() => {
-		showToast('success', 'Backup restored successfully.');
-		loadDirectory(currentPath); // Refresh current directory
-	}).catch(e => {
-		showToast('error', 'Backup restoration process encountered an error. See terminal output for details.');
-	});
+function showCompressModal() {
+	compressFolderModal.dataset.path = contextMenuTarget.dataset.path;
+	hideContextMenu();
+	openModal(compressFolderModal);
 }
 
+async function performCompress() {
+	const path = compressFolderModal.dataset.path;
+	const format = document.getElementById('folderCompressionType').value;
+
+	showToast('info', `Compressing ${path}, this may take a few minutes depending on its size.`);
+	closeModal(compressFolderModal);
+
+	fetch(`/api/file/compress/${loadedHost}?path=${path}&format=${format}`, {
+		method: 'POST',
+		headers: {
+			'Content-Type': 'application/json'
+		}
+	})
+		.then(response => response.json())
+		.then(result => {
+			if (result.success) {
+				showToast('success', result.message);
+				loadDirectory(); // Refresh current directory
+			}
+			else {
+				showToast('error', `Error compressing archive: ${result.error}`);
+			}
+		});
+}
 
 /////////// Event listeners
 
 // Refresh button functionality
 refreshBtn.addEventListener('click', () => {
-	loadDirectory(currentPath)
+	loadDirectory()
 });
 
 // Navigate up one directory
 upBtn.addEventListener('click', () => {
-	if (currentPath !== '/') {
-		const parentPath = currentPath.split('/').slice(0, -1).join('/') || '/';
+	if (currentPathEl.textContent !== '/') {
+		const parentPath = currentPathEl.textContent.split('/').slice(0, -1).join('/') || '/';
 		loadDirectory(parentPath);
 	}
 });
 
-// Quick link navigation
-document.querySelectorAll('.quick-path-item').forEach(item => {
-	item.addEventListener('click', () => {
-		const path = item.dataset.path;
-		loadDirectory(path);
-	});
-});
-
 // Save file being edited
-saveFileBtn.addEventListener('click', saveFile);
+fileEditorSaveBtn.addEventListener('click', saveFile);
+
+// Download from within the editor/viewer
+fileEditorDownloadBtn.addEventListener('click', performDownload);
 
 // Editor textarea event listener for stats
-document.getElementById('editorTextarea').addEventListener('input', updateEditorStats);
+document.getElementById('fileContent').addEventListener('input', updateEditorStats);
 
 
 // Create folder
@@ -1245,30 +1132,49 @@ fileInput.addEventListener('change', (e) => {
 });
 confirmUpload.addEventListener('click', startUpload);
 
+// Context menu actions
+contextMenu.addEventListener('click', e => {
+	let btn = e.target.closest('button');
+	if (!btn) {
+		hideContextMenu();
+		return;
+	}
+
+	let action = btn.dataset.action;
+	if (!action) {
+		hideContextMenu();
+		return;
+	}
+
+	if (action === 'open') {
+		loadDirectory(contextMenuTarget.dataset.path);
+	}
+	else if (action === 'edit') {
+		openFile(contextMenuTarget);
+	}
+	else if (action === 'extract') {
+		performExtract();
+	}
+	else if (action === 'download') {
+		performDownload(e);
+	}
+	else if (action === 'rename') {
+		showRenameModal();
+	}
+	else if (action === 'delete') {
+		showDeleteModal();
+	}
+	else if (action === 'compress') {
+		showCompressModal();
+	}
+
+	hideContextMenu();
+});
 // Rename file
-document.getElementById('contextRename').addEventListener('click', showRenameModal);
 confirmRenameBtn.addEventListener('click', performRename);
 
 // Delete file
-document.getElementById('contextDelete').addEventListener('click', showDeleteModal);
 confirmDeleteBtn.addEventListener('click', performDelete);
-
-// Extract file
-document.getElementById('contextExtract').addEventListener('click', performExtract);
-
-// Restore backup file
-restoreBackupFileBtn.addEventListener('click', () => {
-	restoreConfirmModal.querySelector('.warning-message').style.display = 'flex';
-	restoreConfirmModal.querySelector('.terminal').style.display = 'none';
-	restoreConfirmModal.querySelector('.timestamp').innerHTML = restoreBackupFileBtn.dataset.modified;
-	restoreConfirmModal.classList.add('show');
-});
-confirmRestoreBtn.addEventListener('click', performRestoreBackup);
-
-// Download file
-downloadFileBtn.addEventListener('click', performDownload);
-document.getElementById('contextDownload').addEventListener('click', performDownload);
-
 
 // Hide context menu on click outside
 document.addEventListener('click', (e) => {
@@ -1276,6 +1182,14 @@ document.addEventListener('click', (e) => {
 		hideContextMenu();
 	}
 });
+
+renameNewName.addEventListener('keypress', e => {
+	if (e.key === 'Enter') {
+		performRename();
+	}
+});
+
+confirmCompressFolder.addEventListener('click', performCompress);
 
 // Confirm handlers
 
@@ -1287,14 +1201,13 @@ let viewerCurrentMatch = -1;
 function performViewerSearchEvent(e) {
 	const searchTerm = e.target.value,
 		previewContent = document.getElementById('previewContent'),
-		editorTextarea = document.getElementById('editorTextarea'),
 		filePreviewContent = document.getElementById('filePreviewContent'),
 		fileEditorContent = document.getElementById('fileEditorContent'),
 		// Determine if we're searching in preview or editor
 		isPreviewMode = filePreviewContent.style.display !== 'none',
 		fileSearchNext = document.getElementById('viewerSearchNext'),
 		fileSearchPrev = document.getElementById('viewerSearchPrev'),
-		content = isPreviewMode ? previewContent : editorTextarea;
+		content = isPreviewMode ? previewContent : fileEditorTextarea;
 
 	if (!searchTerm) {
 		// Clear highlights
@@ -1349,7 +1262,7 @@ function performViewerSearchEvent(e) {
 		if (codeMirrorEditor) {
 			textContent = codeMirrorEditor.getValue();
 		} else {
-			textContent = editorTextarea.value;
+			textContent = fileEditorTextarea.value;
 		}
 		
 		const regex = new RegExp(searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
@@ -1429,13 +1342,13 @@ function updateViewerSearchHighlight() {
 			codeMirrorEditor.scrollIntoView(from);
 		} else {
 			// Fallback to textarea
-			editorTextarea.focus();
-			editorTextarea.setSelectionRange(matchIndex, matchIndex + searchTerm.length);
+			fileEditorTextarea.focus();
+			fileEditorTextarea.setSelectionRange(matchIndex, matchIndex + searchTerm.length);
 
 			// Scroll to selection
-			const lineHeight = parseFloat(getComputedStyle(editorTextarea).lineHeight);
-			const lines = editorTextarea.value.substr(0, matchIndex).split('\n').length;
-			editorTextarea.scrollTop = (lines - 1) * lineHeight - editorTextarea.clientHeight / 2;
+			const lineHeight = parseFloat(getComputedStyle(fileEditorTextarea).lineHeight);
+			const lines = fileEditorTextarea.value.substr(0, matchIndex).split('\n').length;
+			fileEditorTextarea.scrollTop = (lines - 1) * lineHeight - fileEditorTextarea.clientHeight / 2;
 		}
 	}
 }
@@ -1454,98 +1367,3 @@ document.getElementById('viewerSearch').addEventListener('keydown', (e) => {
 		e.target.dispatchEvent(new Event('input'));
 	}
 });
-
-// Resizer functionality
-let isResizing = false;
-let startX = 0;
-let startBrowserWidth = 0;
-
-// Load saved panel sizes from localStorage
-const savedBrowserWidth = localStorage.getItem('browserPanelWidth');
-if (savedBrowserWidth) {
-	browserCard.style.flexBasis = savedBrowserWidth;
-	browserCard.style.flexGrow = '0';
-	browserCard.style.flexShrink = '0';
-}
-
-resizer.addEventListener('mousedown', (e) => {
-	isResizing = true;
-	startX = e.clientX;
-	startBrowserWidth = browserCard.offsetWidth;
-
-	// Add visual feedback
-	resizer.style.background = 'rgba(0, 150, 255, 0.4)';
-	document.body.style.cursor = 'col-resize';
-	document.body.style.userSelect = 'none';
-
-	e.preventDefault();
-});
-
-document.addEventListener('mousemove', (e) => {
-	if (!isResizing) return;
-
-	const delta = e.clientX - startX;
-	const newBrowserWidth = startBrowserWidth + delta;
-	const containerWidth = filesLayout.offsetWidth;
-	const minWidth = 300;
-	const maxWidth = containerWidth - 300 - 5; // 300px for viewer, 5px for resizer
-
-	// Constrain width
-	const constrainedWidth = Math.max(minWidth, Math.min(newBrowserWidth, maxWidth));
-
-	// Set flex-basis instead of width for better flex behavior
-	browserCard.style.flexBasis = constrainedWidth + 'px';
-	browserCard.style.flexGrow = '0';
-	browserCard.style.flexShrink = '0';
-
-	// File viewer will automatically take remaining space
-	fileViewerCard.style.flexBasis = 'auto';
-	fileViewerCard.style.flexGrow = '1';
-	fileViewerCard.style.flexShrink = '1';
-
-	e.preventDefault();
-});
-
-document.addEventListener('mouseup', (e) => {
-	if (isResizing) {
-		isResizing = false;
-
-		// Remove visual feedback
-		resizer.style.background = '';
-		document.body.style.cursor = '';
-		document.body.style.userSelect = '';
-
-		// Save panel size to localStorage
-		localStorage.setItem('browserPanelWidth', browserCard.style.flexBasis);
-	}
-});
-
-
-
-// Check for path parameter in URL
-const urlParams = new URLSearchParams(window.location.search);
-const pathParam = urlParams.get('path');
-
-if (pathParam) {
-	// If path parameter exists, navigate to that path
-	currentPath = pathParam;
-	loadDirectory(pathParam);
-} else {
-	// Load initial directory
-	loadDirectory(currentPath);
-}
-
-// Keep track of back/forward options by the user too
-window.addEventListener('popstate', e => {
-	const urlParams = new URLSearchParams(window.location.search),
-		pathParam = urlParams.get('path');
-
-	if (pathParam) {
-		currentPath = pathParam;
-		loadDirectory(pathParam);
-	}
-});
-
-
-// Load application paths
-loadApplicationPaths();

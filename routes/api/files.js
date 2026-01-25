@@ -3,6 +3,7 @@ const {validate_session} = require("../../libs/validate_session.mjs");
 const {cmdRunner} = require("../../libs/cmd_runner.mjs");
 const {Host} = require('../../db');
 const {logger} = require('../../libs/logger.mjs');
+const {correctMimetype} = require('../../libs/correct_mimetype.mjs');
 
 const router = express.Router();
 
@@ -50,6 +51,13 @@ router.get('/:host', validate_session, (req, res) => {
 			let files = [];
 			try {
 				files = JSON.parse(jsonOutput);
+
+				// Ensure the mimetypes are actually accurate; useful for things like .json files being reported as text/plain
+
+				files = files.map(f => {
+					f.mimetype = correctMimetype(f.name, f.mimetype);
+					return f;
+				});
 			} catch (e) {
 				return res.json({
 					success: false,

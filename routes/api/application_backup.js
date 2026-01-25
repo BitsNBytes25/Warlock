@@ -24,7 +24,7 @@ router.post('/:guid/:host', validate_session, (req, res) => {
 			const cmd = `set -euo pipefail; ${data.host.path}/manage.py --backup`;
 			logger.info(`Initiating backup for ${guid} on host ${host}`);
 
-			cmdStreamer(host, cmd, res).catch(err => {
+			cmdStreamer(host, cmd, res, true).catch(err => {
 				logger.error('cmdStreamer error (backup):', err);
 				// cmdStreamer will generally have written to the response, but ensure closed
 				try { res.end(); } catch(e){}
@@ -69,7 +69,7 @@ router.put('/:guid/:host', validate_session, (req, res) => {
 			const cmd = `set -euo pipefail; ${data.host.path}/manage.py --restore "${escapedFilename}"`;
 			logger.info(`Restoring backup ${filename} for ${guid} on host ${host}`);
 
-			cmdStreamer(host, cmd, res).catch(err => {
+			cmdStreamer(host, cmd, res, true).catch(err => {
 				logger.error('cmdStreamer error (restore):', err);
 				try { res.end(); } catch(e){}
 			});

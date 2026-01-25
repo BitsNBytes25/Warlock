@@ -1,0 +1,33 @@
+<div id="metricsTimeframeSelector" style="margin-bottom: 20px; text-align: center;">
+    <button class="timeframe-btn active" data-timeframe="hour">Hour</button>
+    <button class="timeframe-btn" data-timeframe="day">Day</button>
+    <button class="timeframe-btn" data-timeframe="week">Week</button>
+    <button class="timeframe-btn" data-timeframe="month">Month</button>
+    <button class="timeframe-btn" data-timeframe="3month">3 Months</button>
+    <button class="timeframe-btn" data-timeframe="6month">6 Months</button>
+    <button class="timeframe-btn" data-timeframe="year">Year</button>
+</div>
+<div id="metricsCharts" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+    <div class="chart-container">
+        <h4>CPU Usage (%)</h4>
+        <div><canvas id="cpuChart"></canvas></div>
+    </div>
+    <div class="chart-container">
+        <h4>Memory Usage (MB)</h4>
+        <div><canvas id="memoryChart"></canvas></div>
+    </div>
+    <div class="chart-container">
+        <h4>Player Count</h4>
+        <div><canvas id="playersChart"></canvas></div>
+    </div>
+    <div class="chart-container">
+        <h4>Server Status</h4>
+        <div><canvas id="statusChart"></canvas></div>
+    </div>
+    <div class="chart-container" style="grid-column: 1 / -1;">
+        <h4>Response Time (ms)</h4>
+        <div><canvas id="responseTimeChart"></canvas></div>
+    </div>
+</div>
+
+<script src="/assets/service_graphs.js"></script>

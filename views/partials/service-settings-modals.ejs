@@ -1,0 +1,145 @@
+<!-- Update Modal -->
+<div id="updateModal" class="modal wide">
+    <div class="modal-overlay"></div>
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-circle-up"></i> Update Game</h3>
+            <button class="modal-close">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div class="warning-message">
+                <i class="fas fa-exclamation-triangle"></i>
+                <p>
+                    Warning: Updating a game will pause the game during the procedure.
+                </p>
+            </div>
+            <div class="terminal"></div>
+        </div>
+        <div class="modal-footer">
+            <button class="action-update" id="confirmUpdateBtn">
+                <i class="fas fa-circle-up"></i>
+                Confirm Update
+            </button>
+            <button class="action-cancel modal-close">
+                <i class="fas fa-times"></i>
+                Cancel
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Automatic Update Check Cron Configuration Modal -->
+<div id="autoUpdateModal" class="modal">
+    <div class="modal-overlay"></div>
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-clock"></i> Automatic Update Configuration</h3>
+            <button class="modal-close">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label for="autoUpdateSchedule">Schedule</label>
+                <select id="autoUpdateSchedule" name="schedule">
+                    <option value="disabled">Disabled</option>
+                    <option value="hourly">Hourly</option>
+                    <option value="daily">Daily</option>
+                    <option value="weekly">Weekly</option>
+                </select>
+            </div>
+
+            <div class="form-group" id="autoUpdateWeeklyDayRow">
+                <label for="autoUpdateWeeklyDay">Weekly Day</label>
+                <select id="autoUpdateWeeklyDay" name="weekly_day">
+                    <option value="mon">Monday</option>
+                    <option value="tue">Tuesday</option>
+                    <option value="wed">Wednesday</option>
+                    <option value="thu">Thursday</option>
+                    <option value="fri">Friday</option>
+                    <option value="sat">Saturday</option>
+                    <option value="sun">Sunday</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="autoUpdateTime">Time</label>
+                <input type="time" id="autoUpdateTime" name="time" value="02:00">
+            </div>
+
+            <div class="form-group">
+                <label for="delayedUpdate">Update if Players Online</label>
+                <input type="checkbox" id="delayedUpdate" name="delayed_update">
+                <p class="form-help-text">
+                    If enabled, updates will run even if players are online, with a 1-hour warning.
+                    Otherwise, restart/updates will be skipped if players are detected.
+                </p>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="action-save" id="saveAutoUpdateBtn">
+                <i class="fas fa-save"></i>
+                Save Configuration
+            </button>
+            <button class="action-cancel modal-close">
+                <i class="fas fa-times"></i>
+                Cancel
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Automatic Restart Cron Configuration Modal -->
+<div id="autoRestartModal" class="modal">
+    <div class="modal-overlay"></div>
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-power-off"></i> Automatic Restart Configuration</h3>
+            <button class="modal-close">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label for="autoRestartSchedule">Schedule</label>
+                <select id="autoRestartSchedule" name="schedule">
+                    <option value="disabled">Disabled</option>
+                    <option value="hourly">Hourly</option>
+                    <option value="daily">Daily</option>
+                    <option value="weekly">Weekly</option>
+                </select>
+            </div>
+
+            <div class="form-group" id="autoRestartWeeklyDayRow">
+                <label for="autoRestartWeeklyDay">Weekly Day</label>
+                <select id="autoRestartWeeklyDay" name="weekly_day">
+                    <option value="mon">Monday</option>
+                    <option value="tue">Tuesday</option>
+                    <option value="wed">Wednesday</option>
+                    <option value="thu">Thursday</option>
+                    <option value="fri">Friday</option>
+                    <option value="sat">Saturday</option>
+                    <option value="sun">Sunday</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="autoRestartTime">Time</label>
+                <input type="time" id="autoRestartTime" name="time" value="02:00">
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="action-save" id="saveAutoRestartBtn">
+                <i class="fas fa-save"></i>
+                Save Configuration
+            </button>
+            <button class="action-cancel modal-close">
+                <i class="fas fa-times"></i>
+                Cancel
+            </button>
+        </div>
+    </div>
+</div>
+

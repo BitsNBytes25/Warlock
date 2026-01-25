@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Warlock - Service Details</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/assets/frontend.css">
+    <link rel="stylesheet" href="/assets/themes.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <script src="/assets/common.js"></script>
+</head>
+<body data-use-app-background="1">
+<%- include('partials/nav.ejs') %>
+
+<div class="main-container wide">
+    <main class="content-area">
+        <div class="content-header" data-use-app-header="1">
+            <div class="content-header-inner">
+                <h2>
+                    <i class="fas fa-server"></i>
+                    <span class="service-name-placeholder">
+                        Service Details
+                    </span>
+                </h2>
+
+                <div class="content-header-buttons">
+                    <button class="action-update" id="btnServiceUpdate">
+                        <i class="fas fa-circle-up"></i> Update
+                    </button>
+                    <button class="open-stop-modal action-stop" id="btnServiceStop">
+                        <i class="fas fa-stop"></i> Stop
+                    </button>
+                    <button data-action="start" class="service-control action-start" id="btnServiceStart">
+                        <i class="fas fa-play"></i> Start
+                    </button>
+                    <button class="open-restart-modal action-restart" id="btnServiceRestart">
+                        <i class="fas fa-sync-alt"></i> Restart
+                    </button>
+                </div>
+
+                <p>
+                    Host: <span class="host-name-placeholder">HOSTNAME OR IP</span>
+                </p>
+            </div>
+        </div>
+
+        <div class="content-subheader">
+            <dl class="service-details-overview">
+                <dt class="service-status">Status</dt>
+                <dd class="service-status" id="serviceDetailsStatus">Loading</dd>
+
+                <dt class="service-players">Players</dt>
+                <dd class="service-players" id="serviceDetailsPlayers">0 / 0</dd>
+
+                <dt class="service-uptime">CPU Usage</dt>
+                <dd class="service-uptime" id="serviceDetailsCpu">N/A</dd>
+
+                <dt class="service-memory">Memory</dt>
+                <dd class="service-memory" id="serviceDetailsMemory">N/A</dd>
+
+                <dt class="service-port">Port</dt>
+                <dd class="service-port" id="serviceDetailsPort">N/A</dd>
+            </dl>
+        </div>
+
+        <div class="content-body">
+            <nav class="tabs-header">
+                <a href="#metrics">
+                    <i class="fas fa-chart-line"></i> Statistics
+                </a>
+                <a href="#configure">
+                    <i class="fas fa-sliders-h"></i> Configure
+                </a>
+                <a href="#logs">
+                    <i class="fas fa-align-justify"></i> Logs
+                </a>
+                <a href="#files">
+                    <i class="fas fa-folder"></i> Files
+                </a>
+                <a href="#backups">
+                    <i class="fas fa-floppy-disk"></i> Backups
+                </a>
+                <a href="#settings">
+                    <i class="fas fa-cogs"></i> Settings
+                </a>
+            </nav>
+
+            <div id="service-details-metrics">
+                <%- include('partials/service-metrics.ejs') %>
+            </div>
+            <div id="service-details-configure">
+                <%- include('partials/service-configure.ejs') %>
+            </div>
+            <div id="service-details-logs">
+                <%- include('partials/service-logs.ejs') %>
+            </div>
+            <div id="service-details-files">
+                <%- include('partials/service-files.ejs') %>
+            </div>
+            <div id="service-details-backups">
+                <%- include('partials/service-backups.ejs') %>
+            </div>
+            <div id="service-details-settings">
+                <%- include('partials/service-settings.ejs') %>
+            </div>
+        </div>
+    </main>
+</div>
+
+
+<%- include('partials/modal-service-stop.ejs') %>
+<%- include('partials/modal-service-restart.ejs') %>
+<%- include('partials/service-files-modals.ejs') %>
+<%- include('partials/service-backups-modals.ejs') %>
+<%- include('partials/service-settings-modals.ejs') %>
+
+<%- include('partials/theme-selector.ejs') %>
+<script src="/assets/service_details.js"></script>
+<script src="/assets/service_configure.js"></script>
+<script src="/assets/application_backups.js"></script>
+<script src="/assets/files.js"></script>
+<link rel="stylesheet" href="/assets/codemirror/codemirror.css">
+<link rel="stylesheet" href="/assets/codemirror/theme/material-darker.css">
+<script src="/assets/codemirror/codemirror.js"></script>
+<script src="/assets/codemirror/mode/yaml/yaml.js"></script>
+<script src="/assets/application_configure.js"></script>
+</body>
+</html>

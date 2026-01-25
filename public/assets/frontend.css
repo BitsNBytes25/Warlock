@@ -41,9 +41,9 @@
 	--content-hover: #f1f5f9;
 	--content-bg: rgba(15, 17, 25, 0.75);
 	--content-hover-bg: rgba(30, 33, 46, 0.85);
-	--content-border: rgba(99, 102, 241, 0.2);
+	--content-border: rgba(121, 123, 243, 0.4);
 	--content-hover-border: rgba(99, 102, 241, 0.4);
-	--content-shadow: rgba(0, 0, 0, 0.3);
+	--content-shadow: rgba(155, 155, 155, 0.6);
 	--card-bg: rgba(20, 23, 35, 0.6);
 	
 	/* Terminal */
@@ -201,6 +201,17 @@
 	}
 	100% {
 		transform: scale(1);
+	}
+}
+
+@keyframes modalSlideIn {
+	from {
+		opacity: 0;
+		transform: translateY(-20px) scale(0.95);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0) scale(1);
 	}
 }
 
@@ -373,6 +384,11 @@ h4 {
 	gap: 2rem;
 	position: relative;
 	z-index: 2;
+}
+
+.main-container.wide {
+	grid-template-columns: 1fr;
+	max-width: 1600px;
 }
 
 .content-area {
@@ -711,7 +727,6 @@ button.action-configure, a.button.action-configure,
 button.action-edit, a.button.action-edit {
 	background: var(--button-config-bg-1);
 	color: var(--button-config);
-	border-radius: 0;
 }
 button.action-configure:hover, a.button.action-configure:hover,
 button.action-edit:hover, a.button.action-edit:hover {
@@ -1452,8 +1467,7 @@ button.link-control span {
 	flex: 1;
 }
 .backup-file-item .file-actions {
-	flex: 6 100%;
-	margin-top: 0.5rem;
+	flex: 3;
 }
 
 /* ==========================
@@ -1489,6 +1503,7 @@ button.link-control span {
 	align-items: center;
 	gap: 1rem;
 	justify-content: space-between;
+	margin-bottom: 2rem;
 }
 .path-controls .current-path {
 	flex: 1;
@@ -1695,16 +1710,29 @@ button.link-control span {
 	height: calc(100vh - (117px + 2rem));
 }
 
+#service-details-files {
+	position: relative;
+}
+
 .file-list {
 	display: grid;
 	gap: 0.5rem;
+	position: relative;
+	min-height: 15rem;
+}
+
+.file-list .loading-spinner {
+	margin: 0 auto;
+	width: 6rem;
+	height: 6rem;
+	border-width: 1rem;
 }
 
 .file-item {
 	display: grid;
 	grid-template-areas: 'icon name owner permissions size modified actions'
 		'symlink symlink symlink symlink symlink symlink symlink';
-	grid-template-columns: 20px 1fr 7rem 4rem 3rem 5rem 1rem;
+	grid-template-columns: 20px 1fr 10rem 4rem 6rem 11rem 1rem;
 	gap: 0.5rem;
 	padding: 0.15rem 0.75rem;
 	border-radius: 8px;
@@ -1714,7 +1742,8 @@ button.link-control span {
 	border: 1px solid transparent;
 	color: var(--content);
 }
-.file-item:hover {
+.file-item:hover,
+.file-item.active {
 	background: var(--content-hover-bg);
 	border-color: var(--content-hover-border);
 }
@@ -1733,6 +1762,7 @@ button.link-control span {
 	grid-area: size;
 	text-align: right;
 	font-size: 0.85rem;
+	margin-right: 0.5rem;
 }
 .file-item .file-owner {
 	grid-area: owner;
@@ -1849,13 +1879,13 @@ button.link-control span {
    Context menu / three-dot menu / action buttons
    ========================== */
 .context-menu {
-	position: fixed;
+	position: absolute;
 	background: var(--content-bg);
 	backdrop-filter: blur(20px);
 	border: 1px solid var(--content-border);
-	border-radius: 8px;
+	border-radius: 0;
 	padding: 0;
-	box-shadow: 0 10px 30px var(--content-shadow);
+	box-shadow: 2px 2px 6px var(--content-shadow);
 	z-index: 10000;
 	display: none;
 	min-width: 200px;
@@ -1871,12 +1901,6 @@ button.link-control span {
 	border-radius: 0;
 	display: flex;
 	padding: 0.75rem;
-}
-.context-menu button:first-of-type {
-	border-radius: 8px 8px 0 0;
-}
-.context-menu button:last-of-type {
-	border-radius: 0 0 8px 8px;
 }
 .context-menu button:hover {
 	transform: scale(1.05);
@@ -2145,10 +2169,99 @@ button.link-control {
 	z-index: 2;
 }
 
+/** <editor-fold desc="Service Details"> **/
 
-/* ==========================
-   Modals
-   ========================== */
+.service-details-overview {
+	display: grid;
+	/*grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));*/
+	gap: 1rem;
+	grid-template-areas: 'status players cpu memory port' 'status-v players-v cpu-v memory-v port-v';
+	margin: 2rem 3rem;
+}
+
+.service-details-overview dt {
+	opacity: 0.7;
+	font-variant: small-caps;
+}
+.service-details-overview dd {
+	font-size: 1.25rem;
+}
+
+.service-details-overview dt.service-status {
+	grid-area: status;
+	opacity: 0.8;
+}
+.service-details-overview dd.service-status {
+	grid-area: status-v;
+}
+.service-details-overview dt.service-players {
+	grid-area: players;
+}
+.service-details-overview dd.service-players {
+	grid-area: players-v;
+}
+.service-details-overview dt.service-cpu {
+	grid-area: cpu;
+}
+.service-details-overview dd.service-cpu {
+	grid-area: cpu-v;
+}
+.service-details-overview dt.service-memory {
+	grid-area: memory;
+}
+.service-details-overview dd.service-memory {
+	grid-area: memory-v;
+}
+.service-details-overview dt.service-port {
+	grid-area: port;
+}
+.service-details-overview dd.service-port {
+	grid-area: port-v;
+}
+
+.tabs-header {
+	display: flex;
+	border-bottom: 1px solid var(--border-color);
+	gap: 1rem;
+	background-color: var(--navbar-bg);
+	margin-bottom: 2rem;
+}
+
+.tabs-header a {
+	color: var(--nav);
+	padding: 1rem 1.5rem;
+	border-bottom: 3px solid transparent;
+	display: flex;
+	align-items: center;
+	text-decoration: none;
+}
+
+.tabs-header a.active,
+.tabs-header a:hover {
+	border-bottom: 3px solid var(--nav-hover);
+	color: var(--nav-hover);
+}
+
+.tabs-header a i {
+	padding-right: 0.5rem;
+}
+
+.modal-body .CodeMirror {
+	height: 100%;
+}
+
+#fileEditorStatus {
+	flex: 1;
+	opacity: 0.7;
+	font-size: 0.875rem;
+}
+
+/** </editor-fold> **/
+
+
+
+
+/** <editor-fold desc="Modals"> **/
 
 .modal {
 	position: fixed;
@@ -2198,17 +2311,6 @@ button.link-control {
 	max-width: 80vw;
 }
 
-@keyframes modalSlideIn {
-	from {
-		opacity: 0;
-		transform: translateY(-20px) scale(0.95);
-	}
-	to {
-		opacity: 1;
-		transform: translateY(0) scale(1);
-	}
-}
-
 .modal-header {
 	padding: 1.25rem 1.5rem;
 	border-bottom: 1px solid var(--content-border);
@@ -2217,6 +2319,7 @@ button.link-control {
 	justify-content: space-between;
 	align-items: center;
 	border-radius: 16px 16px 0 0;
+	max-height: 5rem;
 }
 
 .modal-header h3 {
@@ -2254,6 +2357,8 @@ button.link-control {
 .modal-body {
 	padding: 1.5rem;
 	color: var(--content);
+	max-height: calc(80vh - 13rem);
+	overflow: scroll;
 }
 
 .modal-footer {
@@ -2264,7 +2369,10 @@ button.link-control {
 	gap: 0.75rem;
 	justify-content: flex-end;
 	border-radius: 0 0 16px 16px;
+	max-height: 5rem;
 }
+
+/* </editor-fold> */
 
 /* ==========================
    Theme selector (bottom-left floating)

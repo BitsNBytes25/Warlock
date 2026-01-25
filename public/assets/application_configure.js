@@ -13,9 +13,11 @@ const autoUpdateModal = document.getElementById('autoUpdateModal'),
 	confirmUpdateBtn = document.getElementById('confirmUpdateBtn'),
 	reinstallBtn = document.getElementById('reinstallBtn'),
 	delayedUpdate = document.getElementById('delayedUpdate'),
-	autoUpdateSchedule = document.getElementById('autoUpdateSchedule');
-
-let applicationOptions = [];
+	autoUpdateSchedule = document.getElementById('autoUpdateSchedule'),
+	automatedStartDisabledMessage = document.getElementById('automatedStartDisabledMessage'),
+	automatedStartEnabledMessage = document.getElementById('automatedStartEnabledMessage'),
+	configureAutoStartEnableBtn = document.getElementById('configureAutoStartEnableBtn'),
+	configureAutoStartDisableBtn = document.getElementById('configureAutoStartDisableBtn');
 
 
 async function loadAutomaticUpdates() {
@@ -34,7 +36,7 @@ async function loadAutomaticUpdates() {
 			automatedUpdatesEnabledMessage.style.display = 'none';
 		}
 
-		if (!applicationOptions.includes('delayed-update')) {
+		if (!checkHostAppHasOption(loadedApplication, loadedHost, 'delayed-update')) {
 			delayedUpdate.closest('.form-group').querySelector('p').textContent = 'Note: this game does not support delayed updates.';
 			delayedUpdate.disabled = true;
 			delayedUpdate.checked = false;
@@ -90,7 +92,7 @@ async function saveAutomaticUpdates() {
 			.then(response => {
 				if (response.success) {
 					showToast('success', 'Automatic updates disabled.');
-					autoUpdateModal.classList.remove('show');
+					closeModal(autoUpdateModal);
 					loadAutomaticUpdates();
 				} else {
 					showToast('error', `Failed to disable automatic updates: ${response.error}`);
@@ -100,7 +102,7 @@ async function saveAutomaticUpdates() {
 		return;
 	}
 
-	if (applicationOptions.includes('delayed-update') && delayedUpdate.checked) {
+	if (checkHostAppHasOption(loadedApplication, loadedHost, 'delayed-update') && delayedUpdate.checked) {
 		// Build command for delayed updates
 		command = `${gameDir}/manage.py --check-update && ${gameDir}/manage.py --delayed-update`;
 	}
@@ -117,7 +119,7 @@ async function saveAutomaticUpdates() {
 		.then(response => {
 			if (response.success) {
 				showToast('success', 'Automatic updates scheduled.');
-				autoUpdateModal.classList.remove('show');
+				closeModal(autoUpdateModal);
 				loadAutomaticUpdates();
 			} else {
 				showToast('error', `Failed to save schedule: ${response.error}`);
@@ -149,7 +151,7 @@ async function saveAutomaticRestarts() {
 			.then(response => {
 				if (response.success) {
 					showToast('success', 'Automatic restarts disabled.');
-					autoRestartModal.classList.remove('show');
+					closeModal(autoRestartModal);
 					loadAutomaticRestarts();
 				} else {
 					showToast('error', `Failed to disable automatic restarts: ${response.error}`);
@@ -162,7 +164,7 @@ async function saveAutomaticRestarts() {
 	// Build command
 	// if this service supports delayed-restart, use that instead
 	let command;
-	if (applicationOptions.includes('delayed-restart')) {
+	if (checkHostAppHasOption(loadedApplication, loadedHost, 'delayed-restart')) {
 		command = `${gameDir}/manage.py --delayed-restart`;
 	} else {
 		command = `${gameDir}/manage.py --restart`;
@@ -177,7 +179,7 @@ async function saveAutomaticRestarts() {
 		.then(response => {
 			if (response.success) {
 				showToast('success', 'Automatic restarts scheduled.');
-				autoRestartModal.classList.remove('show');
+				closeModal(autoRestartModal);
 				loadAutomaticRestarts();
 			} else {
 				showToast('error', `Failed to save schedule: ${response.error}`);
@@ -186,79 +188,78 @@ async function saveAutomaticRestarts() {
 		.catch(() => showToast('error', 'Error saving schedule'));
 }
 
-/**
- * Primary handler to load the application on page load
- */
-window.addEventListener('DOMContentLoaded', () => {
+function loadServiceSettings() {
+	// Pull automatic update checks
+	loadAutomaticUpdates();
+	loadAutomaticRestarts();
+}
 
-	const {guid, host} = getPathParams('/application/configure/:guid/:host');
 
-	Promise.all([
-		loadApplication(guid).then(appData => {
-			let hostData = appData.hosts.filter(h => h.host === host)[0];
-			if (hostData) {
-				applicationOptions = hostData.options || [];
-			}
-		}),
-		loadHost(host)
-	])
-		.then(() => {
-			// Pull automatic update checks
-			loadAutomaticUpdates();
-			loadAutomaticRestarts();
+// Events
+reinstallBtn.addEventListener('click', () => {
+	window.location.href = `/application/install/${loadedApplication}/${loadedHost}`;
+});
 
-			reinstallBtn.classList.remove('disabled');
-			reinstallBtn.addEventListener('click', () => {
-				window.location.href = `/application/install/${guid}/${host}`;
-			});
+configureAutoUpdateBtn.addEventListener('click', () => {
+	openModal(autoUpdateModal);
+});
+saveAutoUpdateBtn.addEventListener('click', () => {
+	saveAutomaticUpdates();
+});
 
-			configureAutoUpdateBtn.addEventListener('click', () => {
-				autoUpdateModal.classList.add('show');
-			});
-			saveAutoUpdateBtn.addEventListener('click', () => {
-				saveAutomaticUpdates();
-			});
+configureAutoRestartBtn.addEventListener('click', () => {
+	openModal(autoRestartModal);
+});
+saveAutoRestartBtn.addEventListener('click', () => {
+	saveAutomaticRestarts();
+});
 
-			configureAutoRestartBtn.addEventListener('click', () => {
-				autoRestartModal.classList.add('show');
-			});
-			saveAutoRestartBtn.addEventListener('click', () => {
-				saveAutomaticRestarts();
-			});
+openUpdateBtn.addEventListener('click', () => {
+	openModal(updateModal);
+});
+autoUpdateSchedule.addEventListener('change', () => {
+	if (autoUpdateSchedule.value === 'disabled') {
+		delayedUpdate.closest('.form-group').style.display = 'none';
+	}
+	else {
+		delayedUpdate.closest('.form-group').style.display = 'flex';
+	}
+});
+confirmUpdateBtn.addEventListener('click', () => {
+	confirmUpdateBtn.classList.add('disabled');
+	const icon = confirmUpdateBtn.querySelector('i'),
+		classes = icon.className;
+	icon.className = 'fas fa-spinner fa-spin';
 
-			openUpdateBtn.addEventListener('click', () => {
-				updateModal.classList.add('show');
-			});
-			autoUpdateSchedule.addEventListener('change', () => {
-				if (autoUpdateSchedule.value === 'disabled') {
-					delayedUpdate.closest('.form-group').style.display = 'none';
-				}
-				else {
-					delayedUpdate.closest('.form-group').style.display = 'flex';
-				}
-			});
-			confirmUpdateBtn.addEventListener('click', () => {
-				confirmUpdateBtn.classList.add('disabled');
-				const icon = confirmUpdateBtn.querySelector('i'),
-					classes = icon.className;
-				icon.className = 'fas fa-spinner fa-spin';
+	stream(
+		`/api/application/update/${loadedApplication}/${loadedHost}`,
+		'POST',
+		{},
+		'',
+		(event, data) => {
+			terminalOutputHelper(updateModal.querySelector('.terminal'), event, data);
+		}).then(() => {
+		// Stream ended
+		showToast('success', 'Update process completed.');
+	}).catch(err => {
+		showToast('error', 'Update process encountered an error. See terminal output for details.');
+	}).finally(() => {
+		icon.className = classes;
+		confirmUpdateBtn.classList.remove('disabled');
+	});
+});
 
-				stream(
-					`/api/application/update/${guid}/${host}`,
-					'POST',
-					{},
-					'',
-					(event, data) => {
-						terminalOutputHelper(updateModal.querySelector('.terminal'), event, data);
-					}).then(() => {
-					// Stream ended
-					showToast('success', 'Update process completed.');
-				}).catch(err => {
-					showToast('error', 'Update process encountered an error. See terminal output for details.');
-				}).finally(() => {
-					icon.className = classes;
-					confirmUpdateBtn.classList.remove('disabled');
-				});
-			});
-		});
+document.addEventListener('serviceEnabledChange', e => {
+	if (e.detail.value) {
+		automatedStartDisabledMessage.style.display = 'none';
+		automatedStartEnabledMessage.style.display = 'flex';
+		configureAutoStartEnableBtn.style.display = 'none';
+		configureAutoStartDisableBtn.style.display = 'inline-flex';
+	}
+	else {
+		automatedStartDisabledMessage.style.display = 'flex';
+		automatedStartEnabledMessage.style.display = 'none';
+		configureAutoStartEnableBtn.style.display = 'inline-flex';
+		configureAutoStartDisableBtn.style.display = 'none';
+	}
 });
