@@ -1,365 +1,197 @@
-// Example: populate one host entry from a JS object
-function renderHost(host, hostData) {
-	const hostContainer = document.createElement('div'),
-		hostnameContainer = document.createElement('div'),
-		metricsContainer = document.createElement('div');
-
-	hostContainer.className = 'host-card';
-	hostContainer.dataset.host = host;
-	metricsContainer.className = 'host-metrics';
-
-	const target = document.getElementById('hostsList');
-	const cpuGraph = document.getElementById('cpu-speedometer-template').content.cloneNode(true);
-
-	const thumbnail = hostContainer.appendChild(renderHostOSThumbnail(host));
-
-	// Hostname
-	hostnameContainer.className = 'host-title';
-	const hostname = document.createElement('h4');
-	hostname.className = 'host-name';
-	hostname.innerHTML = `${renderHostIcon(host)} <span>${hostData.hostname || host}</span>`;
-	hostnameContainer.appendChild(hostname);
-/*
-	// IP/
-	const ip = document.createElement('div');
-	ip.className = 'host-desc';
-	ip.textContent = host || '';
-	hostnameContainer.appendChild(ip);*/
-
-	// Actions (Add Delete button)
-	const actions = document.createElement('div');
-	const deleteBtn = document.createElement('button');
-	const firewallBtn = document.createElement('button');
-
-	actions.className = 'host-actions';
-
-	if (hostData.connected) {
-		firewallBtn.className = 'link-control action-edit';
-		firewallBtn.dataset.href = `/host/firewall/${encodeURIComponent(host)}`;
-		firewallBtn.title = 'Host Firewall';
-		firewallBtn.innerHTML = '<i class="fas fa-shield"></i>';
-		actions.appendChild(firewallBtn);
-	}
-
-	deleteBtn.className = 'link-control action-remove';
-	deleteBtn.dataset.href = `/host/delete/${encodeURIComponent(host)}`;
-	deleteBtn.title = 'Delete Host';
-	deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
-	actions.appendChild(deleteBtn);
-
-	hostnameContainer.appendChild(actions);
-
-	// --- CPU: show speedometer + small percent text ---
-	const cpu = document.createElement('div');
-	cpu.className = 'metric-item metric-cpu';
-	cpu.appendChild(cpuGraph);
-	const cpuMeta = document.createElement('div');
-	cpuMeta.className = 'metric-meta';
-	const cpuModel = document.createElement('div');
-	cpuModel.className = 'metric-label cpu-model';
-	if (hostData.cpu.model) {
-		cpuModel.textContent = (hostData.cpu.count > 1 ? `${hostData.cpu.count}x ` : '') + hostData.cpu.model;
-		cpuMeta.appendChild(cpuModel);
-	}
-	const cpuPercent = document.createElement('div');
-	cpuPercent.className = 'cpu-percent';
-	cpuPercent.textContent = `${Math.max(0, Math.min(100, Number(hostData.cpu.usage) || 0))}%`;
-	cpuMeta.appendChild(cpuPercent);
-	cpu.appendChild(cpuMeta);
-	metricsContainer.appendChild(cpu);
-
-	// --- Memory: vertical bar with label ---
-	const memory = document.createElement('div');
-	memory.className = 'metric-item metric-memory';
-	const memGraph = document.createElement('div');
-	memGraph.className = 'mem-graph metric-graph';
-	const memUsed = document.createElement('div');
-	memUsed.className = 'mem-used';
-	memGraph.appendChild(memUsed);
-	memory.appendChild(memGraph);
-	const memLabel = document.createElement('div');
-	memLabel.className = 'metric-label mem-summary';
-	memLabel.textContent = `${formatFileSize(hostData.memory.used)} / ${formatFileSize(hostData.memory.total)}`;
-	memory.appendChild(memLabel);
-	metricsContainer.appendChild(memory);
-
-	// Memory values and state
-	const used = Number(hostData.memory.used || 0);
-	const total = Number(hostData.memory.total || 0) || 1;
-	const memPct = Math.max(0, Math.min(100, (used / total) * 100));
-	if (memPct >= 80) {
-		memGraph.classList.add('usage-status-critical');
-	}
-	else if (memPct >= 60) {
-		memGraph.classList.add('usage-status-warning');
-	}
-	else {
-		memGraph.classList.add('usage-status-normal');
-	}
-	memUsed.style.height = `${memPct}%`;
-
-	// --- Disk: aggregated summary ---
-	const diskSummary = document.createElement('div');
-	diskSummary.className = 'metric-item metric-disk-summary';
-	let totalDisk = 0, totalAvail = 0;
-	hostData.disks.forEach(disk => {
-		totalDisk += Number(disk.size || 0);
-		totalAvail += Number(disk.avail || 0);
-	});
-	const totalUsed = Math.max(0, totalDisk - totalAvail);
-	const diskPct = totalDisk > 0 ? Math.round((totalUsed / totalDisk) * 100) : 0;
-	diskSummary.innerHTML = `<div class="metric-label">Disk</div><div class="metric-value">${formatFileSize(totalAvail)} free (${diskPct}% used)</div>`;
-	metricsContainer.appendChild(diskSummary);
-
-	// Append a compact host details area with IP, cores and a per-disk list
-	const details = document.createElement('div');
-	details.className = 'host-details';
-	// IP
-	const ipItem = document.createElement('div');
-	ipItem.className = 'detail-item detail-ip';
-	// If IP looks like loopback or localhost, prefer to display public IPv4 if available
-	let rawIp = hostData.ip || '';
-	let publicIp = hostData.public_ip || '';
-	let ipDisplay = rawIp;
-	let ipClass = 'ip-value';
-	let titleText = rawIp;
-	if (rawIp === '127.0.0.1' || rawIp === '::1' || rawIp.toLowerCase() === 'localhost' || rawIp.startsWith('127.') ) {
-		if (publicIp) {
-			ipDisplay = publicIp;
-			ipClass += ' public';
-			titleText = `raw: ${rawIp} (public: ${publicIp})`;
-		}
-		else {
-			ipDisplay = hostData.hostname || rawIp || '';
-			ipClass += ' loopback';
-			titleText = rawIp;
-		}
-	}
-	ipItem.innerHTML = `<i class="fas fa-network-wired"></i><span class="detail-label">IP</span><span class="detail-value ${ipClass}" title="${titleText}">${ipDisplay}</span>`;
-	details.appendChild(ipItem);
-	// Cores / Threads — show physical cores and logical threads (e.g., "8 cores / 16 threads")
-	const coreItem = document.createElement('div');
-	coreItem.className = 'detail-item detail-cores';
-	const threads = hostData.cpu.threads || 0;
-	const physical = hostData.cpu.physical_cores || (hostData.cpu.cores_per_socket && hostData.cpu.count ? (hostData.cpu.cores_per_socket * hostData.cpu.count) : 0);
-	let coreText = '';
-	if (physical && physical > 0) {
-		coreText = `${physical} cores / ${threads} threads`;
-	} else {
-		coreText = `${threads} threads`;
-	}
-	coreItem.innerHTML = `<i class="fas fa-microchip"></i><span class="detail-label">Cores</span><span class="detail-value cores-value">${coreText}</span>`;
-	details.appendChild(coreItem);
-	// Memory percent
-	const memItem = document.createElement('div');
-	memItem.className = 'detail-item detail-memory';
-	memItem.innerHTML = `<i class="fas fa-memory"></i><span class="detail-label">Memory</span><span class="detail-value mem-value">${Math.round(memPct)}%</span>`;
-	details.appendChild(memItem);
-	// CPU usage
-	const cpuItem = document.createElement('div');
-	cpuItem.className = 'detail-item detail-cpu';
-	cpuItem.innerHTML = `<i class="fas fa-tachometer-alt"></i><span class="detail-label">CPU</span><span class="detail-value cpu-value">${Math.max(0, Math.min(100, Number(hostData.cpu.usage) || 0))}%</span>`;
-	details.appendChild(cpuItem);
-	// Disk per mountpoint (small)
-	if (hostData.disks && hostData.disks.length) {
-		const diskList = document.createElement('div');
-		diskList.className = 'disk-list';
-		hostData.disks.slice(0,3).forEach(disk => {
-			const d = document.createElement('div');
-			d.className = 'disk-item';
-			const dUsed = Number(disk.used || 0), dSize = Number(disk.size || 0), dPct = dSize > 0 ? Math.round((dUsed / dSize) * 100) : 0;
-			d.innerHTML = `<span class="disk-mount">${disk.mountpoint}</span><span class="disk-free">${formatFileSize(disk.avail)} free</span><span class="disk-pct">${dPct}%</span>`;
-			diskList.appendChild(d);
-		});
-		details.appendChild(diskList);
-	}
-
-	hostContainer.appendChild(thumbnail);
-	hostContainer.appendChild(hostnameContainer);
-	hostContainer.appendChild(metricsContainer);
-	hostContainer.appendChild(details);
-	target.appendChild(hostContainer);
-}
+const hostsContainer = document.getElementById('hostsContainer'),
+	hostsTable = document.getElementById('hosts-table');
 
 /**
- * Updating an existing host entry with new metrics
- *
+ * Populate hosts table with host data
  * @param {string} host
  * @param {HostData} hostData
  */
-function updateHost(host, hostData) {
-	const hostContainer = document.querySelector(`.host-card[data-host="${host}"]`);
-	if (!hostContainer) {
-		// Host not found, render new
-		renderHost(host, hostData);
-		return;
+function populateHostsTable(host, hostData) {
+	const table = hostsTable,
+		now = parseInt(Date.now() / 1000);
+
+	let row = table.querySelector('div.host[data-host="' + host + '"]'),
+		fields = ['thumbnail', 'hostname', 'ip', 'os', 'cpu', 'memory', 'disk', 'actions'];
+
+	if (!row) {
+		// Create new row
+		row = document.createElement('div');
+		row.className = 'host';
+		row.setAttribute('data-host', host);
+		table.querySelector('.body').appendChild(row);
+
+		// Initialize empty cells
+		fields.forEach(field => {
+			const cell = document.createElement('div');
+			cell.className = field;
+			row.appendChild(cell);
+		});
 	}
 
-	// TEST
-	//hostData.cpu.usage = 95;
+	row.dataset.updated = String(now);
 
-	// Update CPU needle and percent
-	const cpuNeedle = hostContainer.querySelector('.gauge-needle');
-	const percent = Math.max(0, Math.min(100, Number(hostData.cpu.usage) || 0));
-	const rot = -90 + (percent * 180 / 100);
-	cpuNeedle.style.transform = `rotate(${rot}deg)`;
+	// Calculate metrics
+	const used = Number(hostData.memory.used || 0),
+		total = Number(hostData.memory.total || 0) || 1,
+		memPct = Math.max(0, Math.min(100, (used / total) * 100)),
+		cpuPct = Math.max(0, Math.min(100, Number(hostData.cpu.usage) || 0));
 
-	const arc = hostContainer.querySelector('.gauge-arc');
-	if (arc) {
-		const offset = 565 - (255 * (percent / 100));
-		arc.style.strokeDashoffset = String(offset);
-	}
-	const cpuPercent = hostContainer.querySelector('.cpu-percent');
-	if (cpuPercent) cpuPercent.textContent = `${percent}%`;
-	const cpuValue = hostContainer.querySelector('.detail-cpu .cpu-value');
-	if (cpuValue) cpuValue.textContent = `${percent}%`;
-	// Update cores value (physical cores / logical threads)
-	const coresValue = hostContainer.querySelector('.cores-value');
-	if (coresValue) {
-		const threads = hostData.cpu.threads || 0;
-		const physical = hostData.cpu.physical_cores || (hostData.cpu.cores_per_socket && hostData.cpu.count ? (hostData.cpu.cores_per_socket * hostData.cpu.count) : 0);
-		let coreText = '';
-		if (physical && physical > 0) coreText = `${physical} cores / ${threads} threads`;
-		else coreText = `${threads} threads`;
-		coresValue.textContent = coreText;
-	}
-	// Update IP display in case it changed; keep loopback handling
-	const ipElem = hostContainer.querySelector('.ip-value');
-	if (ipElem) {
-		let rawIp = hostData.ip || '';
-		let publicIp = hostData.public_ip || '';
-		let ipDisplay = rawIp;
-		let isLoop = false;
-		let titleText = rawIp;
-		if (rawIp === '127.0.0.1' || rawIp === '::1' || rawIp.toLowerCase() === 'localhost' || rawIp.startsWith('127.')) {
-			if (publicIp) {
-				ipDisplay = publicIp;
-				titleText = `raw: ${rawIp} (public: ${publicIp})`;
-				ipElem.classList.add('public');
-				ipElem.classList.remove('loopback');
-			} else {
-				ipDisplay = hostData.hostname || rawIp || '';
-				isLoop = true;
-				ipElem.classList.add('loopback');
-				ipElem.classList.remove('public');
-			}
-		}
-		else {
-			ipElem.classList.remove('public');
-			ipElem.classList.remove('loopback');
-		}
-		ipElem.textContent = ipDisplay;
-		ipElem.title = titleText;
-	}
-
-	// Update Memory
-	const memUsedDiv = hostContainer.querySelector('.mem-used');
-	const memGraph = hostContainer.querySelector('.mem-graph');
-	const used = Number(hostData.memory.used || 0);
-	const total = Number(hostData.memory.total || 0) || 1;
-	const memPct = Math.max(0, Math.min(100, (used / total) * 100));
-	memUsedDiv.style.height = `${memPct}%`;
-
-	// Update memory status class
-	memGraph.classList.remove('usage-status-normal', 'usage-status-warning', 'usage-status-critical');
-	if (memPct >= 80) {
-		memGraph.classList.add('usage-status-critical');
-	}
-	else if (memPct >= 60) {
-		memGraph.classList.add('usage-status-warning');
-	}
-	else {
-		memGraph.classList.add('usage-status-normal');
-	}
-
-	// Update memory label and detail
-	const memLabel = hostContainer.querySelector('.metric-memory .mem-summary');
-	if (memLabel) memLabel.textContent = `${formatFileSize(hostData.memory.used)} / ${formatFileSize(hostData.memory.total)}`;
-	const memDetail = hostContainer.querySelector('.detail-memory .mem-value');
-	if (memDetail) memDetail.textContent = `${Math.round(memPct)}%`;
-
-	// Update disk summary and per-disk items
 	let totalDisk = 0, totalAvail = 0;
 	hostData.disks.forEach(disk => {
 		totalDisk += Number(disk.size || 0);
 		totalAvail += Number(disk.avail || 0);
 	});
-	const totalUsed = Math.max(0, totalDisk - totalAvail);
-	const diskPct = totalDisk > 0 ? Math.round((totalUsed / totalDisk) * 100) : 0;
-	const diskSummary = hostContainer.querySelector('.metric-disk-summary');
-	if (diskSummary) {
-		diskSummary.querySelector('.metric-value').textContent = `${formatFileSize(totalAvail)} free (${diskPct}% used)`;
+	const totalUsed = Math.max(0, totalDisk - totalAvail),
+		diskPct = totalDisk > 0 ? Math.round((totalUsed / totalDisk) * 100) : 0;
+
+	// Prepare action buttons
+	let actionButtons = [];
+	if (hostData.connected) {
+		actionButtons.push(`
+<button title="Host Firewall" data-href="/host/firewall/${encodeURIComponent(host)}" class="link-control action-edit">
+<i class="fas fa-shield"></i><span>Firewall</span>
+</button>`);
 	}
-	// per-disk
-	const diskItems = hostContainer.querySelectorAll('.disk-item');
-	hostData.disks.slice(0, diskItems.length).forEach((disk, idx) => {
-		const d = diskItems[idx];
-		if (!d) return;
-		const dUsed = Number(disk.used || 0), dSize = Number(disk.size || 0), dPct = dSize > 0 ? Math.round((dUsed / dSize) * 100) : 0;
-		d.querySelector('.disk-free').textContent = `${formatFileSize(disk.avail)} free`;
-		d.querySelector('.disk-pct').textContent = `${dPct}%`;
+	actionButtons.push(`
+<button title="Delete Host" data-href="/host/delete/${encodeURIComponent(host)}" class="link-control action-remove">
+<i class="fas fa-trash"></i><span>Delete</span>
+</button>`);
+
+	// Populate cells
+	fields.forEach(field => {
+		const cell = row.querySelector('div.' + field);
+		let val = '';
+
+		if (field === 'thumbnail') {
+			val = renderHostOSThumbnail(host).outerHTML;
+		}
+		else if (field === 'hostname') {
+			val = `${renderHostIcon(host)} <span>${hostData.hostname || host}</span>`;
+		}
+		else if (field === 'ip') {
+			let rawIp = hostData.ip || '',
+				publicIp = hostData.public_ip || '',
+				ipDisplay = rawIp;
+
+			if (rawIp === '127.0.0.1' || rawIp === '::1' || rawIp.toLowerCase() === 'localhost' || rawIp.startsWith('127.')) {
+				if (publicIp) {
+					ipDisplay = publicIp;
+				} else {
+					ipDisplay = hostData.hostname || rawIp || '';
+				}
+			}
+			val = ipDisplay;
+		}
+		else if (field === 'os') {
+			val = hostData.os ? hostData.os.title : 'Unknown';
+		}
+		else if (field === 'cpu') {
+			val = `${cpuPct}%`;
+			// Add CPU details for card view
+			if (hostData.cpu.model) {
+				val += `<div class="cpu-details">${hostData.cpu.model}</div>`;
+			}
+		}
+		else if (field === 'memory') {
+			val = `${formatFileSize(used)} / ${formatFileSize(total)}`;
+			val += `<div class="mem-bar"><div class="mem-fill" style="width: ${memPct}%"></div></div>`;
+		}
+		else if (field === 'disk') {
+			val = `${formatFileSize(totalAvail)} free (${diskPct}% used)`;
+		}
+		else if (field === 'actions') {
+			val = '<div class="">' + actionButtons.join(' ') + '</div>';
+		}
+
+		cell.innerHTML = val;
+	});
+
+	// Remove loading rows
+	table.querySelectorAll('div.host-loading').forEach(row => {
+		row.remove();
 	});
 }
 
-// Example usage: replace loading state and render array
-function renderHosts(hosts) {
-	const container = document.getElementById('hostsList');
+function noHostsAvailable() {
+	const body = hostsTable.querySelector('.body'),
+		row = document.createElement('div');
 
-	if (Object.keys(hosts).length === 0) {
-		container.innerHTML = '<div style="grid-column:1/-1;"><p class="error-message">No hosts found</p></div>';
-		return;
-	}
+	body.innerHTML = '';
 
-	Object.keys(hosts).forEach(hostId => {
-		if (document.querySelector(`.host-card[data-host="${hostId}"]`)) {
-			updateHost(hostId, hosts[hostId]);
+	row.className = 'host no-hosts-available';
+	row.innerHTML = '<div class="warning-message"><p>No hosts available. Please <a href="/host/add">add a host</a> to manage applications and services.</p></div>';
+	body.appendChild(row);
+}
+
+/**
+ * Load all hosts and their stats
+ */
+function loadAllHosts() {
+	fetchHosts().then(hosts => {
+		if (Object.keys(hosts).length === 0) {
+			noHostsAvailable();
+			return;
 		}
-		else {
-			renderHost(hostId, hosts[hostId]);
-		}
+
+		Object.entries(hosts).forEach(([host, hostData]) => {
+			populateHostsTable(host, hostData);
+		});
+	}).catch(error => {
+		console.error('Error loading hosts:', error);
+		noHostsAvailable();
 	});
 }
-
-function displayNoHosts() {
-	const hostsList = document.getElementById('hostsList');
-	hostsList.innerHTML = `
-		<div style="grid-column: 1 / -1;">
-			<div class="error-message">
-				<p style="text-align:center; width:100%;">
-					<i class="fas fa-server" style="font-size: 2rem; margin-bottom: 1rem; display: block; opacity: 0.3;"></i>
-					<br/>
-					No hosts available. Please <a href="/host/add">add a host</a> to manage applications and services.
-				</p>
-			</div>
-		</div>
-	`;
-}
-
-fetchHosts().then(hosts => {
-	if (Object.values(hosts).length === 0) {
-		displayNoHosts();
-		return;
-	}
-
-	setInterval(() => {
-		fetchHosts().then(hosts => renderHosts(hosts));
-	}, 5000);
-
-	renderHosts(hosts);
-}).catch(err => {
-	console.error('Error fetching hosts:', err);
-});
 
 // Dynamic events for various buttons
 document.addEventListener('click', e => {
-	if (e.target) {
-		if (e.target.classList.contains('link-control') || e.target.closest('.link-control')) {
-			let btn = e.target.classList.contains('link-control') ? e.target : e.target.closest('.link-control'),
-				href = btn.dataset.href;
+	if (e.target && (e.target.classList.contains('link-control') || e.target.closest('.link-control'))) {
+		let btn = e.target.classList.contains('link-control') ? e.target : e.target.closest('.link-control'),
+			href = btn.dataset.href;
 
-			e.preventDefault();
-
-			window.location.href = href;
-		}
+		e.preventDefault();
+		window.location.href = href;
 	}
 });
+
+// View changer buttons
+document.querySelectorAll('.view-changer').forEach(btn => {
+	btn.addEventListener('click', () => {
+		hostsTable.classList.remove('card-view', 'table-view');
+		hostsTable.classList.add(btn.dataset.view);
+		localStorage.setItem('hosts-view', btn.dataset.view);
+	});
+});
+
+// Load on page load
+window.addEventListener('DOMContentLoaded', () => {
+	// Set initial view from localStorage
+	const savedView = localStorage.getItem('hosts-view');
+	if (savedView === 'card-view' || savedView === 'table-view') {
+		hostsTable.classList.add(savedView);
+	} else {
+		hostsTable.classList.add('card-view'); // Default view
+	}
+
+	// Add resize handler to force UI to card view when less than 1200px wide
+	window.addEventListener('resize', () => {
+		if (window.innerWidth < 1200 && hostsTable.classList.contains('table-view')) {
+			hostsTable.classList.remove('table-view');
+			hostsTable.classList.add('card-view');
+			hostsTable.dataset.mobileOverride = '1';
+		} else if (window.innerWidth >= 1200 && hostsTable.dataset.mobileOverride === '1') {
+			hostsTable.classList.remove('card-view');
+			hostsTable.classList.add('table-view');
+			delete hostsTable.dataset.mobileOverride;
+		}
+	});
+	if (window.innerWidth < 1200 && hostsTable.classList.contains('table-view')) {
+		hostsTable.classList.remove('table-view');
+		hostsTable.classList.add('card-view');
+		hostsTable.dataset.mobileOverride = '1';
+	}
+
+	// Load all hosts and periodically update the list
+	loadAllHosts();
+	setInterval(loadAllHosts, 60*1000); // Refresh hosts every 60 seconds
+});
+

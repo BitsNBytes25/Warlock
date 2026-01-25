@@ -26,6 +26,9 @@ export async function validateHostApplication(host, guid) {
 				});
 				// If the host is not found, we can immediately reject the lookup.
 				return reject(new Error(`Host '${host}' does not have application installed with GUID '${guid}'`));
+			})
+			.catch(e => {
+				return reject(new Error(`Error retrieving applications: ${e.message}`));
 			});
 	});
 }

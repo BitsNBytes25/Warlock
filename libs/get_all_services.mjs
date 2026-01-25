@@ -36,6 +36,9 @@ export async function getAllServices() {
 
 						resolve(services);
 					});
-			});
+			})
+			.catch(e => {
+				resolve([]);
+			})
 	});
 }

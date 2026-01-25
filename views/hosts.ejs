@@ -23,6 +23,12 @@
                     Fleet Hosts
                 </h2>
                 <div class="content-header-buttons">
+                    <button data-view="card-view" class="action-view view-changer" title="Card View">
+                        <i class="fas fa-th-large"></i>
+                    </button>
+                    <button data-view="table-view" class="action-view view-changer" title="List View">
+                        <i class="fas fa-list"></i>
+                    </button>
                     <button class="link-control action-create" data-href="/host/add">
                         <i class="fas fa-plus"></i>
                         Add Host
@@ -33,14 +39,31 @@
         </div>
 
         <div class="content-body">
-
             <!-- Hosts List -->
             <div id="hostsContainer">
-                <h3>
-                    <i class="fas fa-th-large"></i>
-                    Available Servers
-                </h3>
-                <div id="hostsList" style=""></div>
+                <div id="hosts-table">
+                    <div class="header">
+                        <div class="hostname">Hostname</div>
+                        <div class="ip">IP Address</div>
+                        <div class="os">Operating System</div>
+                        <div class="cpu">CPU</div>
+                        <div class="memory">Memory</div>
+                        <div class="disk">Disk</div>
+                        <div class="actions">Actions</div>
+                    </div>
+                    <div class="body">
+                        <div class="host host-loading" data-updated="0">
+                            <div class="thumbnail"></div>
+                            <div class="hostname">Loading...</div>
+                            <div class="ip">0.0.0.0</div>
+                            <div class="os">Loading OS</div>
+                            <div class="cpu">-</div>
+                            <div class="memory">- / -</div>
+                            <div class="disk">-</div>
+                            <div class="actions"></div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </main>
@@ -48,55 +71,7 @@
 
 <%- include('partials/theme-selector.ejs') %>
 
-<template id="cpu-speedometer-template">
-    <svg class="cpu-speedometer" viewBox="0 0 200 100" aria-hidden="true">
-        <defs>
-            <linearGradient id="gaugeGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" class="bg-start" />
-                <stop offset="60%" class="bg-mid" />
-                <stop offset="100%" class="bg-stop" />
-            </linearGradient>
-        </defs>
-        <!-- background arc -->
-        <path class="gauge-bg" d="M16,100 A70,70 0 0,1 184,100" fill="none" stroke-width="32" stroke-linecap="round" />
-        <!-- coloured arc (mask/clip not required for template) -->
-        <path class="gauge-arc" d="M16,100 A70,70 0 0,1 184,100" fill="none" stroke="url(#gaugeGrad)" stroke-width="28" stroke-linecap="round" stroke-dasharray="565" stroke-dashoffset="565" />
-        <!-- needle pivot -->
-        <g transform="translate(100,90)">
-            <line class="gauge-needle" x1="0" y1="0" x2="0" y2="-72" stroke="#fff" stroke-width="3" stroke-linecap="round" style="transform-origin: 0px 0px;" />
-            <circle cx="0" cy="0" r="4" fill="#fff" />
-        </g>
-    </svg>
-</template>
-
-<template id="host-row-template">
-    <div class="host-row" role="group" aria-label="Host row" style="">
-
-
-        <!-- CPU: model name, threads, speedometer-style usage -->
-        <div class="host-cpu" style="display:flex; flex-direction:column; align-items:center; gap:6px;">
-            <div class="cpu-meta" style="font-size:0.85rem; color:#9aa; text-align:center;">
-                <div class="cpu-model">Model name</div>
-                <div class="cpu-threads">Threads: <span class="cpu-thread-count">0</span></div>
-            </div>
-            <div class="cpu-gauge" style="width:220px; height:110px; display:flex; align-items:center; justify-content:center;">
-                <!-- A simple semicircle gauge built with SVG. Rotate the needle by setting style="transform: rotate(%deg)" on .gauge-needle element. -->
-
-            </div>
-            <div class="cpu-percent" style="font-family: Rajdhani, sans-serif; font-weight:600;">0%</div>
-        </div>
-
-        <!-- Memory: vertical bar graph -->
-        <div class="host-memory" style="display:flex; flex-direction:column; align-items:center; gap:6px;">
-            <div class="mem-meta" style="font-size:0.85rem; color:#9aa;">Memory</div>
-            <div class="mem-viewport" style="width:48px; height:80px; border-radius:6px; background: rgba(255,255,255,0.03); overflow:hidden; display:flex; align-items:flex-end;">
-                <div class="mem-fill" style="width:100%; height:10%; background: linear-gradient(180deg,var(--status-good),var(--status-good-bg-2)); box-shadow: inset 0 0 6px rgba(0,0,0,0.4);"></div>
-            </div>
-            <div class="mem-text" style="font-size:0.85rem; color:#9aa;">0 GB / 0 GB</div>
-        </div>
-    </div>
-</template>
-
 <script src="/assets/hosts.js"></script>
 </body>
 </html>
+
