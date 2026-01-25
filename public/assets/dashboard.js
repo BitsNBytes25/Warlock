@@ -442,6 +442,25 @@ window.addEventListener('DOMContentLoaded', () => {
 		servicesTable.classList.add('table-view'); // Default view
 	}
 
+	// Add resize handler to force UI to card view when less than 1200px wide.
+	window.addEventListener('resize', () => {
+		if (window.innerWidth < 1200 && servicesTable.classList.contains('table-view')) {
+			servicesTable.classList.remove('table-view');
+			servicesTable.classList.add('card-view');
+			servicesTable.dataset.mobileOverride = '1';
+		}
+		else if (window.innerWidth >= 1200 && servicesTable.dataset.mobileOverride === '1') {
+			servicesTable.classList.remove('card-view');
+			servicesTable.classList.add('table-view');
+			delete servicesTable.dataset.mobileOverride;
+		}
+	});
+	if (window.innerWidth < 1200 && servicesTable.classList.contains('table-view')) {
+		servicesTable.classList.remove('table-view');
+		servicesTable.classList.add('card-view');
+		servicesTable.dataset.mobileOverride = '1';
+	}
+
 	fetchHosts().then(hosts => {
 		if (Object.values(hosts).length === 0) {
 			displayNoHosts();

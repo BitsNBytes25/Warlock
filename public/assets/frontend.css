@@ -1005,7 +1005,7 @@ button.link-control span {
 	display: grid;
 	align-items: center;
 	grid-template-areas: 'host icon name enabled status port players memory cpu actions';
-	grid-template-columns: 1fr 4rem 1fr 6rem 9rem 5rem 5rem 5rem 3rem 12rem;
+	grid-template-columns: 12rem 3rem 1fr 4rem 9rem 5rem 5rem 5rem 3rem 13rem;
 	gap: 2rem;
 	padding: 0.5rem 0;
 	border-bottom: 1px solid var(--table-border);
@@ -1026,6 +1026,7 @@ button.link-control span {
 #services-table.table-view .host {
 	grid-area: host;
 	padding-left: 1rem;
+	overflow: hidden;
 }
 #services-table.table-view .icon {
 	grid-area: icon;
@@ -1033,6 +1034,7 @@ button.link-control span {
 }
 #services-table.table-view .name {
 	grid-area: name;
+	overflow: hidden;
 }
 #services-table.table-view .enabled {
 	grid-area: enabled;
@@ -1111,15 +1113,18 @@ button.link-control span {
 	order: 1;
 	z-index: 2;
 	flex: 4 100%;
-	height: 2.5rem;
+	height: 3.5rem;
 	font-weight: bold;
 	font-size: 1.5rem;
+	text-align: center;
+	padding-top: 0.5rem;
 }
 #services-table.card-view .host {
 	order: 2;
 	z-index: 2;
 	flex: 4 100%;
 	height: 4rem;
+	text-align: center;
 }
 #services-table.card-view .enabled {
 	display: none;
@@ -2784,9 +2789,28 @@ button.link-control span {
    Responsive Design
    ========================== */
 
-@media (max-width: 1400px) {
-	#services-table .host {
+@media (max-width: 1550px) {
+	#services-table.table-view .header,
+	#services-table.table-view .service {
+		grid-template-areas: 'host icon name enabled status players memory cpu actions';
+		grid-template-columns: 12rem 3rem 1fr 4rem 9rem 5rem 5rem 3rem 13rem;
+	}
+	#services-table.table-view .port {
 		display: none;
+	}
+}
+
+@media (max-width: 1400px) {
+	#services-table.table-view .header,
+	#services-table.table-view .service {
+		grid-template-areas: 'icon name enabled status players memory cpu actions';
+		grid-template-columns: 3rem 1fr 4rem 9rem 5rem 5rem 3rem 13rem;
+	}
+	#services-table.table-view .host {
+		display: none;
+	}
+	#services-table.table-view .icon {
+		padding-left: 1rem;
 	}
 }
 
@@ -2805,23 +2829,12 @@ button.link-control span {
 		font-size: 1.5rem;
 	}
 
-	#applicationsList, #hostsList {
-		grid-template-columns: repeat(3, minmax(250px, 1fr));
+	#services-table.card-view .service {
+		flex: 1 40%;
 	}
 
-	#services-table .age {
-		display: none;
-	}
-	#services-table .port {
-		display: none;
-	}
-}
-
-@media (max-width: 1060px) {
-	#services-table .memory {
-		display: none;
-	}
-	#services-table .cpu {
+	/* Hide the view-changer buttons on smaller screens */
+	.view-changer {
 		display: none;
 	}
 }
@@ -2858,72 +2871,26 @@ button.link-control span {
 		font-size: 0.95rem;
 		padding: 0.4rem 0.8rem;
 	}
-
-	#applicationsList, #hostsList {
-		grid-template-columns: repeat(2, minmax(250px, 1fr));
-	}
-}
-
-/* Hide mobile actions rows by default */
-#services-table tbody tr.service-actions {
-	display: none;
 }
 
 @media (max-width: 900px) {
-	#services-table .actions {
-		display: none;
+	#services-table.card-view .service {
+		flex: 1 100%;
 	}
-	
-	#services-table tbody tr.service {
-		cursor: pointer;
-		position: relative;
+}
+
+@media (max-width: 700px) {
+	.content-header-inner h2 {
+		flex: 3 100%;
+		order: 1;
 	}
-	
-	#services-table tbody tr.service::after {
-		content: '\f0d7';
-		font-family: 'Font Awesome 6 Free';
-		font-weight: 900;
-		position: absolute;
-		right: 10px;
-		top: 50%;
-		transform: translateY(-50%);
-		color: var(--text-secondary);
-		font-size: 1rem;
-		transition: transform 0.3s;
+	.content-header-inner p {
+		order: 2;
+		margin-bottom: 1rem;
 	}
-	
-	#services-table tbody tr.service.expanded::after {
-		transform: translateY(-50%) rotate(180deg);
-	}
-	
-	#services-table tbody tr.service-actions {
-		display: none;
-	}
-	
-	#services-table tbody tr.service.expanded + tr.service-actions {
-		display: table-row;
-	}
-	
-	#services-table tbody tr.service-actions td {
-		padding: 10px;
-		background: var(--card-bg);
-		border-top: 1px solid var(--content-border);
-	}
-	
-	#services-table tbody tr.service-actions .mobile-actions {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 8px;
-	}
-	
-	#services-table tbody tr.service-actions .mobile-actions button {
-		flex: 1 1 calc(50% - 4px);
-		min-width: 0;
-		padding: 10px 12px;
-		font-size: 0.9rem;
-		white-space: nowrap;
-		overflow: hidden;
-		text-overflow: ellipsis;
+	.content-header-inner .content-header-buttons {
+		flex: 3 100%;
+		order: 3;
 	}
 }
 
