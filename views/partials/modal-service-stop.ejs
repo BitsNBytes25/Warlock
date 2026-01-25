@@ -33,7 +33,7 @@
     const stopModal = document.getElementById('stopModal');
 
     function openServiceStopModal(guid, host, service) {
-		stopModal.classList.add('show');
+		openModal(stopModal);
 		stopModal.querySelectorAll('.service-control').forEach(el => {
 			let action = el.dataset.action;
 			if (checkHostAppHasOption(guid, host, action)) {

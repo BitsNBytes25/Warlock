@@ -1,9 +1,5 @@
 const servicesContainer = document.getElementById('servicesContainer'),
-	stopModal = document.getElementById('stopModal'),
 	servicesTable = document.getElementById('services-table');
-
-// Metrics Modal Functionality
-let metricsCharts = {};
 
 // List of services which are being watched live; these should have the lazy lookups ignored.
 let liveServices = [];
@@ -169,28 +165,37 @@ function populateServicesTable(servicesWithStats) {
 	});
 
 	// Services have been loaded, (at least one), remove "no services" and "services loading" messages
-	if (table.querySelector('tr.no-services-available')) {
-		table.querySelector('tr.no-services-available').remove();
+	if (table.querySelector('div.no-services-available')) {
+		table.querySelector('div.no-services-available').remove();
 	}
-	table.querySelectorAll('tr.service-loading').forEach(row => {
+	table.querySelectorAll('div.service-loading').forEach(row => {
 		row.remove();
 	});
 }
 
 function noServicesAvailable() {
-	const table = document.getElementById('services-table'),
-		row = document.createElement('tr'),
-		colSpan = table.querySelectorAll('th').length,
-		cell = document.createElement('td');
+	const body = servicesTable.querySelector('.body'),
+		row = document.createElement('div');
 
-	table.querySelector('tbody').innerHTML = ''; // Clear existing rows
+	body.innerHTML = ''; // Clear existing rows
 
 	row.className = 'service no-services-available';
-	table.querySelector('tbody').appendChild(row);
+	row.innerHTML = '<p class="warning-message">No services available. Please install applications to manage their services here.</p>';
+	body.appendChild(row);
+}
 
-	cell.colSpan = colSpan;
-	cell.innerHTML = '<p class="warning-message">No services available. Please install applications to manage their services here.</p>';
-	row.appendChild(cell);
+function noHostsAvailable() {
+	const body = servicesTable.querySelector('.body'),
+		row = document.createElement('div');
+
+	body.innerHTML = ''; // Clear existing rows
+
+	// Disable the "install game" button (as no host available for installation)
+	document.querySelector('.content-header-buttons .action-create').style.display = 'none';
+
+	row.className = 'service no-services-available';
+	row.innerHTML = '<div class="warning-message"><p>No hosts available. Please <a href="/host/add">add a host</a> to manage applications and services..</p></div>';
+	body.appendChild(row);
 }
 
 /**
@@ -287,23 +292,6 @@ function streamServiceStats(app_guid, host, service, target_state) {
 	}, true);
 }
 
-function displayNoHosts() {
-	const applicationsList = document.getElementById('applicationsList');
-	applicationsList.innerHTML = `
-		<div style="grid-column: 1 / -1;">
-			<div class="error-message">
-				<p style="text-align:center; width:100%;">
-					<i class="fas fa-server" style="font-size: 2rem; margin-bottom: 1rem; display: block; opacity: 0.3;"></i>
-					<br/>
-					No hosts available. Please <a href="/host/add">add a host</a> to manage applications and services.
-				</p>
-			</div>
-		</div>
-	`;
-
-	document.getElementById('servicesContainer').innerHTML = '';
-}
-
 function checkForUpdates() {
 	document.querySelectorAll('.app-install .update-available').forEach(btn => {
 		btn.classList.remove('update-available');
@@ -341,15 +329,11 @@ document.addEventListener('click', e => {
 				action = btn.dataset.action,
 				host = btn.dataset.host,
 				guid = btn.dataset.guid,
-				tr = servicesContainer.querySelector(`tr[data-host="${host}"][data-service="${service}"]`);
+				tr = servicesContainer.querySelector(`div[data-host="${host}"][data-service="${service}"]`);
 
 			e.preventDefault();
 
-			if (btn.classList.contains('disabled')) {
-				return;
-			}
-
-			stopModal.classList.remove('show');
+			closeModal(stopModal);
 
 			if (action === 'delayed-stop' || action === 'delayed-restart') {
 				// Delayed actions do not trigger live stats streaming
@@ -362,7 +346,7 @@ document.addEventListener('click', e => {
 				if (tr) {
 					tr.classList.add('updating');
 					// Swap the icon to a spinner to indicate a status change
-					let icon = tr.querySelector('td.status i');
+					let icon = tr.querySelector('.status i');
 					if (icon) {
 						icon.className = 'fas fa-sync-alt fa-spin';
 					}
@@ -381,52 +365,23 @@ document.addEventListener('click', e => {
 
 			window.location.href = href;
 		}
-		else if (e.target.classList.contains('action-metrics') || e.target.closest('.action-metrics')) {
-			let btn = e.target.classList.contains('action-metrics') ? e.target : e.target.closest('.action-metrics'),
-				service = btn.dataset.service,
-				host = btn.dataset.host,
-				guid = btn.dataset.guid;
-
-			e.preventDefault();
-			openMetricsModal(host, service, guid);
-		}
 		else if (e.target.classList.contains('open-stop-modal') || e.target.closest('.open-stop-modal')) {
 			let btn = e.target.classList.contains('open-stop-modal') ? e.target : e.target.closest('.open-stop-modal'),
 				service = btn.dataset.service,
 				host = btn.dataset.host,
-				guid = btn.dataset.guid,
-				supportsDelayedStop = btn.dataset.supportDelayedStop === '1',
-				supportsDelayedRestart = btn.dataset.supportDelayedRestart === '1';
+				guid = btn.dataset.guid;
 
-			stopModal.classList.add('show');
-			stopModal.querySelectorAll('.service-control').forEach(el => {
-				let action = el.dataset.action;
-
-				if (action === 'delayed-stop') {
-					if (supportsDelayedStop) {
-						el.style.display = 'inline-block';
-					} else {
-						el.style.display = 'none';
-					}
-				}
-				if (action === 'delayed-restart') {
-					if (supportsDelayedRestart) {
-						el.style.display = 'inline-block';
-					} else {
-						el.style.display = 'none';
-					}
-				}
-
-				el.dataset.service = service;
-				el.dataset.host = host;
-				el.dataset.guid = guid;
-				el.classList.remove('disabled');
-			});
-
-			// stopModal
+			openServiceStopModal(guid, host, service);
 		}
 	}
+});
 
+document.querySelectorAll('.view-changer').forEach(btn => {
+	btn.addEventListener('click', () => {
+		servicesTable.classList.remove('card-view', 'table-view');
+		servicesTable.classList.add(btn.dataset.view);
+		localStorage.setItem('dashboard-services-view', btn.dataset.view);
+	});
 });
 
 
@@ -463,7 +418,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
 	fetchHosts().then(hosts => {
 		if (Object.values(hosts).length === 0) {
-			displayNoHosts();
+			noHostsAvailable();
 			return;
 		}
 		fetchApplications().then(applications => {
@@ -471,13 +426,7 @@ window.addEventListener('DOMContentLoaded', () => {
 			loadAllServicesAndStats();
 			setInterval(loadAllServicesAndStats, 60*1000); // Refresh services every 60 seconds
 
-			document.querySelectorAll('.view-changer').forEach(btn => {
-				btn.addEventListener('click', () => {
-					servicesTable.classList.remove('card-view', 'table-view');
-					servicesTable.classList.add(btn.dataset.view);
-					localStorage.setItem('dashboard-services-view', btn.dataset.view);
-				});
-			});
+
 		}).catch(error => {
 			document.getElementById('applicationsList').innerHTML = `<div style="grid-column:1/-1;"><p class="error-message">${error}</p></div>`;
 			console.error('Error fetching applications:', error);

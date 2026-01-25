@@ -1020,6 +1020,13 @@ button.link-control span {
 	background-color: var(--table-row-hover);
 }
 
+#services-table.table-view .no-services-available {
+	display: flex;
+}
+#services-table.table-view .no-services-available .warning-message {
+	flex: 1 100%;
+}
+
 #services-table.table-view .thumbnail {
 	display: none;
 }
@@ -1088,6 +1095,9 @@ button.link-control span {
 	position: relative;
 	flex: 1 30%;
 	overflow: hidden;
+}
+#services-table.card-view .no-services-available .warning-message {
+	flex: 1 100%;
 }
 
 #services-table.card-view .thumbnail {
