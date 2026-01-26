@@ -151,7 +151,13 @@ router.get('/:host', validate_session, (req, res) => {
 // POST add rule
 router.post('/:host', validate_session, (req, res) => {
 	const host = req.params.host;
-	const {to, from, proto, action, comment} = req.body;
+	let {to, from, proto, action, comment} = req.body;
+
+	if (!action) {
+		return res.json({ success: false, error: 'Action is required to add a rule' });
+	}
+
+	action = action.toUpperCase();
 
 	Host.count({ where: { ip: host } }).then(count => {
 		if (count === 0) {
@@ -195,7 +201,13 @@ router.post('/:host', validate_session, (req, res) => {
 // DELETE remove rule by spec
 router.delete('/:host', validate_session, (req, res) => {
 	const host = req.params.host;
-	const {to, from, proto, action} = req.body;
+	let {to, from, proto, action} = req.body;
+
+	if (!action) {
+		return res.json({ success: false, error: 'Action is required to add a rule' });
+	}
+
+	action = action.toUpperCase();
 
 	Host.count({ where: { ip: host } }).then(count => {
 		if (count === 0) {

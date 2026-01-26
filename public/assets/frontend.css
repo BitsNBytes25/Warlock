@@ -525,8 +525,7 @@ table tbody tr:nth-child(even) {
 	background-color: var(--table-row-bg-2);
 }
 table tbody tr:hover {
-	background-color: rgba(99, 102, 241, 0.15);
-	transform: scale(1.002);
+	background-color: var(--table-row-hover);
 }
 table td {
 	padding: 0.875rem 1rem;
@@ -1958,7 +1957,9 @@ button.link-control span {
 	align-items: center;
 	gap: 1rem;
 	justify-content: space-between;
-	margin-bottom: 2rem;
+	margin-bottom: 1rem;
+	border-bottom: 1px solid var(--content-border);
+	padding-bottom: 1rem;
 }
 .path-controls .current-path {
 	flex: 1;
@@ -2660,6 +2661,47 @@ button.link-control span {
 	grid-area: port-v;
 }
 
+/** </editor-fold> **/
+
+/** <editor-fold desc="Host Details"> **/
+
+.host-details-overview {
+	display: flex;
+	gap: 3rem;
+	margin: 2rem 3rem;
+	flex-wrap: wrap;
+}
+
+.host-details-overview .label {
+	opacity: 0.7;
+	font-variant: small-caps;
+	margin-bottom: 0.5rem;
+}
+
+.host-details-overview .value {
+	font-size: 1.25rem;
+}
+
+.host-details-info-grid {
+	display: flex;
+	gap: 3rem;
+	margin: 2rem 3rem;
+	flex-wrap: wrap;
+}
+.host-details-info-grid .label {
+	opacity: 0.7;
+	font-variant: small-caps;
+	margin-bottom: 0.5rem;
+}
+
+.host-details-info-grid .value {
+	font-size: 1.25rem;
+}
+
+/** </editor-fold> **/
+
+/** <editor-fold desc="Details Shared"> **/
+
 .tabs-header {
 	display: flex;
 	border-bottom: 1px solid var(--border-color);
@@ -2688,6 +2730,10 @@ button.link-control span {
 	padding-right: 0.5rem;
 }
 
+.tab-target {
+	min-height: 10rem;
+}
+
 .modal-body .CodeMirror {
 	height: 100%;
 }
@@ -2696,6 +2742,34 @@ button.link-control span {
 	flex: 1;
 	opacity: 0.7;
 	font-size: 0.875rem;
+}
+
+#firewallTableBody .icon img {
+	width: 2rem;
+	height: 2rem;
+}
+#firewallTableBody .port .configurable-port {
+	cursor: pointer;
+}
+#firewallTableBody .configurable-port .edit-icon {
+	margin-left: 1rem;
+	opacity: 0;
+}
+#firewallTableBody .configurable-port:hover .edit-icon {
+	opacity: 1;
+}
+#firewallTableBody .port .port-input {
+	display: none;
+}
+#firewallTableBody .port.edit .configurable-port {
+	display: none;
+}
+#firewallTableBody .port.edit .port-input {
+	display: block;
+}
+#firewallTableBody .actions .status-allowed {
+	color: var(--status-good);
+	margin-right: 1rem;
 }
 
 /** </editor-fold> **/
@@ -3049,9 +3123,7 @@ button.link-control span {
 
 
 
-/* ==========================
-   Responsive Design
-   ========================== */
+/** <editor-fold desc="Responsive Design"> **/
 
 @media (max-width: 1550px) {
 	#services-table.table-view .header,
@@ -3149,12 +3221,51 @@ button.link-control span {
 	#metricsCharts {
 		grid-template-columns: 1fr;
 	}
+
+	.tabs-header {
+		flex-direction: column;
+	}
+
+	.file-item {
+		grid-template-areas:
+			'icon    name    permissions size    modified actions'
+			'symlink symlink symlink     symlink symlink  symlink';
+		grid-template-columns: 20px 1fr 4rem 6rem 11rem 1rem;
+	}
+	.file-item .file-owner {
+		display: none;
+	}
 }
 
 @media (max-width: 900px) {
 	/* Switch dashboard cards to single column */
 	#services-table.card-view .service {
 		flex: 1 100%;
+	}
+
+	.path-controls {
+		flex-wrap: wrap;
+	}
+	.path-controls .btn-nav {
+		order: 2;
+		flex: 1 2rem;
+		text-align: center;
+		display: inline-block;
+	}
+	.path-controls .current-path {
+		order: 3;
+		flex: 6 80%;
+	}
+	.path-controls .action-buttons {
+		order: 1;
+		flex: 7 100%;
+	}
+
+	#firewallRulesContainer .comment {
+		display: none;
+	}
+	#firewallOtherRulesContainer .comment {
+		display: none;
 	}
 }
 
@@ -3218,11 +3329,37 @@ button.link-control span {
 	.service-details-overview dd {
 		text-align: center;
 	}
+
+	/* Switch host details to single column */
+	.host-details-overview {
+		flex-direction: column;
+		text-align: center;
+	}
+
+	.file-item {
+		grid-template-areas:
+			'icon    name    size    modified actions'
+			'symlink symlink     symlink symlink  symlink';
+		grid-template-columns: 20px 1fr 6rem 11rem 1rem;
+	}
+	.file-item .file-permissions {
+		display: none;
+	}
 }
 
 @media (max-width: 640px) {
 	#applicationsList, #hostsList {
 		grid-template-columns: 1fr;
+	}
+
+	.file-item {
+		grid-template-areas:
+			'icon    name    size    actions'
+			'symlink symlink     symlink  symlink';
+		grid-template-columns: 20px 1fr 6rem 1rem;
+	}
+	.file-item .file-modified {
+		display: none;
 	}
 }
 
@@ -3283,6 +3420,16 @@ button.link-control span {
 	#services-table tbody tr.service {
 		cursor: default;
 	}
+
+	.path-controls .action-buttons {
+		justify-content: center;
+		display: flex;
+		flex-wrap: wrap;
+		gap: 1rem;
+	}
+	.path-controls .action-buttons button {
+		flex: 1 100%;
+	}
 }
 
 @media (max-width: 420px) {
@@ -3295,3 +3442,4 @@ button.link-control span {
 	}
 }
 
+/** </editor-fold> **/

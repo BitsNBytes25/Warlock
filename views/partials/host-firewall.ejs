@@ -1,0 +1,72 @@
+<h3>Firewall Status</h3>
+<div id="firewallStatusActive" class="success-message" style="display: none;">
+    The firewall is active.
+</div>
+<div id="firewallStatusInactive" class="warning-message" style="display: none;">
+    The firewall is inactive.
+</div>
+<div id="firewallStatusNotInstalled" class="error-message" style="display: none;">
+    <p>
+        UFW is not installed on this server.
+
+        <button id="installFirewallBtn">
+            <i class="fas fa-download"></i>
+            Install Firewall
+        </button>
+    </p>
+
+</div>
+
+<div style="margin-top: 1rem;">
+    <button id="btnAddFirewallRule" class="action-create">
+        <i class="fas fa-plus"></i> Add Rule
+    </button>
+    <button id="btnPauseFirewall" class="action-stop" style="display: none;">
+        <i class="fas fa-pause"></i> Disable Firewall
+    </button>
+    <button id="btnEnableFirewall" class="action-start" style="display: none;">
+        <i class="fas fa-play"></i> Enable Firewall
+    </button>
+</div>
+
+<br/><br/>
+
+<h3>Game Ports</h3>
+<div id="firewallRulesContainer">
+    <table class="table rules-table">
+        <thead>
+            <tr>
+                <th>Game</th>
+                <th>Port</th>
+                <th>Protocol</th>
+                <th class="comment">Comment</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody id="firewallTableBody">
+            <tr><td colspan="5">Loading...</td></tr>
+        </tbody>
+    </table>
+</div>
+
+<h3>Other Rules</h3>
+<div id="firewallOtherRulesContainer">
+    <table class="table rules-table">
+        <thead>
+            <tr>
+                <th>To / Port</th>
+                <th>From</th>
+                <th>Protocol</th>
+                <th>Action</th>
+                <th class="comment">Comment</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody id="firewallOtherTableBody">
+            <tr><td colspan="6">Loading...</td></tr>
+        </tbody>
+    </table>
+</div>
+
+
+

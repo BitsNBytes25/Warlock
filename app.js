@@ -102,6 +102,7 @@ app.use('/hosts', require('./routes/hosts'));
 app.use('/host/add', require('./routes/host_add'));
 app.use('/host/delete', require('./routes/host_delete'));
 app.use('/host/firewall', require('./routes/host_firewall'));
+app.use('/host/details', require('./routes/host_details'));
 app.use('/service/logs', require('./routes/service_logs'));
 app.use('/service/configure', require('./routes/service_configure'));
 app.use('/service/details', require('./routes/service_details'));
@@ -145,17 +146,33 @@ const HOST = process.env.IP || '127.0.0.1';
 app.listen(PORT, HOST, () => {
 	logger.info(`Listening on ${PORT}`);
 
-	// Ensure the sqlite database is up to date with the schema.
-	sequelize.sync({ alter: true }).then(() => {
-		logger.info('Initialized database connection and synchronized schema.');
+	// Sequelize doesn't handle cleaning up _backup tables all the time, so manually check if there are any.
+	sequelize.showAllSchemas().then(res => {
+		let dropPromises = [];
+		res.forEach(schema => {
+			if (schema.name && schema.name.endsWith('_backup')) {
+				const tableName = schema.name;
+				logger.info(`Dropping leftover backup table: ${tableName}`);
+				dropPromises.push(sequelize.getQueryInterface().dropTable(tableName));
+			}
+		});
 
-		// Send a tracking snippet to our analytics server so we can monitor basic usage.
-		push_analytics('Start');
+		Promise.allSettled(dropPromises).then(() => {
+			// Ensure the sqlite database is up to date with the schema.
+			sequelize.sync({ alter: true }).then(() => {
+				logger.info('Initialized database connection and synchronized schema.');
 
-		MetricsPollTask();
-		setInterval(MetricsPollTask, 60000); // Run every 60 seconds
+				// Send a tracking snippet to our analytics server so we can monitor basic usage.
+				push_analytics('Start');
 
-		MetricsMergeTask();
-		setInterval(MetricsMergeTask, 3600000); // Run every hour
+				MetricsPollTask();
+				setInterval(MetricsPollTask, 60000); // Run every 60 seconds
+
+				MetricsMergeTask();
+				setInterval(MetricsMergeTask, 3600000); // Run every hour
+			});
+		});
 	});
+
+
 });

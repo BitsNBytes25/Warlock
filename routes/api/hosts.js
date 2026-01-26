@@ -28,15 +28,15 @@ router.get('/', validate_session, (req, res) => {
 				cmdRunner(
 					host.ip,
 					'echo "HOSTNAME: $(hostname -f)"; ' +
-					'echo "KERNEL: $(uname -a)"; ' +
+					'echo "KERNEL: $(uname -r)"; ' +
 					'echo "UPTIME: $(uptime)"; ' +
 					'echo "THREAD_COUNT: $(nproc)"; ' +
-				'echo "PUBLIC_IPV4: $(curl -4 -s ifconfig.me 2>/dev/null || wget -qO- ifconfig.me 2>/dev/null || echo)"; ' +
+					'echo "PUBLIC_IPV4: $(curl -4 -s ifconfig.me 2>/dev/null || wget -qO- ifconfig.me 2>/dev/null || echo)"; ' +
 					'echo "CPU_COUNT: $(egrep "^physical id" /proc/cpuinfo | uniq | wc -l)"; ' +
-				'echo "CPU_CORES_PER_SOCKET: $(egrep "^cpu cores" /proc/cpuinfo | head -n1 | sed "s#.*: ##")"; ' +
-				'echo "CPU_MODEL: $(egrep "^model name" /proc/cpuinfo | head -n1 | sed "s#.*: ##")"; ' +
-				'echo "MEMORY_STATS: $(free | grep "^Mem:" | tr -s " " | cut -d" " -f2,3,4,5,6,7)"; ' +
-				'echo "TOP_CPU_PROCESSES:"; ' +
+					'echo "CPU_CORES_PER_SOCKET: $(egrep "^cpu cores" /proc/cpuinfo | head -n1 | sed "s#.*: ##")"; ' +
+					'echo "CPU_MODEL: $(egrep "^model name" /proc/cpuinfo | head -n1 | sed "s#.*: ##")"; ' +
+					'echo "MEMORY_STATS: $(free | grep "^Mem:" | tr -s " " | cut -d" " -f2,3,4,5,6,7)"; ' +
+					'echo "TOP_CPU_PROCESSES:"; ' +
 					'ps aux --sort=-%cpu | head -6 | tail -5 | awk "{print \\$11}"; ' +
 					'echo "TOP_MEMORY_PROCESSES:"; ' +
 					'ps aux --sort=-%mem | head -6 | tail -5 | awk "{print \\$11}"; ' +
@@ -61,6 +61,7 @@ router.get('/', validate_session, (req, res) => {
 						name: '',
 						title: '',
 						version: '',
+						kernel: '',
 					},
 					cpu: {
 						model: '',
@@ -99,9 +100,9 @@ router.get('/', validate_session, (req, res) => {
 							hostInfo.cpu.threads = parseInt(line.replace('THREAD_COUNT:', '').trim());
 						}
 						else if (group === null && line.startsWith('PUBLIC_IPV4: ')) {
-					hostInfo.public_ip = line.replace('PUBLIC_IPV4:', '').trim();
-				}
-				else if (group === null && line.startsWith('CPU_COUNT: ')) {
+							hostInfo.public_ip = line.replace('PUBLIC_IPV4:', '').trim();
+						}
+						else if (group === null && line.startsWith('CPU_COUNT: ')) {
 							hostInfo.cpu.count = parseInt(line.replace('CPU_COUNT:', '').trim());
 						}
 						else if (group === null && line.startsWith('CPU_MODEL: ')) {
@@ -125,6 +126,9 @@ router.get('/', validate_session, (req, res) => {
 								hostInfo.memory.shared = parseInt(memParts[3]) * 1024;
 								hostInfo.memory.cache = parseInt(memParts[4]) * 1024;
 							}
+						}
+						else if (group === null && line.startsWith('KERNEL: ')) {
+							hostInfo.os.kernel = line.replace('KERNEL:', '').trim();
 						}
 						else if (line === 'DISK_INFO:') {
 							group = 'disks';

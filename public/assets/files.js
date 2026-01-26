@@ -137,7 +137,7 @@ function showLoading() {
 	fileList.innerHTML = '<div class="loading-spinner"></div>';
 
 	refreshBtn.disabled = true;
-	refreshBtn.innerHTML = '<i class="fas fa-spin fa-spinner"></i> Loading...';
+	refreshBtn.innerHTML = '<i class="fas fa-spin fa-spinner"></i>';
 }
 
 /**
@@ -145,7 +145,7 @@ function showLoading() {
  */
 function hideLoading() {
 	refreshBtn.disabled = false;
-	refreshBtn.innerHTML = '<i class="fas fa-sync-alt"></i> Refresh';
+	refreshBtn.innerHTML = '<i class="fas fa-sync-alt"></i>';
 }
 
 function showError(message) {

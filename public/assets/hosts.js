@@ -46,15 +46,9 @@ function populateHostsTable(host, hostData) {
 
 	// Prepare action buttons
 	let actionButtons = [];
-	if (hostData.connected) {
-		actionButtons.push(`
-<button title="Host Firewall" data-href="/host/firewall/${encodeURIComponent(host)}" class="link-control action-edit">
-<i class="fas fa-shield"></i><span>Firewall</span>
-</button>`);
-	}
 	actionButtons.push(`
-<button title="Delete Host" data-href="/host/delete/${encodeURIComponent(host)}" class="link-control action-remove">
-<i class="fas fa-trash"></i><span>Delete</span>
+<button title="Host Details" data-href="/host/details/${encodeURIComponent(host)}" class="link-control action-view">
+<i class="fas fa-info-circle"></i><span>Details</span>
 </button>`);
 
 	// Populate cells

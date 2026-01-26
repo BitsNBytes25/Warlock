@@ -1,14 +1,15 @@
-const {host} = getPathParams('/host/firewall/:host'),
-	tableBody = document.getElementById('firewallTableBody'),
-	addBtn = document.getElementById('btnAddRule'),
-	addModal = document.getElementById('addRuleModal'),
-	deleteModal = document.getElementById('deleteRuleModal'),
+const tableBody = document.getElementById('firewallTableBody'),
+	firewallOtherTableBody = document.getElementById('firewallOtherTableBody'),
+	btnAddFirewallRule = document.getElementById('btnAddFirewallRule'),
+	addFirewallRuleModal = document.getElementById('addFirewallRuleModal'),
+	deleteFirewallRuleModal = document.getElementById('deleteFirewallRuleModal'),
 	btnPauseFirewall = document.getElementById('btnPauseFirewall'),
 	btnEnableFirewall = document.getElementById('btnEnableFirewall'),
-	portsTableBody = document.getElementById('portsTableBody'),
+	firewallTableBody = document.getElementById('firewallTableBody'),
 	installFirewallBtn = document.getElementById('installFirewallBtn');
 
 let firewallActive = false,
+	firewallEventsLoaded = false,
 	globalRules = [];
 
 function sanitizeForPreview(text){
@@ -16,10 +17,10 @@ function sanitizeForPreview(text){
 }
 
 function renderRules(rules){
-	tableBody.innerHTML = '';
+	firewallOtherTableBody.innerHTML = '';
 	globalRules = [];
 	if (!rules || rules.length === 0){
-		tableBody.innerHTML = '<tr><td colspan="6">No rules configured</td></tr>';
+		firewallOtherTableBody.innerHTML = '<tr><td colspan="6">No rules configured</td></tr>';
 		return;
 	}
 
@@ -49,6 +50,7 @@ function renderRules(rules){
 		tdAction.textContent = (rule.action || '').toUpperCase();
 		tdAction.className = 'status-' + (rule.action || 'unknown').toLowerCase();
 		tdComment.textContent = rule.comment || '';
+		tdComment.className = 'comment';
 		delBtn.className = 'action-remove';
 		delBtn.textContent = 'Delete';
 		delBtn.addEventListener('click', () => {
@@ -63,7 +65,7 @@ function renderRules(rules){
 			document.getElementById('deleteRulePreview').textContent =
 				`To: ${sanitizeForPreview(spec.port || spec.to || 'any')}\nFrom: ${sanitizeForPreview(spec.from || 'any')}\nAction: ${sanitizeForPreview(spec.action)}`;
 			document.getElementById('delRuleSpec').value = JSON.stringify(spec);
-			deleteModal.classList.add('show');
+			openModal(deleteFirewallRuleModal);
 		});
 		tdActions.appendChild(delBtn);
 
@@ -73,13 +75,13 @@ function renderRules(rules){
 		tr.appendChild(tdAction);
 		tr.appendChild(tdComment);
 		tr.appendChild(tdActions);
-		tableBody.appendChild(tr);
+		firewallOtherTableBody.appendChild(tr);
 	});
 }
 
 async function fetchRules(){
-	tableBody.innerHTML = '<tr><td colspan="6">Loading...</td></tr>';
-	fetch(`/api/firewall/${host}`, { method: 'GET' })
+	firewallOtherTableBody.innerHTML = '<tr><td colspan="6">Loading...</td></tr>';
+	fetch(`/api/firewall/${loadedHost}`, { method: 'GET' })
 		.then(response => response.json())
 		.then(resp => {
 			const statusActive = document.getElementById('firewallStatusActive'),
@@ -88,7 +90,7 @@ async function fetchRules(){
 
 			if (!resp || !resp.success){
 				showToast('error', resp && resp.error ? resp.error : 'Failed to fetch rules');
-				tableBody.innerHTML = '<tr><td colspan="6">Error loading rules</td></tr>';
+				firewallOtherTableBody.innerHTML = '<tr><td colspan="6">Error loading rules</td></tr>';
 				return;
 			}
 
@@ -99,7 +101,7 @@ async function fetchRules(){
 				statusNotInstalled.style.display = 'none';
 				btnEnableFirewall.style.display = 'none';
 				btnPauseFirewall.style.display = 'inline-block';
-				addBtn.classList.remove('disabled');
+				btnAddFirewallRule.classList.remove('disabled');
 				firewallActive = true;
 			}
 			else if (resp.status === 'inactive') {
@@ -108,7 +110,7 @@ async function fetchRules(){
 				statusNotInstalled.style.display = 'none';
 				btnEnableFirewall.style.display = 'inline-block';
 				btnPauseFirewall.style.display = 'none';
-				addBtn.classList.remove('disabled');
+				btnAddFirewallRule.classList.add('disabled');
 				firewallActive = false;
 			}
 			else {
@@ -117,7 +119,7 @@ async function fetchRules(){
 				statusNotInstalled.style.display = 'flex';
 				btnEnableFirewall.style.display = 'none';
 				btnPauseFirewall.style.display = 'none';
-				addBtn.classList.add('disabled');
+				btnAddFirewallRule.classList.add('disabled');
 				firewallActive = false;
 			}
 
@@ -125,7 +127,7 @@ async function fetchRules(){
 		}).catch(e => {
 			console.error(e);
 			showToast('error', 'Error fetching rules');
-			tableBody.innerHTML = '<tr><td colspan="6">Error loading rules</td></tr>';
+			firewallOtherTableBody.innerHTML = '<tr><td colspan="6">Error loading rules</td></tr>';
 		});
 }
 
@@ -166,8 +168,9 @@ function addRule(action, to, from, proto, comment) {
 	if (from) payload.from = from;
 	if (to) payload.to = to;
 	if (comment) payload.comment = comment;
+	closeModal(addFirewallRuleModal);
 
-	fetch(`/api/firewall/${host}`, {
+	fetch(`/api/firewall/${loadedHost}`, {
 		method: 'POST',
 		headers: {'Content-Type':'application/json'},
 		body: JSON.stringify(payload)
@@ -175,7 +178,6 @@ function addRule(action, to, from, proto, comment) {
 		.then(response => response.json())
 		.then(resp => {
 			showToast('info', resp.stdout);
-			addModal.classList.remove('show');
 			fetchRules();
 			fetchPorts();
 		}).catch(() => {
@@ -184,7 +186,7 @@ function addRule(action, to, from, proto, comment) {
 }
 
 function updateConfig(app_guid, service, option, newValue) {
-	fetch(`/api/service/configs/${app_guid}/${host}/${service}`, {
+	fetch(`/api/service/configs/${app_guid}/${loadedHost}/${service}`, {
 		method: 'POST',
 		headers: {
 			'Content-Type': 'application/json'
@@ -204,12 +206,12 @@ function updateConfig(app_guid, service, option, newValue) {
 }
 
 async function fetchPorts() {
-	portsTableBody.innerHTML = '<tr><td colspan="5">Loading...</td></tr>';
+	firewallTableBody.innerHTML = '<tr><td colspan="5">Loading...</td></tr>';
 	fetchApplications().then(apps => {
-		fetch(`/api/ports/${host}`, { method: 'GET' })
+		fetch(`/api/ports/${loadedHost}`, { method: 'GET' })
 			.then(response => response.json())
 			.then(resp => {
-				portsTableBody.innerHTML = '';
+				firewallTableBody.innerHTML = '';
 
 				// resp is an array of Objects with config, description, guid, port, protocol, and service.
 				// sort them by the port number
@@ -228,6 +230,7 @@ async function fetchPorts() {
 					tdProto.textContent = port.protocol.toUpperCase();
 					tdProto.className = 'proto';
 					tdDescription.textContent = port.description || '';
+					tdDescription.className = 'comment';
 
 					if (port.config) {
 						// Ports with configuration parameters can be changed!
@@ -239,7 +242,7 @@ async function fetchPorts() {
 						a.title = 'Click to configure';
 						a.innerHTML = `${port.port} <i class="edit-icon fas fa-pencil"></i>`;
 						a.addEventListener('click', (e) => {
-							portsTableBody.querySelectorAll('.port.edit').forEach(td => {
+							firewallTableBody.querySelectorAll('.port.edit').forEach(td => {
 								td.classList.remove('edit');
 							});
 
@@ -310,7 +313,7 @@ async function fetchPorts() {
 							document.getElementById('deleteRulePreview').textContent =
 								`To: ${sanitizeForPreview(spec.port || spec.to || 'any')}\nFrom: ${sanitizeForPreview(spec.from || 'any')}\nAction: ${sanitizeForPreview(spec.action)}`;
 							document.getElementById('delRuleSpec').value = JSON.stringify(spec);
-							deleteModal.classList.add('show');
+							openModal(deleteFirewallRuleModal);
 						});
 						tdAction.appendChild(delBtn);
 
@@ -359,78 +362,85 @@ async function fetchPorts() {
 					row.appendChild(tdProto);
 					row.appendChild(tdDescription);
 					row.appendChild(tdAction);
-					portsTableBody.appendChild(row);
+					firewallTableBody.appendChild(row);
 				});
 			});
 	});
 }
 
-(function(){
-	loadHost(host);
+function loadFirewall() {
+	if (!firewallEventsLoaded) {
+		// Add rule wiring
+		btnAddFirewallRule.addEventListener('click', () => {
+			if (btnAddFirewallRule.classList.contains('disabled')) {
+				return;
+			}
+			openModal(addFirewallRuleModal);
+		});
+		document.getElementById('saveFirewallRuleBtn').addEventListener('click', () => {
+			const action = document.getElementById('firewallRuleAction').value;
+			const proto = document.getElementById('firewallRuleProto').value || undefined;
+			const from = document.getElementById('firewallRuleFrom').value.trim() || undefined;
+			const to = document.getElementById('firewallRuleTo').value.trim() || undefined;
+			const comment = document.getElementById('firewallRuleComment').value.trim() || undefined;
 
-    // Add rule wiring
-    addBtn.addEventListener('click', () => {
-		if (addBtn.classList.contains('disabled')) {
-			return;
-		}
-		addModal.classList.add('show');
-	});
-    document.getElementById('saveRuleBtn').addEventListener('click', () => {
-        const action = document.getElementById('ruleAction').value;
-        const proto = document.getElementById('ruleProto').value || undefined;
-        const from = document.getElementById('ruleFrom').value.trim() || undefined;
-        const to = document.getElementById('ruleTo').value.trim() || undefined;
-        const comment = document.getElementById('ruleComment').value.trim() || undefined;
+			addRule(action, to, from, proto, comment);
+		});
 
-		addRule(action, to, from, proto, comment);
-    });
+		// Delete confirm
+		document.getElementById('confirmDeleteRuleBtn').addEventListener('click', () => {
+			const specRaw = document.getElementById('delRuleSpec').value;
+			if (!specRaw) return showToast('error', 'No rule specified');
+			let spec = null;
+			try {
+				spec = JSON.parse(specRaw);
+			} catch (e) {
+				return showToast('error', 'Invalid rule spec');
+			}
 
-    // Delete confirm
-    document.getElementById('confirmDeleteRuleBtn').addEventListener('click', () => {
-        const specRaw = document.getElementById('delRuleSpec').value;
-        if (!specRaw) return showToast('error','No rule specified');
-        let spec = null;
-        try { spec = JSON.parse(specRaw); } catch(e){ return showToast('error','Invalid rule spec'); }
-
-        fetch(`/api/firewall/${host}`, {
-			method: 'DELETE',
-			headers: {'Content-Type':'application/json'},
-			body: JSON.stringify(spec)
-		})
-			.then(resp => resp.json())
-			.then(resp => {
-				showToast('info', resp.stdout);
-				fetchRules();
-				deleteModal.classList.remove('show');
-			}).catch(() => {
-				showToast('error','Failed to delete rule');
+			fetch(`/api/firewall/${loadedHost}`, {
+				method: 'DELETE',
+				headers: {'Content-Type': 'application/json'},
+				body: JSON.stringify(spec)
+			})
+				.then(resp => resp.json())
+				.then(resp => {
+					showToast('info', resp.stdout);
+					fetchRules();
+					fetchPorts();
+					closeModal(deleteFirewallRuleModal);
+				}).catch(() => {
+				showToast('error', 'Failed to delete rule');
 			});
-    });
-
-	btnPauseFirewall.addEventListener('click', () => {
-		fetch(`/api/firewall/disable/${host}`, { method: 'POST' }).then(() => {
-			fetchRules();
-			fetchPorts();
 		});
-	});
 
-	btnEnableFirewall.addEventListener('click', () => {
-		fetch(`/api/firewall/enable/${host}`, { method: 'POST' }).then(() => {
-			fetchRules();
-			fetchPorts();
+		btnPauseFirewall.addEventListener('click', () => {
+			fetch(`/api/firewall/disable/${loadedHost}`, {method: 'POST'}).then(() => {
+				fetchRules();
+				fetchPorts();
+			});
 		});
-	});
 
-	installFirewallBtn.addEventListener('click', () => {
-		showToast('info', 'Installing firewall on target host; this may take a minute...');
-
-		fetch(`/api/firewall/install/${host}`, { method: 'POST' }).then(() => {
-			fetchRules();
-			fetchPorts();
+		btnEnableFirewall.addEventListener('click', () => {
+			fetch(`/api/firewall/enable/${loadedHost}`, {method: 'POST'}).then(() => {
+				fetchRules();
+				fetchPorts();
+			});
 		});
-	});
 
-    // initial load
-    fetchRules();
+		installFirewallBtn.addEventListener('click', () => {
+			showToast('info', 'Installing firewall on target host; this may take a minute...');
+
+			fetch(`/api/firewall/install/${loadedHost}`, {method: 'POST'}).then(() => {
+				fetchRules();
+				fetchPorts();
+			});
+		});
+
+		firewallEventsLoaded = true;
+	}
+
+	// initial load
+	fetchRules();
 	fetchPorts();
-})();
+}

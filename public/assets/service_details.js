@@ -78,7 +78,7 @@ function checkUpdates(app_guid, host) {
 		});
 }
 
-function activateServiceTab(tab) {
+function activateServiceTab(tab, jumpTo = true) {
 	const tabHeader = document.querySelector('nav.tabs-header');
 
 	// Deactivate any active tab first
@@ -127,6 +127,17 @@ function activateServiceTab(tab) {
 	}
 	else if (tab === 'settings') {
 		loadServiceSettings();
+	}
+
+	if (jumpTo) {
+		// Jump down to the section, useful for mobile views to focus on the selected content.
+		setTimeout(() => {
+			const tabPosition = content.getBoundingClientRect().top + window.scrollY - document.querySelector('.navbar').offsetHeight ;
+			window.scrollTo({
+				top: tabPosition,
+				behavior: 'smooth'
+			});
+		}, 100);
 	}
 }
 
@@ -208,7 +219,7 @@ window.addEventListener('DOMContentLoaded', () => {
 				checkUpdates(app_guid, host);
 			}, 1000 * 60 * 30);
 
-			activateServiceTab('metrics');
+			activateServiceTab('metrics', false);
 
 			// Events
 			btnServiceStop.addEventListener('click', () => {
@@ -229,7 +240,7 @@ window.addEventListener('DOMContentLoaded', () => {
 				tabBtn.addEventListener('click', (e) => {
 					e.preventDefault();
 					const tab = tabBtn.getAttribute('href').replace('#', '');
-					activateServiceTab(tab);
+					activateServiceTab(tab, true);
 				});
 			});
 
