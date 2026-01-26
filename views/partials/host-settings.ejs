@@ -1,49 +1,18 @@
-<h3>Host Settings</h3>
-
 <div class="settings-section">
-    <h4>Connection Information</h4>
-    <div class="info-grid">
-        <div class="info-item">
-            <dt>SSH Connection</dt>
-            <dd class="host-ip-placeholder">Loading...</dd>
-        </div>
-        <div class="info-item">
-            <dt>Connection Status</dt>
-            <dd id="hostConnectionStatus">Checking...</dd>
-        </div>
-    </div>
-</div>
-
-<br/><br/>
-
-<div class="settings-section">
-    <h4>Danger Zone</h4>
+    <h4>Remove Host</h4>
     <div class="warning-message">
-        <p>These actions cannot be undone. Please be certain before proceeding.</p>
+        <p>
+            This will remove the host from Warlock's management system. It will not affect the actual server or any installed applications.
+            <br/><br/>
+            Hosts can be re-added later and all compatible applications will be detected.
+        </p>
     </div>
-
-    <br/>
 
     <button class="action-remove" id="btnDeleteHost">
         <i class="fas fa-trash"></i>
         Remove Host from Warlock
     </button>
-
-    <p style="margin-top: 0.5rem; font-size: 0.9rem; opacity: 0.7;">
-        This will remove the host from Warlock's management system. It will not affect the actual server or any installed applications.
-    </p>
 </div>
-
-<style>
-.settings-section {
-    margin-bottom: 2rem;
-}
-
-.settings-section h4 {
-    margin: 0 0 1rem 0;
-    font-size: 1.1rem;
-}
-</style>
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
@@ -51,17 +20,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (btnDeleteHost) {
         btnDeleteHost.addEventListener('click', () => {
-            if (confirm('Are you sure you want to remove this host from Warlock? This action cannot be undone.')) {
-                window.location.href = `/host/delete/${loadedHost}`;
-            }
+			window.location.href = `/host/delete/${loadedHost}`;
         });
-    }
-
-    // Update connection status based on hostDataCache
-    if (hostDataCache && hostDataCache.connected) {
-        document.getElementById('hostConnectionStatus').innerHTML = '<span style="color: #0f0;"><i class="fas fa-check-circle"></i> Connected</span>';
-    } else {
-        document.getElementById('hostConnectionStatus').innerHTML = '<span style="color: #f00;"><i class="fas fa-times-circle"></i> Disconnected</span>';
     }
 });
 </script>
