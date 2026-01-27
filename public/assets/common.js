@@ -531,6 +531,20 @@ function formatFileSize(bytes) {
 }
 
 /**
+ * Format bits per second as human-readable text.
+ *
+ * @param {number} bits
+ * @returns {string}
+ */
+function formatBitSpeed(bytes) {
+	if (bytes === 0) return '0 bps';
+	const k = 1024;
+	const sizes = ['bps', 'Kbps', 'Mbps', 'Gbps', 'Tbps', 'Pbps'];
+	const i = Math.floor(Math.log(bytes) / Math.log(k));
+	return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+}
+
+/**
  * Perform a service action (start, stop, restart, etc) via the backend API.
  *
  * @param guid

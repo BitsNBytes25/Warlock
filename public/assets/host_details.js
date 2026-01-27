@@ -1,6 +1,7 @@
 const hostDetailsUptime = document.getElementById('hostDetailsUptime'),
 	hostDetailsCpu = document.getElementById('hostDetailsCpu'),
 	hostDetailsMemory = document.getElementById('hostDetailsMemory'),
+	hostDetailsNetwork = document.getElementById('hostDetailsNetwork'),
 	btnHostFirewall = document.getElementById('btnHostFirewall'),
 	btnHostDelete = document.getElementById('btnHostDelete'),
 	hostPublicIP = document.getElementById('hostPublicIP'),
@@ -36,8 +37,8 @@ function pollHostStatus(host) {
 		hostMemoryTotal.innerText = hostDataCache.memory ? formatFileSize(hostDataCache.memory.total) : 'N/A';
 
 		// CPU usage (use load average as percentage relative to thread count)
-		if (hostData.cpu && hostData.cpu.threads > 0) {
-			const cpuPct = Math.min(100, (hostData.cpu.load1m / hostData.cpu.threads) * 100).toFixed(1),
+		if (hostData.cpu) {
+			const cpuPct = hostData.cpu.usage,
 				fill = hostDetailsCpu.closest('.host-cpu').querySelector('.bargraph-h .fill');
 			hostDetailsCpu.innerText = `${cpuPct}%`;
 			fill.style.width = `${cpuPct}%`;
@@ -75,6 +76,14 @@ function pollHostStatus(host) {
 			else {
 				fill.classList.add('good');
 			}
+		}
+
+		// Network usage
+		if (hostData.net.rx && hostData.net.tx) {
+			hostDetailsNetwork.innerText = `↓ ${formatBitSpeed(hostData.net.rx * 8)} ↑ ${formatBitSpeed(hostData.net.tx * 8)}`;
+		}
+		else {
+			hostDetailsNetwork.innerText = 'N/A';
 		}
 
 		// Disk usage
@@ -142,7 +151,7 @@ function activateHostTab(tab, jumpTo = true) {
 		loadOverview();
 	}
 	else if (tab === 'metrics') {
-		loadMetricsPlaceholder();
+		loadMetrics();
 	}
 	else if (tab === 'files') {
 		loadDirectory('/');

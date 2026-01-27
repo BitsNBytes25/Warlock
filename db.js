@@ -107,10 +107,55 @@ const Metric = sequelize.define('Metric', {
 	timestamps: false
 });
 
+const HostMetric = sequelize.define('HostMetric', {
+	ip: {
+		type: DataTypes.STRING,
+		allowNull: false
+	},
+	timestamp: {
+		type: DataTypes.INTEGER,
+		allowNull: false
+	},
+	cpu: {
+		type: DataTypes.INTEGER,
+		allowNull: true
+	},
+	memory: {
+		type: DataTypes.INTEGER,
+		allowNull: true
+	},
+	disk: {
+		type: DataTypes.INTEGER,
+		allowNull: true
+	},
+	rx_last: {
+		type: DataTypes.BIGINT,
+		allowNull: true
+	},
+	rx: {
+		type: DataTypes.INTEGER,
+		allowNull: true
+	},
+	tx_last: {
+		type: DataTypes.BIGINT,
+		allowNull: true
+	},
+	tx: {
+		type: DataTypes.INTEGER,
+		allowNull: true
+	}
+}, {
+	indexes: [
+		{ fields: ['ip', 'timestamp'] }
+	],
+	timestamps: false
+});
+
 module.exports = {
 	sequelize,
 	User,
 	Host,
 	Meta,
-	Metric
+	Metric,
+	HostMetric
 };
