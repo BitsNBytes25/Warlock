@@ -37,20 +37,48 @@ function pollHostStatus(host) {
 
 		// CPU usage (use load average as percentage relative to thread count)
 		if (hostData.cpu && hostData.cpu.threads > 0) {
-			const cpuPct = Math.min(100, (hostData.cpu.load1m / hostData.cpu.threads) * 100).toFixed(1);
+			const cpuPct = Math.min(100, (hostData.cpu.load1m / hostData.cpu.threads) * 100).toFixed(1),
+				fill = hostDetailsCpu.closest('.host-cpu').querySelector('.bargraph-h .fill');
 			hostDetailsCpu.innerText = `${cpuPct}%`;
+			fill.style.width = `${cpuPct}%`;
+
+			// Set status class
+			fill.classList.remove('good', 'warning', 'critical');
+			if (cpuPct >= 80) {
+				fill.classList.add('critical');
+			}
+			else if (cpuPct >= 60) {
+				fill.classList.add('warning');
+			}
+			else {
+				fill.classList.add('good');
+			}
 		}
 
 		// Memory usage
 		if (hostData.memory) {
 			const used = hostData.memory.used,
-				total = hostData.memory.total;
+				total = hostData.memory.total,
+				memPct = Math.min(100, (used / total) * 100).toFixed(1),
+				fill = hostDetailsMemory.closest('.host-memory').querySelector('.bargraph-h .fill');
 			hostDetailsMemory.innerText = `${formatFileSize(used)} / ${formatFileSize(total)}`;
+			fill.style.width = `${memPct}%`;
+
+			// Set status class
+			fill.classList.remove('good', 'warning', 'critical');
+			if (memPct >= 80) {
+				fill.classList.add('critical');
+			}
+			else if (memPct >= 60) {
+				fill.classList.add('warning');
+			}
+			else {
+				fill.classList.add('good');
+			}
 		}
 
 		// Disk usage
 		if (hostData.disks && hostData.disks.length > 0) {
-			let totalSize = 0, totalAvail = 0;
 			hostData.disks.forEach(disk => {
 				let diskContainer = hostDetailOverview.querySelector('[data-disk="' + disk.filesystem + '"]');
 				if (!diskContainer) {
@@ -60,8 +88,17 @@ function pollHostStatus(host) {
 					diskContainer.classList.add('host-disk');
 					hostDetailOverview.appendChild(diskContainer);
 				}
+				let diskPct = Math.min(100, ((disk.used / disk.size) * 100).toFixed(1)),
+					diskStatus = 'good';
+				if (diskPct >= 80) {
+					diskStatus = 'critical';
+				}
+				else if (diskPct >= 60) {
+					diskStatus = 'warning';
+				}
 				diskContainer.innerHTML = `<div class="label">Disk ${disk.mountpoint} (${disk.filesystem})</div>
-<div class="value">${formatFileSize(disk.used)} / ${formatFileSize(disk.size)}</div>`;
+<div class="value">${formatFileSize(disk.used)} / ${formatFileSize(disk.size)}</div>
+<div class="bargraph-h"><div class="fill ${diskStatus}" style="width: ${diskPct}%"></div></div>`;
 			});
 		}
 	}).catch(error => {

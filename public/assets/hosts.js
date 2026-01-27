@@ -80,15 +80,32 @@ function populateHostsTable(host, hostData) {
 			val = hostData.os ? hostData.os.title : 'Unknown';
 		}
 		else if (field === 'cpu') {
+			let cpuStatusClass = 'good';
+			if (memPct >= 80) {
+				cpuStatusClass = 'critical';
+			}
+			else if (memPct >= 60) {
+				cpuStatusClass = 'warning';
+			}
+
 			val = `${cpuPct}%`;
 			// Add CPU details for card view
 			if (hostData.cpu.model) {
 				val += `<div class="cpu-details">${hostData.cpu.model}</div>`;
+				val += `<div class="bargraph-h"><div class="fill ${cpuStatusClass}" style="width: ${cpuPct}%"></div></div>`;
 			}
 		}
 		else if (field === 'memory') {
+			let memStatusClass = 'good';
+			if (memPct >= 80) {
+				memStatusClass = 'critical';
+			}
+			else if (memPct >= 60) {
+				memStatusClass = 'warning';
+			}
+
 			val = `${formatFileSize(used)} / ${formatFileSize(total)}`;
-			val += `<div class="mem-bar"><div class="mem-fill" style="width: ${memPct}%"></div></div>`;
+			val += `<div class="bargraph-h"><div class="fill ${memStatusClass}" style="width: ${memPct}%"></div></div>`;
 		}
 		else if (field === 'disk') {
 			val = `${formatFileSize(totalAvail)} free (${diskPct}% used)`;
