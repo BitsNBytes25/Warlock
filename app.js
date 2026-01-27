@@ -55,6 +55,7 @@
 const express = require('express');
 const path = require('path');
 const dotenv = require('dotenv');
+const packageJson = require('./package.json');
 
 const app = express();
 const cookieParser = require('cookie-parser');
@@ -72,6 +73,14 @@ dotenv.config();
 
 
 app.set('view engine', 'ejs')
+
+// Expose app version for cache busting
+app.locals.appVersion = packageJson.version;
+
+// Helper function for versioned asset URLs (cache busting)
+app.locals.assetUrl = function(assetPath) {
+	return `${assetPath}?v=${packageJson.version}`;
+}
 
 app.use(cookieParser());
 

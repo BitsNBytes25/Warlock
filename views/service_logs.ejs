@@ -6,9 +6,9 @@
     <title>Warlock - Service Logs</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/assets/frontend.css">
-    <link rel="stylesheet" href="/assets/themes.css">
-    <script src="/assets/common.js"></script>
+    <link rel="stylesheet" href="<%= assetUrl('/assets/frontend.css') %>">
+    <link rel="stylesheet" href="<%= assetUrl('/assets/themes.css') %>">
+    <script src="<%= assetUrl('/assets/common.js') %>"></script>
 </head>
 <body data-use-app-background="1">
 <%- include('partials/nav.ejs') %>
@@ -49,6 +49,6 @@
 
     <%- include('partials/theme-selector.ejs') %>
 
-    <script src="/assets/service_logs.js"></script>
+    <script src="<%= assetUrl('/assets/service_logs.js') %>"></script>
 </body>
 </html>

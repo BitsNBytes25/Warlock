@@ -6,11 +6,11 @@
     <title>Warlock - Host Details</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/assets/frontend.css">
-    <link rel="stylesheet" href="/assets/themes.css">
+    <link rel="stylesheet" href="<%= assetUrl('/assets/frontend.css') %>">
+    <link rel="stylesheet" href="<%= assetUrl('/assets/themes.css') %>">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
-    <script src="/assets/common.js"></script>
+    <script src="<%= assetUrl('/assets/common.js') %>"></script>
 </head>
 <body data-use-app-background="1">
 <%- include('partials/nav.ejs') %>
@@ -109,11 +109,11 @@
 <%- include('partials/service-files-modals.ejs') %>
 
 <%- include('partials/theme-selector.ejs') %>
-<script src="/assets/host_details.js"></script>
-<script src="/assets/files.js"></script>
-<link rel="stylesheet" href="/assets/codemirror/codemirror.css">
-<link rel="stylesheet" href="/assets/codemirror/theme/material-darker.css">
-<script src="/assets/codemirror/codemirror.js"></script>
+<script src="<%= assetUrl('/assets/host_details.js') %>"></script>
+<script src="<%= assetUrl('/assets/files.js') %>"></script>
+<link rel="stylesheet" href="<%= assetUrl('/assets/codemirror/codemirror.css') %>">
+<link rel="stylesheet" href="<%= assetUrl('/assets/codemirror/theme/material-darker.css') %>">
+<script src="<%= assetUrl('/assets/codemirror/codemirror.js') %>"></script>
 </body>
 </html>
 

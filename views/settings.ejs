@@ -6,10 +6,10 @@
     <title>Warlock - Settings</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/assets/frontend.css">
-    <link rel="stylesheet" href="/assets/themes.css">
-    <script src="/assets/common.js"></script>
-    <script src="/assets/qrcode.min.js" type="text/javascript" charset="utf-8"></script>
+    <link rel="stylesheet" href="<%= assetUrl('/assets/frontend.css') %>">
+    <link rel="stylesheet" href="<%= assetUrl('/assets/themes.css') %>">
+    <script src="<%= assetUrl('/assets/common.js') %>"></script>
+    <script src="<%= assetUrl('/assets/qrcode.min.js') %>" type="text/javascript" charset="utf-8"></script>
 </head>
 <body>
 
@@ -177,6 +177,6 @@
 <script>
     const twofactor = <%= twofactor ? 'true' : 'false' %>;
 </script>
-<script src="/assets/settings.js"></script>
+<script src="<%= assetUrl('/assets/settings.js') %>"></script>
 </body>
 </html>
