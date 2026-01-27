@@ -3,89 +3,50 @@
     <div class="modal-overlay"></div>
     <div class="modal-content">
         <div class="modal-header">
-            <h3>Add Cron Job</h3>
+            <h3>Add/Edit Cron Job</h3>
             <button class="modal-close"><i class="fas fa-times"></i></button>
         </div>
         <div class="modal-body">
             <div class="form-group">
-                <label for="cronIdentifier">Identifier</label>
-                <input id="cronIdentifier" type="text" placeholder="unique-identifier" required />
-                <small>A unique identifier for this cron job (e.g., app-guid+backup)</small>
-            </div>
-            <div class="form-group">
-                <label for="cronSchedule">Schedule</label>
-                <input id="cronSchedule" type="text" placeholder="0 2 * * *" required />
-                <small>Cron schedule format (e.g., "0 2 * * *" for daily at 2 AM)</small>
-            </div>
-            <div class="form-group">
                 <label for="cronCommand">Command</label>
                 <textarea id="cronCommand" rows="3" placeholder="/path/to/script.sh --option" required></textarea>
-                <small>Full command to execute</small>
+                <p>Full command to execute</p>
+            </div>
+
+            <div class="form-group">
+                <label for="cronTaskSchedule">Schedule</label>
+                <select id="cronTaskSchedule" name="schedule">
+                    <!--<option value="disabled">Disabled</option>-->
+                    <option value="hourly">Hourly</option>
+                    <option value="daily">Daily</option>
+                    <option value="weekly">Weekly</option>
+                </select>
+            </div>
+
+            <div class="form-group" id="cronTaskWeeklyDayRow">
+                <label for="cronTaskWeeklyDay">Weekly Day</label>
+                <select id="cronTaskWeeklyDay" name="weekly_day">
+                    <option value="mon">Monday</option>
+                    <option value="tue">Tuesday</option>
+                    <option value="wed">Wednesday</option>
+                    <option value="thu">Thursday</option>
+                    <option value="fri">Friday</option>
+                    <option value="sat">Saturday</option>
+                    <option value="sun">Sunday</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="cronTaskTime">Time</label>
+                <input type="time" id="cronTaskTime" name="time" value="02:00">
             </div>
         </div>
         <div class="modal-footer">
-            <button id="saveCronJobBtn" class="action-save">Add Cron Job</button>
+            <button id="saveCronJobBtn" class="action-save">Save Cron Job</button>
             <button class="action-cancel modal-close">Cancel</button>
         </div>
     </div>
 </div>
 
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-    const addCronJobModal = document.getElementById('addCronJobModal'),
-        saveCronJobBtn = document.getElementById('saveCronJobBtn');
-
-    // Setup modal close buttons
-    addCronJobModal.querySelectorAll('.modal-close').forEach(btn => {
-        btn.addEventListener('click', () => {
-            addCronJobModal.classList.remove('show');
-        });
-    });
-
-    addCronJobModal.querySelector('.modal-overlay').addEventListener('click', () => {
-        addCronJobModal.classList.remove('show');
-    });
-
-    // Save button handler
-    if (saveCronJobBtn) {
-        saveCronJobBtn.addEventListener('click', () => {
-            const identifier = document.getElementById('cronIdentifier').value,
-                schedule = document.getElementById('cronSchedule').value,
-                command = document.getElementById('cronCommand').value;
-
-            if (!identifier || !schedule || !command) {
-                showToast('error', 'All fields are required');
-                return;
-            }
-
-            const job = { identifier, schedule, command };
-
-            fetch(`/api/cron/${loadedHost}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(job)
-            })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        showToast('success', 'Cron job added successfully');
-                        addCronJobModal.classList.remove('show');
-                        loadCronJobs();
-
-                        // Clear form
-                        document.getElementById('cronIdentifier').value = '';
-                        document.getElementById('cronSchedule').value = '';
-                        document.getElementById('cronCommand').value = '';
-                    } else {
-                        showToast('error', data.error || 'Error adding cron job');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error adding cron job:', error);
-                    showToast('error', 'Error adding cron job');
-                });
-        });
-    }
-});
-</script>
+<script src="/assets/host_cron.js"></script>
 

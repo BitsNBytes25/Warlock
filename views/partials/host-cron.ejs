@@ -12,83 +12,16 @@
 <div id="cronJobsContainer">
     <table class="table cron-table">
         <thead>
-            <tr><th>Schedule</th><th>Command</th><th>Identifier</th><th>Actions</th></tr>
+            <tr>
+                <th>Schedule</th>
+                <th>Command</th>
+                <th>Actions</th>
+            </tr>
         </thead>
         <tbody id="cronTableBody">
-            <tr><td colspan="4">Loading...</td></tr>
+            <tr><td colspan="3">Loading...</td></tr>
         </tbody>
     </table>
 </div>
 
-<script>
-function renderCronJobs(jobs) {
-    const cronTableBody = document.getElementById('cronTableBody');
-
-    cronTableBody.innerHTML = '';
-
-    if (!jobs || jobs.length === 0) {
-        cronTableBody.innerHTML = '<tr><td colspan="4">No cron jobs configured.</td></tr>';
-        return;
-    }
-
-    jobs.forEach(job => {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-            <td><code>${job.schedule || 'N/A'}</code></td>
-            <td><code>${job.command || 'N/A'}</code></td>
-            <td>${job.identifier || 'N/A'}</td>
-            <td>
-                <button class="action-edit" onclick="editCronJob('${encodeURIComponent(job.identifier)}')">
-                    <i class="fas fa-edit"></i>
-                </button>
-                <button class="action-remove" onclick="deleteCronJob('${encodeURIComponent(job.identifier)}')">
-                    <i class="fas fa-trash"></i>
-                </button>
-            </td>
-        `;
-        cronTableBody.appendChild(row);
-    });
-}
-
-function editCronJob(identifier) {
-    // TODO: Implement edit functionality
-    showToast('info', 'Edit functionality coming soon');
-}
-
-function deleteCronJob(identifier) {
-    if (!confirm('Are you sure you want to delete this cron job?')) {
-        return;
-    }
-
-    fetch(`/api/cron/${loadedHost}`, {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ identifier: decodeURIComponent(identifier) })
-    })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                showToast('success', 'Cron job deleted successfully');
-                loadCronJobs();
-            } else {
-                showToast('error', data.error || 'Error deleting cron job');
-            }
-        })
-        .catch(error => {
-            console.error('Error deleting cron job:', error);
-            showToast('error', 'Error deleting cron job');
-        });
-}
-
-// Setup button handlers
-document.addEventListener('DOMContentLoaded', () => {
-    const btnAddCronJob = document.getElementById('btnAddCronJob');
-
-    if (btnAddCronJob) {
-        btnAddCronJob.addEventListener('click', () => {
-            document.getElementById('addCronJobModal').classList.add('show');
-        });
-    }
-});
-</script>
 

@@ -1110,34 +1110,6 @@ function convertTimestampToDateTimeString(unixTime) {
 
 async function loadCronJob(host, identifier, target) {
 	return new Promise((resolve, reject) => {
-		if (target && !target.dataset.autoEventsAdded) {
-			// Add change event to schedule selector to show/hide relevant fields
-			let schedule, time, day;
-			schedule = target.querySelector('[name="schedule"]');
-			time = target.querySelector('[name="time"]');
-			day = target.querySelector('[name="weekly_day"]');
-			target.dataset.autoEventsAdded = '1';
-
-			schedule.addEventListener('change', () => {
-				if (schedule.value === 'weekly') {
-					time.closest('.form-group').style.display = 'flex';
-					day.closest('.form-group').style.display = 'flex';
-				}
-				else if (schedule.value === 'daily') {
-					time.closest('.form-group').style.display = 'flex';
-					day.closest('.form-group').style.display = 'none';
-				}
-				else if (schedule.value === 'hourly') {
-					time.closest('.form-group').style.display = 'none';
-					day.closest('.form-group').style.display = 'none';
-				}
-				else {
-					time.closest('.form-group').style.display = 'none';
-					day.closest('.form-group').style.display = 'none';
-				}
-			});
-		}
-
 		fetch(`/api/cron/${host}`, { method: 'GET' })
 			.then(r => r.json())
 			.then(data => {
@@ -1145,82 +1117,123 @@ async function loadCronJob(host, identifier, target) {
 					return reject(data);
 				}
 
-				let schedule, time, day;
-				if (target) {
-					// Load the form elements for the target UI, (optionally)
-					schedule = target.querySelector('[name="schedule"]');
-					time = target.querySelector('[name="time"]');
-					day = target.querySelector('[name="weekly_day"]');
-				}
-
 				const jobs = data.jobs || [];
 				const job = jobs.find(j => j.identifier === identifier);
-				if (!job) {
-					if (schedule) {
-						schedule.value = 'disabled';
-						schedule.dispatchEvent(new CustomEvent('change'));
-					}
 
-					return resolve(null);
+				if (target) {
+					populateCronJob(job, target);
 				}
-				else {
-					// parse schedule
-					const parts = job.schedule.split(/\s+/);
-					if (parts.length >= 5) {
-						const minute = parts[0].padStart(2, '0');
-						const hour = parts[1].padStart(2, '0');
-
-						if (parts[1] === '*') {
-							// 0 * * * *
-							if (schedule) {
-								schedule.value = 'hourly';
-								schedule.dispatchEvent(new CustomEvent('change'));
-							}
-						}
-						else if (parts[2] === '*' && parts[3] === '*' && parts[4] === '*') {
-							// X X * * *
-							if (time) {
-								time.value = `${hour}:${minute}`;
-							}
-							if (schedule) {
-								schedule.value = 'daily';
-								schedule.dispatchEvent(new CustomEvent('change'));
-							}
-						}
-						else if (parts[2] === '*' && parts[3] === '*') {
-							// X X * * DOW
-							if (time) {
-								time.value = `${hour}:${minute}`;
-							}
-							if (day) {
-								// map day number to option
-								const dowNum = parts[4];
-								const dowMap = {
-									'0': 'sun',
-									'1': 'mon',
-									'2': 'tue',
-									'3': 'wed',
-									'4': 'thu',
-									'5': 'fri',
-									'6': 'sat',
-									'7': 'sun'
-								};
-								day.value = dowMap[dowNum] || 'sun';
-							}
-							if (schedule) {
-								schedule.value = 'weekly';
-								schedule.dispatchEvent(new CustomEvent('change'));
-							}
-						}
-					}
-
-					return resolve(job);
-				}
+				return resolve(null);
 			})
 			.catch(() => {
 				// ignore fetch errors; show defaults
 			});
 	});
+}
+
+function populateCronJob(job, target) {
+	let schedule, time, day;
+
+	if (target) {
+		schedule = target.querySelector('[name="schedule"]');
+		time = target.querySelector('[name="time"]');
+		day = target.querySelector('[name="weekly_day"]');
+	}
+
+	if (target && !target.dataset.autoEventsAdded) {
+		// Add change event to schedule selector to show/hide relevant fields
+		target.dataset.autoEventsAdded = '1';
+
+		schedule.addEventListener('change', () => {
+			if (schedule.value === 'weekly') {
+				time.closest('.form-group').style.display = 'flex';
+				day.closest('.form-group').style.display = 'flex';
+			}
+			else if (schedule.value === 'daily') {
+				time.closest('.form-group').style.display = 'flex';
+				day.closest('.form-group').style.display = 'none';
+			}
+			else if (schedule.value === 'hourly') {
+				time.closest('.form-group').style.display = 'none';
+				day.closest('.form-group').style.display = 'none';
+			}
+			else {
+				time.closest('.form-group').style.display = 'none';
+				day.closest('.form-group').style.display = 'none';
+			}
+		});
+	}
+
+	if (!job) {
+		if (schedule) {
+			let hasDisabled = false;
+			schedule.querySelectorAll('option').forEach(option => {
+				if (option.value === 'disabled') {
+					hasDisabled = true;
+				}
+			});
+
+			if (hasDisabled) {
+				schedule.value = 'disabled';
+			}
+			else {
+				schedule.value = 'hourly';
+			}
+
+			schedule.dispatchEvent(new CustomEvent('change'));
+		}
+	}
+	else {
+		// parse schedule
+		const parts = job.schedule.split(/\s+/);
+		if (parts.length >= 5) {
+			const minute = parts[0].padStart(2, '0');
+			const hour = parts[1].padStart(2, '0');
+
+			if (parts[1] === '*') {
+				// 0 * * * *
+				if (schedule) {
+					schedule.value = 'hourly';
+					schedule.dispatchEvent(new CustomEvent('change'));
+				}
+			}
+			else if (parts[2] === '*' && parts[3] === '*' && parts[4] === '*') {
+				// X X * * *
+				if (time) {
+					time.value = `${hour}:${minute}`;
+				}
+				if (schedule) {
+					schedule.value = 'daily';
+					schedule.dispatchEvent(new CustomEvent('change'));
+				}
+			}
+			else if (parts[2] === '*' && parts[3] === '*') {
+				// X X * * DOW
+				if (time) {
+					time.value = `${hour}:${minute}`;
+				}
+				if (day) {
+					// map day number to option
+					const dowNum = parts[4];
+					const dowMap = {
+						'0': 'sun',
+						'1': 'mon',
+						'2': 'tue',
+						'3': 'wed',
+						'4': 'thu',
+						'5': 'fri',
+						'6': 'sat',
+						'7': 'sun'
+					};
+					day.value = dowMap[dowNum] || 'sun';
+				}
+				if (schedule) {
+					schedule.value = 'weekly';
+					schedule.dispatchEvent(new CustomEvent('change'));
+				}
+			}
+		}
+	}
 }
 
 function parseCronSchedule(target) {
@@ -1248,6 +1261,112 @@ function parseCronSchedule(target) {
 		console.warn('Unknown schedule type selected:', schedule.value);
 		return 'DISABLED';
 	}
+}
+
+/**
+ * Format a cron schedule string into a human-readable description.
+ *
+ * Input string should be in a cron format ie "0 2 * * 1"
+ *
+ * @param {string} schedule
+ */
+function formatCronSchedule(schedule) {
+	if (!schedule) return 'Disabled';
+
+	const s = String(schedule).trim();
+	if (!s || s.toUpperCase() === 'DISABLED') return 'Disabled';
+
+	// Handle @-shortcuts
+	const shortcuts = {
+		'@hourly': 'Hourly',
+		'@daily': 'Daily',
+		'@midnight': 'Daily at 00:00',
+		'@weekly': 'Weekly',
+		'@monthly': 'Monthly',
+		'@yearly': 'Yearly',
+		'@annually': 'Yearly',
+		'@reboot': 'At reboot'
+	};
+	if (shortcuts[s.toLowerCase()]) return shortcuts[s.toLowerCase()];
+
+	// Split into parts (minute hour dom month dow)
+	const parts = s.split(/\s+/);
+	if (parts.length < 5) return s;
+
+	const [minute, hour, dom, month, dow] = parts;
+
+	// Helper to map DOW numbers to names
+	const dowMap = { '0': 'Sunday', '1': 'Monday', '2': 'Tuesday', '3': 'Wednesday', '4': 'Thursday', '5': 'Friday', '6': 'Saturday', '7': 'Sunday' };
+
+	function prettyTime(h, m) {
+		// h or m might be '*' or numbers
+		if (h === '*' || m === '*') return null;
+		const hh = String(h).padStart(2, '0');
+		const mm = String(m).padStart(2, '0');
+		return `${hh}:${mm}`;
+	}
+
+	// Common patterns
+	// Every minute
+	if (minute === '*' && hour === '*' && dom === '*' && month === '*' && dow === '*') return 'Every minute';
+
+	// Every N minutes: */N * * * *
+	if (/^\*\/\d+$/.test(minute) && hour === '*' && dom === '*' && month === '*' && dow === '*') {
+		const n = minute.split('/')[1];
+		return `Every ${n} minute${n !== '1' ? 's' : ''}`;
+	}
+
+	// Hourly (e.g., 0 * * * *) or minute fixed, hour = *
+	if (hour === '*' && dom === '*' && month === '*' && dow === '*') {
+		if (/^\d+$/.test(minute)) {
+			return `Hourly at minute ${String(minute).padStart(2, '0')}`;
+		}
+		return 'Hourly';
+	}
+
+	// Daily (minute hour * * *)
+	if (dom === '*' && month === '*' && dow === '*') {
+		if (/^(\d+|\*+)$/.test(minute) && /^(\d+|\*+)$/.test(hour) && minute !== '*') {
+			const t = prettyTime(hour, minute);
+			if (t) return `Daily at ${t}`;
+		}
+		// Fallback
+		return 'Daily';
+	}
+
+	// Weekly (minute hour * * DOW)
+	if (dom === '*' && month === '*') {
+		if (dow && dow !== '*') {
+			// dow may be a list like 1,3
+			const partsDow = String(dow).split(',');
+			const mapped = partsDow.map(d => dowMap[d] || d);
+			const t = prettyTime(hour, minute);
+			if (mapped.length === 1) {
+				return t ? `Every ${mapped[0]} at ${t}` : `Every ${mapped[0]}`;
+			}
+			return t ? `Every ${mapped.join(', ')} at ${t}` : `Every ${mapped.join(', ')}`;
+		}
+	}
+
+	// Monthly (minute hour DOM * *)
+	if (month === '*' && dow === '*') {
+		if (dom && dom !== '*') {
+			const t = prettyTime(hour, minute) || '';
+			return `Monthly on day ${dom}${t ? ` at ${t}` : ''}`;
+		}
+	}
+
+	// If we reach here, produce a sensible summary
+	let summaryParts = [];
+	if (minute && minute !== '*') summaryParts.push(`minute: ${minute}`);
+	if (hour && hour !== '*') summaryParts.push(`hour: ${hour}`);
+	if (dom && dom !== '*') summaryParts.push(`day-of-month: ${dom}`);
+	if (month && month !== '*') summaryParts.push(`month: ${month}`);
+	if (dow && dow !== '*') summaryParts.push(`day-of-week: ${dow}`);
+
+	if (summaryParts.length === 0) return 'Every minute';
+
+	return summaryParts.join(', ');
 }
 
 /**

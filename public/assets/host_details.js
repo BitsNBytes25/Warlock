@@ -217,29 +217,7 @@ function loadMetricsPlaceholder() {
 	console.log('Metrics tab activated - placeholder for now');
 }
 
-/**
- * Load cron jobs
- */
-function loadCronJobs() {
-	const cronContainer = document.getElementById('cronJobsContainer');
-	if (!cronContainer) return;
 
-	cronContainer.innerHTML = '<div><i class="fas fa-spinner fa-spin"></i> Loading cron jobs...</div>';
-
-	fetch(`/api/cron/${loadedHost}`)
-		.then(response => response.json())
-		.then(data => {
-			if (data.success) {
-				renderCronJobs(data.jobs);
-			} else {
-				cronContainer.innerHTML = `<div class="error-message">${data.error || 'Error loading cron jobs'}</div>`;
-			}
-		})
-		.catch(error => {
-			console.error('Error loading cron jobs:', error);
-			cronContainer.innerHTML = '<div class="error-message">Error loading cron jobs.</div>';
-		});
-}
 
 /**
  * Load host settings
