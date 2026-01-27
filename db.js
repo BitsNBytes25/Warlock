@@ -1,6 +1,5 @@
 const { Sequelize, DataTypes} = require('sequelize');
 const bcrypt = require('bcrypt');
-const { stat } = require('fs');
 
 const sequelize = new Sequelize({
 	dialect: 'sqlite',
@@ -10,7 +9,8 @@ const sequelize = new Sequelize({
 // User model with username and password fields
 const User = sequelize.define('User', {
 	username: {
-		type: DataTypes.STRING
+		type: DataTypes.STRING,
+		unique: true
 	},
 	password: {
 		type: DataTypes.STRING
@@ -46,7 +46,8 @@ User.prototype.validatePassword = async function(password) {
 // Host model with ip field
 const Host = sequelize.define('Host', {
 	ip: {
-		type: DataTypes.STRING
+		type: DataTypes.STRING,
+		unique: true
 	}
 });
 

@@ -1,6 +1,6 @@
 {
   "name": "warlock-express-app",
-  "version": "1.2.0~20260124",
+  "version": "1.2.0~20260127",
   "description": "Express app serving HTML pages",
   "main": "app.js",
   "scripts": {
