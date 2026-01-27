@@ -118,14 +118,14 @@
 <%- include('partials/service-settings-modals.ejs') %>
 
 <%- include('partials/theme-selector.ejs') %>
-<script src="/assets/service_details.js"></script>
-<script src="/assets/service_configure.js"></script>
-<script src="/assets/application_backups.js"></script>
-<script src="/assets/files.js"></script>
-<link rel="stylesheet" href="/assets/codemirror/codemirror.css">
-<link rel="stylesheet" href="/assets/codemirror/theme/material-darker.css">
-<script src="/assets/codemirror/codemirror.js"></script>
-<script src="/assets/codemirror/mode/yaml/yaml.js"></script>
-<script src="/assets/application_configure.js"></script>
+<script src="<%= assetUrl('/assets/service_details.js') %>"></script>
+<script src="<%= assetUrl('/assets/service_configure.js') %>"></script>
+<script src="<%= assetUrl('/assets/application_backups.js') %>"></script>
+<script src="<%= assetUrl('/assets/files.js') %>"></script>
+<link rel="stylesheet" href="<%= assetUrl('/assets/codemirror/codemirror.css') %>">
+<link rel="stylesheet" href="<%= assetUrl('/assets/codemirror/theme/material-darker.css') %>">
+<script src="<%= assetUrl('/assets/codemirror/codemirror.js') %>"></script>
+<script src="<%= assetUrl('/assets/codemirror/mode/yaml/yaml.js') %>"></script>
+<script src="<%= assetUrl('/assets/application_configure.js') %>"></script>
 </body>
 </html>

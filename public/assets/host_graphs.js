@@ -55,11 +55,11 @@ function renderCharts(metrics, timeframe) {
 		});
 		groupedMetrics['memory_usage'].push({
 			x: metric.timestamp * 1000,
-			y: metric.memory / (1024 * 1024) // Convert to MB
+			y: Math.round(metric.memory * 100 / (1024 * 1024 * 1024)) / 100 // Convert to GB
 		});
 		groupedMetrics['disk_usage'].push({
 			x: metric.timestamp * 1000,
-			y: metric.disk / (1024 * 1024 * 1024) // Convert to GB
+			y: Math.round(metric.disk * 10 / (1024 * 1024 * 1024)) / 10 // Convert to GB
 		});
 		groupedMetrics['network_rx'].push({
 			x: metric.timestamp * 1000,
@@ -149,7 +149,7 @@ function renderCharts(metrics, timeframe) {
 		type: 'line',
 		data: {
 			datasets: [{
-				label: 'Memory MB',
+				label: 'Memory (GB)',
 				data: groupedMetrics.memory_usage,
 				borderColor: '#00d4aa',
 				backgroundColor: 'rgba(0, 212, 170, 0.1)',
@@ -165,7 +165,7 @@ function renderCharts(metrics, timeframe) {
 		type: 'line',
 		data: {
 			datasets: [{
-				label: 'Disk Usage',
+				label: 'Disk Usage (GB)',
 				data: groupedMetrics.disk_usage,
 				borderColor: '#ff6b6b',
 				backgroundColor: 'rgba(255, 107, 107, 0.1)',
