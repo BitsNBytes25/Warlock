@@ -1104,7 +1104,7 @@ button.link-control span {
 #services-table.card-view .thumbnail {
 	position: absolute;
 	width: 100%;
-	height: 6rem;
+	height: 7rem;
 	margin: 0 -1.5rem;
 	overflow: hidden;
 	z-index: 1;
@@ -1124,11 +1124,12 @@ button.link-control span {
 	order: 1;
 	z-index: 2;
 	flex: 4 100%;
-	height: 3.5rem;
+	height: 4.5rem;
 	font-weight: bold;
-	font-size: 1.5rem;
+	font-size: 1.25rem;
 	text-align: center;
 	padding-top: 0.5rem;
+	overflow: hidden;
 }
 #services-table.card-view .host {
 	order: 2;
@@ -1305,7 +1306,7 @@ button.link-control span {
 }
 #hosts-table.card-view .thumbnail {
 	width: 100%;
-	height: 8rem;
+	height: 9rem;
 	overflow: hidden;
 	position: absolute;
 	z-index: 1;
@@ -1323,6 +1324,7 @@ button.link-control span {
 	font-size: 1.25rem;
 	text-align: center;
 	z-index: 2;
+	white-space: nowrap;
 }
 #hosts-table.card-view .hostname img {
 	width: 1.5rem;
@@ -1390,7 +1392,6 @@ button.link-control span {
 	border-top: 1px solid var(--content-border);
 	display: flex;
 	gap: 0.5rem;
-	justify-content: flex-end;
 }
 /** </editor-fold> **/
 
@@ -3124,6 +3125,12 @@ button.link-control span {
 
 
 /** <editor-fold desc="Responsive Design"> **/
+
+@media (max-height: 500px) {
+	.navbar {
+		position: inherit;
+	}
+}
 
 @media (max-width: 1550px) {
 	#services-table.table-view .header,

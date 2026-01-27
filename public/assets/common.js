@@ -1123,7 +1123,7 @@ async function loadCronJob(host, identifier, target) {
 				if (target) {
 					populateCronJob(job, target);
 				}
-				return resolve(null);
+				return resolve(job);
 			})
 			.catch(() => {
 				// ignore fetch errors; show defaults
