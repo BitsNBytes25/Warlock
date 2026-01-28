@@ -433,7 +433,7 @@ router.post('/extract/:host', validate_session, (req, res) => {
 		const cmdDiscover = `if [ -e "${path}" ]; then file --mime-type "${path}"; else echo "missing"; fi;` +
 			'if which unzip &>/dev/null; then echo "zip"; fi;' +
 			'if which unrar &>/dev/null; then echo "rar"; fi;' +
-			'if which tar &>/dev/null; then echo "tar"; echo "tar/gz"; echo "tar/xz"; echo "tar/bzip2"; fi;' +
+			'if which tar &>/dev/null; then echo "tar"; echo "tar/gzip"; echo "tar/xz"; echo "tar/bzip2"; fi;' +
 			'if which unxz &>/dev/null; then echo "xz"; fi;' +
 			'if which bunzip2 &>/dev/null; then echo "bzip2"; fi;' +
 			'if which 7z &>/dev/null; then echo "7z"; fi;';
