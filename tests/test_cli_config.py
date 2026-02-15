@@ -39,7 +39,7 @@ class TestCLIConfig(unittest.TestCase):
 		self.assertEqual('?SessionName="My Ark Server"?RCONPort=32330?RCONEnabled=True -Flag1=Value1 -Flag2="Some value 2"', str(cfg))
 		cfg.set_value('RCON Enabled', False)
 		self.assertFalse(cfg.get_value('RCON Enabled'))
-		self.assertEqual('?SessionName="My Ark Server"?RCONPort=32330 -Flag1=Value1 -Flag2="Some value 2"', str(cfg))
+		self.assertEqual('?SessionName="My Ark Server"?RCONPort=32330?RCONEnabled=False -Flag1=Value1 -Flag2="Some value 2"', str(cfg))
 
 	def test_similar_arguments(self):
 		cfg = CLIConfig('test')
