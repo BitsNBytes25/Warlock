@@ -246,6 +246,7 @@ confirmUpdateBtn.addEventListener('click', () => {
 		}).then(() => {
 		// Stream ended
 		showToast('success', 'Update process completed.');
+		btnServiceUpdate.style.display = 'none';
 	}).catch(err => {
 		showToast('error', 'Update process encountered an error. See terminal output for details.');
 	}).finally(() => {

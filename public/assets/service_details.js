@@ -77,6 +77,9 @@ function checkUpdates(app_guid, host) {
 			}
 		});
 }
+btnServiceUpdate.addEventListener('click', () => {
+	openModal(document.getElementById('updateModal'));
+});
 
 function activateServiceTab(tab, jumpTo = true) {
 	const tabHeader = document.querySelector('nav.tabs-header');
@@ -173,8 +176,8 @@ function serviceControlAction(btn) {
 	}
 
 	showToast('info', `Issuing ${action.replace('-', ' ')} command to ${service}...`);
-	stopModal.classList.remove('show');
-	restartModal.classList.remove('show');
+	closeModal(stopModal);
+	closeModal(restartModal);
 
 	serviceAction(guid, host, service, action).then(() => {
 		if (action === 'delayed-stop' || action === 'delayed-restart') {
@@ -214,7 +217,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
 			setTimeout(() => {
 				checkUpdates(app_guid, host);
-			}, 1000 * 60);
+			}, 1000 * 15);
 			setInterval(() => {
 				checkUpdates(app_guid, host);
 			}, 1000 * 60 * 30);
