@@ -3,7 +3,7 @@ const bcrypt = require('bcrypt');
 
 const sequelize = new Sequelize({
 	dialect: 'sqlite',
-	storage: 'warlock.sqlite'
+	storage: process.env.DB_PATH || 'warlock.sqlite'
 });
 
 // User model with username and password fields

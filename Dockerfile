@@ -18,8 +18,12 @@ EXPOSE 3077
 ENV SKIP_AUTHENTICATION=false
 ENV SKIP_2FA=false
 
-# Volumes for persistent data (sqlite db and assets)
-VOLUME ["/app/warlock.sqlite"]
+# Create data directory for database and set default database path
+RUN mkdir -p /app/data
+ENV DB_PATH=/app/data/warlock.sqlite
+
+# Volume for persistent data (directory containing sqlite db)
+VOLUME ["/app/data"]
 
 # Start the application
 CMD ["npm", "start"]

@@ -9,7 +9,7 @@ services:
       - SKIP_AUTHENTICATION=false
       - SKIP_2FA=false
     volumes:
-      - ./warlock.sqlite:/app/warlock.sqlite
+      - ./data:/app/data
     restart: unless-stopped
 # Uncomment and configure the following if you want to add nginx as a reverse proxy in another service
 #  nginx:

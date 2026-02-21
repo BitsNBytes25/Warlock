@@ -12,7 +12,7 @@
      -p 3077:3077 \
      -e SKIP_AUTHENTICATION=false \
      -e SKIP_2FA=false \
-     -v $(pwd)/warlock.sqlite:/app/warlock.sqlite \
+     -v $(pwd)/data:/app/data \
      --name warlock warlock
    ```
 
@@ -25,9 +25,11 @@ docker-compose up -d
 ## Environment Variables
 - `SKIP_AUTHENTICATION` (default: false) — Set to true to disable authentication
 - `SKIP_2FA` (default: false) — Set to true to disable 2FA
+- `DB_PATH` (default: /app/data/warlock.sqlite) — Custom database file path
 
 ## Persistent Data
-- `warlock.sqlite` is mounted as volumes for data persistence.
+- `./data` directory is mounted as a volume for database persistence.
+- Database is stored at `/app/data/warlock.sqlite` inside the container.
 
 ## Nginx/SSL
 - For production, use an external nginx reverse proxy for SSL and asset caching.
