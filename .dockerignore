@@ -1,0 +1,11 @@
+node_modules
+npm-debug.log
+dist
+tmp
+*.sqlite
+*.bak
+*.swp
+*.swo
+.env
+.DS_Store
+coverage
