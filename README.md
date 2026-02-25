@@ -14,6 +14,24 @@ Server game manager that supports your fleet of servers and games.
 
 ## Getting Started
 
+### Development Build
+
+To get a development build of Warlock up and running, do the following:
+
+```bash
+git clone https://github.com/BitsNBytes25/Warlock.git
+cd Warlock
+npm install
+```
+
+Then you can start the development server with:
+
+```bash
+npm run dev
+```
+
+### Production Build
+
 To install Warlock on a server, do the following as root:
 
 ```bash
@@ -37,6 +55,12 @@ This will install Node and all required dependencies and set up Warlock to run a
 By default it will install nginx as a frontend, taking over the default web server.
 
 You can skip the nginx integration by passing `--skip-nginx` to the install script.
+
+### Docker Build
+
+Warlock can be run as a Docker container, but an nginx reverse proxy is recommended to handle SSL termination.
+
+
 
 ## Supported Platforms
 

@@ -17,6 +17,8 @@ EXPOSE 3077
 # Environment variables for authentication/2FA skipping (can be overridden at runtime)
 ENV SKIP_AUTHENTICATION=false
 ENV SKIP_2FA=false
+ENV IP=0.0.0.0
+ENV NODE_ENV=production
 
 # Create data directory for database and set default database path
 RUN mkdir -p /app/data
