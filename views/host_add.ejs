@@ -45,15 +45,21 @@
                         </div>
                     <% } %>
 
-                    <!-- An error occurred but we have a local key to show -->
-                    <pre class="terminal"><code># Please connect to the host as ROOT and run the following command:
-# If you need to, switch to root with 'sudo su -' first.
-#
-# Once ran, try to re-add this host.
+                    <div class="info-message">
+                        <p>
+                            Please connect to the host as <strong>ROOT</strong> and run the following command.<br/>
+                            If you need to, switch to root with 'sudo su -' first.<br/><br/>
+                            Once ran, try to re-add this host.
+                        </p>
+                    </div>
 
-[ -d /root/.ssh ] || mkdir /root/.ssh; echo "" >> /root/.ssh/authorized_keys; echo "<%= localKey %>" >> /root/.ssh/authorized_keys; chmod og-rwx /root/.ssh -R
+                    <!-- An error occurred, but we have a local key to show -->
+                    <pre class="terminal"><code id="host-add-key-block">[ -d /root/.ssh ] || mkdir /root/.ssh; echo "" >> /root/.ssh/authorized_keys; echo "<%= localKey %>" >> /root/.ssh/authorized_keys; chmod og-rwx /root/.ssh -R
 
                     </code></pre>
+                    <button type="button" class="copy-code-btn" onclick="copyHostAddKey()">
+                        <i class="fas fa-copy"></i> Copy Command
+                    </button>
                 <% } else { %>
                     <div class="error-message">
                         <i class="fas fa-exclamation-triangle"></i>
@@ -84,5 +90,16 @@
 </div>
 
 <%- include('partials/theme-selector.ejs') %>
+
+<script>
+	function copyHostAddKey() {
+		const codeBlock = document.getElementById('host-add-key-block');
+		const text = codeBlock.innerText || codeBlock.textContent;
+		navigator.clipboard.writeText(text.trim()).then(function() {
+			showToast('success', 'Command copied to clipboard, please paste in your target server.');
+		});
+	}
+</script>
+
 </body>
 </html>
