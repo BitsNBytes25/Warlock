@@ -1,17 +1,10 @@
 const express = require('express');
 const {User} = require("../db");
+const {validate_session} = require("../libs/validate_session.mjs");
 const router = express.Router();
 
-router.get('/', (req, res) => {
-	// If there are no users in the database, redirect to install page
-	User.count().then((count) => {
-		if (count === 0) {
-			res.redirect('/install');
-		}
-		else {
-			res.redirect('/dashboard');
-		}
-	});
+router.get('/', validate_session, (req, res) => {
+	res.redirect('/dashboard');
 });
 
 module.exports = router;

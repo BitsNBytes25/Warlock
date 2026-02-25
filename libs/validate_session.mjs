@@ -50,7 +50,15 @@ export const validate_session = (req, res, next) => {
 			return res.status(500).send('Internal Server Error');
 		});
 	} else {
-		// No session, redirect to login
-		return res.redirect('/login');
+		// No session, redirect to login or install (if not installed)
+		// If there are no users in the database, redirect to install page
+		User.count().then((count) => {
+			if (count === 0) {
+				return res.redirect('/install');
+			}
+			else {
+				return res.redirect('/login');
+			}
+		});
 	}
 };
