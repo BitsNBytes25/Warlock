@@ -1,6 +1,6 @@
 {
   "name": "warlock-express-app",
-  "version": "1.2.0~20260127",
+  "version": "1.2.0~20260225",
   "description": "Express app serving HTML pages",
   "main": "app.js",
   "scripts": {
@@ -16,15 +16,15 @@
   "author": "",
   "license": "AGPL-3.0",
   "dependencies": {
-    "@dr.pogodin/csurf": "^1.16.7",
+    "@dr.pogodin/csurf": "^1.16.8",
     "bcrypt": "^6.0.0",
-    "body-parser": "2.2.1",
+    "body-parser": "2.2.2",
     "connect-sqlite3": "^0.9.16",
-    "cookie-parser": "^1.4.6",
-    "dotenv": "^16.6.1",
-    "ejs": "^3.1.10",
-    "express": "^4.18.2",
-    "express-session": "^1.18.2",
+    "cookie-parser": "^1.4.7",
+    "dotenv": "^17.3.1",
+    "ejs": "^4.0.1",
+    "express": "^5.2.1",
+    "express-session": "^1.19.0",
     "js-yaml": "^4.1.1",
     "multer": "^2.0.2",
     "node-2fa": "^2.0.3",
@@ -36,6 +36,6 @@
     "sqlite3": "^5.1.7"
   },
   "devDependencies": {
-    "nodemon": "^3.1.10"
+    "nodemon": "^3.1.14"
   }
 }
