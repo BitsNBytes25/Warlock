@@ -7,6 +7,7 @@ const {get_ssh_key} = require("../libs/get_ssh_key.mjs");
 const {exec} = require('child_process');
 const {hostPostAdd} = require("../libs/host_post_add.mjs");
 const cache = require("../libs/cache.mjs");
+const fs = require('fs');
 
 const router = express.Router();
 const csrfProtection = csrf({ cookie: true });
@@ -27,9 +28,14 @@ router.post('/', validate_session, parseForm, csrfProtection, (req, res) => {
 	}
 
 	if (ip === 'localhost' || ip === '127.0.0.1') {
-		// If localhost, require this process be running as root!
 		if (process.getuid() !== 0) {
+			// If localhost, require this process be running as root!
 			return res.render('host_add', {error: 'Adding localhost requires the application to be run as root.'});
+		}
+
+		if (fs.existsSync('/.dockerenv')) {
+			// If localhost, do NOT allow localhost when in Docker, as it won't work correctly and can cause confusion.
+			return res.render('host_add', {error: 'Adding localhost is not allowed when running in Docker.'});
 		}
 	}
 
