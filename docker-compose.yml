@@ -8,8 +8,11 @@ services:
     environment:
       - SKIP_AUTHENTICATION=false
       - SKIP_2FA=false
+      - IP=0.0.0.0
+      - NODE_ENV=production
     volumes:
-      - "/opt/warlock/data:/app/data"
+      - "./data:/app/data"
+      - "./ssh:/root/.ssh"
     restart: unless-stopped
 # Uncomment and configure the following if you want to add nginx as a reverse proxy in another service
 #  nginx:

@@ -24,9 +24,10 @@ ENV DB_PATH=/app/data/warlock.sqlite
 
 # Volume for persistent data (directory containing sqlite db)
 VOLUME ["/app/data"]
-# Volume should be set to /opt/warlock/data in production to persist data outside the container
+VOLUME ["/root/.ssh"]
 
+# Install OpenSSH client for SSH and ssh-keygen support
+RUN apk add --no-cache openssh-client
 
 # Start the application
 CMD ["npm", "start"]
-

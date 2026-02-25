@@ -3,3 +3,5 @@ DEV/
 .env
 .idea/copilot*
 warlock.sqlite
+/ssh/
+/data/
