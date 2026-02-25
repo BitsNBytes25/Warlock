@@ -1,0 +1,5 @@
+services:
+  warlock:
+    build: .
+    image: warlock-dev
+
