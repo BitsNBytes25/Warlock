@@ -1,9 +1,16 @@
 const { Sequelize, DataTypes} = require('sequelize');
 const bcrypt = require('bcrypt');
+const {logger} = require("./libs/logger.mjs");
+
+// Custom logging function for Sequelize: only log SQL queries
+function sequelizeLog(sql) {
+    logger.debug(sql);
+}
 
 const sequelize = new Sequelize({
 	dialect: 'sqlite',
-	storage: process.env.DB_PATH || 'warlock.sqlite'
+	storage: process.env.DB_PATH || 'warlock.sqlite',
+	logging: sequelizeLog
 });
 
 // User model with username and password fields
