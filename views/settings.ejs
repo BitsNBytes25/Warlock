@@ -34,6 +34,11 @@
 
         <div class="content-body">
             <h3>Users</h3>
+            <% if (!authentication) { %>
+                <div class="warning-message">
+                    <p>User authentication is disabled and Warlock is open to anyone.</p>
+                </div>
+            <% } %>
             <div id="usersContainer">
                 <table class="table users-table">
                     <thead>
