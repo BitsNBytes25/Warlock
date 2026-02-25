@@ -56,6 +56,7 @@ const express = require('express');
 const path = require('path');
 const dotenv = require('dotenv');
 const packageJson = require('./package.json');
+const fs = require('fs');
 
 const app = express();
 const cookieParser = require('cookie-parser');
@@ -155,7 +156,20 @@ const HOST = process.env.IP || '127.0.0.1';
 
 // Start the server
 app.listen(PORT, HOST, () => {
-	logger.info(`Listening on ${PORT}`);
+	if (fs.existsSync('/.dockerenv')) {
+		// If running in Docker, check to make sure we're not listening on 127.0.0.1/localhost.
+		// Doing so inside a container is pointless, as it won't be accessible from outside.
+		if (HOST === '127.0.0.1' || HOST === 'localhost') {
+			logger.warn(`Warlock is listening on ${HOST}:${PORT} ONLY - this will probably not work how you think it will.`);
+			logger.warn('Recommended setting IP=0.0.0.0 instead.');
+		}
+		else {
+			logger.info(`Running in Docker and listening on ${HOST} port ${PORT}`);
+		}
+	}
+	else {
+		logger.info(`Listening on ${HOST} port ${PORT}`);
+	}
 
 	// Sequelize doesn't handle cleaning up _backup tables all the time, so manually check if there are any.
 	sequelize.showAllSchemas().then(res => {
