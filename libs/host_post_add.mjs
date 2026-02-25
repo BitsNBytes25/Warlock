@@ -25,7 +25,7 @@ export async function hostPostAdd(host) {
 		// Query the server for the OS type; this will determine which install command to use.
 		cmdRunner(host, 'lsb_release -i 2>/dev/null | sed "s#.*:\\t##"')
 			.then(result => {
-				const osRelease = result.stdout.toLowerCase();
+				const osRelease = result.stdout.trim().toLowerCase();
 				if (installFileCmds[osRelease]) {
 					cmdRunner(host, installFileCmds[osRelease]).then(() => {
 						resolve();
