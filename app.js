@@ -59,9 +59,16 @@ const {MetricsPollTask} = require("./tasks/metrics_poll.mjs");
 const {MetricsMergeTask} = require("./tasks/metrics_merge.mjs");
 const {HostMetricsMergeTask} = require("./tasks/host_metrics_merge.mjs");
 const {HostMetricsPollTask} = require("./tasks/host_metrics_poll.mjs");
+const {initializeProfiler, isEnabled: isProfilerEnabled} = require("./libs/cmd_profiler.mjs");
 
 // Load environment variables
 dotenv.config();
+
+// Initialize profiler if enabled
+initializeProfiler();
+if (isProfilerEnabled()) {
+	logger.info('Command profiler enabled - metrics will be written to warlock-profile.csv');
+}
 
 
 app.set('view engine', 'ejs')

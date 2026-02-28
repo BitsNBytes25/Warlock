@@ -3,6 +3,7 @@ import {createHash} from 'crypto';
 import {Host} from "../db.js";
 import {logger} from "./logger.mjs";
 import cache from "./cache.mjs";
+import {recordMetric} from "./cmd_profiler.mjs";
 
 /**
  * Run a command via SSH on the target host
@@ -15,6 +16,7 @@ import cache from "./cache.mjs";
  */
 export async function cmdRunner(target, cmd, extraFields = {}, cacheable = false) {
 	return new Promise((resolve, reject) => {
+		const startTime = performance.now();
 		// Generate cache key from host and command
 		const cacheKey = createHash('sha256').update(`${target}:${cmd}`).digest('hex');
 
@@ -23,6 +25,8 @@ export async function cmdRunner(target, cmd, extraFields = {}, cacheable = false
 			const cachedResult = cache.get(cacheKey);
 			if (cachedResult) {
 				logger.debug(`cmdRunner: Cache hit on ${target} for ${cmd}`);
+				const duration = Math.round(performance.now() - startTime);
+				recordMetric(target, cmd, duration, 'CACHED');
 				return resolve({
 					stdout: cachedResult.stdout,
 					stderr: cachedResult.stderr,
@@ -37,6 +41,8 @@ export async function cmdRunner(target, cmd, extraFields = {}, cacheable = false
 				cmdOptions = {timeout: 30000, maxBuffer: 1024 * 1024 * 20};
 
 			if (count === 0) {
+				const duration = Math.round(performance.now() - startTime);
+				recordMetric(target, cmd, duration, 'error');
 				return reject({
 					error: new Error(`Target host '${target}' not found in database.`),
 					stdout: '',
@@ -55,8 +61,11 @@ export async function cmdRunner(target, cmd, extraFields = {}, cacheable = false
 			}
 
 			exec(sshCommand, cmdOptions, (error, stdout, stderr) => {
+				const duration = Math.round(performance.now() - startTime);
+
 				if (error) {
 					logger.debug('cmdRunner exit code:', error.code);
+					recordMetric(target, cmd, duration, 'error');
 					if (stderr) {
 						logger.debug('cmdRunner stderr:', stderr);
 						return reject({error: new Error(stderr), stdout, stderr, extraFields});
@@ -66,6 +75,7 @@ export async function cmdRunner(target, cmd, extraFields = {}, cacheable = false
 					}
 				}
 
+				recordMetric(target, cmd, duration, 'success');
 				const result = {stdout, stderr, extraFields};
 
 				// Store in cache if cacheable

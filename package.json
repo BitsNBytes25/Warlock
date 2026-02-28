@@ -9,6 +9,8 @@
   "scripts": {
     "start": "node app.js",
     "dev": "NODE_ENV=development nodemon app.js",
+    "dev:profile": "NODE_ENV=development WARLOCK_PROFILE=1 nodemon app.js",
+    "start:profile": "WARLOCK_PROFILE=1 node app.js",
     "prune-duplicates": "node tasks/prune_duplicates.js",
     "test": "node --test --experimental-test-module-mocks tests/*"
   },
