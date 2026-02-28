@@ -2,7 +2,6 @@ const express = require('express');
 const {validate_session} = require("../../libs/validate_session.mjs");
 const {getAllServices} = require("../../libs/get_all_services.mjs");
 const {getAllApplications} = require("../../libs/get_all_applications.mjs");
-const {getServicesStatus} = require("../../libs/get_services_status.mjs");
 const {logger} = require("../../libs/logger.mjs");
 const {Metric} = require("../../db.js");
 const {getApplicationServices} = require("../../libs/get_application_services.mjs");

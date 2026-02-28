@@ -35,7 +35,7 @@ router.get('/updates', validate_session, (req, res) => {
 
 			Object.values(applications).forEach(application => {
 				application.hosts.forEach(hostData => {
-					promises.push(cmdRunner(hostData.host, `${hostData.path}/manage.py --check-update`, {application, hostData}));
+					promises.push(cmdRunner(hostData.host, hostData.getCommandString('check-update'), {application, hostData}));
 				});
 			});
 

@@ -13,16 +13,7 @@ export async function getApplicationServices(appData, hostData) {
 
 		const guid = appData.guid;
 
-		let cachedServices = cache.get(`services_${guid}_${hostData.host}`);
-		if (cachedServices) {
-			return resolve({
-				app: appData,
-				host: hostData,
-				services: cachedServices
-			});
-		}
-
-		cmdRunner(hostData.host, `${hostData.path}/manage.py --get-services`)
+		cmdRunner(hostData.host, hostData.getCommandString('get-services'), {}, 3600)
 			.then(result => {
 				let appServices = {},
 					allData,
@@ -45,9 +36,6 @@ export async function getApplicationServices(appData, hostData) {
 				catch(e) {
 					return reject(new Error(`Error parsing services data for application '${guid}' on host '${hostData.host}': ${e.message}`));
 				}
-
-				// Save this to cache for faster future lookups
-				cache.set(`services_${guid}_${hostData.host}`, appServices, 86400); // Cache for a day
 
 				return resolve({
 					app: appData,

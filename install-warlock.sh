@@ -123,15 +123,15 @@ if ! which node; then
 	echo "Node.js binary not found in PATH. Attempting installation" >&2
 	case "$DISTRO" in
 		"ubuntu"|"debian")
-			curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+			curl -fsSL https://deb.nodesource.com/setup_24.x | bash -
 			apt install -y nodejs
 			;;
 		"centos"|"rhel"|"rocky"|"almalinux")
-			curl -fsSL https://rpm.nodesource.com/setup_20.x | bash -
+			curl -fsSL https://rpm.nodesource.com/setup_24.x | bash -
 			yum install -y nodejs
 			;;
 		"fedora")
-			curl -fsSL https://rpm.nodesource.com/setup_20.x | bash -
+			curl -fsSL https://rpm.nodesource.com/setup_24.x | bash -
 			dnf install -y nodejs
 			;;
 		*)
@@ -147,11 +147,11 @@ if ! NODE_BIN=$(command -v node); then
 fi
 
 VERSION="$(node --version | sed 's:v::' | cut -d '.' -f 1)"
-if [[ "$VERSION" -lt 20 ]]; then
-	echo "Node.js version 20 or higher is required. Detected version: $VERSION" >&2
+if [[ "$VERSION" -lt 24 ]]; then
+	echo "Node.js version 24 or higher is required. Detected version: $VERSION" >&2
 	echo "" >&2
-	echo "If you are on Ubuntu/Debian, you can use the following to install v20:" >&2
-	echo '  curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -' >&2
+	echo "If you are on Ubuntu/Debian, you can use the following to install v24:" >&2
+	echo '  curl -fsSL https://deb.nodesource.com/setup_24.x | sudo -E bash -' >&2
 	echo '  sudo apt-get install -y nodejs' >&2
 	exit 1
 fi

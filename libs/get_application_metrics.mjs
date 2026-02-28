@@ -23,15 +23,15 @@ export async function getApplicationMetrics(appData, hostData, service = null) {
 		if (hostData.options.includes('get-metrics')) {
 			// Application supports service-level metrics collection
 			if (service) {
-				cmd = `${hostData.path}/manage.py --service ${service} --get-metrics`
+				cmd = hostData.getServiceCommandString('get-metrics', service);
 			}
 			else {
-				cmd = `${hostData.path}/manage.py --get-metrics`
+				cmd = hostData.getCommandString('get-metrics');
 			}
 		}
 		else {
 			// Fallback to general status of all services
-			cmd = `${hostData.path}/manage.py --get-services`
+			cmd = hostData.getCommandString('get-services');
 		}
 
 

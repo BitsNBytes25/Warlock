@@ -21,7 +21,7 @@ router.post('/:guid/:host', validate_session, (req, res) => {
 	validateHostApplication(host, guid).then(data => {
 		try {
 			// data.host.path holds the installation directory for the app on the host
-			const cmd = `set -euo pipefail; ${data.host.path}/manage.py --backup`;
+			const cmd = `set -euo pipefail; ${data.host.getCommandString('backup')}`;
 			logger.info(`Initiating backup for ${guid} on host ${host}`);
 
 			cmdStreamer(host, cmd, res, true).catch(err => {
@@ -66,7 +66,7 @@ router.put('/:guid/:host', validate_session, (req, res) => {
 			// filename has been validated to be basename-only and not contain quotes
 			const escapedFilename = data.host.path + '/backups/' + String(filename).replace(/"/g, '\\"');
 
-			const cmd = `set -euo pipefail; ${data.host.path}/manage.py --restore "${escapedFilename}"`;
+			const cmd = `set -euo pipefail; ${data.host.getCommandString('restore', escapedFilename)}`;
 			logger.info(`Restoring backup ${filename} for ${guid} on host ${host}`);
 
 			cmdStreamer(host, cmd, res, true).catch(err => {

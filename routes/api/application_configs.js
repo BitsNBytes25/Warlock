@@ -11,7 +11,7 @@ const router = express.Router();
 router.get('/:guid/:host', validate_session, (req, res) => {
 	validateHostApplication(req.params.host, req.params.guid)
 		.then(dat => {
-			cmdRunner(dat.host.host, `${dat.host.path}/manage.py --get-configs`)
+			cmdRunner(dat.host.host, dat.host.getCommandString('get-configs'))
 				.then(result => {
 					return res.json({
 						success: true,
@@ -43,7 +43,7 @@ router.post('/:guid/:host', async (req, res) => {
 			for (let option in configUpdates) {
 				const value = configUpdates[option];
 				updatePromises.push(
-					cmdRunner(dat.host.host, `${dat.host.path}/manage.py --set-config "${option}" "${value}"`)
+					cmdRunner(dat.host.host, dat.host.getCommandString('set-config', option, value))
 				);
 			}
 			Promise.all(updatePromises)

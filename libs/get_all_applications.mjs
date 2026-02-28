@@ -6,7 +6,7 @@ import {cmdRunner} from "./cmd_runner.mjs";
 import {Host} from "../db.js";
 import {logger} from "./logger.mjs";
 import cache from "./cache.mjs";
-import {lookup} from "passport-local/lib/utils.js";
+import {HostAppData} from "./host_app_data.mjs";
 
 /**
  * Get all applications from /var/lib/warlock/*.app registration files
@@ -15,25 +15,28 @@ import {lookup} from "passport-local/lib/utils.js";
  */
 export async function getAllApplications() {
 	return new Promise((resolve, reject) => {
-		let cachedApplications = cache.get('all_applications');
-		if (cachedApplications) {
-			logger.debug('getAllApplications: Returning cached application data');
-			return resolve(cachedApplications);
-		}
-
-		const appsFilePath = path.join(path.dirname(path.dirname(fileURLToPath(import.meta.url))), 'Apps.yaml');
-		if (!fs.existsSync(appsFilePath)) {
-			return reject(new Error(`Applications definition file not found at path: ${appsFilePath}`));
-		}
-
-		// Open Apps.yaml and parse it for the list of applications
 		let applications = {};
-		const data = yaml.load(fs.readFileSync(appsFilePath, 'utf8'), {});
-		if (data) {
-			data.forEach(item => {
-				applications[ item.guid ] = item;
-				applications[ item.guid ].hosts = [];
-			});
+		let cachedApplications = cache.get('all_applications');
+
+		if (cachedApplications) {
+			logger.debug('getAllApplications: Fetched cached application list');
+			applications = cachedApplications;
+		}
+		else {
+			const appsFilePath = path.join(path.dirname(path.dirname(fileURLToPath(import.meta.url))), 'Apps.yaml');
+			if (!fs.existsSync(appsFilePath)) {
+				return reject(new Error(`Applications definition file not found at path: ${appsFilePath}`));
+			}
+
+			// Open Apps.yaml and parse it for the list of applications
+			const data = yaml.load(fs.readFileSync(appsFilePath, 'utf8'), {});
+			if (data) {
+				data.forEach(item => {
+					applications[ item.guid ] = item;
+					applications[ item.guid ].hosts = [];
+				});
+				cache.set('all_applications', applications, 3600);
+			}
 		}
 
 		logger.debug('getAllApplications: Loading application definitions from hosts');
@@ -50,7 +53,7 @@ export async function getAllApplications() {
 				lookupPromises = [];
 
 			hostList.forEach(host => {
-				promises.push(cmdRunner(host, cmd, {host}));
+				promises.push(cmdRunner(host, cmd, {host}, 86400));
 			});
 
 			Promise.allSettled(promises)
@@ -74,12 +77,10 @@ export async function getAllApplications() {
 										};
 									}
 
-									lookupPromises.push(
-										getApplicationOptions(target, path.trim())
-											.then(appData => {
-												applications[guid]['hosts'].push(appData);
-											})
-									);
+									const hostAppData = new HostAppData(target, path.trim());
+									applications[guid]['hosts'].push(hostAppData);
+
+									lookupPromises.push(hostAppData.init());
 								}
 							}
 						}
@@ -87,52 +88,10 @@ export async function getAllApplications() {
 
 					Promise.allSettled(lookupPromises)
 						.then(() => {
-							// Cache the applications for 1 day
-							cache.set('all_applications', applications, 86400);
 							logger.debug('getAllApplications: Application Definitions Loaded', applications);
 							return resolve(applications);
 						});
 				});
 		});
-	});
-}
-
-/**
- * Execute manage.py on the host with --help to retrieve the options available in this version of the application.
- *
- * Required because some game managers may support different options.
- *
- * @param {string} host Host IP or name
- * @param {string} path Path to the application on the host
- * @returns {Object<host:string, path:string, options:Array<string>>}
- */
-async function getApplicationOptions(host, path) {
-	return new Promise((resolve, reject) => {
-		cmdRunner(host, `${path}/manage.py --help`)
-			.then(result => {
-				let options = [];
-				const helpText = result.stdout;
-
-				// Simple parsing of the help text to find available options
-				const optionRegex = /--([a-zA-Z0-9_-]+)(\s+<[^>]+>)?/g;
-				let match;
-				while ((match = optionRegex.exec(helpText)) !== null) {
-					options.push(match[1]);
-				}
-
-				resolve({
-					host: host,
-					path: path,
-					options: options
-				});
-			})
-			.catch(error => {
-				logger.warn(`getApplicationOptions: Error retrieving options for app at ${host}: ${error.message}`);
-				resolve({
-					host: host,
-					path: path,
-					options: []
-				});
-			});
 	});
 }

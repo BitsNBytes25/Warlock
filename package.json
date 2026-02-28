@@ -3,10 +3,14 @@
   "version": "1.2.0~20260225",
   "description": "Express app serving HTML pages",
   "main": "app.js",
+  "engines": {
+    "node": ">=24.0.0"
+  },
   "scripts": {
     "start": "node app.js",
     "dev": "NODE_ENV=development nodemon app.js",
-    "prune-duplicates": "node tasks/prune_duplicates.js"
+    "prune-duplicates": "node tasks/prune_duplicates.js",
+    "test": "node --test --experimental-test-module-mocks tests/*"
   },
   "keywords": [
     "express",

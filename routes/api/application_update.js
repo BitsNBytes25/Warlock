@@ -22,7 +22,7 @@ router.get('/:guid/:host', validate_session, (req, res) => {
 	validateHostApplication(host, guid).then(data => {
 		try {
 			// data.host.path holds the installation directory for the app on the host
-			const cmd = `${data.host.path}/manage.py --check-update`;
+			const cmd = data.host.getCommandString('check-update');
 			logger.info(`Initiating update check for ${guid} on host ${host}`);
 
 			cmdRunner(host, cmd)
@@ -64,7 +64,7 @@ router.post('/:guid/:host', validate_session, (req, res) => {
 	validateHostApplication(host, guid).then(data => {
 		try {
 			// data.host.path holds the installation directory for the app on the host
-			const cmd = `${data.host.path}/manage.py --update`;
+			const cmd = data.host.getCommandString('update');
 			logger.info(`Initiating update for ${guid} on host ${host}`);
 
 			cmdStreamer(host, cmd, res, true).catch(err => {

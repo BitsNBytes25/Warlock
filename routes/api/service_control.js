@@ -49,7 +49,7 @@ router.post('/:guid/:host/:service', validate_session, (req, res) => {
 
 			if (action === 'delayed-stop' || action === 'delayed-restart') {
 				clearNeeded = false;
-				cmd = `${dat.host.path}/manage.py --service ${service} --${action} &`;
+				cmd = dat.host.getServiceCommandString(action, service) + ' &'; // Run in background to avoid waiting for completion
 			}
 			else if (action === 'enable' || action === 'disable') {
 				clearNeeded = true;

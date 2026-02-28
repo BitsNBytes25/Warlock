@@ -1,5 +1,4 @@
 import { getAllApplications } from './get_all_applications.mjs';
-import { getServicesStatus } from './get_services_status.mjs';
 import {getApplicationServices} from "./get_application_services.mjs";
 
 /**

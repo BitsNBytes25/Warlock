@@ -15,15 +15,6 @@
  */
 
 /**
- * Represents the details of a host specifically regarding an installed application.
- *
- * @typedef {Object} HostAppData
- * @property {string} host Hostname or IP of host.
- * @property {string} path Path where the application is installed on the host.
- *
- */
-
-/**
  * Represents the details of a service.
  *
  * @typedef {Object} ServiceData

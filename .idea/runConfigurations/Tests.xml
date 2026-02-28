@@ -1,0 +1,5 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Tests" type="NodeJSConfigurationType" node-parameters="--test --experimental-test-module-mocks tests/*" working-dir="$PROJECT_DIR$">
+    <method v="2" />
+  </configuration>
+</component>

@@ -22,7 +22,7 @@ router.get('/:host', validate_session, (req, res) => {
 			Object.values(results).forEach(app => {
 				app.hosts.forEach(hostData => {
 					if (hostData.host === host) {
-						promises.push(cmdRunner(host, `${hostData.path}/manage.py --get-ports`, app.guid));
+						promises.push(cmdRunner(host, hostData.getCommandString('get-ports'), app.guid));
 					}
 				});
 			});

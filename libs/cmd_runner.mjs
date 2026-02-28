@@ -1,6 +1,8 @@
 import {exec} from 'child_process';
+import {createHash} from 'crypto';
 import {Host} from "../db.js";
 import {logger} from "./logger.mjs";
+import cache from "./cache.mjs";
 
 /**
  * Run a command via SSH on the target host
@@ -8,10 +10,27 @@ import {logger} from "./logger.mjs";
  * @param target {string}
  * @param cmd {string}
  * @param extraFields {*}
+ * @param cacheable {boolean|int} Number > 0 if the result of this command should be cached for N seconds.
  * @returns {Promise<{stdout: string, stderr: string, extraFields: *}>|Promise<{error: Error, stdout: string, stderr: string, extraFields: *}>}
  */
-export async function cmdRunner(target, cmd, extraFields = {}) {
+export async function cmdRunner(target, cmd, extraFields = {}, cacheable = false) {
 	return new Promise((resolve, reject) => {
+		// Generate cache key from host and command
+		const cacheKey = createHash('sha256').update(`${target}:${cmd}`).digest('hex');
+
+		// Check cache if cacheable
+		if (cacheable) {
+			const cachedResult = cache.get(cacheKey);
+			if (cachedResult) {
+				logger.debug(`cmdRunner: Cache hit on ${target} for ${cmd}`);
+				return resolve({
+					stdout: cachedResult.stdout,
+					stderr: cachedResult.stderr,
+					extraFields: extraFields
+				});
+			}
+		}
+
 		// Confirm the host exists in the database first
 		Host.count({where: {ip: target}}).then(count => {
 			let sshCommand = null,
@@ -47,8 +66,21 @@ export async function cmdRunner(target, cmd, extraFields = {}) {
 					}
 				}
 
+				const result = {stdout, stderr, extraFields};
+
+				// Store in cache if cacheable
+				if (cacheable) {
+					if (cacheable === true) {
+						cacheable = 300; // Default to 5 minutes if true
+					}
+					if (typeof cacheable === 'number' && cacheable > 0) {
+						cache.set(cacheKey, {stdout, stderr}, cacheable);
+						logger.debug('cmdRunner: Cached result for', cacheKey);
+					}
+				}
+
 				logger.debug('cmdRunner:', stdout);
-				resolve({stdout, stderr, extraFields});
+				resolve(result);
 			});
 		});
 	});
