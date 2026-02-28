@@ -148,6 +148,10 @@ with each instance being configurable and manageable separately.
 To add a new game, [check out the Template Repo](https://github.com/BitsNBytes25/Warlock-Game-Template)
 for example code and instructions on getting started!
 
+## Updating Warlock
+
+(@todo)
+
 ## Links and Contact
 
 * [Volleyball coach-turned-developer Micah](https://micahtml.com/)
