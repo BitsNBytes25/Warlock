@@ -11,6 +11,7 @@ ENV_FILE="$INSTALL_DIR/.env"
 SERVICE_USER=root
 CONFIGURE_NGINX=1
 CONFIGURE_SYSTEMD=1
+ONLY_UPDATE=0
 FQDN=""
 SSL=0
 
@@ -22,6 +23,7 @@ Options:
   --user <name>        Run the service as <name> (default: root)
   --skip-nginx	       Do not configure nginx even if it is installed
   --skip-systemd       Do not configure systemd service (just install dependencies and generate .env)
+  --update             Update an existing installation ONLY
   --help               Show this help message
 
 This installer will:
@@ -45,8 +47,18 @@ while [[ $# -gt 0 ]]; do
 			SERVICE_USER="$1"
 			shift
 			;;
+		--skip-systemd)
+			CONFIGURE_SYSTEMD=0
+			shift
+			;;
 		--skip-nginx)
 			CONFIGURE_NGINX=0
+			shift
+			;;
+		--update)
+			ONLY_UPDATE=1
+			CONFIGURE_NGINX=0
+			CONFIGURE_SYSTEMD=0
 			shift
 			;;
 		--help)
@@ -61,66 +73,72 @@ while [[ $# -gt 0 ]]; do
 	esac
 done
 
-# Require root
-if [[ $(id -u) -ne 0 ]]; then
-	echo "This installer must be run as root." >&2
-	exit 1
-fi
-
 # Confirm this script is located within /var/www
 if [[ "$INSTALL_DIR" != /var/www* ]]; then
-	echo "Warning: It is recommended to install Warlock within /var/www (current location: $INSTALL_DIR)" >&2
-	echo ""
-	echo "Installing in another directory may lead to the web application not working."
-	echo "Press ENTER to continue or CTRL+C to abort."
-	read -r
+	echo "Warlock not located in /var/www/..., disabling nginx and systemd integration"
+	CONFIGURE_NGINX=0
+	CONFIGURE_SYSTEMD=0
 fi
 
-echo "This script will configure Warlock as a system service and configure it for nginx."
+if [ "$EUID" -ne 0 ]; then
+	echo "Not running as root, disabling nginx and systemd integration"
+	CONFIGURE_NGINX=0
+	CONFIGURE_SYSTEMD=0
+fi
+
+echo "This script will install Warlock Game Server Manager."
 echo ""
 echo "We will:"
-echo "  create /etc/systemd/system/warlock.service"
-echo "  create $ENV_FILE with defaults"
-if [ $CONFIGURE_NGINX -eq 0 ]; then
-	echo "  skip nginx configuration even if nginx is installed"
-else
+if [ $CONFIGURE_SYSTEMD -eq 1 ]; then
+	echo "  create /etc/systemd/system/warlock.service"
+fi
+echo "  create $ENV_FILE with defaults (if does not exist)"
+if [ $CONFIGURE_NGINX -eq 1 ]; then
 	echo "  create /etc/nginx/sites-available/warlock and enable it (if nginx is installed)"
 fi
 echo ""
-echo "Press ENTER to continue or CTRL+C to abort."
-read -r
 
-echo "By installing Warlock you are agreeing to the following terms:"
-echo ""
-echo "Warlock is provided 'as-is', without any express or implied warranty"
-echo " and is published under the AGPLv3 license,"
-echo " (which in short means that if you modify and distribute the code, you must also"
-echo " distribute your modifications under the same license)."
-echo ""
-echo "Commercial paid support IS available from eVAL Agency."
-echo ""
-echo "Metrics of the server are collected to help improve the project, including:"
-echo " * Server OS type and version"
-echo " * Warlock version"
-echo " * Random Warlock installation identifier"
-echo " * Country and approximate region of server"
-echo " * Server events such as start or game installation"
-echo ""
-echo "Metrics such as community information, email addresses, user activity,"
-echo " or personally identifiable information are NOT collected."
-echo ""
-echo "For more information, please refer to"
-echo " * Warlock Documentation: (@todo link to Warlock documentation here)"
-echo " * Discord: https://discord.gg/jyFsweECPb"
-echo " * Mastodon: https://social.bitsnbytes.dev/@sitenews"
-echo " * Bits N Bytes: https://bitsnbytes.dev"
-echo ""
-echo "Press ENTER to accept these terms and continue installation, or CTRL+C to abort."
-read -r
+if [ $ONLY_UPDATE -eq 0 ]; then
+	echo "Press ENTER to continue or CTRL+C to abort."
+	read -r
+
+	echo "By installing Warlock you are agreeing to the following terms:"
+    echo ""
+    echo "Warlock is provided 'as-is', without any express or implied warranty"
+    echo " and is published under the AGPLv3 license,"
+    echo " (which in short means that if you modify and distribute the code, you must also"
+    echo " distribute your modifications under the same license)."
+    echo ""
+    echo "Commercial paid support IS available from eVAL Agency."
+    echo ""
+    echo "Metrics of the server are collected to help improve the project, including:"
+    echo " * Server OS type and version"
+    echo " * Warlock version"
+    echo " * Random Warlock installation identifier"
+    echo " * Country and approximate region of server"
+    echo " * Server events such as start or game installation"
+    echo ""
+    echo "Metrics such as community information, email addresses, user activity,"
+    echo " or personally identifiable information are NOT collected."
+    echo ""
+    echo "For more information, please refer to"
+    echo " * Warlock Documentation: (@todo link to Warlock documentation here)"
+    echo " * Discord: https://discord.gg/jyFsweECPb"
+    echo " * Mastodon: https://social.bitsnbytes.dev/@sitenews"
+    echo " * Bits N Bytes: https://bitsnbytes.dev"
+    echo ""
+    echo "Press ENTER to accept these terms and continue installation, or CTRL+C to abort."
+    read -r
+fi
 
 DISTRO="$(lsb_release -i 2>/dev/null | sed "s#.*:\t##" | tr '[:upper:]' '[:lower:]')"
 
 install_node() {
+	if [ "$EUID" -ne 0 ]; then
+		echo "Warlock requires Node.js v24 or higher to run. Please install Node.js and re-run this installer." >&2
+		exit 1
+	fi
+
 	case "$DISTRO" in
 		"ubuntu"|"debian")
 			curl -fsSL https://deb.nodesource.com/setup_24.x | bash -
@@ -137,6 +155,51 @@ install_node() {
 		*)
 			echo "Automatic Node.js installation not supported on this distribution ($DISTRO). Please install Node.js v24 or higher manually." >&2
 			exit 1
+			;;
+	esac
+}
+
+install_nginx() {
+	if [ "$EUID" -ne 0 ]; then
+		echo "Unable to install nginx without root permissions!  Please run with --skip-nginx or manually install nginx." >&2
+		exit 1
+	fi
+
+	case "$DISTRO" in
+		"ubuntu"|"debian")
+			apt install -y nginx
+			;;
+		"centos"|"rhel"|"rocky"|"almalinux")
+			yum install -y nginx
+			;;
+		"fedora")
+			dnf install -y nginx
+			;;
+		*)
+			echo "Automatic Nginx installation not supported on this distribution ($DISTRO). Please install Nginx manually or re-run this script with --skip-nginx." >&2
+			exit 1
+			;;
+	esac
+}
+
+install_certbot() {
+	if [ "$EUID" -ne 0 ]; then
+		echo "Unable to install certbot without root permissions!  Skipping SSL." >&2
+		return
+	fi
+
+	case "$DISTRO" in
+		"ubuntu"|"debian")
+			apt install -y certbot python3-certbot-nginx
+			;;
+		"centos"|"rhel"|"rocky"|"almalinux")
+			yum install -y certbot python3-certbot-nginx
+			;;
+		"fedora")
+			dnf install -y certbot python3-certbot-nginx
+			;;
+		*)
+			echo "Automatic certbot installation not supported on this distribution ($DISTRO). Please install certbot manually if you wish to use SSL certificates." >&2
 			;;
 	esac
 }
@@ -163,39 +226,12 @@ fi
 if [ $CONFIGURE_NGINX -eq 1 ]; then
 	if ! which nginx; then
     	echo "Warning: Nginx not found in PATH.  Attempting auto install" >&2
-    	case "$DISTRO" in
-			"ubuntu"|"debian")
-				apt install -y nginx
-				;;
-			"centos"|"rhel"|"rocky"|"almalinux")
-				yum install -y nginx
-				;;
-			"fedora")
-				dnf install -y nginx
-				;;
-			*)
-				echo "Automatic Nginx installation not supported on this distribution ($DISTRO). Please install Nginx manually or re-run this script with --skip-nginx." >&2
-				exit 1
-				;;
-		esac
+    	install_nginx
     fi
 
     if ! which certbot; then
 		echo "Warning: certbot not found in PATH.  Attempting auto install" >&2
-		case "$DISTRO" in
-			"ubuntu"|"debian")
-				apt install -y certbot python3-certbot-nginx
-				;;
-			"centos"|"rhel"|"rocky"|"almalinux")
-				yum install -y certbot python3-certbot-nginx
-				;;
-			"fedora")
-				dnf install -y certbot python3-certbot-nginx
-				;;
-			*)
-				echo "Automatic certbot installation not supported on this distribution ($DISTRO). Please install certbot manually if you wish to use SSL certificates." >&2
-				;;
-		esac
+		install_certbot
 	fi
 
 	FQDN=""

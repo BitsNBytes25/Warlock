@@ -1,4 +1,4 @@
-# ![Warlock Game Server Manager](public/assets/media/logos/warlock/warlock-lopoly-text-384x192.webp)
+# ![Warlock Logo](public/assets/media/logos/warlock/warlock-lopoly-logo-128x96.webp) ![Warlock Game Server Manager](public/assets/media/logos/warlock/warlock-lopoly-text-246x96.webp)
 
 Server game manager that supports your fleet of servers and games.
 
