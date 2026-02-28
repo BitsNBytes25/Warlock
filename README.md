@@ -56,12 +56,20 @@ By default it will install nginx as a frontend, taking over the default web serv
 
 You can skip the nginx integration by passing `--skip-nginx` to the install script.
 
+You can also skip systemd integration by passing `--skip-systemd`.
+
 ### Docker Build
 
 Warlock can be run as a Docker container, but an nginx reverse proxy is recommended to handle SSL termination.
 
 ```bash
-docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
+docker pull bitsnbytes25/warlock:latest
+docker run \
+  --name warlock \
+  -p 3077:3077 \
+  -v warlock_data:/app/data \
+  -v warlock_ssh:/home/warlock/.ssh \
+  bitsnbytes25/warlock:latest
 ```
 
 

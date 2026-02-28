@@ -2,4 +2,5 @@ services:
   warlock:
     build: .
     image: warlock-dev
-
+    environment:
+      - NODE_ENV=development
