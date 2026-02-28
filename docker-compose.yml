@@ -9,9 +9,10 @@ services:
       - SKIP_2FA=false
       - IP=0.0.0.0
       - NODE_ENV=production
+      - WARLOCK_PROFILE=false
     volumes:
       - "data:/app/data"
-      - "ssh:/root/.ssh"
+      - "ssh:/home/warlock/.ssh"
     restart: unless-stopped
 volumes:
   data:

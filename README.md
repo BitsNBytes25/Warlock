@@ -61,7 +61,7 @@ You can skip the nginx integration by passing `--skip-nginx` to the install scri
 Warlock can be run as a Docker container, but an nginx reverse proxy is recommended to handle SSL termination.
 
 ```bash
-docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
 ```
 
 
