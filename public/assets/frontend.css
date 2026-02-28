@@ -309,10 +309,16 @@ h4 {
 	text-shadow: none;
 	text-decoration: none;
 	transition: all 0.3s ease;
+	line-height: 1.2rem;
 }
 
 .logo:hover {
 	color: var(--primary-hover);
+}
+.logo .sub-title {
+	font-size: 0.75rem;
+	letter-spacing: -0.01em;
+	opacity: 0.8;
 }
 
 .logo i {
