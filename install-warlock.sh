@@ -409,9 +409,6 @@ fi
 if [ $CONFIGURE_SYSTEMD -eq 1 ]; then
 	echo "Service status:"
 	systemctl --no-pager status warlock.service --lines=10 || true
-
-	echo "Recent journal entries (last 50 lines):"
-	journalctl -u warlock.service -n 50 --no-pager || true
 elif [ $ONLY_UPDATE -eq 1 ] && [ "$EUID" -eq 0 ] && [ -e /etc/systemd/system/warlock.service ]; then
 	# An update was requested, we have permissions, and the service file exists.
 	# Start the service if it's not already running,
@@ -422,9 +419,6 @@ elif [ $ONLY_UPDATE -eq 1 ] && [ "$EUID" -eq 0 ] && [ -e /etc/systemd/system/war
 
 		echo "Service status:"
 		systemctl --no-pager status warlock.service --lines=10 || true
-
-		echo "Recent journal entries (last 50 lines):"
-		journalctl -u warlock.service -n 50 --no-pager || true
 	fi
 fi
 
