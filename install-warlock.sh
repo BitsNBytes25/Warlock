@@ -223,6 +223,11 @@ if [[ "$VERSION" -lt 24 ]]; then
 	install_node
 fi
 
+FQDN=""
+if [ -e "/etc/nginx/sites-available/warlock" ]; then
+	FQDN=$(grep -m1 'server_name' /etc/nginx/sites-available/warlock | awk '{print $2}' | tr -d ';')
+fi
+
 if [ $CONFIGURE_NGINX -eq 1 ]; then
 	if ! which nginx; then
     	echo "Warning: Nginx not found in PATH.  Attempting auto install" >&2
@@ -232,11 +237,6 @@ if [ $CONFIGURE_NGINX -eq 1 ]; then
     if ! which certbot; then
 		echo "Warning: certbot not found in PATH.  Attempting auto install" >&2
 		install_certbot
-	fi
-
-	FQDN=""
-	if [ -e "/etc/nginx/sites-available/warlock" ]; then
-		FQDN=$(grep -m1 'server_name' /etc/nginx/sites-available/warlock | awk '{print $2}' | tr -d ';')
 	fi
 
 	if [ -n "$FQDN" ]; then
@@ -412,6 +412,20 @@ if [ $CONFIGURE_SYSTEMD -eq 1 ]; then
 
 	echo "Recent journal entries (last 50 lines):"
 	journalctl -u warlock.service -n 50 --no-pager || true
+elif [ $ONLY_UPDATE -eq 1 ] && [ "$EUID" -eq 0 ] && [ -e /etc/systemd/system/warlock.service ]; then
+	# An update was requested, we have permissions, and the service file exists.
+	# Start the service if it's not already running,
+	# it was probably stopped prior to the git update from the updater.
+	if ! systemctl is-active --quiet warlock; then
+		echo "Starting warlock.service..."
+		systemctl start warlock
+
+		echo "Service status:"
+		systemctl --no-pager status warlock.service --lines=10 || true
+
+		echo "Recent journal entries (last 50 lines):"
+		journalctl -u warlock.service -n 50 --no-pager || true
+	fi
 fi
 
 echo "You can access the Warlock web interface at:"
