@@ -10,6 +10,7 @@ SERVICE_UNIT_PATH="/etc/systemd/system/warlock.service"
 ENV_FILE="$INSTALL_DIR/.env"
 SERVICE_USER=root
 CONFIGURE_NGINX=1
+CONFIGURE_SYSTEMD=1
 FQDN=""
 SSL=0
 
@@ -20,6 +21,7 @@ Usage: $SCRIPT_NAME [options]
 Options:
   --user <name>        Run the service as <name> (default: root)
   --skip-nginx	       Do not configure nginx even if it is installed
+  --skip-systemd       Do not configure systemd service (just install dependencies and generate .env)
   --help               Show this help message
 
 This installer will:
@@ -118,9 +120,7 @@ read -r
 
 DISTRO="$(lsb_release -i 2>/dev/null | sed "s#.*:\t##" | tr '[:upper:]' '[:lower:]')"
 
-# Locate node
-if ! which node; then
-	echo "Node.js binary not found in PATH. Attempting installation" >&2
+install_node() {
 	case "$DISTRO" in
 		"ubuntu"|"debian")
 			curl -fsSL https://deb.nodesource.com/setup_24.x | bash -
@@ -135,10 +135,16 @@ if ! which node; then
 			dnf install -y nodejs
 			;;
 		*)
-			echo "Automatic Node.js installation not supported on this distribution ($DISTRO). Please install Node.js v20 or higher manually." >&2
+			echo "Automatic Node.js installation not supported on this distribution ($DISTRO). Please install Node.js v24 or higher manually." >&2
 			exit 1
 			;;
 	esac
+}
+
+# Locate node
+if ! which node; then
+	echo "Node.js binary not found in PATH. Attempting installation" >&2
+	install_node
 fi
 
 if ! NODE_BIN=$(command -v node); then
@@ -149,11 +155,9 @@ fi
 VERSION="$(node --version | sed 's:v::' | cut -d '.' -f 1)"
 if [[ "$VERSION" -lt 24 ]]; then
 	echo "Node.js version 24 or higher is required. Detected version: $VERSION" >&2
-	echo "" >&2
-	echo "If you are on Ubuntu/Debian, you can use the following to install v24:" >&2
-	echo '  curl -fsSL https://deb.nodesource.com/setup_24.x | sudo -E bash -' >&2
-	echo '  sudo apt-get install -y nodejs' >&2
-	exit 1
+	echo "Press ENTER to attempt auto-installation, or CTRL+C to abort."
+    read -r
+	install_node
 fi
 
 if [ $CONFIGURE_NGINX -eq 1 ]; then
@@ -230,9 +234,10 @@ if [ "$PWD" != "$INSTALL_DIR" ]; then
 fi
 
 # Generate unit file
-echo "Generating and saving unit file"
-TMP_UNIT=$(mktemp)
-cat > "$TMP_UNIT" <<UNIT
+if [ $CONFIGURE_SYSTEMD -eq 1 ]; then
+	echo "Generating and saving unit file"
+	TMP_UNIT=$(mktemp)
+	cat > "$TMP_UNIT" <<UNIT
 [Unit]
 Description=Warlock Management App
 After=network.target
@@ -253,8 +258,9 @@ StandardError=journal
 WantedBy=multi-user.target
 UNIT
 
-chmod 0644 "$TMP_UNIT"
-mv "$TMP_UNIT" "$SERVICE_UNIT_PATH"
+	chmod 0644 "$TMP_UNIT"
+	mv "$TMP_UNIT" "$SERVICE_UNIT_PATH"
+fi
 
 # Create environment file
 if [ ! -e "$ENV_FILE" ]; then
@@ -266,6 +272,7 @@ NODE_ENV=production
 SESSION_SECRET=$SECRET
 SKIP_AUTHENTICATION=false
 SKIP_2FA=false
+WARLOCK_PROFILE=false
 ENV
 	if [ "$SERVICE_USER" != "root" ]; then
 		chown "$SERVICE_USER":"$SERVICE_USER" "$ENV_FILE"
@@ -273,13 +280,15 @@ ENV
 fi
 
 # Reload systemd and enable/start service
-echo "Reloading systemd daemon..."
-systemctl daemon-reload
+if [ $CONFIGURE_SYSTEMD -eq 1 ]; then
+	echo "Reloading systemd daemon..."
+	systemctl daemon-reload
 
-echo "Enabling and starting warlock.service..."
-if ! systemctl enable --now warlock.service; then
-  echo "Failed to enable/start warlock.service. Check 'journalctl -u warlock.service' for details." >&2
-  exit 1
+	echo "Enabling and starting warlock.service..."
+	if ! systemctl enable --now warlock.service; then
+	  echo "Failed to enable/start warlock.service. Check 'journalctl -u warlock.service' for details." >&2
+	  exit 1
+	fi
 fi
 
 # If nginx is installed, generate a simple site config that reverse-proxies to the local app
@@ -361,11 +370,13 @@ else
 fi
 
 # Output quick verification
-echo "Service status:"
-systemctl --no-pager status warlock.service --lines=10 || true
+if [ $CONFIGURE_SYSTEMD -eq 1 ]; then
+	echo "Service status:"
+	systemctl --no-pager status warlock.service --lines=10 || true
 
-echo "Recent journal entries (last 50 lines):"
-journalctl -u warlock.service -n 50 --no-pager || true
+	echo "Recent journal entries (last 50 lines):"
+	journalctl -u warlock.service -n 50 --no-pager || true
+fi
 
 echo "You can access the Warlock web interface at:"
 if [ "$FQDN" == "_" ]; then
