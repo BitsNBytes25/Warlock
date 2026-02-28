@@ -1,6 +1,6 @@
 services:
   warlock:
-    image: ${DOCKERHUB_IMAGE:-bitsnbytes25/warlock:latest}
+    image: bitsnbytes25/warlock:latest
     container_name: warlock
     ports:
       - "3077:3077"
