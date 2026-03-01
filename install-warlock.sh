@@ -423,7 +423,7 @@ elif [ $ONLY_UPDATE -eq 1 ] && [ "$EUID" -eq 0 ] && [ -e /etc/systemd/system/war
 fi
 
 echo "You can access the Warlock web interface at:"
-if [ "$FQDN" == "_" ]; then
+if [ "$FQDN" == "_" ] || [ "$FQDN" == "" ]; then
 	for IP in $(hostname -I); do
 		echo "http://$IP/"
 	done
