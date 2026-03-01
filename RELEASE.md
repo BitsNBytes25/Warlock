@@ -16,6 +16,7 @@ to update Node.js and all dependencies.
 * Docker support for Warlock to be installed in a container
 * Graphs and metrics for servers
 * Add updater script to update Warlock to the latest git version
+* Add support for v2 of the Warlock API to support Typer as the argument parser
 
 ## Fixes
 
