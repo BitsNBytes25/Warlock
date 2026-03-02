@@ -279,7 +279,7 @@ document.addEventListener('serviceStatusChange', e => {
 		serviceDetailsStatus.classList.add('status-starting');
 
 		btnServiceStart.style.display = 'none';
-		btnServiceStop.style.display = 'none';
+		btnServiceStop.style.display = 'inline-flex';
 		btnServiceRestart.style.display = 'none';
 	}
 	else if (e.detail.value === 'stopping') {
