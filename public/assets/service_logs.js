@@ -10,7 +10,9 @@ const logsContainer = document.getElementById('logsContainer'),
 
 let serviceLogsMode = 'live',
 	serviceLogsOffset = 1,
-	req = null;
+	req = null,
+	commandHistory = [],
+	currentHistoryIndex = -1;
 
 function updateCommandInputUI() {
 	const hasCmd = checkHostAppHasOption(loadedApplication, loadedHost, 'cmd'),
@@ -34,6 +36,10 @@ async function sendCommand() {
 	commandInput.value = '';
 	commandInput.disabled = true;
 	commandSendBtn.disabled = true;
+
+	// Keep a history of this command for arrow key navigation
+	commandHistory.push(cmdText);
+	currentHistoryIndex = commandHistory.length; // Set to end of history
 
 	try {
 		const response = await fetch(`/api/service/cmd/${loadedApplication}/${loadedHost}/${loadedService}`, {
@@ -202,9 +208,27 @@ logsPagerNextBtn.addEventListener('click', event => {
 
 // Command input event listeners
 commandSendBtn.addEventListener('click', sendCommand);
-commandInput.addEventListener('keypress', event => {
+commandInput.addEventListener('keyup', event => {
+
 	if (event.key === 'Enter' && !commandSendBtn.disabled) {
 		event.preventDefault();
 		sendCommand();
+	}
+	else if (event.key === 'ArrowUp') {
+		event.preventDefault();
+		if (currentHistoryIndex > 0) {
+			currentHistoryIndex -= 1;
+			commandInput.value = commandHistory[currentHistoryIndex];
+		}
+	}
+	else if (event.key === 'ArrowDown') {
+		event.preventDefault();
+		if (currentHistoryIndex < commandHistory.length - 1) {
+			currentHistoryIndex += 1;
+			commandInput.value = commandHistory[currentHistoryIndex];
+		} else {
+			currentHistoryIndex = commandHistory.length; // Set to end of history
+			commandInput.value = '';
+		}
 	}
 });

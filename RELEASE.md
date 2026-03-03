@@ -17,6 +17,7 @@ to update Node.js and all dependencies.
 * Graphs and metrics for servers
 * Add updater script to update Warlock to the latest git version
 * Add support for v2 of the Warlock API to support Typer as the argument parser
+* Add support for running custom commands against game instances
 
 ## Fixes
 
