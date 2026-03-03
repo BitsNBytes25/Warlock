@@ -135,6 +135,7 @@ app.use('/api/hosts', require('./routes/api/hosts'));
 app.use('/api/services', require('./routes/api/services'));
 app.use('/api/service', require('./routes/api/service'));
 app.use('/api/service/logs', require('./routes/api/service_logs'));
+app.use('/api/service/cmd', require('./routes/api/service_cmd'));
 app.use('/api/service/control', require('./routes/api/service_control'));
 app.use('/api/service/configs', require('./routes/api/service_configs'));
 app.use('/api/application', require('./routes/api/application'));

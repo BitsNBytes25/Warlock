@@ -557,6 +557,30 @@ table td {
 	color: var(--terminal-error);
 }
 
+.command-input-wrapper {
+	position: relative;
+	margin-top: -0.5em;
+}
+.command-input-wrapper .command-input {
+	color: var(--terminal);
+	background: var(--terminal-bg);
+	border: 1px solid var(--terminal-border);
+	padding: 0.75em 8em 0.75em 5.5em;
+	width: 100%;
+	border-radius: 0 0 8px 8px;
+}
+.command-input-wrapper .command-prefix-label {
+	position: absolute;
+	color: var(--terminal);
+	left: 0.5em;
+	top: 0.35em;
+}
+.command-input-wrapper .command-send-btn {
+	position: absolute;
+	right: 0;
+	top: 0;
+}
+
 
 
 /* ==========================

@@ -114,6 +114,12 @@ export class HostAppData {
 			throw new Error(`Option '${option}' is not supported by ${this.path} on ${this.host}`);
 		}
 		const argsString = args.map(arg => {
+			if (arg.startsWith('"') && arg.endsWith('"')) {
+				return arg; // Already quoted, assume properly escaped
+			}
+			if (arg.startWith("'") && arg.endsWith("'")) {
+				return arg; // Already quoted, assume properly escaped
+			}
 			if (arg.includes(' ') || arg.includes('"')) {
 				return `"${arg.replace(/"/g, '\\"')}"`;
 			}

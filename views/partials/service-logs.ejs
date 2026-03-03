@@ -10,5 +10,14 @@
     </div>
 </div>
 <div id="logsContainer" class="terminal"></div>
+<div id="commandInputSection" class="command-input-section" style="display: none;">
+    <div class="command-input-wrapper">
+        <input type="text" id="commandInput" class="command-input" placeholder="Enter command..." disabled>
+        <div class="command-prefix-label">CMD:&gt;</div>
+        <button id="commandSendBtn" class="command-send-btn" disabled>
+            <i class="fas fa-paper-plane"></i> Send
+        </button>
+    </div>
+</div>
 
 <script src="<%= assetUrl('/assets/service_logs.js') %>"></script>

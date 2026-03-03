@@ -3,11 +3,57 @@ const logsContainer = document.getElementById('logsContainer'),
 	logsModeDayBtn = document.getElementById('logs-mode-day'),
 	logsModeLiveBtn = document.getElementById('logs-mode-live'),
 	logsPagerPrevBtn = document.getElementById('logs-pager-previous'),
-	logsPagerNextBtn = document.getElementById('logs-pager-next');
+	logsPagerNextBtn = document.getElementById('logs-pager-next'),
+	commandInputSection = document.getElementById('commandInputSection'),
+	commandInput = document.getElementById('commandInput'),
+	commandSendBtn = document.getElementById('commandSendBtn');
 
 let serviceLogsMode = 'live',
 	serviceLogsOffset = 1,
 	req = null;
+
+function updateCommandInputUI() {
+	const hasCmd = checkHostAppHasOption(loadedApplication, loadedHost, 'cmd'),
+		isLiveMode = serviceLogsMode === 'live';
+
+	if (hasCmd && isLiveMode) {
+		commandInputSection.style.display = 'block';
+		commandInput.disabled = false;
+		commandSendBtn.disabled = false;
+	} else {
+		commandInputSection.style.display = isLiveMode ? 'block' : 'none';
+		commandInput.disabled = true;
+		commandSendBtn.disabled = true;
+	}
+}
+
+async function sendCommand() {
+	const cmdText = commandInput.value.trim();
+	if (!cmdText) return;
+
+	commandInput.value = '';
+	commandInput.disabled = true;
+	commandSendBtn.disabled = true;
+
+	try {
+		const response = await fetch(`/api/service/cmd/${loadedApplication}/${loadedHost}/${loadedService}`, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ command: cmdText })
+		});
+
+		const data = await response.json();
+		if (!data.success) {
+			showToast('error', `Command execution failed: ${data.error}`);
+		}
+	} catch (e) {
+		showToast('error', `Error sending command: ${e.message}`);
+	}
+
+	commandInput.disabled = false;
+	commandSendBtn.disabled = false;
+	commandInput.focus();
+}
 
 async function fetchLogs() {
 	logsContainer.innerHTML = '';
@@ -22,6 +68,7 @@ async function fetchLogs() {
 				terminalOutputHelper(logsContainer, event, data);
 			}
 		);
+		updateCommandInputUI();
 	}
 	else {
 		if (req) {
@@ -78,6 +125,7 @@ async function fetchLogs() {
 				logEntry.className = 'line-stderr';
 				logsContainer.appendChild(logEntry);
 			});
+		updateCommandInputUI();
 	}
 }
 
@@ -149,5 +197,14 @@ logsPagerNextBtn.addEventListener('click', event => {
 			logsPagerNextBtn.classList.add('disabled');
 		}
 		fetchLogs();
+	}
+});
+
+// Command input event listeners
+commandSendBtn.addEventListener('click', sendCommand);
+commandInput.addEventListener('keypress', event => {
+	if (event.key === 'Enter' && !commandSendBtn.disabled) {
+		event.preventDefault();
+		sendCommand();
 	}
 });
