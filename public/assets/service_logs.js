@@ -20,16 +20,30 @@ let serviceLogsMode = 'live',
 
 function updateCommandInputUI() {
 	const hasCmd = checkHostAppHasOption(loadedApplication, loadedHost, 'cmd'),
-		isLiveMode = serviceLogsMode === 'live';
+		isLiveMode = serviceLogsMode === 'live',
+		isRunning = commandInput.dataset.running === '1';
 
-	if (hasCmd && isLiveMode) {
+	if (hasCmd && isLiveMode && isRunning) {
 		commandInputSection.style.display = 'block';
 		commandInput.disabled = false;
 		commandSendBtn.disabled = false;
+		commandSendBtn.classList.remove('disabled');
+		commandInput.placeholder = 'Enter command to send to service...';
 	} else {
 		commandInputSection.style.display = isLiveMode ? 'block' : 'none';
 		commandInput.disabled = true;
 		commandSendBtn.disabled = true;
+		commandSendBtn.classList.add('disabled');
+
+		if (!hasCmd) {
+			commandInput.placeholder = 'Game does not support commands';
+		}
+		else if (!isRunning) {
+			commandInput.placeholder = 'Service is not running, cannot run commands';
+		}
+		else {
+			commandInput.placeholder = 'Live commands not available';
+		}
 	}
 }
 
@@ -67,6 +81,11 @@ async function sendCommand() {
 
 function fetchAvailableCommands() {
 	return new Promise(resolve => {
+		if (commandInput.dataset.running === '0') {
+			// Service not running, don't even try to pull commands.
+			resolve([]);
+		}
+
 		if (availableCommands !== null) {
 			resolve(availableCommands);
 		}
@@ -85,8 +104,7 @@ function fetchAvailableCommands() {
 				}
 				else {
 					console.warn('Failed to fetch available commands:', data.error || 'Unknown error');
-					availableCommands = [];
-					resolve(availableCommands);
+					resolve([]);
 				}
 			})
 			.catch(e => {
@@ -392,4 +410,15 @@ commandInput.addEventListener('keyup', event => {
 			}
 		}
 	}
+});
+
+document.addEventListener('serviceStatusChange', e => {
+	if (e.detail.value === 'running') {
+		commandInput.dataset.running = '1';
+	}
+	else {
+		commandInput.dataset.running = '0';
+	}
+
+	updateCommandInputUI();
 });
