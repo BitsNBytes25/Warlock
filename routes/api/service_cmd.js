@@ -28,9 +28,10 @@ router.get('/:guid/:host/:service', validate_session, (req, res) => {
 			const cmd = dat.host.getServiceCommandString('get-commands', service);
 			cmdRunner(host, cmd, {}, 86400)
 				.then(output => {
+					let commands = JSON.parse(output.stdout);
 					res.json({
 						success: true,
-						output: output.stdout
+						commands: commands
 					});
 				})
 				.catch(e => {

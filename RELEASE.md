@@ -18,6 +18,7 @@ to update Node.js and all dependencies.
 * Add updater script to update Warlock to the latest git version
 * Add support for v2 of the Warlock API to support Typer as the argument parser
 * Add support for running custom commands against game instances
+* Commands support auto-complete based off game instance, (when supported)
 
 ## Fixes
 
