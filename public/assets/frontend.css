@@ -978,6 +978,17 @@ button.link-control span {
 .options-group .form-group {
 	flex:1 100%;
 }
+.options-group .save-indicator {
+	margin-left: 1rem;
+	opacity: 0;
+	transition: opacity 0.3s;
+}
+.options-group .saving .save-indicator {
+	opacity: 1;
+}
+.options-group .saving .form-label {
+	animation: blinker 1.5s infinite;
+}
 /** </editor-fold> **/
 
 /* Hologram loader */

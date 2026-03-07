@@ -94,6 +94,7 @@ function buildOptionsForm(
 		}
 		else {
 			containerGroup = document.createElement('div');
+			containerGroup.classList.add('options-group');
 			let header = document.createElement('h3');
 			header.innerText = group;
 			containerGroup.appendChild(header);
@@ -104,7 +105,7 @@ function buildOptionsForm(
 		let label = document.createElement('label');
 		label.htmlFor = id;
 		label.className = 'form-label';
-		label.innerHTML = option.option;
+		label.innerHTML = option.option + '<i class="fas fa-spin fa-spinner save-indicator" title="Saving..."></i>';
 
 		let help = null;
 		if (option.help) {
@@ -234,7 +235,10 @@ function buildOptionsForm(
 				return;
 			}
 
-			let newValue;
+			let newValue,
+				group = event.target.closest('.form-group');
+
+			group.classList.add('saving');
 
 			if (event.target.closest('.form-values')) {
 				// This is a checkboxes group
@@ -278,11 +282,17 @@ function buildOptionsForm(
 			})
 				.then(response => response.json())
 				.then(result => {
+					group.classList.remove('saving');
 					if (result.success) {
 						showToast('success', `Configuration option ${option.option} updated successfully.`);
 					} else {
 						showToast('error', `Failed to update configuration option ${option.option}: ${result.error}`);
 					}
+				})
+				.catch(error => {
+					group.classList.remove('saving');
+					showToast('error', `Failed to update configuration option ${option.option}: ${error}`);
+					console.error(`Error updating configuration option ${option.option}:`, error);
 				});
 		});
 	});
