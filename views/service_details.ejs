@@ -71,8 +71,11 @@
                 <a href="#metrics">
                     <i class="fas fa-chart-line"></i> Statistics
                 </a>
-                <a href="#configure">
+                <a href="#app-configure">
                     <i class="fas fa-sliders-h"></i> Game Options
+                </a>
+                <a href="#configure">
+                    <i class="fas fa-sliders-h"></i> Instance Options
                 </a>
                 <a href="#logs">
                     <i class="fas fa-align-justify"></i> Terminal
@@ -90,6 +93,9 @@
 
             <div class="tab-target" id="service-details-metrics">
                 <%- include('partials/service-metrics.ejs') %>
+            </div>
+            <div class="tab-target" id="service-details-app-configure">
+                <%- include('partials/app-configure.ejs') %>
             </div>
             <div class="tab-target" id="service-details-configure">
                 <%- include('partials/service-configure.ejs') %>

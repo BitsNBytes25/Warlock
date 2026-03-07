@@ -48,6 +48,7 @@
 	
 	/* Terminal */
 	--terminal: #10b981;
+	--terminal-in: #84c4f8;
 	--terminal-error: #ef4444;
 	--terminal-bg: rgba(0, 0, 0, 0.95);
 	--terminal-border: rgba(99, 102, 241, 0.2);
@@ -553,6 +554,9 @@ table td {
 	white-space: pre-line;
 	box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
 }
+.terminal .line-stdin {
+	color: var(--terminal-in);
+}
 .terminal .line-stderr {
 	color: var(--terminal-error);
 }
@@ -958,6 +962,23 @@ button.link-control i,
 button.link-control span {
 	color: inherit;
 }
+
+/** <editor-fold desc="Option / Configuration Forms"> **/
+.options-group {
+	padding-bottom: 0.5rem;
+	margin-bottom: 0.5rem;
+	border-bottom: 1px solid var(--border-color);
+}
+.options-group .info-message {
+	flex-wrap: wrap;
+}
+.options-group .info-message p {
+	flex:1 100%;
+}
+.options-group .form-group {
+	flex:1 100%;
+}
+/** </editor-fold> **/
 
 /* Hologram loader */
 .hologram-loader {

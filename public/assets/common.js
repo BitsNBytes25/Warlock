@@ -77,6 +77,7 @@
  * @property {string|number|bool} default Default value of the configuration option.
  * @property {string} type Data type of the configuration option (str, int, bool, float, text).
  * @property {string} help Help text or description for the configuration option.
+ * @property {string} group Optional group name for categorizing configuration options in the UI.
  */
 
 /**
@@ -1103,7 +1104,10 @@ function terminalOutputHelper(terminalOutput, event, data) {
 	data = parseTerminalCodes(data);
 
 	// Append output
-	terminalOutput.innerHTML += `<div class="line-${event}">${data}</div>`;
+	let line = document.createElement('div');
+	line.classList.add('line-' + event);
+	line.innerHTML = data;
+	terminalOutput.appendChild(line);
 
 	// Scroll to bottom
 	if (scrolledToBottom) {

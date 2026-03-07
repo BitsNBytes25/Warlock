@@ -116,6 +116,9 @@ function activateServiceTab(tab, jumpTo = true) {
 	if (tab === 'metrics') {
 		loadMetrics();
 	}
+	else if (tab === 'app-configure') {
+		loadAppConfigure();
+	}
 	else if (tab === 'configure') {
 		loadServiceConfigure();
 	}

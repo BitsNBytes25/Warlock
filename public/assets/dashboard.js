@@ -342,7 +342,6 @@ document.addEventListener('click', e => {
 				});
 			}
 			else {
-				btn.classList.add('disabled');
 				if (tr) {
 					tr.classList.add('updating');
 					// Swap the icon to a spinner to indicate a status change

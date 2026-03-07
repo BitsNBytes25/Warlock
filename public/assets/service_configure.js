@@ -1,4 +1,50 @@
 /**
+ * Build the DOM for the quick search input for filtering configuration options
+ *
+ * @param {Element} target
+ */
+function buildOptionsSearch(target) {
+	let containerGroup = document.createElement('div'),
+		header = document.createElement('h3'),
+		msg = document.createElement('div'),
+		formGroup = document.createElement('div'),
+		input = document.createElement('input');
+
+	containerGroup.classList.add('options-group');
+	header.innerText = 'Quick Search';
+	msg.classList.add('info-message');
+	msg.innerHTML = '<p>Filter to quickly find an option by its name.</p>';
+	formGroup.classList.add('form-group', 'search-group');
+	input.type = 'search';
+	input.placeholder = 'Quick Filter';
+
+	containerGroup.appendChild(header);
+	formGroup.appendChild(input);
+	msg.appendChild(formGroup);
+	containerGroup.appendChild(msg);
+
+	input.addEventListener('keyup', e => {
+		const searchTerm = e.target.value.toLowerCase();
+		const configItems = target.getElementsByClassName('form-group');
+
+		Array.from(configItems).forEach(item => {
+			if (item.classList.contains('search-group')) {
+				return;
+			}
+
+			const label = item.getElementsByTagName('label')[0];
+			if (label.innerText.toLowerCase().includes(searchTerm)) {
+				item.style.display = '';
+			} else {
+				item.style.display = 'none';
+			}
+		});
+	});
+
+	target.appendChild(containerGroup);
+}
+
+/**
  * Build the HTML for configuration options received from the server
  *
  * Populates to the container with the ID configurationContainer on the main page
@@ -6,33 +52,59 @@
  * @param {string} app_guid
  * @param {string} host
  * @param {string} service
+ * @param {Element} target
  * @param {AppConfigOption[]} options
+ * @param {string[]|null} include - If provided, only include options whose name is in this list
+ * @param {string[]|null} exclude - If provided, exclude options whose name is in this list
+ * @returns {void}
  */
-function buildOptionsForm(app_guid, host, service, options) {
-	let target = document.getElementById('configurationContainer'),
-		serviceRunning = loadedServiceData.status !== 'stopped';
-
-	if (options.length === 0) {
-		target.innerHTML = '<div class="alert alert-info" role="alert">No configuration options available for this service.</div>';
-		return;
-	}
+function buildOptionsForm(
+	app_guid,
+	host,
+	service,
+	target,
+	options,
+	include = null,
+	exclude = null
+) {
+	let serviceRunning = loadedServiceData.status !== 'stopped',
+		groups = {},
+		optionCount = 0;
 
 	options.forEach(option => {
 		let formGroup = document.createElement('div'),
 			name = option.option.toLowerCase().replace(/[^a-z]/g, '-').replace(/[-]+/g, '-').replace(/-$/, ''),
-			id = `config-${service ? 'service' : 'app'}-${name}`;
+			id = `config-${service ? 'service' : 'app'}-${name}`,
+			containerGroup,
+			group = option.group || 'Options';
 		formGroup.className = 'form-group';
+
+		if (include && !include.includes(group)) {
+			return;
+		}
+
+		if (exclude && exclude.includes(group)) {
+			return;
+		}
+
+		optionCount++;
+
+		if (group in groups) {
+			containerGroup = groups[group];
+		}
+		else {
+			containerGroup = document.createElement('div');
+			let header = document.createElement('h3');
+			header.innerText = group;
+			containerGroup.appendChild(header);
+			groups[group] = containerGroup;
+		}
+
 
 		let label = document.createElement('label');
 		label.htmlFor = id;
 		label.className = 'form-label';
-		if (service) {
-			label.innerHTML = option.option;
-		}
-		else {
-			label.innerHTML = '<i class="fas fa-globe" title="Option affects all instances"></i> ' + option.option;
-		}
-
+		label.innerHTML = option.option;
 
 		let help = null;
 		if (option.help) {
@@ -154,7 +226,7 @@ function buildOptionsForm(app_guid, host, service, options) {
 			formGroup.appendChild(help);
 		}
 		formGroup.appendChild(input);
-		target.appendChild(formGroup);
+		containerGroup.appendChild(formGroup);
 
 		// Add event handler on input to live-save changes to the backend
 		input.addEventListener('change', (event) => {
@@ -214,6 +286,30 @@ function buildOptionsForm(app_guid, host, service, options) {
 				});
 		});
 	});
+
+	if (optionCount >= 10) {
+		buildOptionsSearch(target);
+	}
+	else if (optionCount === 0) {
+		target.innerHTML = '<div class="alert alert-info" role="alert">No configuration options available for this service.</div>';
+		return;
+	}
+
+	// Now groups should contain the list of groups to render.
+	// We want to render "Basic", followed by all the rest, followed by "Advanced".
+	if ('Basic' in groups) {
+		target.appendChild(groups['Basic']);
+	}
+
+	Object.keys(groups).forEach(groupName => {
+		if (groupName !== 'Basic' && groupName !== 'Advanced') {
+			target.appendChild(groups[groupName]);
+		}
+	});
+
+	if ('Advanced' in groups) {
+		target.appendChild(groups['Advanced']);
+	}
 }
 
 async function loadServiceConfigure() {
@@ -240,43 +336,45 @@ async function loadServiceConfigure() {
 
 			if (result.success && result.configs) {
 				const configs = result.configs;
-				buildOptionsForm(app_guid, host, service, configs);
+				buildOptionsForm(app_guid, host, service, configurationContainer, configs, null, ['Settings']);
 			}
 
-			// Pull the configs for the application (shared by all services)
-			fetch(`/api/application/configs/${app_guid}/${host}`, {
-				method: 'GET',
-				headers: {
-					'Content-Type': 'application/json'
-				}
-			})
-				.then(response => response.json())
-				.then(result => {
-					if (result.success && result.configs) {
-						const configs = result.configs;
-						buildOptionsForm(app_guid, host, '', configs);
-					}
+			if (configurationContainer.querySelectorAll('input').length === 0) {
+				configurationContainer.innerHTML = '<div class="alert alert-info" role="alert">No configuration options available for this service.</div>';
+			}
+		});
+}
 
-					const quickSearch = document.getElementById('quick-search');
-					quickSearch.removeAttribute('disabled');
-					quickSearch.addEventListener('keyup', e => {
-						const searchTerm = e.target.value.toLowerCase();
-						const configItems = configurationContainer.getElementsByClassName('form-group');
+async function loadAppConfigure() {
+	const app_guid = loadedApplication || null,
+		host = loadedHost || null,
+		service = loadedService || null,
+		configurationContainer = document.getElementById('appConfigurationContainer');
 
-						Array.from(configItems).forEach(item => {
-							const label = item.getElementsByTagName('label')[0];
-							if (label.innerText.toLowerCase().includes(searchTerm)) {
-								item.style.display = '';
-							} else {
-								item.style.display = 'none';
-							}
-						});
-					});
+	if (!host || !service || !app_guid) {
+		console.error('Host, service, or app guid not specified for loading service configuration');
+		return;
+	}
 
-					if (configurationContainer.querySelectorAll('input').length === 0) {
-						configurationContainer.innerHTML = '<div class="alert alert-info" role="alert">No configuration options available for this service or application.</div>';
-					}
-				});
+	// Pull the configs for the application (shared by all services)
+	fetch(`/api/application/configs/${app_guid}/${host}`, {
+		method: 'GET',
+		headers: {
+			'Content-Type': 'application/json'
+		}
+	})
+		.then(response => response.json())
+		.then(result => {
+			configurationContainer.innerHTML = '';
+
+			if (result.success && result.configs) {
+				const configs = result.configs;
+				buildOptionsForm(app_guid, host, '', configurationContainer, configs);
+			}
+
+			if (configurationContainer.querySelectorAll('input').length === 0) {
+				configurationContainer.innerHTML = '<div class="alert alert-info" role="alert">No configuration options available for this application.</div>';
+			}
 		});
 }
 

@@ -60,6 +60,8 @@ async function sendCommand() {
 	currentHistoryIndex = commandHistory.length; // Set to end of history
 
 	try {
+		// Send the command to the log, (just for game servers which don't display it)
+		terminalOutputHelper(logsContainer, 'stdin', cmdText);
 		const response = await fetch(`/api/service/cmd/${loadedApplication}/${loadedHost}/${loadedService}`, {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
@@ -69,6 +71,9 @@ async function sendCommand() {
 		const data = await response.json();
 		if (!data.success) {
 			showToast('error', `Command execution failed: ${data.error}`);
+		}
+		else {
+			terminalOutputHelper(logsContainer, 'stdout', data.output);
 		}
 	} catch (e) {
 		showToast('error', `Error sending command: ${e.message}`);
