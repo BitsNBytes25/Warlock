@@ -114,10 +114,16 @@ export class HostAppData {
 			throw new Error(`Option '${option}' is not supported by ${this.path} on ${this.host}`);
 		}
 		const argsString = args.map(arg => {
+			if (typeof(arg) == 'boolean') {
+				return arg ? 'true' : 'false';
+			}
+			if (typeof(arg) == 'number') {
+				return arg.toString();
+			}
 			if (arg.startsWith('"') && arg.endsWith('"')) {
 				return arg; // Already quoted, assume properly escaped
 			}
-			if (arg.startWith("'") && arg.endsWith("'")) {
+			if (arg.startsWith("'") && arg.endsWith("'")) {
 				return arg; // Already quoted, assume properly escaped
 			}
 			if (arg.includes(' ') || arg.includes('"')) {
