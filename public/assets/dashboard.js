@@ -292,34 +292,6 @@ function streamServiceStats(app_guid, host, service, target_state) {
 	}, true);
 }
 
-function checkForUpdates() {
-	document.querySelectorAll('.app-install .update-available').forEach(btn => {
-		btn.classList.remove('update-available');
-		btn.title = 'Configure Game';
-		btn.querySelector('i').className = 'fas fa-cog';
-	});
-
-	fetch('/api/applications/updates').then(response => response.json()).then(data => {
-		if (data.success) {
-			const updates = data.updates || [];
-			updates.forEach(update => {
-				const appCard = document.querySelector(`.application-card[data-guid="${update.guid}"]`),
-					hostInstall = appCard ? appCard.querySelector(`.app-install[data-host="${update.host}"]`) : null;
-
-				if (hostInstall) {
-					// Update the settings button to indicate an update is available
-					const configButton = hostInstall.querySelector('.action-configure');
-					if (configButton && !configButton.classList.contains('update-available')) {
-						configButton.classList.add('update-available');
-						configButton.title = 'Configure Game (Update Available)';
-						configButton.querySelector('i').className = 'fas fa-circle-up';
-					}
-				}
-			});
-		}
-	});
-}
-
 // Dynamic events for various buttons
 document.addEventListener('click', e => {
 	if (e.target) {
@@ -423,15 +395,16 @@ window.addEventListener('DOMContentLoaded', () => {
 		fetchApplications().then(applications => {
 			// Load all services and periodically update the list
 			loadAllServicesAndStats();
+			populateCreateServiceModal(applications);
 			setInterval(loadAllServicesAndStats, 60*1000); // Refresh services every 60 seconds
 
 
 		}).catch(error => {
-			document.getElementById('applicationsList').innerHTML = `<div style="grid-column:1/-1;"><p class="error-message">${error}</p></div>`;
+			document.getElementById('servicesContainer').innerHTML = `<div style="grid-column:1/-1;"><p class="error-message">${error}</p></div>`;
 			console.error('Error fetching applications:', error);
 		});
 	}).catch(error => {
-		document.getElementById('applicationsList').innerHTML = `<div style="grid-column:1/-1;"><p class="error-message">${error}</p></div>`;
+		document.getElementById('servicesContainer').innerHTML = `<div style="grid-column:1/-1;"><p class="error-message">${error}</p></div>`;
 		console.error('Error fetching hosts:', error);
 	});
 });

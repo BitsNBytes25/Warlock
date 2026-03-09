@@ -1,0 +1,115 @@
+<!-- Restart Modal -->
+<div id="createServiceModal" class="modal">
+	<div class="modal-content">
+		<div class="modal-header">
+			<h3><i class="fas fa-plus"></i> Create Service Instance</h3>
+			<button class="modal-close">
+				<i class="fas fa-times"></i>
+			</button>
+		</div>
+		<div class="modal-body">
+
+			<div class="info-message">
+				<p>
+					Create a new game instance based off a currently installed game.<br/><br/>
+					This allows you to run multiple instances, each with their own settings.
+				</p>
+			</div>
+
+			<div class="form-group">
+				<label class="form-label">Game / Server</label>
+				<select id="create-service-game-select" class="form-control">
+					<option value="">Select a game...</option>
+				</select>
+			</div>
+
+			<div class="form-group">
+				<label class="form-label">Instance Name</label>
+				<input id="create-service-name-input" class="form-control" type="text" placeholder="Enter a name for this instance...">
+			</div>
+
+			<div>
+				<button title="Create Instance" id="create-service-confirm">
+					<i class="fas fa-plus"></i> <span>Create Instance</span>
+				</button>
+			</div>
+
+		</div>
+	</div>
+</div>
+
+<script>
+	const createServiceModal = document.getElementById('createServiceModal');
+
+	document.querySelectorAll('.create-instance').forEach(btn => {
+		btn.addEventListener('click', () => {
+			openModal(createServiceModal);
+		});
+	});
+
+	/**
+	 * Populate the game select dropdown in the create service modal with the list of installed applications.
+	 *
+	 * @param applications
+	 */
+	function populateCreateServiceModal(applications) {
+		const select = createServiceModal.querySelector('#create-service-game-select');
+		let optionsAdded = false;
+
+		for(let k in applications) {
+			applications[k].hosts.forEach(hostData => {
+				if (hostData.options.includes('create-service')) {
+					optionsAdded = true;
+					let option = document.createElement('option'),
+						val = k + ':' + hostData.host,
+						lbl = applications[k].title + ' on ' + renderHostName(hostData.host, false);
+					option.value = val;
+					option.dataset.app = k;
+					option.dataset.host = hostData.host;
+					option.textContent = lbl;
+					select.appendChild(option);
+				}
+			});
+		}
+
+		if (optionsAdded) {
+			document.querySelectorAll('.create-instance').forEach(btn => {
+				btn.style.display = 'inline-flex';
+			});
+
+			document.getElementById('create-service-name-input').addEventListener('keyup', e => {
+				// Limit input to lowercase letters, numbers, and dashes
+				e.target.value = e.target.value.toLowerCase().replace(' ', '-').replace(/[^a-z0-9-]/g, '');
+			});
+
+			document.getElementById('create-service-confirm').addEventListener('click', e => {
+				const selectedOption = select.options[select.selectedIndex];
+				const app = selectedOption.dataset.app;
+				const host = selectedOption.dataset.host;
+				const nameInput = document.getElementById('create-service-name-input');
+				const instanceName = nameInput.value.trim();
+
+				if (!app || !host) {
+					showToast('error', 'Please select a game/server to create an instance of.');
+					return;
+				}
+				if (!instanceName) {
+					showToast('error', 'Please enter a name for this instance.');
+					return;
+				}
+
+				fetch(`/api/service/${app}/${host}/${instanceName}`, {method: 'PUT'})
+						.then(res => res.json())
+						.then(res => {
+							if (res.success) {
+								showToast('success', 'Instance created successfully!');
+								closeModal(createServiceModal);
+								window.location.href = `/service/details/${app}/${host}/${res.stdout}`;
+							} else {
+								showToast('error', res.error || 'An error occurred while creating the instance.');
+							}
+						});
+			});
+		}
+	}
+</script>

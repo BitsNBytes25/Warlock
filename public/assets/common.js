@@ -453,13 +453,19 @@ function getAppImage(guid) {
  * Get the rendered hostname for a given host identifier.
  *
  * @param {string} host
+ * @param {boolean} asHTML Whether to return the hostname as HTML with a tooltip of the full host, or as plain text with the host in parentheses.
  * @returns {string}
  */
-function renderHostName(host) {
+function renderHostName(host, asHTML = true) {
 	let hostInfo = hostData && hostData[host] || null;
 
 	if (hostInfo && hostInfo.hostname) {
-		return '<span title="' + host + '">' + hostInfo.hostname + '</span>';
+		if (asHTML) {
+			return '<span title="' + host + '">' + hostInfo.hostname + '</span>';
+		}
+		else {
+			return hostInfo.hostname + ' (' + host + ')';
+		}
 	}
 	else {
 		return host;

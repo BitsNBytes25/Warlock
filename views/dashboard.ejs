@@ -34,6 +34,10 @@
                             <i class="fas fa-plus"></i>
                             Install Game
                         </button>
+                        <button class="create-instance action-create" style="display:none">
+                            <i class="fas fa-plus"></i>
+                            New Instance
+                        </button>
                     </div>
                     <p>View all available game server services</p>
                 </div>
@@ -119,6 +123,7 @@
 
     <%- include('partials/modal-service-stop.ejs') %>
 	<%- include('partials/theme-selector.ejs') %>
+	<%- include('partials/modal-service-create.ejs') %>
     <script src="<%= assetUrl('/assets/dashboard.js') %>"></script>
 </body>
 </html>
