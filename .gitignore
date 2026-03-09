@@ -3,3 +3,4 @@ DEV/
 .env
 .idea/copilot*
 warlock.sqlite
+.vagrant/
