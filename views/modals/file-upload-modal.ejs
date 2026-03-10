@@ -31,8 +31,15 @@
 <script>
 	let uploadFileResolve;
 
-	async function openFileUploadModal(host, path, callback) {
-		const modal = document.getElementById('uploadFileModal');
+	async function openFileUploadModal(host, path, callback, options = {}) {
+		const modal = document.getElementById('uploadFileModal'),
+			input = document.getElementById('uploadFileModalInput');
+
+		options = {
+			multiple: true,
+			accept: '*',
+			...options
+		}
 
 		modal.dataset.host = host;
 		modal.dataset.path = path;
@@ -40,7 +47,10 @@
 		modal.dataset.chunkSize = 1024 * 1024 * 5; // 5MB chunk size
 		uploadFileResolve = callback;
 
-		document.getElementById('uploadFileModalInput').click();
+		input.accept = options.accept;
+		input.multiple = options.multiple;
+
+		input.click();
 	}
 
 	function showFileUploadModal(files) {

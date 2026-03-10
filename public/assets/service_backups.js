@@ -1,22 +1,12 @@
 const backupsList = document.getElementById('backupsList'),
 	performBackupBtn = document.getElementById('performBackupBtn'),
-	backupModal = document.getElementById('backupModal'),
 	confirmBackupBtn = document.getElementById('confirmBackupBtn'),
-	confirmRestoreBtn = document.getElementById('confirmRestoreBtn'),
 	restoreModal = document.getElementById('restoreModal'),
-	deleteBackupModal = document.getElementById('deleteBackupModal'),
-	confirmDeleteBackupBtn = document.getElementById('confirmDeleteBackupBtn'),
 	configureAutoBackupBtn = document.getElementById('configureAutoBackupBtn'),
 	automatedBackupsDisabledMessage = document.getElementById('automatedBackupsDisabledMessage'),
 	automatedBackupsEnabledMessage = document.getElementById('automatedBackupsEnabledMessage'),
-	autoBackupModal = document.getElementById('autoBackupModal'),
-	autoBackupSchedule = document.getElementById('autoBackupSchedule'),
 	autoBackupKeep = document.getElementById('autoBackupKeep'),
-	saveAutoBackupBtn = document.getElementById('saveAutoBackupBtn'),
-	uploadBackupBtn = document.getElementById('uploadBackupBtn'),
-	fileBackupInput = document.getElementById('fileBackupInput'),
-	renameBackupModal = document.getElementById('renameBackupModal'),
-	renameInput = document.getElementById('renameNewName');
+	uploadBackupBtn = document.getElementById('uploadBackupBtn');
 
 let backupPath;
 
@@ -72,8 +62,7 @@ function renderBackupFile(fileData) {
 		openServiceRestoreModal(loadedHost, loadedApplication, loadedService, fileData.name);
 	});
 	fileItem.querySelector('.action-remove').addEventListener('click', () => {
-		confirmDeleteBackupBtn.dataset.path = fileData.path;
-		openModal(deleteBackupModal);
+		openDeleteFileModal(loadedHost, fileData.path, () => {loadBackupsList();});
 	});
 
 	return fileItem;
@@ -100,16 +89,22 @@ async function loadBackupsList() {
 		.then(response => response.json())
 		.then(data => {
 			if (data.success) {
+				let counter = 0;
 				backupsList.innerHTML = '';
+
 				// Sort them by modified timestamp, descending
 				data.files.sort((a, b) => b.modified - a.modified);
 
 				data.files.forEach(fileData => {
 					if (fileData.name.endsWith('.tar.gz')) {
+						counter++;
 						backupsList.appendChild(renderBackupFile(fileData));
 					}
 				});
-				console.log(data.files);
+
+				if (counter === 0) {
+					backupsList.innerHTML = '<p class="warning-message">No backups exist for this service!</p>';
+				}
 			}
 			else {
 				showToast('error', `Failed to load directory: ${data.error}`);
@@ -147,40 +142,6 @@ async function loadAutomaticBackupConfig() {
 	});
 }
 
-async function startUpload() {
-	const files = fileBackupInput.files;
-	if (!files.length) return;
-
-	showToast('info', 'Starting upload, please wait a moment...');
-
-	for (let i = 0; i < files.length; i++) {
-		const file = files[i];
-
-		try {
-			// Send raw file content
-			const response = await fetch(`/api/file/${loadedHost}?path=${backupPath}/${file.name}`, {
-				method: 'PUT',
-				headers: {
-					'Content-Type': 'application/octet-stream'
-				},
-				body: file
-			});
-
-			const result = await response.json();
-
-			if (!result.success) {
-				showToast('error', `Error uploading ${file.name}: ${result.error}`);
-			}
-			else {
-				showToast('success', `Successfully uploaded ${result.success}`);
-				loadBackupsList();
-			}
-		} catch (error) {
-			showToast('error', `Network error uploading ${file.name}: ${error.message}`);
-		}
-	}
-}
-
 function loadBackups() {
 	// V2 of the API supports backup directories being defined per-service.
 	backupPath = loadedServiceData.bak_dir || loadedApplicationData.hosts.filter(h => h.host === loadedHost)[0].path + '/backups';
@@ -192,38 +153,17 @@ function loadBackups() {
 
 // Upload file(s)
 uploadBackupBtn.addEventListener('click', () => {
-	fileBackupInput.click();
-});
-fileBackupInput.addEventListener('change', (e) => {
-	startUpload();
-});
-
-
-
-
-
-confirmDeleteBackupBtn.addEventListener('click', () => {
-	const filePath = confirmDeleteBackupBtn.dataset.path;
-
-	fetch(`/api/file/${loadedHost}?path=${filePath}`, {
-		method: 'DELETE',
-		headers: {
-			'Content-Type': 'application/json'
+	openFileUploadModal(
+		loadedHost,
+		backupPath,
+		() => {
+			loadBackupsList();
+		},
+		{
+			multiple: false,
+			accept: '.tar.gz',
 		}
-	})
-		.then(response => response.json())
-		.then(data => {
-			if (data.success) {
-				showToast('success', `Backup '${filePath}' deleted successfully.`);
-				closeModal(deleteBackupModal);
-				loadBackupsList();
-			} else {
-				showToast('error', `Failed to delete backup: ${data.error}`);
-			}
-		})
-		.catch(e => {
-			showToast('error', `Error deleting backup: ${e.message}`);
-		});
+	);
 });
 
 configureAutoBackupBtn.addEventListener('click', () => {
@@ -234,11 +174,6 @@ configureAutoBackupBtn.addEventListener('click', () => {
 
 performBackupBtn.addEventListener('click', () => {
 	openServiceBackupModal(loadedHost, loadedApplication, loadedService, () => {
-		loadBackups();
+		loadBackupsList();
 	});
 });
-/*
-saveAutoBackupBtn.addEventListener('click', () => {
-	saveAutomaticBackupConfig();
-});
-*/
