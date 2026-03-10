@@ -1,0 +1,83 @@
+<!-- Restore Backup Modal -->
+<div id="restoreModal" class="modal wide">
+	<div class="modal-overlay"></div>
+	<div class="modal-content">
+		<div class="modal-header">
+			<h3><i class="fas fa-undo"></i> Restore Game</h3>
+			<button class="modal-close">
+				<i class="fas fa-times"></i>
+			</button>
+		</div>
+		<div class="modal-body">
+			<div class="warning-message">
+				<i class="fas fa-exclamation-triangle"></i>
+				<p>
+					Warning: Restoring a backup will overwrite the current game environment!
+				</p>
+			</div>
+			<div class="terminal"></div>
+		</div>
+		<div class="modal-footer">
+			<button class="action-restore" id="confirmRestoreBtn">
+				<i class="fas fa-undo"></i>
+				Confirm Restore
+			</button>
+			<button class="action-cancel modal-close">
+				<i class="fas fa-times"></i>
+				Cancel
+			</button>
+		</div>
+	</div>
+</div>
+
+<script>
+	function openServiceRestoreModal(host, application, service, file) {
+		const modal = document.getElementById('restoreModal');
+
+		modal.dataset.host = host;
+		modal.dataset.guid = application;
+		modal.dataset.service = service;
+		modal.dataset.file = file;
+
+		modal.querySelector('.warning-message').style.display = 'flex';
+		modal.querySelector('.terminal').style.display = 'none';
+		openModal(modal);
+	}
+
+	function confirmServiceRestoreModal() {
+		const modal = document.getElementById('restoreModal'),
+			terminalOutput = restoreModal.querySelector('.terminal'),
+			fileName = modal.dataset.file,
+			host = modal.dataset.host,
+			application = modal.dataset.guid,
+			service = modal.dataset.service;
+
+		let url;
+		if (getAppAPIVersion(application, host) >= 2 && service) {
+			url = `/api/application/backup/${application}/${host}/${service}`;
+		}
+		else {
+			url = `/api/application/backup/${application}/${host}`;
+		}
+
+		modal.querySelector('.warning-message').style.display = 'none';
+		terminalOutput.textContent = `Restoring backup '${fileName}'... Please wait.\n`;
+		terminalOutput.style.display = 'block';
+		stream(
+			url,
+			'PUT',
+			{'Content-Type': 'application/json'},
+			JSON.stringify({filename: fileName}),
+			(event, data) => { terminalOutputHelper(terminalOutput, event, data); }
+		)
+			.then(() => {
+				showToast('success', 'Restore completed successfully.');
+			}).catch(() => {
+				showToast('error', 'Restore process encountered an error. See terminal output for details.');
+			});
+	}
+
+	window.addEventListener('DOMContentLoaded', () => {
+		document.getElementById('confirmRestoreBtn').addEventListener('click', confirmServiceRestoreModal);
+	});
+</script>

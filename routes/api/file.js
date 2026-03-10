@@ -8,6 +8,7 @@ const { Host } = require('../../db');
 const { logger } = require('../../libs/logger.mjs');
 const {buildRemoteExec} = require("../../libs/build_remote_exec.mjs");
 const {correctMimetype} = require("../../libs/correct_mimetype.mjs");
+const crypto = require('crypto');
 
 const router = express.Router();
 
@@ -297,8 +298,11 @@ router.post('/:host', validate_session, (req, res) => {
 });
 
 router.put('/:host', validate_session, (req, res) => {
-	const host = req.params.host;
-	const filePath = req.query.path;
+	const host = req.params.host,
+		filePath = req.query.path,
+		chunk = req.query.chunk || 0,
+		totalChunks = req.query.totalChunks || 0,
+		size = parseInt(req.query.size) || null;
 
 	if (!filePath) {
 		return res.json({
@@ -315,15 +319,59 @@ router.put('/:host', validate_session, (req, res) => {
 			});
 		}
 
-		logger.info('Uploading binary file:', filePath);
+		if (totalChunks) {
+			if (!size) {
+				return res.json({
+					success: false,
+					error: 'Total file size must be provided when uploading in chunks'
+				});
+			}
+
+			logger.info(`Uploading chunk ${chunk+1}/${totalChunks} for file:`, filePath);
+		}
+		else {
+			logger.info('Uploading binary file:', filePath);
+		}
+
+		// Generate a hash of the file path to use as an identifier for this upload session
+		const hash = crypto.createHash('sha256').update(host + ':' + filePath).digest('hex');
 
 		// Create a temporary file
-		const tempFile = `/tmp/warlock_upload_${Date.now()}.tmp`;
-		const writeStream = fs.createWriteStream(tempFile);
+		const tempFile = `/tmp/warlock_upload_${hash}.tmp`;
+		// Create an APPEND write stream to the temporary file
+		const writeStream = fs.createWriteStream(tempFile, {flags: 'a'});
 
 		req.pipe(writeStream);
 
 		writeStream.on('finish', () => {
+			if (totalChunks) {
+				logger.info(`Finished writing chunk ${chunk+1}/${totalChunks} to temporary file:`, tempFile);
+
+				if (chunk < totalChunks - 1) {
+					// Not the last chunk, wait for the next one
+					return res.json({
+						success: true,
+						message: `Chunk ${chunk+1} uploaded successfully`
+					});
+				}
+
+				// Check the filesize to provide some measure of validation.
+				const stats = fs.statSync(tempFile);
+				if (stats.size !== size) {
+					logger.warn(`Uploaded file size (${stats.size}) does not match expected size (${size}) for file:`, filePath);
+
+					// Reject the upload attempt, the client should retry the upload
+					fs.unlinkSync(tempFile);
+					return res.json({
+						success: false,
+						error: 'Uploaded file size does not match expected size, please retry the upload'
+					});
+				}
+				else {
+					logger.info('All chunks uploaded successfully, proceeding with file push for:', filePath);
+				}
+			}
+
 			// Push the temporary file to the target device
 			filePushRunner(host, tempFile, filePath).then(() => {
 				logger.info('File uploaded successfully:', filePath);

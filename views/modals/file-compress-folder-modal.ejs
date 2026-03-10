@@ -1,0 +1,83 @@
+<!-- Compress Directory Modal -->
+<div id="compressFolderModal" class="modal">
+    <div class="modal-overlay"></div>
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-file-zipper"></i> Compress / Archive Folder</h3>
+            <button class="modal-close">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label for="folderCompressionType">Select Compression Type</label>
+                <select id="folderCompressionType">
+                    <option value="zip">ZIP</option>
+                    <option value="rar">RAR</option>
+                    <option value="7z">7-Zip</option>
+                    <option value="tar/gz">TAR.GZ</option>
+                    <option value="tar/bzip2">TAR.BZ2</option>
+                </select>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="action-create" id="confirmCompressFolder">
+                <i class="fas fa-folder-closed"></i>
+                Compress Folder
+            </button>
+            <button class="action-cancel modal-close">
+                <i class="fas fa-times"></i>
+                Cancel
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let compressFolderResolve;
+
+    async function openCompressFolderModal(host, path, callback) {
+        const modal = document.getElementById('compressFolderModal');
+
+        modal.dataset.host = host;
+        modal.dataset.path = path;
+        openModal(modal);
+
+        // Store resolve to call after compression is done
+        compressFolderResolve = callback;
+    }
+
+	async function performCompress() {
+        const modal = document.getElementById('compressFolderModal'),
+            path = modal.dataset.path,
+            host = modal.dataset.host,
+		    format = document.getElementById('folderCompressionType').value;
+
+		showToast('info', `Compressing ${path}, this may take a few minutes depending on its size.`);
+		closeModal(modal);
+
+		fetch(`/api/file/compress/${host}?path=${path}&format=${format}`, {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json'
+			}
+		})
+			.then(response => response.json())
+			.then(result => {
+				if (result.success) {
+					showToast('success', result.message);
+                    if (compressFolderResolve) {
+                        compressFolderResolve();
+                        compressFolderResolve = null;
+                    }
+				}
+				else {
+					showToast('error', `Error compressing archive: ${result.error}`);
+				}
+			});
+	}
+
+    window.addEventListener('DOMContentLoaded', () => {
+        document.getElementById('confirmCompressFolder').addEventListener('click', performCompress);
+    });
+</script>

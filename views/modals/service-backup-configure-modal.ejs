@@ -1,0 +1,202 @@
+<!-- Automatic Backup Cron Configuration Modal -->
+<div id="autoBackupModal" class="modal">
+	<div class="modal-overlay"></div>
+	<div class="modal-content">
+		<div class="modal-header">
+			<h3><i class="fas fa-clock"></i> Automatic Backup Configuration</h3>
+			<button class="modal-close">
+				<i class="fas fa-times"></i>
+			</button>
+		</div>
+		<div class="modal-body">
+			<div class="form-group">
+				<label for="autoBackupSchedule">Schedule</label>
+				<select id="autoBackupSchedule" name="schedule">
+					<option value="disabled">Disabled</option>
+					<option value="hourly">Hourly</option>
+					<option value="daily">Daily</option>
+					<option value="weekly">Weekly</option>
+				</select>
+			</div>
+
+			<div class="form-group" id="autoBackupWeeklyDayRow">
+				<label for="autoBackupWeeklyDay">Weekly Day</label>
+				<select id="autoBackupWeeklyDay" name="weekly_day">
+					<option value="mon">Monday</option>
+					<option value="tue">Tuesday</option>
+					<option value="wed">Wednesday</option>
+					<option value="thu">Thursday</option>
+					<option value="fri">Friday</option>
+					<option value="sat">Saturday</option>
+					<option value="sun">Sunday</option>
+				</select>
+			</div>
+
+			<div class="form-group">
+				<label for="autoBackupTime">Time</label>
+				<input type="time" id="autoBackupTime" name="time" value="02:00">
+			</div>
+
+			<div class="form-group">
+				<label for="autoBackupKeep">Number of backups to keep</label>
+				<input type="number" id="autoBackupKeep" name="keep" min="0">
+			</div>
+
+			<!-- Hidden fields to be populated by client-side script when opening modal -->
+			<input type="hidden" id="autoBackupHost" name="host" value="">
+			<input type="hidden" id="autoBackupGuid" name="guid" value="">
+		</div>
+		<div class="modal-footer">
+			<button class="link-control action-save" id="saveAutoBackupBtn">
+				<i class="fas fa-save"></i>
+				Save Configuration
+			</button>
+			<button class="action-cancel modal-close">
+				<i class="fas fa-times"></i>
+				Cancel
+			</button>
+		</div>
+	</div>
+</div>
+
+<script>
+
+	let openAutoBackupModalCallback;
+
+	function openAutoBackupModal(host, application, service, callback) {
+		const modal = document.getElementById('autoBackupModal'),
+			hostData = (applicationData[application] && applicationData[application].hosts) ? applicationData[application].hosts.filter(h => h.host === host)[0] : null;
+
+		if (!hostData) {
+			showToast('error', 'Host data not found for this application.');
+			return;
+		}
+
+		const appVersion = hostData.version;
+
+		let identifier;
+		if (service && appVersion >= 2) {
+			identifier = `${application}_${service}_backup`;
+		}
+		else {
+			identifier = `${application}_backup`;
+		}
+
+		modal.dataset.host = host;
+		modal.dataset.guid = application;
+		modal.dataset.service = service;
+		openModal(modal);
+		openAutoBackupModalCallback = callback;
+
+		loadCronJob(host, identifier, modal).then(job => {
+			if (job) {
+				// parse command for max-backups
+				if (job.command) {
+					const m = job.command.match(/--max-backups=(\d+)/);
+					if (m) document.getElementById('autoBackupKeep').value = parseInt(m[1], 10) || 0;
+				}
+			}
+		}).catch(e => {
+			console.error('Error loading cron job:', e);
+			showToast('error', 'Error loading automatic backup configuration.');
+		});
+	}
+
+	async function saveAutomaticBackupConfig() {
+		const modal = document.getElementById('autoBackupModal'),
+			host = modal.dataset.host,
+			keep = parseInt(autoBackupKeep.value, 10) || 0,
+			guid = modal.dataset.guid,
+			service = modal.dataset.service,
+			appVersion = getAppAPIVersion(guid, host),
+			hostData = (applicationData[guid] && applicationData[guid].hosts) ? applicationData[guid].hosts.filter(h => h.host === host)[0] : null;
+
+		if (!hostData) {
+			showToast('error', 'Host data not found for this application.');
+			return;
+		}
+
+		const appDir = hostData.path;
+
+		if (!appDir) {
+			showToast('error', 'Cannot determine game directory for this host.');
+			return;
+		}
+
+		let identifier;
+		if (service && appVersion >= 2) {
+			identifier = `${guid}_${service}_backup`;
+		}
+		else {
+			identifier = `${guid}_backup`;
+		}
+
+		const schedule = parseCronSchedule(modal);
+		closeModal(modal);
+
+		if (schedule === 'DISABLED') {
+			// Delete existing identifier
+			fetch(`/api/cron/${host}`, {
+				method: 'DELETE',
+				headers: {'Content-Type': 'application/json'},
+				body: JSON.stringify({identifier})
+			})
+				.then(r => r.json())
+				.then(response => {
+					if (response.success) {
+						showToast('success', 'Automatic backups disabled.');
+						if (openAutoBackupModalCallback) {
+							openAutoBackupModalCallback();
+							openAutoBackupModalCallback = null;
+						}
+					} else {
+						showToast('error', `Failed to disable automatic backups: ${response.error}`);
+					}
+				})
+				.catch(() => showToast('error', 'Error disabling automatic backups'));
+			return;
+		}
+
+		// Build command
+		let command;
+		if (appVersion >= 2) {
+			command = `${appDir}/manage.py backup --service ${service} --max-backups=${keep}`;
+		}
+		else {
+			command = `${appDir}/manage.py --backup --max-backups=${keep}`;
+		}
+
+		fetch(`/api/cron/${host}`, {
+			method: 'POST',
+			headers: {'Content-Type': 'application/json'},
+			body: JSON.stringify({schedule, command, identifier})
+		})
+			.then(r => r.json())
+			.then(response => {
+				if (response.success) {
+					showToast('success', 'Automatic backup scheduled.');
+					if (openAutoBackupModalCallback) {
+						openAutoBackupModalCallback();
+						openAutoBackupModalCallback = null;
+					}
+				} else {
+					showToast('error', `Failed to save schedule: ${response.error}`);
+				}
+			})
+			.catch(() => showToast('error', 'Error saving schedule'));
+	}
+
+	window.addEventListener('DOMContentLoaded', () => {
+		document.getElementById('autoBackupSchedule').addEventListener('change', e => {
+			let backupsToKeep = document.getElementById('autoBackupKeep').closest('.form-group');
+
+			if (e.target.value === 'disabled') {
+				backupsToKeep.style.display = 'none';
+			}
+			else {
+				backupsToKeep.style.display = 'flex';
+			}
+		});
+		document.getElementById('saveAutoBackupBtn').addEventListener('click', saveAutomaticBackupConfig);
+	})
+</script>

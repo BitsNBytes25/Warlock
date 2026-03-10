@@ -119,7 +119,17 @@
 
 <%- include('partials/modal-service-stop.ejs') %>
 <%- include('partials/modal-service-restart.ejs') %>
-<%- include('partials/service-files-modals.ejs') %>
+<!--%- include('partials/service-files-modals.ejs') %-->
+<%- include('modals/file-create-folder-modal.ejs') %>
+<%- include('modals/file-create-file-modal.ejs') %>
+<%- include('modals/file-upload-modal.ejs') %>
+<%- include('modals/file-compress-folder-modal.ejs') %>
+<%- include('modals/file-rename-modal.ejs') %>
+<%- include('modals/file-delete-file-modal.ejs') %>
+<%- include('modals/file-edit-modal.ejs') %>
+<%- include('modals/service-backup-configure-modal.ejs') %>
+<%- include('modals/service-backup-modal.ejs') %>
+<%- include('modals/service-backup-restore-modal.ejs') %>
 <%- include('partials/service-backups-modals.ejs') %>
 <%- include('partials/service-settings-modals.ejs') %>
 
@@ -158,7 +168,7 @@
 <%- include('partials/theme-selector.ejs') %>
 <script src="<%= assetUrl('/assets/service_details.js') %>"></script>
 <script src="<%= assetUrl('/assets/service_configure.js') %>"></script>
-<script src="<%= assetUrl('/assets/application_backups.js') %>"></script>
+<script src="<%= assetUrl('/assets/service_backups.js') %>"></script>
 <script src="<%= assetUrl('/assets/files.js') %>"></script>
 <link rel="stylesheet" href="<%= assetUrl('/assets/codemirror/codemirror.css') %>">
 <link rel="stylesheet" href="<%= assetUrl('/assets/codemirror/theme/material-darker.css') %>">

@@ -25,5 +25,9 @@ export function correctMimetype(filename, mimetype) {
 		return 'application/yaml';
 	}
 
+	if (extension === 'jar' && mimetype === 'application/zip') {
+		return 'application/java-archive';
+	}
+
 	return mimetype;
 }

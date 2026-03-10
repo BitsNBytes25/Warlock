@@ -52,29 +52,24 @@ function renderBackupFile(fileData) {
 		</div>`;
 
 	fileItem.querySelector('.action-rename').addEventListener('click', () => {
-		let filename = fileData.name,
-			extension = '';
-		// Most files here will end in '.tar.gz', so trim that for the rename input
-		if (filename.endsWith('.tar.gz')) {
-			filename = filename.slice(0, -7);
-			extension = '.tar.gz';
-		} else if (filename.endsWith('.zip')) {
-			filename = filename.slice(0, -4);
-			extension = '.zip';
-		}
-		renameInput.value = filename;
-		renameInput.dataset.extension = extension;
-		renameInput.dataset.path = fileData.path;
-		openModal(renameBackupModal);
+		openRenameFileModal(
+			loadedHost,
+			fileData.path,
+			fileData.name,
+			() => {
+				loadBackupsList();
+			},
+			{
+				skipExtension: true,
+				skipWarning: true,
+			}
+		);
 	});
 	fileItem.querySelector('.action-download').addEventListener('click', () => {
 		window.open(`/api/file/${loadedHost}?path=${fileData.path}&download=1`, '_blank');
 	});
 	fileItem.querySelector('.action-restore').addEventListener('click', () => {
-		confirmRestoreBtn.dataset.file = fileData.name;
-		restoreModal.querySelector('.warning-message').style.display = 'flex';
-		restoreModal.querySelector('.terminal').style.display = 'none';
-		openModal(restoreModal);
+		openServiceRestoreModal(loadedHost, loadedApplication, loadedService, fileData.name);
 	});
 	fileItem.querySelector('.action-remove').addEventListener('click', () => {
 		confirmDeleteBackupBtn.dataset.path = fileData.path;
@@ -126,7 +121,16 @@ async function loadAutomaticBackupConfig() {
 	if (!loadedHost) {
 		return;
 	}
-	const identifier = `${loadedApplication}_backup`;
+	const hostData = loadedApplicationData.hosts.filter(h => h.host === loadedHost)[0],
+		appVersion = hostData.version;
+
+	let identifier;
+	if (appVersion >= 2) {
+		identifier = `${loadedApplication}_${loadedService}_backup`;
+	}
+	else {
+		identifier = `${loadedApplication}_backup`;
+	}
 
 	loadCronJob(loadedHost, identifier).then(job => {
 		if (job) {
@@ -178,7 +182,8 @@ async function startUpload() {
 }
 
 function loadBackups() {
-	backupPath = loadedApplicationData.hosts.filter(h => h.host === loadedHost)[0].path + '/backups';
+	// V2 of the API supports backup directories being defined per-service.
+	backupPath = loadedServiceData.bak_dir || loadedApplicationData.hosts.filter(h => h.host === loadedHost)[0].path + '/backups';
 
 	loadAutomaticBackupConfig();
 	loadBackupsList();
@@ -193,55 +198,9 @@ fileBackupInput.addEventListener('change', (e) => {
 	startUpload();
 });
 
-performBackupBtn.addEventListener('click', () => {
-	openModal(backupModal);
-	backupModal.querySelector('.warning-message').style.display = 'flex';
-	backupModal.querySelector('.terminal').style.display = 'none';
-});
 
-confirmBackupBtn.addEventListener('click', () => {
-	const terminalOutput = backupModal.querySelector('.terminal');
 
-	backupModal.querySelector('.warning-message').style.display = 'none';
-	terminalOutput.textContent = 'Performing backup... Please wait.\n';
-	terminalOutput.style.display = 'block';
-	stream(
-		`/api/application/backup/${loadedApplication}/${loadedHost}`,
-		'POST',
-		{'Content-Type': 'application/json'},
-		null,
-		(event, data) => {
-			terminalOutputHelper(terminalOutput, event, data);
-		})
-		.then(() => {
-			showToast('success', 'Backup completed successfully.');
-			loadBackupsList();
-		}).catch(() => {
-		showToast('error', 'Backup process encountered an error. See terminal output for details.');
-	});
-});
 
-confirmRestoreBtn.addEventListener('click', () => {
-	const terminalOutput = restoreModal.querySelector('.terminal'),
-		fileName = confirmRestoreBtn.dataset.file;
-
-	restoreModal.querySelector('.warning-message').style.display = 'none';
-	terminalOutput.textContent = `Restoring backup '${fileName}'... Please wait.\n`;
-	terminalOutput.style.display = 'block';
-	stream(
-		`/api/application/backup/${loadedApplication}/${loadedHost}`,
-		'PUT',
-		{'Content-Type': 'application/json'},
-		JSON.stringify({filename: fileName}),
-		(event, data) => {
-			terminalOutputHelper(terminalOutput, event, data);
-		})
-		.then(() => {
-			showToast('success', 'Restore completed successfully.');
-		}).catch(() => {
-		showToast('error', 'Restore process encountered an error. See terminal output for details.');
-	});
-});
 
 confirmDeleteBackupBtn.addEventListener('click', () => {
 	const filePath = confirmDeleteBackupBtn.dataset.path;
@@ -268,11 +227,18 @@ confirmDeleteBackupBtn.addEventListener('click', () => {
 });
 
 configureAutoBackupBtn.addEventListener('click', () => {
-	openAutoBackupModal(loadedHost, loadedApplication, () => {
+	openAutoBackupModal(loadedHost, loadedApplication, loadedService, () => {
 		loadAutomaticBackupConfig();
 	});
 });
 
+performBackupBtn.addEventListener('click', () => {
+	openServiceBackupModal(loadedHost, loadedApplication, loadedService, () => {
+		loadBackups();
+	});
+});
+/*
 saveAutoBackupBtn.addEventListener('click', () => {
 	saveAutomaticBackupConfig();
 });
+*/

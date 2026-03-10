@@ -1,0 +1,92 @@
+<!-- Create File Modal -->
+<div id="createFileModal" class="modal">
+    <div class="modal-overlay"></div>
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-file"></i> Create New File</h3>
+            <button class="modal-close">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label for="fileName">File Name:</label>
+                <input type="text" id="createFileModalName" placeholder="Enter file name with extension..." />
+            </div>
+            <div class="form-group">
+                <label for="fileContent">Initial Content (optional):</label>
+                <textarea id="createFileModalContent" rows="6" placeholder="Enter initial file content..."></textarea>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="action-save" id="createFileModalConfirm">
+                <i class="fas fa-save"></i>
+                Create File
+            </button>
+            <button class="action-cancel modal-close">
+                <i class="fas fa-times"></i>
+                Cancel
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+	// New functionality functions
+	let createFileResolve;
+
+	async function openCreateFileModal(host, path, callback) {
+        const modal = document.getElementById('createFileModal'),
+            input = document.getElementById('createFileModalName'),
+            content = document.getElementById('createFileModalContent');
+
+        modal.dataset.host = host;
+        modal.dataset.path = path;
+        input.value = '';
+        content.value = '';
+        openModal(modal);
+
+        createFileResolve = callback;
+	}
+
+	async function createFileConfirm() {
+		const modal = document.getElementById('createFileModal'),
+		    fileName = document.getElementById('createFileModalName').value.trim(),
+		    fileContent = document.getElementById('createFileModalContent').value,
+			host = modal.dataset.host,
+			path = modal.dataset.path;
+
+		if (!fileName) {
+			alert('Please enter a file name');
+			return;
+		}
+
+		closeModal(modal);
+		showToast('info', 'Creating file, please wait...');
+
+		fetch(`/api/file/${host}?path=${path}&name=${fileName}`, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ content: fileContent })
+		}).then(response => response.json())
+			.then(result => {
+				if (result.success) {
+					if (createFileResolve) {
+						createFileResolve();
+						createFileResolve = null;
+					}
+				} else {
+					alert(`Error creating file: ${result.error}`);
+				}
+			})
+			.catch(error => {
+				alert(`Network error: ${error.message}`);
+			});
+	}
+
+	window.addEventListener('DOMContentLoaded', () => {
+		document.getElementById('createFileModalConfirm').addEventListener('click', () => {
+			createFileConfirm();
+		});
+	});
+</script>

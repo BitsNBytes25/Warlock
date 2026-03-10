@@ -126,7 +126,9 @@ function activateServiceTab(tab, jumpTo = true) {
 		fetchLogs();
 	}
 	else if (tab === 'files') {
-		loadDirectory(loadedApplicationData.hosts.filter(h => h.host === loadedHost)[0].path);
+		let defaultPath = loadedServiceData.app_dir ||
+			loadedApplicationData.hosts.filter(h => h.host === loadedHost)[0].path;
+		loadDirectory(defaultPath);
 	}
 	else if (tab === 'backups') {
 		loadBackups();
@@ -225,7 +227,13 @@ window.addEventListener('DOMContentLoaded', () => {
 				checkUpdates(app_guid, host);
 			}, 1000 * 60 * 30);
 
-			activateServiceTab('metrics', false);
+			if (window.location.hash) {
+				const hashTab = window.location.hash.replace('#', '');
+				activateServiceTab(hashTab, false);
+			}
+			else {
+				activateServiceTab('metrics', false);
+			}
 
 			// Events
 			btnServiceStop.addEventListener('click', () => {
@@ -244,7 +252,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
 			document.querySelectorAll('.tabs-header a').forEach(tabBtn => {
 				tabBtn.addEventListener('click', (e) => {
-					e.preventDefault();
+					//e.preventDefault();
 					const tab = tabBtn.getAttribute('href').replace('#', '');
 					activateServiceTab(tab, true);
 				});

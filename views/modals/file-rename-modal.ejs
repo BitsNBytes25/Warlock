@@ -1,0 +1,142 @@
+<!-- Rename Modal -->
+<div id="renameModal" class="modal">
+	<div class="modal-overlay"></div>
+	<div class="modal-content">
+		<div class="modal-header">
+			<h3><i class="fas fa-edit"></i> Rename Item</h3>
+			<button class="modal-close">
+				<i class="fas fa-times"></i>
+			</button>
+		</div>
+		<div class="modal-body">
+			<div class="warning-message">
+				<div style="display: flex; align-items: center; gap: 1rem;">
+					<i class="fas fa-exclamation-triangle" style="font-size: 1.5rem; color: #fbbf24;"></i>
+					<div>
+						<p style="font-size: 0.85rem;">Renaming files or folders may break applications or scripts that depend on the current name or path!</p>
+					</div>
+				</div>
+			</div>
+			<div class="form-group">
+				<label for="renameNewName">New Name:</label>
+				<input type="text" id="renameNewName" placeholder="Enter new name..." />
+			</div>
+		</div>
+		<div class="modal-footer">
+			<button class="btn-nav btn-action" id="confirmRename">
+				<i class="fas fa-edit"></i>
+				Rename
+			</button>
+			<button class="action-cancel modal-close">
+				<i class="fas fa-times"></i>
+				Cancel
+			</button>
+		</div>
+	</div>
+</div>
+
+<script>
+	let renameFileResolve;
+
+	async function openRenameFileModal(host, path, name, callback, options = {}) {
+		const modal = document.getElementById('renameModal'),
+			input = document.getElementById('renameNewName');
+
+		modal.dataset.host = host;
+		modal.dataset.path = path;
+		modal.dataset.name = name;
+
+		// Load default options
+		options = {
+			skipExtension: false,
+			skipWarning: false,
+			...options
+		};
+
+		// Add support for skipping the warning message.
+		// Renaming a backup for example is generally safe.
+		modal.querySelector('.warning-message').style.display = options.skipWarning ? 'none' : 'flex';
+
+		// Add support for skipping file extensions;
+		// If set, it should strip the extension and only allow the user to edit the name.
+		if (options.skipExtension) {
+			let lastDotIndex = name.lastIndexOf('.');
+			if (lastDotIndex > 0) {
+				let ext = name.substring(lastDotIndex);
+				// Handle special case for .tar.gz and similar multi-part extensions
+				if (ext === '.gz' && name.substring(lastDotIndex - 4, lastDotIndex) === '.tar') {
+					lastDotIndex -= 4;
+					ext = name.substring(lastDotIndex);
+				}
+
+				name = name.substring(0, lastDotIndex);
+				modal.dataset.extension = ext; // Store the extension in a data attribute for later
+			} else {
+				modal.dataset.extension = ''; // Set extension to empty string
+			}
+		}
+		else {
+			modal.dataset.extension = '';
+		}
+
+
+		input.value = name;
+		openModal(modal);
+
+		// Store resolve to call after compression is done
+		renameFileResolve = callback;
+	}
+
+	async function performRename() {
+		const modal = document.getElementById('renameModal'),
+			input = document.getElementById('renameNewName');
+		let newName = input.value.trim();
+
+		if (!newName) {
+			alert('Please enter a new name');
+			return;
+		}
+
+		// Add the extension, (may be an empty string)
+		newName += modal.dataset.extension;
+
+		if (newName === modal.dataset.name) {
+			closeModal(modal);
+			return;
+		}
+
+		const oldPath = modal.dataset.path;
+		const pathParts = oldPath.split('/');
+		pathParts[pathParts.length - 1] = newName;
+		const newPath = pathParts.join('/');
+
+		closeModal(modal);
+
+		fetch(`/api/file/${modal.dataset.host}`, {
+			method: 'MOVE',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({
+				oldPath: oldPath,
+				newPath: newPath
+			})
+		})
+			.then(response => response.json())
+			.then(result => {
+				if (result.success) {
+					showToast('success', 'Item renamed successfully');
+					if (renameFileResolve) {
+						renameFileResolve();
+						renameFileResolve = null;
+					}
+				} else {
+					showToast('error', `Error renaming item: ${result.error}`);
+				}
+			}).catch(error => {
+			showToast('error', `Network error: ${error.message}`);
+		});
+	}
+
+	window.addEventListener('DOMContentLoaded', () => {
+		document.getElementById('confirmRename').addEventListener('click', performRename);
+	});
+</script>

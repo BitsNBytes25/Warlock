@@ -450,6 +450,30 @@ function getAppImage(guid) {
 }
 
 /**
+ * Get the API version for a given application on the target host.
+ *
+ * @param {string} guid
+ * @param {string} host
+ */
+function getAppAPIVersion(guid, host) {
+	let appData = applicationData && applicationData[guid] || null,
+		hostData;
+
+	if (!appData) {
+		// Applications not loaded or the requested app doesn't exist.
+		return null;
+	}
+
+	hostData = appData.hosts.find(h => h.host === host) || null;
+	if (!hostData) {
+		// Host not found for this application.
+		return null;
+	}
+
+	return hostData.version || 1;
+}
+
+/**
  * Get the rendered hostname for a given host identifier.
  *
  * @param {string} host

@@ -27,3 +27,17 @@ to update Node.js and all dependencies.
 * Fix OS discovery for new hosts
 * Fix SKIP_AUTHENTICATION trying to create a user on first run
 * Bump version of Node to v24 and a number of dependencies to address security vulnerabilities
+
+
+(to sort)
+More work for APIv2 support
+
+* Add jar mimetype support
+* Return all keys when looking up service data
+* Cleanup modals by moving them into their own utility files
+* Add support for V2 backups
+* Add support for V2 restores
+* Add support for V2 file browsing
+* New getAPIVersion helper function on frontend
+* Remember the page when viewing detail tabs
+* Add support for chunked uploads - useful for uploading large files
