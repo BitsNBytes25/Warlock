@@ -1,7 +1,7 @@
 meta {
-  name: GET Service Configs
+  name: Service Configs
   type: http
-  seq: 4
+  seq: 7
 }
 
 get {
@@ -11,9 +11,9 @@ get {
 }
 
 params:path {
-  guid: 33201d07-4d80-c271-28d5-82548dde0a67
-  service: valheim-server
-  host: 45.26.230.248
+  guid: {{lookup_app}}
+  service: {{lookup_service}}
+  host: {{lookup_host}}
 }
 
 settings {

@@ -1,7 +1,7 @@
 meta {
-  name: GET Service Logs
+  name: Service Logs
   type: http
-  seq: 7
+  seq: 15
 }
 
 get {
@@ -11,9 +11,9 @@ get {
 }
 
 params:path {
-  service: vein-server
-  host: 45.26.230.248
-  guid: 6ee9bb12-0e21-4ca0-a2f2-75fdeb9af718
+  service: {{lookup_service}}
+  host: {{lookup_host}}
+  guid: {{lookup_app}}
 }
 
 settings {

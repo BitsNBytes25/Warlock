@@ -1,17 +1,17 @@
 meta {
-  name: GET Host Firewall
+  name: Host Cron
   type: http
-  seq: 9
+  seq: 13
 }
 
 get {
-  url: {{host}}/api/firewall/:host
+  url: {{host}}/api/cron/:host
   body: none
   auth: inherit
 }
 
 params:path {
-  host: 45.26.230.248
+  host: {{lookup_host}}
 }
 
 settings {

@@ -1,7 +1,7 @@
 meta {
   name: ENABLE Host Firewall
   type: http
-  seq: 12
+  seq: 18
 }
 
 post {
@@ -11,7 +11,7 @@ post {
 }
 
 params:path {
-  host: 45.26.230.248
+  host: {{lookup_host}}
 }
 
 settings {

@@ -1,0 +1,29 @@
+meta {
+  name: Service Command help
+  type: http
+  seq: 20
+}
+
+post {
+  url: {{host}}/api/service/cmd/:guid/:host/:service
+  body: json
+  auth: inherit
+}
+
+params:path {
+  service: {{lookup_service}}
+  host: {{lookup_host}}
+  guid: {{lookup_app}}
+}
+
+body:json {
+  {"command": "help"}
+}
+
+body:text {
+  help
+}
+
+settings {
+  encodeUrl: true
+}

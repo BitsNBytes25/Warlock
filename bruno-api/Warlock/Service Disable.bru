@@ -1,0 +1,25 @@
+meta {
+  name: Service Disable
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{host}}/api/service/control/:guid/:host/:service
+  body: json
+  auth: inherit
+}
+
+params:path {
+  service: {{lookup_service}}
+  host: {{lookup_host}}
+  guid: {{lookup_app}}
+}
+
+body:json {
+  {"action": "disable"}
+}
+
+settings {
+  encodeUrl: true
+}

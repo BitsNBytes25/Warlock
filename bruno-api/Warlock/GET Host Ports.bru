@@ -1,7 +1,7 @@
 meta {
   name: GET Host Ports
   type: http
-  seq: 13
+  seq: 19
 }
 
 get {
@@ -11,7 +11,7 @@ get {
 }
 
 params:path {
-  host: 45.26.230.248
+  host: {{lookup_host}}
 }
 
 settings {

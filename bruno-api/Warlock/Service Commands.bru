@@ -1,0 +1,21 @@
+meta {
+  name: Service Commands
+  type: http
+  seq: 9
+}
+
+get {
+  url: {{host}}/api/service/cmd/:guid/:host/:service
+  body: none
+  auth: inherit
+}
+
+params:path {
+  service: {{lookup_service}}
+  host: {{lookup_host}}
+  guid: {{lookup_app}}
+}
+
+settings {
+  encodeUrl: true
+}
