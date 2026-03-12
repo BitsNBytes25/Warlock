@@ -216,18 +216,11 @@ async function fetchService(app_guid, host, service) {
 }
 
 /**
- * Fetches the list of applications from the backend API or localStorage.
+ * Fetches the list of applications from the backend API.
  *
- * @returns {Promise<Object.<string, AppData>>} A promise that resolves to an object mapping GUIDs to AppData objects.
+ * @returns {Promise<AppData[]>}
  */
-async function fetchApplications(skipCache) {
-	skipCache = skipCache || false;
-
-	// Try to use local memory for faster results, defaulting back to the manual fetch
-	if (applicationData !== null && !skipCache) {
-		return applicationData;
-	}
-
+async function fetchApplications() {
 	return fetch('/api/applications', {
 		method: 'GET',
 		headers: {
@@ -248,14 +241,7 @@ async function fetchApplications(skipCache) {
 		});
 }
 
-async function fetchHosts(skipCache) {
-	skipCache = skipCache || false;
-
-	// Try to use local memory for faster results, defaulting back to the manual fetch
-	if (hostData !== null && !skipCache) {
-		return hostData;
-	}
-
+async function fetchHosts() {
 	return fetch('/api/hosts', {
 		method: 'GET',
 		headers: {
@@ -391,8 +377,7 @@ function getApplicationData(guid) {
 		return null;
 	}
 
-	let results = applicationData.filter(a => a.guid === guid) || null;
-	return results && results.length > 0 ? results[0] : null;
+	return applicationData.find(app => app.guid === guid) || null;
 }
 
 /**
@@ -598,12 +583,12 @@ function formatFileSize(bytes) {
  * @param {number} bits
  * @returns {string}
  */
-function formatBitSpeed(bytes) {
-	if (bytes === 0) return '0 bps';
+function formatBitSpeed(bits) {
+	if (bits === 0) return '0 bps';
 	const k = 1024;
 	const sizes = ['bps', 'Kbps', 'Mbps', 'Gbps', 'Tbps', 'Pbps'];
-	const i = Math.floor(Math.log(bytes) / Math.log(k));
-	return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+	const i = Math.floor(Math.log(bits) / Math.log(k));
+	return parseFloat((bits / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
 }
 
 /**
@@ -697,26 +682,36 @@ function replaceServicePlaceholders(service) {
  * @returns {Promise<void>}
  */
 async function loadApplication(guid) {
-	return new Promise((resolve, reject) => {
-		fetchApplications()
-			.then(applications => {
-				const app = applications[guid] || null;
+	if (applicationData && applicationData.length > 0) {
+		// Try to find the application that's in the cache.
+		let cachedApp = applicationData.find(app => app.guid === guid) || null;
+		if (cachedApp) {
+			loadedApplication = guid;
+			loadedApplicationData = cachedApp;
 
-				if (!app) {
-					return reject('Application not found.');
-				}
+			// Replace content from application
+			replaceAppPlaceholders(cachedApp);
 
-				loadedApplication = guid;
-				loadedApplicationData = app;
+			return loadedApplicationData;
+		}
+	}
 
-				// Replace content from application
-				replaceAppPlaceholders(app);
-				resolve(app);
-			})
-			.catch(error => {
-				reject(error);
-			});
-	});
+	return fetchApplications()
+		.then(applications => {
+			const app = applications.find(app => app.guid === guid) || null;
+
+			if (!app) {
+				throw new Error(`Application '${guid}' not found.`);
+			}
+
+			loadedApplication = guid;
+			loadedApplicationData = app;
+
+			// Replace content from application
+			replaceAppPlaceholders(app);
+
+			return app;
+		});
 }
 
 /**
@@ -726,26 +721,36 @@ async function loadApplication(guid) {
  * @returns {Promise<unknown>}
  */
 async function loadHost(host) {
-	return new Promise((resolve, reject) => {
-		fetchHosts()
-			.then(hosts => {
-				const hostInfo = hosts[host] || null;
+	if (hostData && hostData.length > 0) {
+		// Try to find the application that's in the cache.
+		let cachedHost = hostData.find(h => h.host === host) || null;
+		if (cachedHost) {
+			loadedHost = host;
+			loadedHostData = cachedHost;
 
-				if (!hostInfo) {
-					return reject('Host not found.');
-				}
+			// Replace content from application
+			replaceHostPlaceholders(cachedHost);
 
-				loadedHost = host;
-				loadedHostData = hostInfo;
+			return cachedHost;
+		}
+	}
 
-				// Replace content from application
-				replaceHostPlaceholders(hostInfo);
-				resolve(hostInfo);
-			})
-			.catch(error => {
-				reject(error);
-			});
-	});
+	return fetchHosts()
+		.then(hosts => {
+			const hostInfo = hosts.find(h => h.host === host) || null;
+
+			if (!hostInfo) {
+				throw new Error(`Host '${host}' not found.`);
+			}
+
+			loadedHost = host;
+			loadedHostData = hostInfo;
+
+			// Replace content from application
+			replaceHostPlaceholders(hostInfo);
+
+			return hostInfo;
+		});
 }
 
 /**
@@ -1464,7 +1469,7 @@ function checkHostAppHasOption(guid, host, option) {
 		return false;
 	}
 
-	const appHostData = appData.hosts.find(h => h.host === host);
+	const appHostData = appData.installs.find(h => h.host === host);
 	if (!appHostData) {
 		// No specific host data for this host
 		return false;

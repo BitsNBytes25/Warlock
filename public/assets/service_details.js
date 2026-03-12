@@ -50,7 +50,6 @@ function pollServiceStatus(app_guid, host, service) {
 				serviceDetailsCpu.innerText = parsed.service.cpu_usage;
 				serviceDetailsMemory.innerText = parsed.service.memory_usage;
 				serviceDetailsPort.innerText = parsed.service.port;
-				console.log(parsed);
 			}
 			catch (error) {
 				console.error('Error parsing service stream data:', error, data);
