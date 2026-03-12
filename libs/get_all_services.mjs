@@ -9,12 +9,11 @@ import {getApplicationServices} from "./get_application_services.mjs";
  */
 export async function getAllServices() {
 	return getAllApplications()
-		.then(async results => {
+		.then(async apps => {
 			let allLookups = [],
 				services = [];
 
-			for (let guid in results) {
-				let app = results[guid];
+			apps.forEach(app => {
 				for (let hostData of app.installs) {
 					allLookups.push(
 						hostData.getServices().then(hostServices => {
@@ -24,7 +23,7 @@ export async function getAllServices() {
 						})
 					);
 				}
-			}
+			});
 
 			await Promise.allSettled(allLookups);
 			return services;

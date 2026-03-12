@@ -18,11 +18,3 @@ Hosts:
 Manager:
 
 * Disable systemd fail trigger on start timeout - some games take a REALLY long time to start, (ARK...)
-
-Backend:
-
-Caching will be a problem; implement a solution for keeping track
-of which cached commands are on which hosts / services.
-
-This way installing or updating a given host can invalidate
-the appropriate caches just for that host/service.

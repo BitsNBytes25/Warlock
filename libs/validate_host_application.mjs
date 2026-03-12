@@ -22,7 +22,8 @@ export async function validateHostApplication(req, res, next) {
 
 	getAllApplications()
 		.then(applications => {
-			const app = applications[guid] || null;
+			const apps = applications.filter(a => a.guid === guid);
+			const app = apps.length > 0 ? apps[0] : null;
 
 			if (!app) {
 				throw new Error(`Application with GUID '${guid}' not found`);

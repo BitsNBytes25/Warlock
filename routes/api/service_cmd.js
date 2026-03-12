@@ -26,7 +26,7 @@ router.get('/:guid/:host/:service', validate_session, validateHostService, (req,
 
 	// Execute the command via manage.py
 	const cmd = req.appInstallData.getServiceCommandString('get-commands', req.serviceData.service);
-	cmdRunner(req.appInstallData.host, cmd, {}, 86400)
+	cmdRunner(req.appInstallData.host, cmd, 86400)
 		.then(output => {
 			let commands = JSON.parse(output.stdout);
 			res.json({

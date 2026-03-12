@@ -2,7 +2,7 @@ import {exec} from 'child_process';
 import {createHash} from 'crypto';
 import {Host} from "../db.js";
 import {logger} from "./logger.mjs";
-import cache from "./cache.mjs";
+import cache, {tagCacheKey} from "./cache.mjs";
 import {recordMetric} from "./cmd_profiler.mjs";
 
 /**
@@ -10,11 +10,11 @@ import {recordMetric} from "./cmd_profiler.mjs";
  *
  * @param target {string}
  * @param cmd {string}
- * @param extraFields {*}
  * @param cacheable {boolean|int} Number > 0 if the result of this command should be cached for N seconds.
- * @returns {Promise<{stdout: string, stderr: string, extraFields: *}>|Promise<{error: Error, stdout: string, stderr: string, extraFields: *}>}
+ * @param cacheTag {string|strings[]|null} Optional tag to use for cache tracking.
+ * @returns {Promise<{stdout: string, stderr: string}>|Promise<{error: Error, stdout: string, stderr: string}>}
  */
-export async function cmdRunner(target, cmd, extraFields = {}, cacheable = false) {
+export async function cmdRunner(target, cmd, cacheable = false, cacheTag = null) {
 	return new Promise((resolve, reject) => {
 		const startTime = performance.now();
 		// Generate cache key from host and command
@@ -29,8 +29,7 @@ export async function cmdRunner(target, cmd, extraFields = {}, cacheable = false
 				recordMetric(target, cmd, duration, 'CACHED');
 				return resolve({
 					stdout: cachedResult.stdout,
-					stderr: cachedResult.stderr,
-					extraFields: extraFields
+					stderr: cachedResult.stderr
 				});
 			}
 		}
@@ -46,8 +45,7 @@ export async function cmdRunner(target, cmd, extraFields = {}, cacheable = false
 				return reject({
 					error: new Error(`Target host '${target}' not found in database.`),
 					stdout: '',
-					stderr: '',
-					extraFields
+					stderr: ''
 				});
 			}
 
@@ -68,15 +66,15 @@ export async function cmdRunner(target, cmd, extraFields = {}, cacheable = false
 					recordMetric(target, cmd, duration, 'error');
 					if (stderr) {
 						logger.debug('cmdRunner stderr:', stderr);
-						return reject({error: new Error(stderr), stdout, stderr, extraFields});
+						return reject({error: new Error(stderr), stdout, stderr});
 					}
 					else {
-						return reject({error, stdout, stderr, extraFields});
+						return reject({error, stdout, stderr});
 					}
 				}
 
 				recordMetric(target, cmd, duration, 'success');
-				const result = {stdout, stderr, extraFields};
+				const result = {stdout, stderr};
 
 				// Store in cache if cacheable
 				if (cacheable) {
@@ -85,6 +83,7 @@ export async function cmdRunner(target, cmd, extraFields = {}, cacheable = false
 					}
 					if (typeof cacheable === 'number' && cacheable > 0) {
 						cache.set(cacheKey, {stdout, stderr}, cacheable);
+						tagCacheKey(cacheKey, target, cacheTag);
 						logger.debug('cmdRunner: Cached result for', cacheKey);
 					}
 				}

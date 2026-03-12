@@ -2,17 +2,15 @@ import { fileURLToPath} from 'url';
 import path from 'path';
 import fs from 'fs';
 import yaml from 'js-yaml';
-import {cmdRunner} from "./cmd_runner.mjs";
 import {Host} from "../db.js";
 import {logger} from "./logger.mjs";
 import cache from "./cache.mjs";
-import {AppInstallData} from "./app_install_data.mjs";
 import {HostData} from "./host_data.mjs";
 
 /**
  * Get all applications from /var/lib/warlock/*.app registration files
  * *
- * @returns {Promise<Object.<string, AppData>>}
+ * @returns {Promise<AppData[]>}
  */
 export async function getAllApplications() {
 	return new Promise((resolve, reject) => {
@@ -77,7 +75,7 @@ export async function getAllApplications() {
 			await Promise.allSettled(promises);
 
 			logger.debug(`getAllApplications: Application Definitions Loaded with ${appCount} apps and ${installCount} installs.`);
-			return resolve(applications);
+			return resolve(Object.values(applications));
 		});
 	});
 }

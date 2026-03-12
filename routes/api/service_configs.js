@@ -3,6 +3,7 @@ const {validate_session} = require("../../libs/validate_session.mjs");
 const {cmdRunner} = require("../../libs/cmd_runner.mjs");
 const {validateHostService} = require("../../libs/validate_host_service.mjs");
 const cache = require("../../libs/cache.mjs");
+const {clearTaggedCache} = require("../../libs/cache.mjs");
 
 const router = express.Router();
 
@@ -49,10 +50,7 @@ router.get('/:guid/:host/:service', validate_session, validateHostService, (req,
  * @property {ServiceData} req.serviceData
  */
 router.post('/:guid/:host/:service', validate_session, validateHostService, async (req, res) => {
-	const host = req.appInstallData.host,
-		guid = req.appInstallData.guid,
-		service = req.serviceData.service,
-		configUpdates = req.body;
+	const configUpdates = req.body;
 
 	// Multiple updates can be sent in a single request, but run them one-at-a-time.
 	for (let option in configUpdates) {
@@ -61,7 +59,7 @@ router.post('/:guid/:host/:service', validate_session, validateHostService, asyn
 	}
 
 	// Clear the cache data for this service, useful for keys like name or port.
-	cache.default.set(`services_${guid}_${host}`, null, 1); // Invalidate cache
+	clearTaggedCache(req.appInstallData.host, req.appInstallData.guid);
 
 	return res.json({
 		success: true,

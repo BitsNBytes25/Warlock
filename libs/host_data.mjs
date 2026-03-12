@@ -335,7 +335,7 @@ export class HostData {
 	async getInstalls() {
 		const cmd = 'for file in /var/lib/warlock/*.app; do if [ -f "$file" ]; then echo "$(basename "$file" ".app"):$(cat "$file")"; fi; done';
 
-		return cmdRunner(this.host, cmd, null, 86400)
+		return cmdRunner(this.host, cmd, 86400)
 			.then(async result => {
 				let installs = [],
 					lookups = [];

@@ -5,6 +5,7 @@ const {getLatestServiceMetrics} = require("../../libs/get_latest_service_metrics
 const {getApplicationMetrics} = require("../../libs/get_application_metrics.mjs");
 const {cmdRunner} = require("../../libs/cmd_runner.mjs");
 const {validateHostApplication} = require("../../libs/validate_host_application.mjs");
+const {clearTaggedCache} = require("../../libs/cache.mjs");
 
 const router = express.Router();
 
@@ -51,6 +52,9 @@ router.put('/:guid/:host/:service', validate_session, validateHostApplication, (
 	const cmd = req.appInstallData.getServiceCommandString('create-service', req.params.service);
 	cmdRunner(req.appInstallData.host, cmd)
 		.then(output => {
+			// On updates to the service state, clear the cache for the application
+			clearTaggedCache(req.appInstallData.host, req.appInstallData.guid);
+
 			res.json({
 				success: true,
 				stdout: output.stdout,
@@ -87,6 +91,9 @@ router.delete('/:guid/:host/:service', validate_session, validateHostService, (r
 	const cmd = req.appInstallData.getServiceCommandString('remove-service', req.params.service);
 	cmdRunner(req.appInstallData.host, cmd)
 		.then(output => {
+			// On updates to the service state, clear the cache for the application
+			clearTaggedCache(req.appInstallData.host, req.appInstallData.guid);
+
 			res.json({
 				success: true,
 				stdout: output.stdout,

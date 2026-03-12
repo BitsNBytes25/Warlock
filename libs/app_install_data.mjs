@@ -47,7 +47,7 @@ export class AppInstallData {
 	 * @returns {Promise<void>}
 	 */
 	async init() {
-		return cmdRunner(this.host, `${this.path}/manage.py --help`, {}, 86400)
+		return cmdRunner(this.host, `${this.path}/manage.py --help`, 86400)
 			.then(result => {
 				let options = [],
 					version = 1,
@@ -166,7 +166,7 @@ export class AppInstallData {
 			return this._services;
 		}
 
-		return cmdRunner(this.host, this.getCommandString('get-services'), {}, 3600)
+		return cmdRunner(this.host, this.getCommandString('get-services'), 3600, this.guid)
 			.then(result => {
 				try {
 					this._services = JSON.parse(result.stdout);

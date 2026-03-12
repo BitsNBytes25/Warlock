@@ -14,7 +14,7 @@ export async function injectApps(req, res, next) {
 	return getAllApplications()
 		.then(applications => {
 			// Limit to only installed applications
-			applications = Object.values(applications).filter(app => app.installs.length > 0);
+			applications = applications.filter(app => app.installs.length > 0);
 
 			res.locals.apps = applications;
 			next();

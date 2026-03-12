@@ -8,7 +8,9 @@ import {getAllApplications} from "./get_all_applications.mjs";
 export async function getAppInstaller(app) {
 	if (app instanceof String) {
 		// If app is just a string, assume it's a GUID which needs resolved.
-		app = (await getAllApplications())[app] || null;
+		let apps = await getAllApplications();
+		apps = apps.filter(a => a.guid === app);
+		app = apps.length > 0 ? apps[0] : null;
 	}
 
 	if (!app) return null;

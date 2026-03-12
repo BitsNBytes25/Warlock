@@ -36,7 +36,8 @@ router.put('/:guid/:host', validate_session, (req, res) => {
 		}
 
 		getAllApplications().then(async applications => {
-			const appData = applications[guid] || null;
+			const apps = applications.filter(a => a.guid === guid);
+			const appData = apps.length > 0 ? apps[0] : null;
 
 			if (!appData) {
 				return res.json({

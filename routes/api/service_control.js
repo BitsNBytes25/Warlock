@@ -2,7 +2,7 @@ const express = require('express');
 const {validate_session} = require("../../libs/validate_session.mjs");
 const {cmdRunner} = require("../../libs/cmd_runner.mjs");
 const {validateHostService} = require("../../libs/validate_host_service.mjs");
-const cache = require("../../libs/cache.mjs");
+const {clearTaggedCache} = require("../../libs/cache.mjs");
 
 const router = express.Router();
 
@@ -66,7 +66,8 @@ router.post('/:guid/:host/:service', validate_session, validateHostService, (req
 	cmdRunner(host, cmd)
 		.then(result => {
 			if (clearNeeded) {
-				cache.default.set(`services_${guid}_${host}`, null, 1); // Invalidate cache
+				// On updates to the service state, clear the cache for the application
+				clearTaggedCache(req.appInstallData.host, req.appInstallData.guid);
 			}
 
 			return res.json({

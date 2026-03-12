@@ -19,7 +19,7 @@ router.get('/', validate_session, (req, res) => {
 	getAllApplications()
 		.then(applications => {
 			if (all !== '1') {
-				applications = Object.values(applications).filter(app => app.installs.length > 0);
+				applications = applications.filter(app => app.installs.length > 0);
 			}
 
 			return res.json({
@@ -44,33 +44,28 @@ router.get('/', validate_session, (req, res) => {
  */
 router.get('/updates', validate_session, (req, res) => {
 	getAllApplications()
-		.then(applications => {
-			let promises = [];
+		.then(async applications => {
+			let promises = [],
+				updates = [];
 
-			Object.values(applications).forEach(application => {
+			applications.forEach(application => {
 				application.installs.forEach(hostData => {
-					promises.push(cmdRunner(hostData.host, hostData.getCommandString('check-update'), {application, hostData}));
+					promises.push(
+						cmdRunner(hostData.host, hostData.getCommandString('check-update'))
+							.then(() => {
+								updates.push({
+									guid: hostData.guid,
+									host: hostData.host
+								});
+							})
+					);
 				});
 			});
 
-			Promise.allSettled(promises).then(results => {
-				let updates = [];
-
-				results.forEach(result => {
-					// Most results here should be REJECTED; as that indicates an update is not available.
-					// Only FULFILLED results indicate an update is available.
-					if (result.status === 'fulfilled') {
-						updates.push({
-							guid: result.value.extraFields.application.guid,
-							host: result.value.extraFields.hostData.host
-						});
-					}
-				});
-
-				return res.json({
-					success: true,
-					updates: updates
-				});
+			await Promise.allSettled(promises);
+			return res.json({
+				success: true,
+				updates: updates
 			});
 		});
 });

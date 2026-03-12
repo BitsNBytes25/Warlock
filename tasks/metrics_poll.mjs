@@ -7,12 +7,11 @@ export function MetricsPollTask() {
 		.then(results => {
 			let allLookups = [];
 
-			for (let guid in results) {
-				let app = results[guid];
+			results.forEach(app => {
 				for (let hostData of app.installs) {
 					allLookups.push(getApplicationMetrics(hostData));
 				}
-			}
+			});
 
 			Promise.allSettled(allLookups)
 				.then(() => {

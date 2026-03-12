@@ -13,7 +13,7 @@ export async function getApplicationServices(appData, hostData) {
 
 		const guid = appData.guid;
 
-		cmdRunner(hostData.host, hostData.getCommandString('get-services'), {}, 3600)
+		cmdRunner(hostData.host, hostData.getCommandString('get-services'), 3600)
 			.then(result => {
 				let appServices = {};
 
