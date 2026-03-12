@@ -20,7 +20,7 @@ router.get('/:host', validate_session, (req, res) => {
 			promises = [];
 		getAllApplications().then(results => {
 			Object.values(results).forEach(app => {
-				app.hosts.forEach(hostData => {
+				app.installs.forEach(hostData => {
 					if (hostData.host === host) {
 						promises.push(cmdRunner(host, hostData.getCommandString('get-ports'), app.guid));
 					}

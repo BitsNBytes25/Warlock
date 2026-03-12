@@ -40,7 +40,20 @@ function parseIdentifier(line) {
 	}
 }
 
-// GET /api/cron/:host - list warlock-managed cron lines
+/**
+ * Get the cron entries for a given host
+ *
+ * API endpoint: GET /api/cron/:host
+ *
+ * Returns JSON with success (True/False) and jobs.
+ * Each job is an object with the following properties:
+ * - raw: The raw crontab line
+ * - is_comment: True if the line is a comment
+ * - schedule: The cron schedule (or null if not a cron line)
+ * - command: The command to run (or null if not a cron line)
+ * - identifier: The identifier for the job (or null if not a cron line)
+ * - is_warlock: True if the line is a Warlock-specific line (e.g. #warlock:id=...)
+ */
 router.get('/:host', validate_session, (req, res) => {
 	const host = req.params.host;
 

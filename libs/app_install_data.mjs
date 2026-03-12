@@ -7,14 +7,14 @@ import {logger} from "./logger.mjs";
  * Usage:
  *
  * ```js
- * const hostAppData = new HostAppData('hostname', '/path/to/app');
- * await hostAppData.init();
- * console.log(hostAppData.options); // List of available command options
+ * const appInstallData = new AppInstallData('hostname', '/path/to/app');
+ * await appInstallData.init();
+ * console.log(appInstallData.options); // List of available command options
  * ```
  */
-export class HostAppData {
+export class AppInstallData {
 	/**
-	 * Create a HostAppData instance.
+	 * Create an AppInstallData instance.
 	 *
 	 * @param {string} host - Hostname or IP of host.
 	 * @param {string} path - Path where the application is installed on the host.
@@ -22,19 +22,32 @@ export class HostAppData {
 	constructor(host, path) {
 		this.host = host;
 		this.path = path;
+		this.guid = null;
+		this.title = null;
+		this._services = null;
 		this.options = [];
 		this.version = 1;
 	}
 
+	toJSON() {
+		const data = {};
+		for (const key of Object.keys(this)) {
+			if (!key.startsWith('_')) {
+				data[key] = this[key];
+			}
+		}
+		return data;
+	}
+
 	/**
-	 * Initialize the HostAppData by retrieving the available command options from the application.
+	 * Initialize the AppInstallData by retrieving the available command options from the application.
 	 *
 	 * This method executes the application's manage.py with the --help option to parse the supported commands and options.
 	 *
 	 * @returns {Promise<void>}
 	 */
 	async init() {
-		cmdRunner(this.host, `${this.path}/manage.py --help`, {}, 86400)
+		return cmdRunner(this.host, `${this.path}/manage.py --help`, {}, 86400)
 			.then(result => {
 				let options = [],
 					version = 1,
@@ -68,7 +81,7 @@ export class HostAppData {
 				this.version = version;
 			})
 			.catch(error => {
-				logger.warn(`HostAppData.init: Error retrieving options for app at ${this.host}: ${error.message}`);
+				logger.warn(`AppInstallData.init: Error retrieving options for app at ${this.host}: ${error.message}`);
 			});
 	}
 
@@ -141,5 +154,41 @@ export class HostAppData {
 		else {
 			throw new Error(`Unsupported application version ${this.version} for ${this.path} on ${this.host}`);
 		}
+	}
+
+	/**
+	 * Get all service instances in this host application.
+	 *
+	 * @returns {Promise<Object<string, ServiceData>>}
+	 */
+	async getServices() {
+		if (this._services !== null) {
+			return this._services;
+		}
+
+		return cmdRunner(this.host, this.getCommandString('get-services'), {}, 3600)
+			.then(result => {
+				try {
+					this._services = JSON.parse(result.stdout);
+					return this._services;
+				}
+				catch(e) {
+					throw new Error(`Error parsing services data for application '${this.guid}' on host '${this.host}': ${e.message}`);
+				}
+			})
+			.catch(e => {
+				throw new Error(`Error retrieving services data for application '${this.guid}' on host '${this.host}': ${e.message}`);
+			});
+	}
+
+	/**
+	 * Get a specific service instance by name.
+	 *
+	 * @param {string} service
+	 * @returns {Promise<ServiceData|null>}
+	 */
+	async getService(service) {
+		const services = await this.getServices();
+		return services[service] || null;
 	}
 }

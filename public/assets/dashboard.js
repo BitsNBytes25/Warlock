@@ -12,7 +12,7 @@ function populateServicesTable(servicesWithStats) {
 	const table = servicesTable,
 		now = parseInt(Date.now() / 1000),
 		threshold = now - 45, // 45 seconds ago
-		app_guid = servicesWithStats.app,
+		app_guid = servicesWithStats.host.guid,
 		host = servicesWithStats.host,
 		service = servicesWithStats.service;
 
@@ -22,8 +22,8 @@ function populateServicesTable(servicesWithStats) {
 		actionButtons = [],
 		enabledField = '',
 		appIcon = renderAppIcon(app_guid),
-		supportsDelayedStop = servicesWithStats.host.options.includes('delayed-stop') ? '1' : '0',
-		supportsDelayedRestart = servicesWithStats.host.options.includes('delayed-restart') ? '1' : '0';
+		supportsDelayedStop = host.options.includes('delayed-stop') ? '1' : '0',
+		supportsDelayedRestart = host.options.includes('delayed-restart') ? '1' : '0';
 
 	actionButtons.push(`
 <button title="Game Details" data-href="/service/details/${app_guid}/${host.host}/${service.service}" class="link-control action-view">
@@ -392,13 +392,12 @@ window.addEventListener('DOMContentLoaded', () => {
 			noHostsAvailable();
 			return;
 		}
+
 		fetchApplications().then(applications => {
 			// Load all services and periodically update the list
 			loadAllServicesAndStats();
 			populateCreateServiceModal(applications);
 			setInterval(loadAllServicesAndStats, 60*1000); // Refresh services every 60 seconds
-
-
 		}).catch(error => {
 			document.getElementById('servicesContainer').innerHTML = `<div style="grid-column:1/-1;"><p class="error-message">${error}</p></div>`;
 			console.error('Error fetching applications:', error);

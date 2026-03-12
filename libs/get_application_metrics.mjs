@@ -8,15 +8,14 @@ import cache from "./cache.mjs";
  *
  * Optionally include the service name to only retrieve metrics for that service
  *
- * @param appData {AppData}
- * @param hostData {HostAppData}
+ * @param hostData {AppInstallData}
  * @param service {string|null}
- * @returns {Promise<{services:Object.<{string}, ServiceData>, app:AppData, host:HostAppData, response_time:number}>}
+ * @returns {Promise<{services:Object.<{string}, ServiceData>, response_time:number}>}
  */
-export async function getApplicationMetrics(appData, hostData, service = null) {
+export async function getApplicationMetrics(hostData, service = null) {
 	return new Promise((resolve, reject) => {
 
-		const guid = appData.guid,
+		const guid = hostData.guid,
 			requestStartTime = Date.now();
 		let cmd;
 
@@ -94,8 +93,6 @@ export async function getApplicationMetrics(appData, hostData, service = null) {
 				}
 
 				return resolve({
-					app: appData,
-					host: hostData,
 					services: appServices,
 					response_time: responseTime
 				});

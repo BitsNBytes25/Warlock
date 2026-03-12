@@ -2,7 +2,6 @@ Scratch pad for quick notes on things to do. Not necessarily in order of priorit
 
 Services:
 
-* Switch Backups -> Delete to standardized Modal
 * Design better port detection in Manager (RCON and game ports may conflict)
 * Switch Settings -> Update to standardized Modal
 * Switch Settings -> Configure Updates to standardized Modal
@@ -19,3 +18,11 @@ Hosts:
 Manager:
 
 * Disable systemd fail trigger on start timeout - some games take a REALLY long time to start, (ARK...)
+
+Backend:
+
+Caching will be a problem; implement a solution for keeping track
+of which cached commands are on which hosts / services.
+
+This way installing or updating a given host can invalidate
+the appropriate caches just for that host/service.

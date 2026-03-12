@@ -5,8 +5,8 @@ import cache from "./cache.mjs";
  * Get the services for a single application on a given host
  *
  * @param appData {AppData}
- * @param hostData {HostAppData}
- * @returns {Promise<{services:Object.<{string}, ServiceData>, app:AppData, host:HostAppData}>}
+ * @param hostData {AppInstallData}
+ * @returns {Promise<{services:Object.<{string}, ServiceData>, app:AppData, host:AppInstallData}>}
  */
 export async function getApplicationServices(appData, hostData) {
 	return new Promise((resolve, reject) => {

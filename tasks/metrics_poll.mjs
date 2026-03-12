@@ -9,8 +9,8 @@ export function MetricsPollTask() {
 
 			for (let guid in results) {
 				let app = results[guid];
-				for (let hostData of app.hosts) {
-					allLookups.push(getApplicationMetrics(app, hostData));
+				for (let hostData of app.installs) {
+					allLookups.push(getApplicationMetrics(hostData));
 				}
 			}
 

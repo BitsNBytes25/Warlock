@@ -1,9 +1,16 @@
+import {getAllApplications} from "./get_all_applications.mjs";
+
 /**
  * Get the URL to the installer for a given app
  *
- * @param {AppData} app
+ * @param {AppData|string} app
  */
 export async function getAppInstaller(app) {
+	if (app instanceof String) {
+		// If app is just a string, assume it's a GUID which needs resolved.
+		app = (await getAllApplications())[app] || null;
+	}
+
 	if (!app) return null;
 
 	// If installer is already a full URL, return it directly

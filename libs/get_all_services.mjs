@@ -5,40 +5,32 @@ import {getApplicationServices} from "./get_application_services.mjs";
 /**
  * Get all services from all applications across all hosts
  *
- * @returns {Promise<[{service:ServiceData, app:AppData, host:HostAppData}]>}
+ * @returns {Promise<[{service:ServiceData, app:AppData, host:AppInstallData}]>}
  */
 export async function getAllServices() {
-	return new Promise((resolve, reject) => {
-		getAllApplications()
-			.then(results => {
-				let allLookups = [],
-					services = [];
+	return getAllApplications()
+		.then(async results => {
+			let allLookups = [],
+				services = [];
 
-				for (let guid in results) {
-					let app = results[guid];
-					for (let hostData of app.hosts) {
-						allLookups.push(getApplicationServices(app, hostData));
-					}
-				}
-
-				Promise.allSettled(allLookups)
-					.then(serviceResults => {
-						serviceResults.forEach(result => {
-							logger.debug(result);
-							if (result.status === 'fulfilled') {
-								let appServices = result.value.services;
-								for (let svc of Object.values(appServices)) {
-									// Merge extra fields into service data
-									services.push({service: svc, app: result.value.app.guid, host: result.value.host} );
-								}
+			for (let guid in results) {
+				let app = results[guid];
+				for (let hostData of app.installs) {
+					allLookups.push(
+						hostData.getServices().then(hostServices => {
+							for (let s of Object.keys(hostServices)) {
+								services.push({service: hostServices[s], host: hostData});
 							}
-						});
+						})
+					);
+				}
+			}
 
-						resolve(services);
-					});
-			})
-			.catch(e => {
-				resolve([]);
-			})
-	});
+			await Promise.allSettled(allLookups);
+			return services;
+		})
+		.catch(e => {
+			logger.warn('getAllServices error:', e);
+			return [];
+		});
 }

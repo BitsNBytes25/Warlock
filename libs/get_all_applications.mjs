@@ -6,7 +6,8 @@ import {cmdRunner} from "./cmd_runner.mjs";
 import {Host} from "../db.js";
 import {logger} from "./logger.mjs";
 import cache from "./cache.mjs";
-import {HostAppData} from "./host_app_data.mjs";
+import {AppInstallData} from "./app_install_data.mjs";
+import {HostData} from "./host_data.mjs";
 
 /**
  * Get all applications from /var/lib/warlock/*.app registration files
@@ -15,8 +16,10 @@ import {HostAppData} from "./host_app_data.mjs";
  */
 export async function getAllApplications() {
 	return new Promise((resolve, reject) => {
-		let applications = {};
-		let cachedApplications = cache.get('all_applications');
+		let applications = {},
+			cachedApplications = cache.get('all_applications'),
+			appCount = 0,
+			installCount = 0;
 
 		if (cachedApplications) {
 			logger.debug('getAllApplications: Fetched cached application list');
@@ -33,65 +36,48 @@ export async function getAllApplications() {
 			if (data) {
 				data.forEach(item => {
 					applications[ item.guid ] = item;
-					applications[ item.guid ].hosts = [];
+					applications[ item.guid ].installs = [];
 				});
 				cache.set('all_applications', applications, 3600);
 			}
 		}
 
+		appCount = Object.keys(applications).length;
 		logger.debug('getAllApplications: Loading application definitions from hosts');
-		Host.findAll().then(hosts => {
-			const hostList = hosts.map(host => host.ip),
-				cmd = 'for file in /var/lib/warlock/*.app; do if [ -f "$file" ]; then echo "$(basename "$file" ".app"):$(cat "$file")"; fi; done';
-
-			if (hostList.length === 0) {
+		Host.findAll().then(async hosts => {
+			if (hosts.length === 0) {
 				logger.debug('getAllApplications: No hosts found in database.');
 				return reject(new Error('No hosts found in database.'));
 			}
 
-			let promises = [],
-				lookupPromises = [];
+			let promises = [];
 
-			hostList.forEach(host => {
-				promises.push(cmdRunner(host, cmd, {host}, 86400));
+			hosts.forEach(host => {
+				const hostData = new HostData(host.ip);
+
+				promises.push(
+					hostData.getInstalls().then(installs => {
+						installs.forEach(install => {
+							if (!applications[install.guid]) {
+								applications[install.guid] = {
+									guid: install.guid,
+									title: install.guid,
+									description: 'No description available',
+									installs: []
+								};
+							}
+							applications[install.guid]['installs'].push(install);
+							installCount++;
+						});
+					})
+				);
 			});
 
-			Promise.allSettled(promises)
-				.then(results => {
-					results.forEach(result => {
-						if (result.status === 'fulfilled') {
-							const target = result.value.extraFields.host,
-								stdout = result.value.stdout;
+			// Wait for all lookups to complete before proceeding
+			await Promise.allSettled(promises);
 
-							for (let line of stdout.split('\n')) {
-								if (line.trim()) {
-									let [guid, path] = line.split(':').map(s => s.trim());
-
-									// Add some data from the local apps definition if it's available
-									if (!applications[guid]) {
-										applications[guid] = {
-											guid: guid,
-											title: guid,
-											description: 'No description available',
-											hosts: []
-										};
-									}
-
-									const hostAppData = new HostAppData(target, path.trim());
-									applications[guid]['hosts'].push(hostAppData);
-
-									lookupPromises.push(hostAppData.init());
-								}
-							}
-						}
-					});
-
-					Promise.allSettled(lookupPromises)
-						.then(() => {
-							logger.debug('getAllApplications: Application Definitions Loaded', applications);
-							return resolve(applications);
-						});
-				});
+			logger.debug(`getAllApplications: Application Definitions Loaded with ${appCount} apps and ${installCount} installs.`);
+			return resolve(applications);
 		});
 	});
 }

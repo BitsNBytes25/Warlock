@@ -1,8 +1,9 @@
 import {test} from 'node:test';
 import assert from 'node:assert';
+import {AppInstallData} from "../libs/app_install_data.mjs";
 
 
-test('HostAppData v1 API', async (t) => {
+test('AppInstallData v1 API', async (t) => {
 	// Mock the module before importing the function under test
 	await t.mock.module('../libs/cmd_runner.mjs', {
 		namedExports: {
@@ -20,9 +21,9 @@ options:
 	});
 
 	// Import AFTER mocking so it picks up the mock
-	const { HostAppData } = await import('../libs/host_app_data.mjs');
+	const { AppInstallData } = await import('../libs/app_install_data.mjs');
 
-	const host = new HostAppData('testhost', '/path/to/app');
+	const host = new AppInstallData('testhost', '/path/to/app');
 	await host.init();
 	assert.strictEqual(host.options.includes('pre-stop'), true, 'Expected options to include "pre-stop"');
 	assert.strictEqual(host.options.includes('post-start'), true, 'Expected options to include "post-start"');
@@ -30,7 +31,7 @@ options:
 	assert.strictEqual(host.getCommandString('pre-stop'), '/path/to/app/manage.py --pre-stop');
 });
 
-test('HostAppData v2 API', async (t) => {
+test('AppInstallData v2 API', async (t) => {
 	// Mock the module before importing the function under test
 	await t.mock.module('../libs/cmd_runner.mjs', {
 		namedExports: {
@@ -61,9 +62,9 @@ Usage: manage.py [OPTIONS] COMMAND [ARGS]...
 	});
 
 	// Import AFTER mocking so it picks up the mock
-	const { HostAppData } = await import('../libs/host_app_data.mjs');
+	const { AppInstallData } = await import('../libs/app_install_data.mjs');
 
-	const host = new HostAppData('testhost', '/path/to/app');
+	const host = new AppInstallData('testhost', '/path/to/app');
 	await host.init();
 	console.log(host.options);
 	assert.strictEqual(host.options.includes('start'), true, 'Expected options to include start');

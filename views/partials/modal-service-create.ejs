@@ -50,27 +50,27 @@
 	/**
 	 * Populate the game select dropdown in the create service modal with the list of installed applications.
 	 *
-	 * @param applications
+	 * @param {AppData[]} applications
 	 */
 	function populateCreateServiceModal(applications) {
 		const select = createServiceModal.querySelector('#create-service-game-select');
 		let optionsAdded = false;
 
-		for(let k in applications) {
-			applications[k].hosts.forEach(hostData => {
+		applications.forEach(appData => {
+			appData.installs.forEach(hostData => {
 				if (hostData.options.includes('create-service')) {
 					optionsAdded = true;
 					let option = document.createElement('option'),
-						val = k + ':' + hostData.host,
-						lbl = applications[k].title + ' on ' + renderHostName(hostData.host, false);
+						val = appData.guid + ':' + hostData.host,
+						lbl = appData.title + ' on ' + renderHostName(hostData.host, false);
 					option.value = val;
-					option.dataset.app = k;
+					option.dataset.app = appData.guid;
 					option.dataset.host = hostData.host;
 					option.textContent = lbl;
 					select.appendChild(option);
 				}
 			});
-		}
+		});
 
 		if (optionsAdded) {
 			document.querySelectorAll('.create-instance').forEach(btn => {

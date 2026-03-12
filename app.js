@@ -9,7 +9,7 @@
  * @property {string} installer Installer URL fragment of the application.
  * @property {string} source Source handler for the application installer.
  * @property {string} thumbnail Thumbnail URL of the application.
- * @property {HostAppData[]} hosts List of hosts where the application is installed.
+ * @property {AppInstallData[]} installs List of hosts where the application is installed.
  * @property {string} image Full size image URL of the application.
  * @property {string} header Header image URL of the application.
  */
@@ -152,6 +152,7 @@ app.use('/api/metrics', require('./routes/api/metrics'));
 
 const PORT = process.env.PORT || 3077;
 const HOST = process.env.IP || '127.0.0.1';
+const SKIP_AUTOMATIONS = process.env.SKIP_AUTOMATIONS === '1';
 
 // Start the server
 app.listen(PORT, HOST, () => {
@@ -170,39 +171,39 @@ app.listen(PORT, HOST, () => {
 		logger.info(`Listening on ${HOST} port ${PORT}`);
 	}
 
-	// Sequelize doesn't handle cleaning up _backup tables all the time, so manually check if there are any.
-	sequelize.showAllSchemas().then(res => {
-		let dropPromises = [];
-		res.forEach(schema => {
-			if (schema.name && schema.name.endsWith('_backup')) {
-				const tableName = schema.name;
-				logger.info(`Dropping leftover backup table: ${tableName}`);
-				dropPromises.push(sequelize.getQueryInterface().dropTable(tableName));
-			}
-		});
+	if (!SKIP_AUTOMATIONS) {
+		// Sequelize doesn't handle cleaning up _backup tables all the time, so manually check if there are any.
+		sequelize.showAllSchemas().then(res => {
+			let dropPromises = [];
+			res.forEach(schema => {
+				if (schema.name && schema.name.endsWith('_backup')) {
+					const tableName = schema.name;
+					logger.info(`Dropping leftover backup table: ${tableName}`);
+					dropPromises.push(sequelize.getQueryInterface().dropTable(tableName));
+				}
+			});
 
-		Promise.allSettled(dropPromises).then(() => {
-			// Ensure the sqlite database is up to date with the schema.
-			sequelize.sync({ alter: true }).then(() => {
-				logger.info('Initialized database connection and synchronized schema.');
+			Promise.allSettled(dropPromises).then(() => {
+				// Ensure the sqlite database is up to date with the schema.
+				sequelize.sync({ alter: true }).then(() => {
+					logger.info('Initialized database connection and synchronized schema.');
 
-				// Send a tracking snippet to our analytics server so we can monitor basic usage.
-				push_analytics('Start');
+					// Send a tracking snippet to our analytics server so we can monitor basic usage.
+					push_analytics('Start');
 
-				MetricsPollTask();
-				setInterval(MetricsPollTask, 60000); // Run every 60 seconds
+					MetricsPollTask();
+					setInterval(MetricsPollTask, 60000); // Run every 60 seconds
 
-				HostMetricsPollTask();
-				setInterval(HostMetricsPollTask, 60000); // Run every 60 seconds
+					HostMetricsPollTask();
+					setInterval(HostMetricsPollTask, 60000); // Run every 60 seconds
 
-				MetricsMergeTask();
-				setInterval(MetricsMergeTask, 3600000); // Run every hour
+					MetricsMergeTask();
+					setInterval(MetricsMergeTask, 3600000); // Run every hour
 
-				HostMetricsMergeTask();
-				setInterval(HostMetricsMergeTask, 3600000); // Run every hour
+					HostMetricsMergeTask();
+					setInterval(HostMetricsMergeTask, 3600000); // Run every hour
+				});
 			});
 		});
-	});
-
-
+	}
 });

@@ -6,27 +6,41 @@ const {cmdRunner} = require("../../libs/cmd_runner.mjs");
 const router = express.Router();
 
 /**
- * Get all available applications and which hosts each is installed on
+ * Get installed applications and which hosts each is installed on
+ *
+ * API endpoint: GET /api/applications
+ * Optional endpoint: GET /api/applications?all=1 (Returns all applications, even if no hosts are installed)
+ *
+ * Returns JSON data with success (True/False) and applications {Object<string, AppData>}
  */
 router.get('/', validate_session, (req, res) => {
+	const { all = '0' } = req.query;
+
 	getAllApplications()
 		.then(applications => {
+			if (all !== '1') {
+				applications = Object.values(applications).filter(app => app.installs.length > 0);
+			}
+
 			return res.json({
 				success: true,
-				applications: applications
+				applications: applications,
 			});
 		})
 		.catch(e => {
 			return res.json({
 				success: false,
-				error: e.message,
-				applications: []
+				error: e.message
 			});
 		});
 });
 
 /**
  * Get all application/hosts that have updates available
+ *
+ * API endpoint: GET /api/applications/updates
+ *
+ * Returns JSON data with success (True/False) and updates {Array<guid: string, host: string>}
  */
 router.get('/updates', validate_session, (req, res) => {
 	getAllApplications()
@@ -34,7 +48,7 @@ router.get('/updates', validate_session, (req, res) => {
 			let promises = [];
 
 			Object.values(applications).forEach(application => {
-				application.hosts.forEach(hostData => {
+				application.installs.forEach(hostData => {
 					promises.push(cmdRunner(hostData.host, hostData.getCommandString('check-update'), {application, hostData}));
 				});
 			});

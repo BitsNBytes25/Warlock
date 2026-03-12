@@ -1,129 +1,131 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Warlock - Server Management</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="<%= assetUrl('/assets/frontend.css') %>">
-    <link rel="stylesheet" href="<%= assetUrl('/assets/themes.css') %>">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
-    <script src="<%= assetUrl('/assets/common.js') %>"></script>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Warlock - Server Management</title>
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+	<link rel="stylesheet" href="<%= assetUrl('/assets/frontend.css') %>">
+	<link rel="stylesheet" href="<%= assetUrl('/assets/themes.css') %>">
+	<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+	<script src="<%= assetUrl('/assets/common.js') %>"></script>
+	<script>hostData = <%- JSON.stringify(hosts) %>;</script>
+	<script>applicationData = <%- JSON.stringify(apps) %>;</script>
 </head>
 <body>
-    <%- include('partials/nav.ejs') %>
+	<%- include('partials/nav.ejs') %>
 
-    <div class="main-container" style="grid-template-columns: 1fr; max-width: 1600px;">
-        <main class="content-area">
-            <div class="content-header">
-                <div class="content-header-inner">
-                    <h2>
-                        <i class="fas fa-server"></i>
-                        Fleet Services
-                    </h2>
-                    <div class="content-header-buttons">
-                        <button data-view="card-view" class="action-view view-changer" title="Card View">
-                            <i class="fas fa-th-large"></i>
-                        </button>
-                        <button data-view="table-view" class="action-view view-changer" title="List View">
-                            <i class="fas fa-list"></i>
-                        </button>
-                        <button class="link-control action-create" data-href="/application/install">
-                            <i class="fas fa-plus"></i>
-                            Install Game
-                        </button>
-                        <button class="create-instance action-create" style="display:none">
-                            <i class="fas fa-plus"></i>
-                            New Instance
-                        </button>
-                    </div>
-                    <p>View all available game server services</p>
-                </div>
-            </div>
-            
-            <div class="content-body">
-                <div id="servicesContainer" style="margin-bottom: 2rem;">
-                    <div id="services-table">
-                        <div class="header">
-                            <div class="host">Host</div>
-                            <div class="icon">Game</div>
-                            <div class="name">Server Name</div>
-                            <div class="enabled">On-Boot</div>
-                            <div class="status">Status</div>
-                            <div class="port">Port</div>
-                            <div class="players">Players</div>
-                            <div class="memory">Memory</div>
-                            <div class="cpu">CPU</div>
-                            <div class="actions">Actions</div>
-                        </div>
-                        <div class="body">
-                            <div class="service service-loading" data-updated="0">
-                                <div class="thumbnail"></div>
-                                <div class="host">Loading</div>
-                                <div class="icon"><img src="/assets/media/generic/controller.webp" alt="Loading Icon" title="Loading"></div>
-                                <div class="name">Game Name</div>
-                                <div class="enabled"></div>
-                                <div class="status status-starting"><i class="fas fa-spin fa-spinner"></i> Starting</div>
-                                <div class="port">1234</div>
-                                <div class="players">N/A</div>
-                                <div class="memory">N/A</div>
-                                <div class="cpu">N/A</div>
-                                <div class="actions"></div>
-                            </div>
-                            <div class="service service-loading" data-updated="0">
-                                <div class="thumbnail"></div>
-                                <div class="host">Loading</div>
-                                <div class="icon"><img src="/assets/media/generic/controller.webp" alt="Loading Icon" title="Loading"></div>
-                                <div class="name">Game Name</div>
-                                <div class="enabled"></div>
-                                <div class="status status-starting"><i class="fas fa-spin fa-spinner"></i> Starting</div>
-                                <div class="port">1234</div>
-                                <div class="players">N/A</div>
-                                <div class="memory">N/A</div>
-                                <div class="cpu">N/A</div>
-                                <div class="actions"></div>
-                            </div>
-                            <div class="service service-loading" data-updated="0">
-                                <div class="thumbnail"></div>
-                                <div class="host">Loading</div>
-                                <div class="icon"><img src="/assets/media/generic/controller.webp" alt="Loading Icon" title="Loading"></div>
-                                <div class="name">Game Name</div>
-                                <div class="enabled"></div>
-                                <div class="status status-starting"><i class="fas fa-spin fa-spinner"></i> Starting</div>
-                                <div class="port">1234</div>
-                                <div class="players">N/A</div>
-                                <div class="memory">N/A</div>
-                                <div class="cpu">N/A</div>
-                                <div class="actions"></div>
-                            </div>
-                            <div class="service service-loading" data-updated="0">
-                                <div class="thumbnail"></div>
-                                <div class="host">Loading</div>
-                                <div class="icon"><img src="/assets/media/generic/controller.webp" alt="Loading Icon" title="Loading"></div>
-                                <div class="name">Game Name</div>
-                                <div class="enabled"></div>
-                                <div class="status status-starting"><i class="fas fa-spin fa-spinner"></i> Starting</div>
-                                <div class="port">1234</div>
-                                <div class="players">N/A</div>
-                                <div class="memory">N/A</div>
-                                <div class="cpu">N/A</div>
-                                <div class="actions"></div>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- Services table will be inserted here -->
-                </div>
-            </div>
-        </main>
-    </div>
+	<div class="main-container" style="grid-template-columns: 1fr; max-width: 1600px;">
+		<main class="content-area">
+			<div class="content-header">
+				<div class="content-header-inner">
+					<h2>
+						<i class="fas fa-server"></i>
+						Fleet Services
+					</h2>
+					<div class="content-header-buttons">
+						<button data-view="card-view" class="action-view view-changer" title="Card View">
+							<i class="fas fa-th-large"></i>
+						</button>
+						<button data-view="table-view" class="action-view view-changer" title="List View">
+							<i class="fas fa-list"></i>
+						</button>
+						<button class="link-control action-create" data-href="/application/install">
+							<i class="fas fa-plus"></i>
+							Install Game
+						</button>
+						<button class="create-instance action-create" style="display:none">
+							<i class="fas fa-plus"></i>
+							New Instance
+						</button>
+					</div>
+					<p>View all available game server services</p>
+				</div>
+			</div>
+			
+			<div class="content-body">
+				<div id="servicesContainer" style="margin-bottom: 2rem;">
+					<div id="services-table">
+						<div class="header">
+							<div class="host">Host</div>
+							<div class="icon">Game</div>
+							<div class="name">Server Name</div>
+							<div class="enabled">On-Boot</div>
+							<div class="status">Status</div>
+							<div class="port">Port</div>
+							<div class="players">Players</div>
+							<div class="memory">Memory</div>
+							<div class="cpu">CPU</div>
+							<div class="actions">Actions</div>
+						</div>
+						<div class="body">
+							<div class="service service-loading" data-updated="0">
+								<div class="thumbnail"></div>
+								<div class="host">Loading</div>
+								<div class="icon"><img src="/assets/media/generic/controller.webp" alt="Loading Icon" title="Loading"></div>
+								<div class="name">Game Name</div>
+								<div class="enabled"></div>
+								<div class="status status-starting"><i class="fas fa-spin fa-spinner"></i> Starting</div>
+								<div class="port">1234</div>
+								<div class="players">N/A</div>
+								<div class="memory">N/A</div>
+								<div class="cpu">N/A</div>
+								<div class="actions"></div>
+							</div>
+							<div class="service service-loading" data-updated="0">
+								<div class="thumbnail"></div>
+								<div class="host">Loading</div>
+								<div class="icon"><img src="/assets/media/generic/controller.webp" alt="Loading Icon" title="Loading"></div>
+								<div class="name">Game Name</div>
+								<div class="enabled"></div>
+								<div class="status status-starting"><i class="fas fa-spin fa-spinner"></i> Starting</div>
+								<div class="port">1234</div>
+								<div class="players">N/A</div>
+								<div class="memory">N/A</div>
+								<div class="cpu">N/A</div>
+								<div class="actions"></div>
+							</div>
+							<div class="service service-loading" data-updated="0">
+								<div class="thumbnail"></div>
+								<div class="host">Loading</div>
+								<div class="icon"><img src="/assets/media/generic/controller.webp" alt="Loading Icon" title="Loading"></div>
+								<div class="name">Game Name</div>
+								<div class="enabled"></div>
+								<div class="status status-starting"><i class="fas fa-spin fa-spinner"></i> Starting</div>
+								<div class="port">1234</div>
+								<div class="players">N/A</div>
+								<div class="memory">N/A</div>
+								<div class="cpu">N/A</div>
+								<div class="actions"></div>
+							</div>
+							<div class="service service-loading" data-updated="0">
+								<div class="thumbnail"></div>
+								<div class="host">Loading</div>
+								<div class="icon"><img src="/assets/media/generic/controller.webp" alt="Loading Icon" title="Loading"></div>
+								<div class="name">Game Name</div>
+								<div class="enabled"></div>
+								<div class="status status-starting"><i class="fas fa-spin fa-spinner"></i> Starting</div>
+								<div class="port">1234</div>
+								<div class="players">N/A</div>
+								<div class="memory">N/A</div>
+								<div class="cpu">N/A</div>
+								<div class="actions"></div>
+							</div>
+						</div>
+					</div>
+					<!-- Services table will be inserted here -->
+				</div>
+			</div>
+		</main>
+	</div>
 
 
 
-    <%- include('partials/modal-service-stop.ejs') %>
+	<%- include('partials/modal-service-stop.ejs') %>
 	<%- include('partials/theme-selector.ejs') %>
 	<%- include('partials/modal-service-create.ejs') %>
-    <script src="<%= assetUrl('/assets/dashboard.js') %>"></script>
+	<script src="<%= assetUrl('/assets/dashboard.js') %>"></script>
 </body>
 </html>

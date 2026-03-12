@@ -18,9 +18,10 @@
  * Represents the details of a host specifically regarding an installed application.
  *
  * @typedef {Object} HostAppData
- * @property {string} host Hostname or IP of host.
- * @property {string} path Path where the application is installed on the host.
- * @property {Array<string>} options List of available options supported by the application installation on this host.
+ * @property {string}   host    Hostname or IP of host.
+ * @property {string}   path    Path where the application is installed on the host.
+ * @property {[string]} options List of available options supported by the application installation on this host.
+ * @property {number}   version Version of the API for the game manager
  *
  */
 
@@ -42,11 +43,17 @@
  * Represents the details of a service.
  *
  * @typedef {Object} ServiceData
- * @property {string} name Name of the service, usually operator set for the instance/map name.
- * @property {string} service Service identifier registered in systemd.
- * @property {bool} enabled Whether the service is enabled to start on boot.
- * @property {string} ip IP address the service is bound to.
- * @property {number} port Port number the service is using.
+ * @property {string} name          Name of the service, usually operator set for the instance/map name.
+ * @property {string} service       Service identifier registered in systemd.
+ * @property {bool}   enabled       Whether the service is enabled to start on boot.
+ * @property {string} ip            WAN IP address detected for the service
+ * @property {number} port          Port number the service is using.
+ * @property {string} app_dir       Full directory path this game files are installed into
+ * @property {string} bak_dir       Full directory path that contains backup files
+ * @property {string} cpu_usage     Current CPU usage of the service as a percentage or 'N/A'.
+ * @property {number} max_players   Maximum number of players allowed on the service.
+ * @property {string} memory_usage  Current memory usage of the service in MB/GB or 'N/A'.
+ * @property {string} response_time Time in ms the service took to respond via the API
  */
 
 /**
@@ -104,7 +111,7 @@
 
 /**
  * Cache of application data received from the backend.
- * @type {Object<string, AppData>}
+ * @type {AppData[]|null}
  */
 let applicationData = null;
 
@@ -113,6 +120,14 @@ let applicationData = null;
  * @type {Object<string, HostData>}
  */
 let hostData = null;
+
+/**
+ * Cache of service data received from the backend.
+ *
+ * Each
+ * @type {[{app:string, host:HostAppData, service:ServiceData}]}
+ */
+let serviceData = null;
 
 /**
  * Application GUID of the currently loaded application.
@@ -205,60 +220,58 @@ async function fetchService(app_guid, host, service) {
  *
  * @returns {Promise<Object.<string, AppData>>} A promise that resolves to an object mapping GUIDs to AppData objects.
  */
-async function fetchApplications() {
-	// Try to use localStorage for faster results, defaulting back to the manual fetch
-	return new Promise((resolve, reject) => {
-		if (applicationData) {
-			return resolve(applicationData);
-		}
+async function fetchApplications(skipCache) {
+	skipCache = skipCache || false;
 
-		fetch('/api/applications', {
-			method: 'GET',
-			headers: {
-				'Content-Type': 'application/json'
-			}
+	// Try to use local memory for faster results, defaulting back to the manual fetch
+	if (applicationData !== null && !skipCache) {
+		return applicationData;
+	}
+
+	return fetch('/api/applications', {
+		method: 'GET',
+		headers: {
+			'Content-Type': 'application/json'
+		}
+	})
+		.then(response => {
+			return response.json()
 		})
-			.then(response => {
-				return response.json()
-			})
-			.then(result => {
-				if (result.success && result.applications) {
-					applicationData = result.applications;
-					resolve(result.applications);
-				} else {
-					reject(result.error);
-				}
-			})
-			.catch(error => {
-				console.error('Error fetching applications:', error);
-				reject(error);
-			});
-	});
+		.then(result => {
+			if (result.success && result.applications) {
+				applicationData = result.applications;
+				return result.applications;
+			}
+			else {
+				throw new Error(result.error);
+			}
+		});
 }
 
-async function fetchHosts() {
-	return new Promise((resolve, reject) => {
-		fetch('/api/hosts', {
-			method: 'GET',
-			headers: {
-				'Content-Type': 'application/json'
+async function fetchHosts(skipCache) {
+	skipCache = skipCache || false;
+
+	// Try to use local memory for faster results, defaulting back to the manual fetch
+	if (hostData !== null && !skipCache) {
+		return hostData;
+	}
+
+	return fetch('/api/hosts', {
+		method: 'GET',
+		headers: {
+			'Content-Type': 'application/json'
+		}
+	})
+		.then(response => response.json())
+		.then(response => {
+			if (response.success) {
+				hostData = response.hosts;
+				return response.hosts;
 			}
-		})
-			.then(response => response.json())
-			.then(response => {
-				if (response.success) {
-					hostData = response.hosts;
-					return resolve(response.hosts);
-				}
-				else {
-					reject(response.error);
-				}
-			})
-			.catch(error => {
-				console.error('Error fetching hosts:', error);
-				reject(error);
-			});
-	});
+			else {
+				throw new Error(response.error);
+			}
+		});
 }
 
 /**
@@ -268,7 +281,7 @@ async function fetchHosts() {
  * @returns {string|null}
  */
 function getRepoURL(guid) {
-	let appData = applicationData && applicationData[guid] || null;
+	let appData = getApplicationData(guid);
 
 	if (!appData) {
 		return null;
@@ -365,13 +378,31 @@ async function getRepoBranches(source, repo) {
 }
 
 /**
+ * Get the application data for a given GUID.
+ *
+ * Expects fetchApplications() to have been called beforehand!
+ *
+ * @param {string} guid
+ * @returns {AppData|null}
+ */
+function getApplicationData(guid) {
+	if (applicationData === null) {
+		// Apps not loaded.
+		return null;
+	}
+
+	let results = applicationData.filter(a => a.guid === guid) || null;
+	return results && results.length > 0 ? results[0] : null;
+}
+
+/**
  * Get the rendered HTML for an application icon.
  *
  * @param {string} guid
  * @returns {string}
  */
 function renderAppIcon(guid) {
-	let appData = applicationData && applicationData[guid] || null,
+	let appData = getApplicationData(guid),
 		url;
 
 	if (appData && appData.icon) {
@@ -400,7 +431,7 @@ function renderAppIcon(guid) {
  * @returns {string|null}
  */
 function getAppThumbnail(guid) {
-	let appData = applicationData && applicationData[guid] || null,
+	let appData = getApplicationData(guid),
 		url;
 
 	if (appData && appData.thumbnail) {
@@ -428,7 +459,7 @@ function getAppThumbnail(guid) {
  * @returns {string|null}
  */
 function getAppImage(guid) {
-	let appData = applicationData && applicationData[guid] || null,
+	let appData = getApplicationData(guid),
 		url;
 
 	if (appData && appData.image) {
@@ -456,7 +487,7 @@ function getAppImage(guid) {
  * @param {string} host
  */
 function getAppAPIVersion(guid, host) {
-	let appData = applicationData && applicationData[guid] || null,
+	let appData = getApplicationData(guid),
 		hostData;
 
 	if (!appData) {
@@ -1426,7 +1457,7 @@ function formatCronSchedule(schedule) {
  * @returns {*|boolean}
  */
 function checkHostAppHasOption(guid, host, option) {
-	const appData = applicationData && applicationData[guid] || null;
+	const appData = getApplicationData(guid);
 
 	if (!appData) {
 		// App data not loaded yet or not found

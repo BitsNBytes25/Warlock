@@ -3,95 +3,57 @@ const {validate_session} = require("../../libs/validate_session.mjs");
 const {cmdStreamer} = require("../../libs/cmd_streamer.mjs");
 const {validateHostApplication} = require("../../libs/validate_host_application.mjs");
 const {logger} = require('../../libs/logger.mjs');
+const {validateHostService} = require("../../libs/validate_host_service.mjs");
 
 const router = express.Router();
 
 /**
- * POST /api/application/backup/:guid/:host
- * Trigger a backup on the remote host. No filename required; manage.py will pick one.
- */
-router.post('/:guid/:host', validate_session, (req, res) => {
-	const guid = req.params.guid,
-		host = req.params.host;
-
-	if (!guid || !host) {
-		return res.status(400).json({ success: false, error: 'Missing guid or host' });
-	}
-
-	validateHostApplication(host, guid).then(data => {
-		try {
-			// data.host.path holds the installation directory for the app on the host
-			const cmd = `set -euo pipefail; ${data.host.getCommandString('backup')}`;
-			logger.info(`Initiating backup for ${guid} on host ${host}`);
-
-			cmdStreamer(host, cmd, res, true).catch(err => {
-				logger.error('cmdStreamer error (backup):', err);
-				// cmdStreamer will generally have written to the response, but ensure closed
-				try { res.end(); } catch(e){}
-			});
-
-		} catch (err) {
-			return res.status(400).json({ success: false, error: err.message });
-		}
-	}).catch(e => {
-		return res.status(400).json({ success: false, error: e.message });
-	});
-});
-
-/**
- * POST /api/application/backup/:guid/:host/:service
  * Trigger a backup on the remote host. No filename required; manage.py will pick one.
  *
- * Runs on V2 of the API.
+ * POST /api/application/backup/:guid/:host
+ *
+ * @property {AppInstallData} req.appInstallData
  */
-router.post('/:guid/:host/:service', validate_session, (req, res) => {
-	const guid = req.params.guid,
-		host = req.params.host,
-		service = req.params.service;
+router.post('/:guid/:host', validate_session, validateHostApplication, (req, res) => {
+	const cmd = req.appInstallData.getCommandString('backup');
 
-	if (!guid) {
-		return res.status(400).json({ success: false, error: 'Missing guid' });
-	}
-	if (!host) {
-		return res.status(400).json({ success: false, error: 'Missing host' });
-	}
-	if (!service) {
-		return res.status(400).json({ success: false, error: 'Missing service' });
-	}
+	cmdStreamer(req.appInstallData.host, cmd, res, true).catch(err => {
+		logger.error('cmdStreamer error (backup):', err);
+		// cmdStreamer will generally have written to the response, but ensure closed
+		try { res.end(); } catch(e){}
+	});
+});
 
-	validateHostApplication(host, guid).then(data => {
-		try {
-			// data.host.path holds the installation directory for the app on the host
-			const cmd = data.host.getServiceCommandString('backup', service);
-			logger.info(`Initiating backup for ${guid} on host ${host}`);
+/**
+ * Trigger a backup on the remote host. No filename required; manage.py will pick one.
+ *
+ * POST /api/application/backup/:guid/:host/:service
+ *
+ * Runs on V2 of the API.
+ *
+ * @property {AppInstallData} req.appInstallData
+ * @property {ServiceData} req.serviceData
+ */
+router.post('/:guid/:host/:service', validate_session, validateHostService, (req, res) => {
+	const cmd = req.appInstallData.getServiceCommandString('backup', req.serviceData.service);
 
-			cmdStreamer(host, cmd, res, true).catch(err => {
-				logger.error('cmdStreamer error (backup):', err);
-				// cmdStreamer will generally have written to the response, but ensure closed
-				try { res.end(); } catch(e){}
-			});
-
-		} catch (err) {
-			return res.status(400).json({ success: false, error: err.message });
-		}
-	}).catch(e => {
-		return res.status(400).json({ success: false, error: e.message });
+	cmdStreamer(req.appInstallData.host, cmd, res, true).catch(err => {
+		logger.error('cmdStreamer error (backup):', err);
+		// cmdStreamer will generally have written to the response, but ensure closed
+		try { res.end(); } catch(e){}
 	});
 });
 
 
 /**
- * PUT /api/application/backup/:guid/:host
  * Restore a named backup on the remote host. Expects req.body.filename (basename only).
+ *
+ * PUT /api/application/backup/:guid/:host
+ *
+ * @property {AppInstallData} req.appInstallData
  */
-router.put('/:guid/:host', validate_session, (req, res) => {
-	const guid = req.params.guid,
-		host = req.params.host,
-		filename = req.body && req.body.filename ? String(req.body.filename).trim() : '';
-
-	if (!guid || !host) {
-		return res.status(400).json({ success: false, error: 'Missing guid or host' });
-	}
+router.put('/:guid/:host', validate_session, validateHostApplication, (req, res) => {
+	const filename = req.body && req.body.filename ? String(req.body.filename).trim() : '';
 
 	if (!filename) {
 		return res.status(400).json({ success: false, error: 'Missing filename' });
@@ -102,48 +64,29 @@ router.put('/:guid/:host', validate_session, (req, res) => {
 		return res.status(400).json({ success: false, error: 'Invalid filename; only a basename with [A-Za-z0-9._-] is allowed' });
 	}
 
-	validateHostApplication(host, guid).then(data => {
-		try {
-			// filename has been validated to be basename-only and not contain quotes
-			const escapedFilename = data.host.path + '/backups/' + String(filename).replace(/"/g, '\\"');
+	// filename has been validated to be basename-only and not contain quotes
+	const escapedFilename = req.appInstallData.path + '/backups/' + String(filename).replace(/"/g, '\\"');
 
-			const cmd = `set -euo pipefail; ${data.host.getCommandString('restore', escapedFilename)}`;
-			logger.info(`Restoring backup ${filename} for ${guid} on host ${host}`);
+	const cmd = req.appInstallData.getCommandString('restore', escapedFilename);
 
-			cmdStreamer(host, cmd, res, true).catch(err => {
-				logger.error('cmdStreamer error (restore):', err);
-				try { res.end(); } catch(e){}
-			});
-
-		} catch (err) {
-			return res.status(400).json({ success: false, error: err.message });
-		}
-	}).catch(e => {
-		return res.status(400).json({ success: false, error: e.message });
+	cmdStreamer(req.appInstallData.host, cmd, res, true).catch(err => {
+		logger.error('cmdStreamer error (restore):', err);
+		try { res.end(); } catch(e){}
 	});
 });
 
 /**
- * PUT /api/application/backup/:guid/:host/:service
  * Restore a named backup on the remote host. Expects req.body.filename (basename only).
  *
+ * PUT /api/application/backup/:guid/:host/:service
+ *
  * Runs on V2 of the API.
+ *
+ * @property {AppInstallData} req.appInstallData
+ * @property {ServiceData} req.serviceData
  */
-router.put('/:guid/:host/:service', validate_session, (req, res) => {
-	const guid = req.params.guid,
-		host = req.params.host,
-		service = req.params.service,
-		filename = req.body && req.body.filename ? String(req.body.filename).trim() : '';
-
-	if (!guid) {
-		return res.status(400).json({ success: false, error: 'Missing guid' });
-	}
-	if (!host) {
-		return res.status(400).json({ success: false, error: 'Missing host' });
-	}
-	if (!service) {
-		return res.status(400).json({ success: false, error: 'Missing service' });
-	}
+router.put('/:guid/:host/:service', validate_session, validateHostService, (req, res) => {
+	const filename = req.body && req.body.filename ? String(req.body.filename).trim() : '';
 
 	if (!filename) {
 		return res.status(400).json({ success: false, error: 'Missing filename' });
@@ -157,21 +100,11 @@ router.put('/:guid/:host/:service', validate_session, (req, res) => {
 		});
 	}
 
-	validateHostApplication(host, guid).then(data => {
-		try {
-			const cmd = data.host.getServiceCommandString('restore', service, filename);
-			logger.info(`Restoring backup ${filename} for ${guid} on host ${host}`);
+	const cmd = req.appInstallData.getServiceCommandString('restore', req.serviceData.service, filename);
 
-			cmdStreamer(host, cmd, res, true).catch(err => {
-				logger.error('cmdStreamer error (restore):', err);
-				try { res.end(); } catch(e){}
-			});
-
-		} catch (err) {
-			return res.status(400).json({ success: false, error: err.message });
-		}
-	}).catch(e => {
-		return res.status(400).json({ success: false, error: e.message });
+	cmdStreamer(req.appInstallData.host, cmd, res, true).catch(err => {
+		logger.error('cmdStreamer error (restore):', err);
+		try { res.end(); } catch(e){}
 	});
 });
 

@@ -104,59 +104,42 @@ router.put('/:guid/:host', validate_session, (req, res) => {
 });
 
 /**
- * DELETE /api/application
  * Streams SSH output back to the client in real-time as text/event-stream (SSE-like chunks)
- * Route: DELETE /api/application/:guid/:host
+ *
+ * API: DELETE /api/application/:guid/:host
+ *
+ * @property {AppInstallData} req.appInstallData
  */
-router.delete('/:guid/:host', validate_session, (req, res) => {
-	const guid = req.params.guid,
-		host = req.params.host;
+router.delete('/:guid/:host', validate_session, validateHostApplication, (req, res) => {
+	// Determine if the installer.sh file is present on the remote host
+	// and execute it directly with the necessary flags.
+	// If it's not present, pull the installer from the install source and run it with the uninstallation parameters.
+	// This is to better support version-specific tasks which may change over time.
+	cmdRunner(req.appInstallData.host, `[ -x "${req.appInstallData.path}/installer.sh" ] && echo -n yes || echo -n no`).then(async result => {
+		let cmd;
 
-	if (!guid || !host) {
-		return res.status(400).json({ success: false, error: 'Missing guid or host' });
-	}
-
-	// Validate that the host and application exist and are related
-	validateHostApplication(host, guid).then(async data => {
-		try {
-			// data.app should be an AppData object
-
-			// Determine if the installer.sh file is present on the remote host
-			// and execute it directly with the necessary flags.
-			// If it's not present, pull the installer from the install source and run it with the uninstallation parameters.
-			// This is to better support version-specific tasks which may change over time.
-			cmdRunner(host, `[ -x "${data.host.path}/installer.sh" ] && echo -n yes || echo -n no`).then(async result => {
-				let cmd;
-
-				if (result.stdout === 'yes') {
-					// Installer exists on remote host, run it directly
-					cmd = `"${data.host.path}/installer.sh" --non-interactive --uninstall`;
-				}
-				else {
-					// Installer does not exist on remote host, use the streaming method
-					const url = await getAppInstaller(data.app);
-
-
-					if (!url) {
-						// No installer URL available
-						return res.status(400).json({ success: false, error: 'No installer URL found for application ' + guid });
-					}
-					// Use buildRemoteExec to build the actual command to pass to the guest.
-					const cmdData = buildRemoteExec(url, ['--non-interactive', '--uninstall']);
-					cmd = cmdData.cmd;
-				}
-
-				// Stream the command output back to the client
-				cmdStreamer(host, cmd, res).then(() => {
-					// Clear the server-side application cache
-					clearCache();
-				}).catch(() => { });
-			});
-		} catch (err) {
-			return res.status(400).json({ success: false, error: err.message });
+		if (result.stdout === 'yes') {
+			// Installer exists on remote host, run it directly
+			cmd = `"${req.appInstallData.path}/installer.sh" --non-interactive --uninstall`;
 		}
-	}).catch(e => {
-		return res.status(400).json({ success: false, error: e.message });
+		else {
+			// Installer does not exist on remote host, use the streaming method
+			const url = await getAppInstaller(req.appInstallData.guid);
+
+			if (!url) {
+				// No installer URL available
+				return res.status(400).json({ success: false, error: 'No installer URL found for application ' + req.appInstallData.guid });
+			}
+			// Use buildRemoteExec to build the actual command to pass to the guest.
+			const cmdData = buildRemoteExec(url, ['--non-interactive', '--uninstall']);
+			cmd = cmdData.cmd;
+		}
+
+		// Stream the command output back to the client
+		cmdStreamer(req.appInstallData.host, cmd, res).then(() => {
+			// Clear the server-side application cache
+			clearCache();
+		}).catch(() => { });
 	});
 });
 
