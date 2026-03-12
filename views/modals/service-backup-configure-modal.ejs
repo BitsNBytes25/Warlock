@@ -65,7 +65,7 @@
 
 	function openAutoBackupModal(host, application, service, callback) {
 		const modal = document.getElementById('autoBackupModal'),
-			hostData = (applicationData[application] && applicationData[application].hosts) ? applicationData[application].hosts.filter(h => h.host === host)[0] : null;
+			hostData = getHostInstallData(application, host);
 
 		if (!hostData) {
 			showToast('error', 'Host data not found for this application.');

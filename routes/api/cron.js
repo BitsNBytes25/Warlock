@@ -4,6 +4,8 @@ const { cmdRunner } = require('../../libs/cmd_runner.mjs');
 const { Host } = require('../../db');
 const { logger } = require('../../libs/logger.mjs');
 const crypto = require('crypto');
+const {validateHost} = require("../../libs/validate_host.mjs");
+const {clearTaggedCache} = require("../../libs/cache.mjs");
 
 const router = express.Router();
 
@@ -54,56 +56,49 @@ function parseIdentifier(line) {
  * - identifier: The identifier for the job (or null if not a cron line)
  * - is_warlock: True if the line is a Warlock-specific line (e.g. #warlock:id=...)
  */
-router.get('/:host', validate_session, (req, res) => {
-	const host = req.params.host;
-
-	Host.count({ where: { ip: host } }).then(count => {
-		if (count === 0) {
-			return res.json({ success: false, error: 'Requested host is not in the configured HOSTS list' });
+router.get('/:host', validate_session, validateHost, (req, res) => {
+	const host = req.hostData.host;
+	const cmd = "crontab -l 2>/dev/null || true";
+	cmdRunner(host, cmd, true, 'cron').then(result => {
+		const out = (result.stdout || '').split(/\r?\n/);
+		const jobs = [];
+		for (let line of out) {
+			if (!line) continue;
+			const is_warlock = hasWarlockTag(line);
+			const is_comment = line.trim().startsWith('#');
+			const identifier = parseIdentifier(line);
+			let schedule = null;
+			let command = null;
+			// Extract portion before the first #warlock: tag
+			const idx = line.indexOf('#warlock:');
+			const pre = (idx >= 0) ? line.substring(0, idx).trim() : line.trim();
+			if (!is_comment) {
+				// Determine schedule and command
+				const tokens = pre.split(/\s+/);
+				if (tokens[0] && tokens[0].startsWith('@')) {
+					schedule = tokens[0];
+					command = tokens.slice(1).join(' ').trim() || null;
+				} else if (tokens.length >= 6) {
+					schedule = tokens.slice(0,5).join(' ');
+					command = tokens.slice(5).join(' ').trim() || null;
+				} else {
+					// Could be malformed; provide raw pre as command
+					command = pre || null;
+				}
+			}
+			jobs.push({ raw: line, is_comment, schedule, command, identifier, is_warlock });
 		}
 
-		const cmd = "crontab -l 2>/dev/null || true";
-		cmdRunner(host, cmd).then(result => {
-			const out = (result.stdout || '').split(/\r?\n/);
-			const jobs = [];
-			for (let line of out) {
-				if (!line) continue;
-				const is_warlock = hasWarlockTag(line);
-				const is_comment = line.trim().startsWith('#');
-				const identifier = parseIdentifier(line);
-				let schedule = null;
-				let command = null;
-				// Extract portion before the first #warlock: tag
-				const idx = line.indexOf('#warlock:');
-				const pre = (idx >= 0) ? line.substring(0, idx).trim() : line.trim();
-				if (!is_comment) {
-					// Determine schedule and command
-					const tokens = pre.split(/\s+/);
-					if (tokens[0] && tokens[0].startsWith('@')) {
-						schedule = tokens[0];
-						command = tokens.slice(1).join(' ').trim() || null;
-					} else if (tokens.length >= 6) {
-						schedule = tokens.slice(0,5).join(' ');
-						command = tokens.slice(5).join(' ').trim() || null;
-					} else {
-						// Could be malformed; provide raw pre as command
-						command = pre || null;
-					}
-				}
-				jobs.push({ raw: line, is_comment, schedule, command, identifier, is_warlock });
-			}
-
-			return res.json({ success: true, jobs: jobs });
-		}).catch(e => {
-			logger.error('Error reading crontab:', e);
-			return res.json({ success: false, error: e && e.error ? e.error.message || String(e.error) : String(e) });
-		});
+		return res.json({ success: true, jobs: jobs });
+	}).catch(e => {
+		logger.error('Error reading crontab:', e);
+		return res.json({ success: false, error: e && e.error ? e.error.message || String(e.error) : String(e) });
 	});
 });
 
 // POST /api/cron/:host - add or update a job
-router.post('/:host', validate_session, (req, res) => {
-	const host = req.params.host;
+router.post('/:host', validate_session, validateHost, (req, res) => {
+	const host = req.hostData.host;
 	const { schedule, command, identifier } = req.body || {};
 
 	if (identifier && !isValidIdentifier(identifier)) {
@@ -121,70 +116,65 @@ router.post('/:host', validate_session, (req, res) => {
 
 	const isHash = !identifier || identifier.startsWith('hash:');
 
-	Host.count({ where: { ip: host } }).then(count => {
-		if (count === 0) {
-			return res.json({ success: false, error: 'Requested host is not in the configured HOSTS list' });
-		}
+	const readCmd = "crontab -l 2>/dev/null || true";
+	cmdRunner(host, readCmd).then(result => {
+		const existing = result.stdout || '';
+		const timestamp = Date.now();
+		const dl = `EOF_${timestamp}`;
 
-		const readCmd = "crontab -l 2>/dev/null || true";
-		cmdRunner(host, readCmd).then(result => {
-			const existing = result.stdout || '';
-			const timestamp = Date.now();
-			const dl = `EOF_${timestamp}`;
+		// Iterate over current lines, replacing the line which matches the inbound identifier.
+		const lines = existing.split(/\r?\n/).filter(Boolean);
+		let matched = false;
+		for (let i = 0; i < lines.length; i++) {
+			const line = lines[i];
+			const lineIdentifier = parseIdentifier(line);
 
-			// Iterate over current lines, replacing the line which matches the inbound identifier.
-			const lines = existing.split(/\r?\n/).filter(Boolean);
-			let matched = false;
-			for (let i = 0; i < lines.length; i++) {
-				const line = lines[i];
-				const lineIdentifier = parseIdentifier(line);
-
-				if (identifier === lineIdentifier) {
-					// Match found; replace this line
-					if (isHash) {
-						// Hash-based identifiers do not get an ID tag added.
-						lines[i] = `${schedule} ${command}`;
-					}
-					else {
-						lines[i] = `${schedule} ${command} #warlock:id=${identifier}`;
-					}
-
-					matched = true;
-					break;
-				}
-			}
-
-			if (!matched) {
-				// No existing line matched
+			if (identifier === lineIdentifier) {
+				// Match found; replace this line
 				if (isHash) {
 					// Hash-based identifiers do not get an ID tag added.
-					lines.push(`${schedule} ${command}`);
+					lines[i] = `${schedule} ${command}`;
 				}
 				else {
-					lines.push(`${schedule} ${command} #warlock:id=${identifier}`);
+					lines[i] = `${schedule} ${command} #warlock:id=${identifier}`;
 				}
-			}
-			const newCron = lines.join('\n') + '\n';
 
-			// Write new crontab and activate it
-			const tmp = `/tmp/warlock_cron_${timestamp}`;
-			const writeCmd = `cat > ${tmp} <<${dl}\n${newCron}\n${dl}\ncrontab ${tmp} && rm -f ${tmp}`;
-			cmdRunner(host, writeCmd).then(() => {
-				return res.json({ success: true });
-			}).catch(e => {
-				logger.error('Error writing new crontab:', e);
-				return res.json({ success: false, error: e && e.error ? e.error.message || String(e.error) : String(e) });
-			});
+				matched = true;
+				break;
+			}
+		}
+
+		if (!matched) {
+			// No existing line matched
+			if (isHash) {
+				// Hash-based identifiers do not get an ID tag added.
+				lines.push(`${schedule} ${command}`);
+			}
+			else {
+				lines.push(`${schedule} ${command} #warlock:id=${identifier}`);
+			}
+		}
+		const newCron = lines.join('\n') + '\n';
+
+		// Write new crontab and activate it
+		const tmp = `/tmp/warlock_cron_${timestamp}`;
+		const writeCmd = `cat > ${tmp} <<${dl}\n${newCron}\n${dl}\ncrontab ${tmp} && rm -f ${tmp}`;
+		cmdRunner(host, writeCmd).then(() => {
+			clearTaggedCache(host, 'cron');
+			return res.json({ success: true });
 		}).catch(e => {
-			logger.error('Error reading existing crontab:', e);
+			logger.error('Error writing new crontab:', e);
 			return res.json({ success: false, error: e && e.error ? e.error.message || String(e.error) : String(e) });
 		});
+	}).catch(e => {
+		logger.error('Error reading existing crontab:', e);
+		return res.json({ success: false, error: e && e.error ? e.error.message || String(e.error) : String(e) });
 	});
 });
 
 // DELETE /api/cron/:host - remove a job by identifier (required)
-router.delete('/:host', validate_session, (req, res) => {
-	const host = req.params.host;
+router.delete('/:host', validate_session, validateHost, (req, res) => {
+	const host = req.hostData.host;
 	const { identifier } = req.body || {};
 
 	if (!identifier) {
@@ -194,52 +184,47 @@ router.delete('/:host', validate_session, (req, res) => {
 		return res.json({ success: false, error: 'Identifier contains invalid characters' });
 	}
 
-	Host.count({ where: { ip: host } }).then(count => {
-		if (count === 0) {
-			return res.json({ success: false, error: 'Requested host is not in the configured HOSTS list' });
+	const readCmd = "crontab -l 2>/dev/null || true";
+	cmdRunner(host, readCmd).then(result => {
+		const existing = result.stdout || '';
+		const timestamp = Date.now();
+		const dl = `EOF_${timestamp}`;
+
+		// Iterate over current lines, replacing the line which matches the inbound identifier.
+		const lines = existing.split(/\r?\n/).filter(Boolean);
+		let matched = false,
+			newLines = [];
+		for (let i = 0; i < lines.length; i++) {
+			const line = lines[i];
+			const lineIdentifier = parseIdentifier(line);
+
+			if (identifier === lineIdentifier) {
+				// Match found; skip
+				matched = true;
+			}
+			else {
+				newLines.push(lines[i]);
+			}
 		}
 
-		const readCmd = "crontab -l 2>/dev/null || true";
-		cmdRunner(host, readCmd).then(result => {
-			const existing = result.stdout || '';
-			const timestamp = Date.now();
-			const dl = `EOF_${timestamp}`;
+		if (!matched) {
+			return res.json({ success: false, error: 'No cron job found with the specified identifier' });
+		}
+		const newCron = newLines.join('\n') + '\n';
 
-			// Iterate over current lines, replacing the line which matches the inbound identifier.
-			const lines = existing.split(/\r?\n/).filter(Boolean);
-			let matched = false,
-				newLines = [];
-			for (let i = 0; i < lines.length; i++) {
-				const line = lines[i];
-				const lineIdentifier = parseIdentifier(line);
-
-				if (identifier === lineIdentifier) {
-					// Match found; skip
-					matched = true;
-				}
-				else {
-					newLines.push(lines[i]);
-				}
-			}
-
-			if (!matched) {
-				return res.json({ success: false, error: 'No cron job found with the specified identifier' });
-			}
-			const newCron = newLines.join('\n') + '\n';
-
-			// Write new crontab and activate it
-			const tmp = `/tmp/warlock_cron_${timestamp}`;
-			const writeCmd = `cat > ${tmp} <<${dl}\n${newCron}\n${dl}\ncrontab ${tmp} && rm -f ${tmp}`;
-			cmdRunner(host, writeCmd).then(() => {
-				return res.json({ success: true });
-			}).catch(e => {
-				logger.error('Error writing new crontab:', e);
-				return res.json({ success: false, error: e && e.error ? e.error.message || String(e.error) : String(e) });
-			});
+		// Write new crontab and activate it
+		const tmp = `/tmp/warlock_cron_${timestamp}`;
+		const writeCmd = `cat > ${tmp} <<${dl}\n${newCron}\n${dl}\ncrontab ${tmp} && rm -f ${tmp}`;
+		cmdRunner(host, writeCmd).then(() => {
+			clearTaggedCache(host, 'cron');
+			return res.json({ success: true });
 		}).catch(e => {
-			logger.error('Error reading existing crontab:', e);
+			logger.error('Error writing new crontab:', e);
 			return res.json({ success: false, error: e && e.error ? e.error.message || String(e.error) : String(e) });
 		});
+	}).catch(e => {
+		logger.error('Error reading existing crontab:', e);
+		return res.json({ success: false, error: e && e.error ? e.error.message || String(e.error) : String(e) });
 	});
 });
 

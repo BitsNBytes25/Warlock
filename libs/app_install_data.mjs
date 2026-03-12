@@ -24,7 +24,6 @@ export class AppInstallData {
 		this.path = path;
 		this.guid = null;
 		this.title = null;
-		this._services = null;
 		this.options = [];
 		this.version = 1;
 	}
@@ -85,6 +84,27 @@ export class AppInstallData {
 			});
 	}
 
+	_argsParse = args => {
+		return args.map(arg => {
+			if (typeof (arg) == 'boolean') {
+				return arg ? 'true' : 'false';
+			}
+			if (typeof (arg) == 'number') {
+				return arg.toString();
+			}
+			if (arg.startsWith('"') && arg.endsWith('"')) {
+				return arg; // Already quoted, assume properly escaped
+			}
+			if (arg.startsWith("'") && arg.endsWith("'")) {
+				return arg; // Already quoted, assume properly escaped
+			}
+			if (arg.includes(' ') || arg.includes('"')) {
+				return `"${arg.replace(/"/g, '\\"')}"`;
+			}
+			return arg;
+		}).join(' ');
+	}
+
 	/**
 	 * Generate the command string to execute manage.py with the given option and arguments.
 	 *
@@ -96,12 +116,7 @@ export class AppInstallData {
 		if (!this.options.includes(option)) {
 			throw new Error(`Option '${option}' is not supported by ${this.path} on ${this.host}`);
 		}
-		const argsString = args.map(arg => {
-			if (arg.includes(' ') || arg.includes('"')) {
-				return `"${arg.replace(/"/g, '\\"')}"`;
-			}
-			return arg;
-		}).join(' ');
+		const argsString = this._argsParse(args);
 
 		if (this.version === 1) {
 			return `${this.path}/manage.py --${option} ${argsString}`.trim();
@@ -126,24 +141,7 @@ export class AppInstallData {
 		if (!this.options.includes(option)) {
 			throw new Error(`Option '${option}' is not supported by ${this.path} on ${this.host}`);
 		}
-		const argsString = args.map(arg => {
-			if (typeof(arg) == 'boolean') {
-				return arg ? 'true' : 'false';
-			}
-			if (typeof(arg) == 'number') {
-				return arg.toString();
-			}
-			if (arg.startsWith('"') && arg.endsWith('"')) {
-				return arg; // Already quoted, assume properly escaped
-			}
-			if (arg.startsWith("'") && arg.endsWith("'")) {
-				return arg; // Already quoted, assume properly escaped
-			}
-			if (arg.includes(' ') || arg.includes('"')) {
-				return `"${arg.replace(/"/g, '\\"')}"`;
-			}
-			return arg;
-		}).join(' ');
+		const argsString = this._argsParse(args);
 
 		if (this.version === 1) {
 			return `${this.path}/manage.py --service "${service}" --${option} ${argsString}`.trim();
@@ -162,15 +160,17 @@ export class AppInstallData {
 	 * @returns {Promise<Object<string, ServiceData>>}
 	 */
 	async getServices() {
-		if (this._services !== null) {
-			return this._services;
-		}
-
 		return cmdRunner(this.host, this.getCommandString('get-services'), 3600, this.guid)
 			.then(result => {
 				try {
-					this._services = JSON.parse(result.stdout);
-					return this._services;
+					let services = JSON.parse(result.stdout);
+					// Standardize some data for each service, notably app_dir, bak_dir, and add multi_binary.
+					for(let service in services) {
+						services[service].app_dir = services[service].app_dir || (this.path + '/AppFiles');
+						services[service].bak_dir = services[service].bak_dir || (this.path + '/backups');
+						services[service].multi_binary = services[service].app_dir !== this.path + '/AppFiles';
+					}
+					return services;
 				}
 				catch(e) {
 					throw new Error(`Error parsing services data for application '${this.guid}' on host '${this.host}': ${e.message}`);

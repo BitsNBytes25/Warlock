@@ -21,113 +21,9 @@ const autoUpdateModal = document.getElementById('autoUpdateModal'),
 	configureAutoStartDisableBtn = document.getElementById('configureAutoStartDisableBtn');
 
 
-async function loadAutomaticUpdates() {
-	if (!loadedHost) {
-		return;
-	}
-	const identifier = `${loadedApplication}_update`;
 
-	loadCronJob(loadedHost, identifier, autoUpdateModal).then(job => {
-		if (job) {
-			automatedUpdatesDisabledMessage.style.display = 'none';
-			automatedUpdatesEnabledMessage.style.display = 'flex';
-		}
-		else {
-			automatedUpdatesDisabledMessage.style.display = 'flex';
-			automatedUpdatesEnabledMessage.style.display = 'none';
-		}
 
-		if (!checkHostAppHasOption(loadedApplication, loadedHost, 'delayed-update')) {
-			delayedUpdate.closest('.form-group').querySelector('p').textContent = 'Note: this game does not support delayed updates.';
-			delayedUpdate.disabled = true;
-			delayedUpdate.checked = false;
-		}
-	}).catch(e => {
-		console.error('Error loading cron job:', e);
-		showToast('error', 'Error loading automatic update configuration.');
-	})
-}
 
-async function loadAutomaticRestarts() {
-	if (!loadedHost) {
-		return;
-	}
-	const identifier = `${loadedApplication}_restart`;
-
-	loadCronJob(loadedHost, identifier, autoRestartModal).then(job => {
-		if (job) {
-			automatedRestartsDisabledMessage.style.display = 'none';
-			automatedRestartsEnabledMessage.style.display = 'flex';
-		}
-		else {
-			automatedRestartsDisabledMessage.style.display = 'flex';
-			automatedRestartsEnabledMessage.style.display = 'none';
-		}
-	}).catch(e => {
-		console.error('Error loading cron job:', e);
-		showToast('error', 'Error loading automatic restart configuration.');
-	})
-}
-
-async function saveAutomaticUpdates() {
-	const guid = loadedApplication;
-	const identifier = `${loadedApplication}_update`;
-	const gameDir = (applicationData[guid] && applicationData[guid].hosts && applicationData[guid].hosts.filter(h => h.host === loadedHost)[0]) ? applicationData[guid].hosts.filter(h => h.host === loadedHost)[0].path : null;
-	let command;
-
-	if (!gameDir) {
-		showToast('error', 'Cannot determine game directory for this host.');
-		return;
-	}
-
-	const schedule = parseCronSchedule(autoUpdateModal);
-
-	if (schedule === 'DISABLED') {
-		// Delete existing identifier
-		fetch(`/api/cron/${loadedHost}`, {
-			method: 'DELETE',
-			headers: {'Content-Type': 'application/json'},
-			body: JSON.stringify({identifier})
-		})
-			.then(r => r.json())
-			.then(response => {
-				if (response.success) {
-					showToast('success', 'Automatic updates disabled.');
-					closeModal(autoUpdateModal);
-					loadAutomaticUpdates();
-				} else {
-					showToast('error', `Failed to disable automatic updates: ${response.error}`);
-				}
-			})
-			.catch(() => showToast('error', 'Error disabling automatic updates'));
-		return;
-	}
-
-	if (checkHostAppHasOption(loadedApplication, loadedHost, 'delayed-update') && delayedUpdate.checked) {
-		// Build command for delayed updates
-		command = `${gameDir}/manage.py --check-update && ${gameDir}/manage.py --delayed-update`;
-	}
-	else {
-		command = `! ${gameDir}/manage.py --has-players && ${gameDir}/manage.py --check-update && ${gameDir}/manage.py --update`;
-	}
-
-	fetch(`/api/cron/${loadedHost}`, {
-		method: 'POST',
-		headers: {'Content-Type': 'application/json'},
-		body: JSON.stringify({schedule, command, identifier})
-	})
-		.then(r => r.json())
-		.then(response => {
-			if (response.success) {
-				showToast('success', 'Automatic updates scheduled.');
-				closeModal(autoUpdateModal);
-				loadAutomaticUpdates();
-			} else {
-				showToast('error', `Failed to save schedule: ${response.error}`);
-			}
-		})
-		.catch(() => showToast('error', 'Error saving schedule'));
-}
 
 async function saveAutomaticRestarts() {
 	const guid = loadedApplication;
@@ -218,14 +114,7 @@ saveAutoRestartBtn.addEventListener('click', () => {
 openUpdateBtn.addEventListener('click', () => {
 	openModal(updateModal);
 });
-autoUpdateSchedule.addEventListener('change', () => {
-	if (autoUpdateSchedule.value === 'disabled') {
-		delayedUpdate.closest('.form-group').style.display = 'none';
-	}
-	else {
-		delayedUpdate.closest('.form-group').style.display = 'flex';
-	}
-});
+
 confirmUpdateBtn.addEventListener('click', () => {
 	confirmUpdateBtn.classList.add('disabled');
 	const icon = confirmUpdateBtn.querySelector('i'),

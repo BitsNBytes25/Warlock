@@ -116,7 +116,7 @@ async function loadAutomaticBackupConfig() {
 	if (!loadedHost) {
 		return;
 	}
-	const hostData = loadedApplicationData.hosts.filter(h => h.host === loadedHost)[0],
+	const hostData = getHostInstallData(loadedApplication, loadedHost),
 		appVersion = hostData.version;
 
 	let identifier;

@@ -50,6 +50,7 @@
  * @property {number} port          Port number the service is using.
  * @property {string} app_dir       Full directory path this game files are installed into
  * @property {string} bak_dir       Full directory path that contains backup files
+ * @property {boolean} multi_binary Set to true if each game instance uses a different binary
  * @property {string} cpu_usage     Current CPU usage of the service as a percentage or 'N/A'.
  * @property {number} max_players   Maximum number of players allowed on the service.
  * @property {string} memory_usage  Current memory usage of the service in MB/GB or 'N/A'.
@@ -378,6 +379,22 @@ function getApplicationData(guid) {
 	}
 
 	return applicationData.find(app => app.guid === guid) || null;
+}
+
+/**
+ * Get the host installation data for a given application
+ *
+ * @param {string} guid
+ * @param {string} host
+ * @returns {HostAppData|null}
+ */
+function getHostInstallData(guid, host) {
+	const appData = getApplicationData(guid);
+	if (!appData) {
+		return null;
+	}
+
+	return appData.installs.find(h => h.host === host) || null;
 }
 
 /**

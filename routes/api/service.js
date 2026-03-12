@@ -134,6 +134,10 @@ router.get('/stream/:guid/:host/:service', validate_session, validateHostService
 				service: results.services[req.serviceData.service],
 			};
 
+			// Merge the data from the original service lookup; this probably contains additional data about the service
+			Object.assign(ret.service, req.serviceData);
+
+			// Tack on the response time of the metrics lookup
 			ret.service['response_time'] = results.response_time;
 
 			res.write(`data: ${JSON.stringify(ret)}\n\n`);

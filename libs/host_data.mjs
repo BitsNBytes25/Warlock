@@ -58,7 +58,7 @@ export class HostData {
 			'echo "OS_INFO:"; lsb_release -a; ' +
 			'echo "DISK_INFO:"; df --output=source,fstype,target -x tmpfs -x devtmpfs -x squashfs -x efivarfs;' +
 			'echo "NET_INFO:"; cat /proc/net/dev | grep -v "lo:" | grep ":" | sed "s#:.*##";',
-			null, 86400
+			86400
 		)
 			.then(result => {
 				const lines = result.stdout.split('\n');

@@ -79,7 +79,7 @@ export async function cmdRunner(target, cmd, cacheable = false, cacheTag = null)
 				// Store in cache if cacheable
 				if (cacheable) {
 					if (cacheable === true) {
-						cacheable = 300; // Default to 5 minutes if true
+						cacheable = 86400; // Convert to a time (in seconds) if True
 					}
 					if (typeof cacheable === 'number' && cacheable > 0) {
 						cache.set(cacheKey, {stdout, stderr}, cacheable);
