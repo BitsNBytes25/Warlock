@@ -1,23 +1,23 @@
 meta {
-  name: Service Config Update
+  name: Service Delete
   type: http
-  seq: 11
+  seq: 9
 }
 
-post {
-  url: {{host}}/api/service/configs/:guid/:host/:service
+delete {
+  url: {{host}}/api/service/:guid/:host/:service
   body: json
   auth: inherit
 }
 
 params:path {
-  guid: {{lookup_app}}
   service: {{lookup_service}}
   host: {{lookup_host}}
+  guid: {{lookup_app}}
 }
 
 body:json {
-  {"key1": "value1"}
+  {"action": "stop"}
 }
 
 settings {

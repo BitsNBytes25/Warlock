@@ -1,0 +1,19 @@
+meta {
+  name: Applications (ALL)
+  type: http
+  seq: 15
+}
+
+get {
+  url: {{host}}/api/applications?all=1
+  body: none
+  auth: inherit
+}
+
+params:query {
+  all: 1
+}
+
+settings {
+  encodeUrl: true
+}

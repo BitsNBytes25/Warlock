@@ -1,17 +1,16 @@
 meta {
-  name: Service Commands
+  name: Application Update
   type: http
-  seq: 12
+  seq: 17
 }
 
 get {
-  url: {{host}}/api/service/cmd/:guid/:host/:service
+  url: {{host}}/api/application/update/:guid/:host
   body: none
   auth: inherit
 }
 
 params:path {
-  service: {{lookup_service}}
   host: {{lookup_host}}
   guid: {{lookup_app}}
 }

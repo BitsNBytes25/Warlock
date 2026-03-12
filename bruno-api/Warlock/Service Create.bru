@@ -1,23 +1,23 @@
 meta {
-  name: Service Config Update
+  name: Service Create
   type: http
-  seq: 11
+  seq: 8
 }
 
-post {
-  url: {{host}}/api/service/configs/:guid/:host/:service
+put {
+  url: {{host}}/api/service/:guid/:host/:service
   body: json
   auth: inherit
 }
 
 params:path {
-  guid: {{lookup_app}}
   service: {{lookup_service}}
   host: {{lookup_host}}
+  guid: {{lookup_app}}
 }
 
 body:json {
-  {"key1": "value1"}
+  {"action": "stop"}
 }
 
 settings {
