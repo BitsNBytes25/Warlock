@@ -1,6 +1,6 @@
 {
   "name": "warlock-express-app",
-  "version": "1.2.0~20260225",
+  "version": "1.2.0~20260311",
   "description": "Express app serving HTML pages",
   "main": "app.js",
   "engines": {
@@ -9,6 +9,7 @@
   "scripts": {
     "start": "node app.js",
     "dev": "NODE_ENV=development nodemon app.js",
+    "dev:quick": "NODE_ENV=development SKIP_AUTOMATIONS=1 nodemon app.js",
     "dev:profile": "NODE_ENV=development WARLOCK_PROFILE=1 nodemon app.js",
     "dev:docker": "docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build",
     "start:profile": "WARLOCK_PROFILE=1 node app.js",
@@ -33,17 +34,17 @@
     "express": "^5.2.1",
     "express-session": "^1.19.0",
     "js-yaml": "^4.1.1",
-    "multer": "^2.0.2",
+    "multer": "^2.1.1",
     "node-2fa": "^2.0.3",
     "node-cache": "^5.1.2",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
     "passport-local": "^1.0.0",
-    "sequelize": "^6.37.7",
+    "sequelize": "^6.37.8",
     "sqlite3": "^5.1.7"
   },
   "overrides": {
-    "tar": "^7.0.0",
+    "tar": "^7.5.11",
     "dottie": ">=2.0.7"
   },
   "devDependencies": {
