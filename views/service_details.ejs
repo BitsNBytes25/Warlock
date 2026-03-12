@@ -135,39 +135,7 @@
 <%- include('modals/service-backup-restore-modal.ejs') %>
 <%- include('modals/app-updates-configure-modal.ejs') %>
 <%- include('modals/app-update-modal.ejs') %>
-<%- include('partials/service-settings-modals.ejs') %>
-
-<!-- Update Modal -->
-<div id="updateModal" class="modal wide">
-    <div class="modal-overlay"></div>
-    <div class="modal-content">
-        <div class="modal-header">
-            <h3><i class="fas fa-circle-up"></i> Update Game</h3>
-            <button class="modal-close">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-        <div class="modal-body">
-            <div class="warning-message">
-                <i class="fas fa-exclamation-triangle"></i>
-                <p>
-                    Warning: Updating a game usually requires stopping game instances.
-                </p>
-            </div>
-            <div class="terminal"></div>
-        </div>
-        <div class="modal-footer">
-            <button class="action-update" id="confirmUpdateBtn">
-                <i class="fas fa-circle-up"></i>
-                Confirm Update
-            </button>
-            <button class="action-cancel modal-close">
-                <i class="fas fa-times"></i>
-                Cancel
-            </button>
-        </div>
-    </div>
-</div>
+<%- include('modals/app-restart-configure-modal.ejs') %>
 
 <%- include('partials/theme-selector.ejs') %>
 <script src="<%= assetUrl('/assets/service_details.js') %>"></script>

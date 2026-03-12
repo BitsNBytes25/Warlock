@@ -9,7 +9,6 @@ const autoUpdateModal = document.getElementById('autoUpdateModal'),
     automatedRestartsEnabledMessage = document.getElementById('automatedRestartsEnabledMessage'),
     saveAutoRestartBtn = document.getElementById('saveAutoRestartBtn'),
     openUpdateBtn = document.getElementById('openUpdateBtn'),
-    btnServiceUpdate = document.getElementById('btnServiceUpdate'),
     updateModal = document.getElementById('updateModal'),
     confirmUpdateBtn = document.getElementById('confirmUpdateBtn'),
     reinstallBtn = document.getElementById('reinstallBtn'),
@@ -117,8 +116,24 @@ openUpdateBtn.addEventListener('click', () => {
     openUpdateModal(loadedHost, loadedApplication, serviceToSend);
 });
 
-btnServiceUpdate.addEventListener('click', () => {
-    // Only mutli-binary services should send the service tag, otherwise just the host/app is sufficient.
-    let serviceToSend = loadedServiceData.multi_binary ? loadedService : null;
-    openUpdateModal(loadedHost, loadedApplication, serviceToSend);
+configureAutoRestartBtn.addEventListener('click', () => {
+    openAutoRestartModal(loadedHost, loadedApplication, loadedService, () => {
+        loadAutomaticRestarts();
+    });
+})
+
+
+document.addEventListener('serviceEnabledChange', e => {
+    if (e.detail.value) {
+        automatedStartDisabledMessage.style.display = 'none';
+        automatedStartEnabledMessage.style.display = 'flex';
+        configureAutoStartEnableBtn.style.display = 'none';
+        configureAutoStartDisableBtn.style.display = 'inline-flex';
+    }
+    else {
+        automatedStartDisabledMessage.style.display = 'flex';
+        automatedStartEnabledMessage.style.display = 'none';
+        configureAutoStartEnableBtn.style.display = 'inline-flex';
+        configureAutoStartDisableBtn.style.display = 'none';
+    }
 });

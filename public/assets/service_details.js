@@ -76,9 +76,6 @@ function checkUpdates(app_guid, host) {
 			}
 		});
 }
-btnServiceUpdate.addEventListener('click', () => {
-	openModal(document.getElementById('updateModal'));
-});
 
 function activateServiceTab(tab, jumpTo = true) {
 	const tabHeader = document.querySelector('nav.tabs-header');
@@ -255,6 +252,12 @@ window.addEventListener('DOMContentLoaded', () => {
 					const tab = tabBtn.getAttribute('href').replace('#', '');
 					activateServiceTab(tab, true);
 				});
+			});
+
+			btnServiceUpdate.addEventListener('click', () => {
+				// Only mutli-binary services should send the service tag, otherwise just the host/app is sufficient.
+				let serviceToSend = loadedServiceData.multi_binary ? loadedService : null;
+				openUpdateModal(loadedHost, loadedApplication, serviceToSend);
 			});
 
 		})
