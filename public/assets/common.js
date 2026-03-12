@@ -862,12 +862,26 @@ function stream(
 		for (const line of lines) {
 			if (line.startsWith('event:')) {
 				event = line.slice(6).trim();
-			} else if (line.startsWith('data:')) {
+			}
+			else if (event === 'done' && line.startsWith('code:')) {
+				let code = parseInt(line.slice(5).trim());
+				if (code === 0) {
+					// Successful execution
+					return;
+				}
+				else {
+					// Failed execution
+					throw new Error(`Execution failed with code ${code}`);
+				}
+			}
+			else if (line.startsWith('data:')) {
 				dataLines.push(line.slice(5).trim());
-			} else if (line.startsWith('stdout:')) {
+			}
+			else if (line.startsWith('stdout:')) {
 				event = 'stdout';
 				dataLines.push(line.slice(7).trim());
-			} else if (line.startsWith('stderr:')) {
+			}
+			else if (line.startsWith('stderr:')) {
 				event = 'stderr';
 				dataLines.push(line.slice(7).trim());
 			}
@@ -954,7 +968,7 @@ function stream(
 				return resolve();
 			} else {
 				if (messageHandler) messageHandler('error', err && err.message ? err.message : String(err));
-				return resolve();
+				return reject();
 			}
 		} finally {
 			// Cleanup reader

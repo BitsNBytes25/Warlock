@@ -96,14 +96,13 @@ export async function cmdStreamer(target, cmd, res, ignoreClose = false) {
 			cleanupListeners();
 			if (clientGone) return;
 
+			res.write(`event: done\ncode: ${code}\n\n`);
+			res.end();
+
 			if (code !== 0) {
-				res.write(`event: error\ndata: Exit code of ${code} indicated an error\n\n`);
-				res.end();
 				reject();
 			}
 			else {
-				res.write(`event: done\ndata: exit ${code}${signal ? ' signal ' + signal : ''}\n\n`);
-				res.end();
 				resolve();
 			}
 		});

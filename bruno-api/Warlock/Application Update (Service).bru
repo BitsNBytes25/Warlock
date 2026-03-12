@@ -1,11 +1,11 @@
 meta {
-  name: Service Logs
+  name: Application Update (Service)
   type: http
-  seq: 23
+  seq: 18
 }
 
 get {
-  url: {{host}}/api/service/logs/:guid/:host/:service
+  url: {{host}}/api/application/update/:guid/:host/:service
   body: none
   auth: inherit
 }

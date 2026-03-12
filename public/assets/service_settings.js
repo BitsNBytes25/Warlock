@@ -9,6 +9,7 @@ const autoUpdateModal = document.getElementById('autoUpdateModal'),
     automatedRestartsEnabledMessage = document.getElementById('automatedRestartsEnabledMessage'),
     saveAutoRestartBtn = document.getElementById('saveAutoRestartBtn'),
     openUpdateBtn = document.getElementById('openUpdateBtn'),
+    btnServiceUpdate = document.getElementById('btnServiceUpdate'),
     updateModal = document.getElementById('updateModal'),
     confirmUpdateBtn = document.getElementById('confirmUpdateBtn'),
     reinstallBtn = document.getElementById('reinstallBtn'),
@@ -108,4 +109,16 @@ configureAutoUpdateBtn.addEventListener('click', () => {
     openAutoUpdateModal(loadedHost, loadedApplication, serviceToSend, () => {
         loadAutomaticUpdates();
     });
+});
+
+openUpdateBtn.addEventListener('click', () => {
+    // Only mutli-binary services should send the service tag, otherwise just the host/app is sufficient.
+    let serviceToSend = loadedServiceData.multi_binary ? loadedService : null;
+    openUpdateModal(loadedHost, loadedApplication, serviceToSend);
+});
+
+btnServiceUpdate.addEventListener('click', () => {
+    // Only mutli-binary services should send the service tag, otherwise just the host/app is sufficient.
+    let serviceToSend = loadedServiceData.multi_binary ? loadedService : null;
+    openUpdateModal(loadedHost, loadedApplication, serviceToSend);
 });

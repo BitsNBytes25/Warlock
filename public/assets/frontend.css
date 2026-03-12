@@ -560,6 +560,9 @@ table td {
 .terminal .line-stderr {
 	color: var(--terminal-error);
 }
+.terminal .line-error {
+	color: var(--terminal-error);
+}
 
 .command-input-wrapper {
 	position: relative;
