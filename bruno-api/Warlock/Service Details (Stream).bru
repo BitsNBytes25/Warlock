@@ -1,11 +1,11 @@
 meta {
-  name: Service Configs
+  name: Service Details (Stream)
   type: http
-  seq: 12
+  seq: 5
 }
 
 get {
-  url: {{host}}/api/service/configs/:guid/:host/:service
+  url: {{host}}/api/service/stream/:guid/:host/:service
   body: none
   auth: inherit
 }

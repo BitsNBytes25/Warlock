@@ -515,7 +515,7 @@ function getAppAPIVersion(guid, host) {
  * @returns {string}
  */
 function renderHostName(host, asHTML = true) {
-	let hostInfo = hostData && hostData[host] || null;
+	let hostInfo = hostData.find( h => h.host === host ) || null;
 
 	if (hostInfo && hostInfo.hostname) {
 		if (asHTML) {
@@ -582,14 +582,18 @@ function renderHostIcon(host) {
  * Format bytes as human-readable text.
  *
  * @param {number} bytes
+ * @param {number|null} precision
  * @returns {string}
  */
-function formatFileSize(bytes) {
-	if (bytes === 0) return '0 B';
+function formatFileSize(bytes, precision) {
+	precision = (precision === undefined || precision === null) ? 1 : precision;
+
+	if (bytes < 1 || bytes === null || bytes === undefined) return '0 B';
+
 	const k = 1024;
 	const sizes = ['B', 'KB', 'MB', 'GB', 'TB', 'PB'];
 	const i = Math.floor(Math.log(bytes) / Math.log(k));
-	return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+	return parseFloat((bytes / Math.pow(k, i)).toFixed(precision)) + ' ' + sizes[i];
 }
 
 /**
@@ -1532,6 +1536,25 @@ function pollService(app_guid, host, service) {
 }
 
 /**
+ * Poll the server for a continuous feed of changes for ALL services
+ */
+function pollServices() {
+	stream(`/api/services/stream`, 'GET',{},null,(event, data) => {
+		if (event === 'data') {
+			let svcName = data.service || null;
+
+			// Keep the application state consistent with latest data if it's the currently loaded service
+			if (svcName !== null && loadedService === svcName) {
+				loadedServiceData = Object.assign(loadedServiceData, data);
+			}
+
+			// Dispatch the change notification so dependent functions can pick up on the new data.
+			document.dispatchEvent(new CustomEvent('serviceChange', { detail: data }));
+		}
+	}, true);
+}
+
+/**
  * Poll the server for a continuous feed of changes for all hosts
  *
  */
@@ -1555,16 +1578,17 @@ function pollHostsMetrics() {
  * @param {function|null} displayFormat
  */
 function numberTick(element, value, displayFormat) {
-	const prev = parseFloat(element.textContent.replace(/[^0-9.\-]/g, ''));
+	const prev = parseFloat(element.dataset.numberTickPrevious || 0);
 	const target = typeof value === 'number' ? value : parseFloat(value);
 	const format = typeof displayFormat === 'function' ? displayFormat : (v) => v.toFixed(1);
 
+	element.dataset.numberTickPrevious = target;
 	if (isNaN(prev) || isNaN(target) || prev === target) {
 		element.textContent = format(target);
 		return;
 	}
 
-	const step = (target - prev) / Math.max(Math.abs(target - prev), 10);
+	const step = (target - prev) / 10;
 	let current = prev,
 		interval;
 

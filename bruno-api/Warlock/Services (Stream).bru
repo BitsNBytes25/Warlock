@@ -1,11 +1,11 @@
 meta {
-  name: Hosts Metrics
+  name: Services (Stream)
   type: http
-  seq: 22
+  seq: 3
 }
 
 get {
-  url: {{host}}/api/hosts/metrics
+  url: {{host}}/api/services/stream
   body: none
   auth: inherit
 }

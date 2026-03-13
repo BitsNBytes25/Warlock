@@ -1048,7 +1048,7 @@ button.link-control span {
    Services and ports table
    ========================== */
 
-#services-table tbody tr.updating {
+#services-table .service.updating {
 	animation: blinker 4s infinite;
 }
 

@@ -54,7 +54,7 @@ export async function getApplicationMetrics(hostData, service = null) {
 
 						// Parse memory usage - handle MB and GB
 						let memoryValue = 0;
-						if (svc.memory_usage && svc.memory_usage !== 'N/A') {
+						if (svc.memory_usage && svc.memory_usage !== 'N/A' && typeof(svc.memory_usage) === 'string') {
 							const memoryMatch = svc.memory_usage.match(/^([\d.]+)\s*(MB|GB)?/i);
 							if (memoryMatch) {
 								memoryValue = parseFloat(memoryMatch[1]);
@@ -67,24 +67,45 @@ export async function getApplicationMetrics(hostData, service = null) {
 								}
 							}
 						}
+						svc.memory_usage = memoryValue;
 
-						let metrics = {
-							timestamp: timestamp,
-							app_guid: guid,
-							service: svcName,
-							ip: hostData.host,
-							response_time: responseTime,
-							player_count: svc.player_count || 0,
-							status: svc.status === 'running' ? 1 : 0,
-							memory_usage: memoryValue,
-							cpu_usage: parseInt(svc.cpu_usage) || 0
-						};
+						// Parse CPU usage; usually contains '%', but sometimes is 'N/A'.
+						let cpuValue = 0;
+						if (svc.cpu_usage && svc.cpu_usage !== 'N/A' && typeof(svc.cpu_usage) === 'string') {
+							cpuValue = parseFloat(svc.cpu_usage.replace('%', ''));
+						}
+						else if (svc.cpu_usage && svc.cpu_usage !== 'N/A') {
+							cpuValue = parseInt(svc.cpu_usage);
+						}
+						svc.cpu_usage = cpuValue;
 
 						try {
-							await Metric.create(metrics);
+							// Get the last metric for this service, and only record if at least a minute old.
+							let lastMetric = await Metric.findOne({
+								where: {
+									ip: hostData.host,
+									app_guid: guid,
+									service: svcName
+								},
+								order: [['timestamp', 'DESC']],
+								raw: true
+							});
+							if (lastMetric && (timestamp - lastMetric.timestamp) >= 60) {
+								await Metric.create({
+									timestamp: timestamp,
+									app_guid: guid,
+									service: svcName,
+									ip: hostData.host,
+									response_time: responseTime,
+									player_count: svc.player_count || 0,
+									status: svc.status === 'running' ? 1 : 0,
+									memory_usage: memoryValue,
+									cpu_usage: cpuValue
+								});
+							}
 						}
 						catch(e) {
-							logger.warn(`MetricsPollTask: Error saving metrics for service '${svcName}' on app '${guid}' at host '${hostData.host}':`, e.message);
+							logger.warn(`getApplicationMetrics: Error saving metrics for service '${svcName}' on app '${guid}' at host '${hostData.host}':`, e.message);
 						}
 
 						if (typeof(svc.players) !== 'undefined') {
@@ -93,6 +114,7 @@ export async function getApplicationMetrics(hostData, service = null) {
 					}
 				}
 				catch(e){
+					logger.warn(`getApplicationMetrics: Error parsing services metrics for application '${guid}' on host '${hostData.host}':`, e.message);
 					return reject(new Error(`Error parsing services metrics for application '${guid}' on host '${hostData.host}': ${e.message}`));
 				}
 

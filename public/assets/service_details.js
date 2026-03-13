@@ -263,11 +263,11 @@ document.addEventListener('serviceChange', e => {
 	}
 
 	if (e.detail.hasOwnProperty('cpu_usage')) {
-		serviceDetailsCpu.innerText = e.detail.cpu_usage;
+		numberTick(serviceDetailsCpu, e.detail.cpu_usage, v => v.toFixed(0) + '%');
 	}
 
 	if (e.detail.hasOwnProperty('memory_usage')) {
-		serviceDetailsMemory.innerText = e.detail.memory_usage;
+		numberTick(serviceDetailsMemory, e.detail.memory_usage, v => formatFileSize(v * 1024 * 1024, 0));
 	}
 
 	if (e.detail.hasOwnProperty('player_count')) {

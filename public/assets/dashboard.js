@@ -11,94 +11,28 @@ let liveServices = [];
 function populateServicesTable(servicesWithStats) {
 	const table = servicesTable,
 		now = parseInt(Date.now() / 1000),
-		threshold = now - 45, // 45 seconds ago
 		app_guid = servicesWithStats.host.guid,
 		host = servicesWithStats.host,
 		service = servicesWithStats.service;
 
-	let row = table.querySelector('div.service[data-host="' + host.host + '"][data-service="' + service.service + '"]'),
+	let row,
 		fields = ['thumbnail', 'host', 'icon', 'name', 'enabled', 'status', 'port', 'players', 'memory', 'cpu', 'actions'],
-		statusIcon = '',
-		actionButtons = [],
-		enabledField = '',
 		appIcon = renderAppIcon(app_guid),
 		supportsDelayedStop = host.options.includes('delayed-stop') ? '1' : '0',
 		supportsDelayedRestart = host.options.includes('delayed-restart') ? '1' : '0';
 
-	actionButtons.push(`
-<button title="Game Details" data-href="/service/details/${app_guid}/${host.host}/${service.service}" class="link-control action-view">
-<i class="fas fa-cog"></i><span>Details</span>
-</button>`);
+	// Create new row
+	row = document.createElement('div');
+	row.className = 'service';
+	row.setAttribute('data-host', host.host);
+	row.setAttribute('data-service', service.service);
+	table.querySelector('.body').appendChild(row);
 
-	if (service.status === 'running') {
-		statusIcon = '<i class="fas fa-check-circle"></i>';
-		actionButtons.push(`
-<button title="Stop Game" data-host="${host.host}" data-service="${service.service}" data-guid="${app_guid}" data-support-delayed-stop="${supportsDelayedStop}" data-support-delayed-restart="${supportsDelayedRestart}" class="open-stop-modal action-stop">
-<i class="fas fa-stop"></i><span>Stop</span>
-</button>`);
-	}
-	else if (service.status === 'stopped') {
-		statusIcon = '<i class="fas fa-times-circle"></i>';
-		actionButtons.push(`
-<button title="Start Game" data-host="${host.host}" data-service="${service.service}" data-action="start" data-guid="${app_guid}" class="service-control action-start">
-<i class="fas fa-play"></i><span>Start</span>
-</button>`);
-	}
-	else if (service.status === 'starting') {
-		statusIcon = '<i class="fas fa-sync-alt fa-spin"></i>';
-		actionButtons.push(`
-<button title="Stop Game" data-host="${host.host}" data-service="${service.service}" data-action="stop" data-guid="${app_guid}" class="service-control action-stop">
-<i class="fas fa-stop"></i><span>Stop</span>
-</button>`);
-	}
-	else if (service.status === 'stopping') {
-		statusIcon = '<i class="fas fa-sync-alt fa-spin"></i>';
-	}
-	else {
-		statusIcon = '<i class="fas fa-question-circle"></i>';
-	}
-
-	if (service.enabled) {
-		enabledField = `
-<button title="Enabled at Boot, click to disable" data-host="${host.host}" data-service="${service.service}" data-action="disable" data-guid="${app_guid}" class="service-control action-start">
-			<i class="fas fa-check-circle"></i>
-		</button>`;
-	} else {
-		enabledField = `
-<button title="Disabled at Boot, click to enable" data-host="${host.host}" data-service="${service.service}" data-action="enable" data-guid="${app_guid}" class="service-control action-stop">
-			<i class="fas fa-times-circle"></i>
-		</button>`;
-	}
-
-	if (!row) {
-		// Create new row
-		row = document.createElement('div');
-		row.className = 'service';
-		row.setAttribute('data-host', host.host);
-		row.setAttribute('data-service', service.service);
-		table.querySelector('.body').appendChild(row);
-
-		// Initialize empty cells
-		fields.forEach(field => {
-			const cell = document.createElement('div');
-			cell.className = field;
-
-			if (field === 'age') {
-				cell.title = 'Data Last Updated';
-			}
-			else if (field === 'cpu') {
-				cell.title = 'Percentage of a single thread process (100% being 1 full thread usage)';
-			}
-
-			row.appendChild(cell);
-		});
-	}
-
-	row.dataset.updated = String(now); // Mark as found
-	row.classList.remove('updating');
-
+	// Initialize default cells
 	fields.forEach(field => {
-		const cell = row.querySelector('div.' + field);
+		const cell = document.createElement('div');
+		cell.className = field;
+
 		let val = service[field] || '';
 
 		if (field === 'host') {
@@ -113,56 +47,44 @@ function populateServicesTable(servicesWithStats) {
 				val = '';
 			}
 		}
-		else if (field === 'response_time') {
-			if (val > 1000) {
-				val = (val / 1000).toFixed(2) + ' s';
-			}
-			else {
-				val = val + ' ms';
-			}
-		}
-		else if (field === 'status') {
-			val = statusIcon + ' ' + service[field].toUpperCase();
-			cell.className = field + ' status-' + service[field];
-		}
 		else if (field === 'enabled') {
-			val = enabledField;
+			val = `<div class="">
+	<button style="display:none;" title="Enabled at Boot, click to disable" data-host="${host.host}" data-service="${service.service}" data-action="disable" data-guid="${app_guid}" class="service-control action-start">
+		<i class="fas fa-check-circle"></i>
+	</button>
+	<button style="display:none;" title="Disabled at Boot, click to enable" data-host="${host.host}" data-service="${service.service}" data-action="enable" data-guid="${app_guid}" class="service-control action-stop">
+		<i class="fas fa-times-circle"></i>
+	</button>
+</div>`;
 		}
 		else if (field === 'players') {
-			val = service.player_count || 0;
-			if (service.max_players) {
-				val += ' / ' + service.max_players;
-			}
-			// If service.players is an array with more than one element, show a tooltip with player names
-			if (Array.isArray(service.players) && service.players.length > 0) {
-				let playerNames = service.players.map(p => p.player_name).join(', ');
-				cell.title = 'Current Players: ' + playerNames;
-			}
-		} else if (field === 'memory') {
-			val = service.memory_usage || '-';
-		} else if (field === 'cpu') {
-			val = service.cpu_usage || '-';
+			cell.dataset.players = service.player_count || 0;
+			cell.dataset.maxPlayers = service.max_players || 0;
 		}
 		else if (field === 'actions') {
-			val = '<div class="">' + actionButtons.join(' ') + '</div>';
-
-			// Also update mobile actions row if on mobile
-			if (window.innerWidth <= 900) {
-				const actionsRow = row.nextElementSibling;
-				if (actionsRow && actionsRow.classList.contains('service-actions')) {
-					const mobileActions = actionsRow.querySelector('.mobile-actions');
-					if (mobileActions) {
-						mobileActions.innerHTML = actionButtons.join(' ');
-					}
-				}
-			}
+			val = `<div class="">
+	<button title="Game Details" data-href="/service/details/${app_guid}/${host.host}/${service.service}" class="link-control action-view">
+		<i class="fas fa-cog"></i><span>Details</span>
+	</button>
+	<button style="display:none;" title="Stop Game" data-host="${host.host}" data-service="${service.service}" data-guid="${app_guid}" data-support-delayed-stop="${supportsDelayedStop}" data-support-delayed-restart="${supportsDelayedRestart}" class="open-stop-modal action-stop">
+		<i class="fas fa-stop"></i><span>Stop</span>
+	</button>
+	<button style="display:none;" title="Start Game" data-host="${host.host}" data-service="${service.service}" data-action="start" data-guid="${app_guid}" class="service-control action-start">
+		<i class="fas fa-play"></i><span>Start</span>
+	</button>
+</div>`;
 		}
 		else if (field === 'icon') {
 			val = appIcon;
 		}
 
 		cell.innerHTML = val;
+
+		row.appendChild(cell);
 	});
+
+	row.dataset.updated = String(now); // Mark as found
+	row.classList.remove('updating');
 
 	// Services have been loaded, (at least one), remove "no services" and "services loading" messages
 	if (table.querySelector('div.no-services-available')) {
@@ -202,14 +124,11 @@ function noHostsAvailable() {
  * Load all services and their stats
  */
 function loadAllServicesAndStats() {
-	fetch('/api/services', {method: 'GET'})
+	return fetch('/api/services', {method: 'GET'})
 		.then(r => r.json())
 		.then(results => {
 			if (results.success && results.services.length > 0) {
 				results.services.forEach(s => {
-					if (liveServices.includes(s.app + '|' + s.host.host + '|' + s.service.service)) {
-						return;
-					}
 					populateServicesTable(s);
 				});
 			}
@@ -218,78 +137,6 @@ function loadAllServicesAndStats() {
 				noServicesAvailable();
 			}
 		});
-}
-
-/**
- * Stream service stats for a given application, host, and service
- *
- * Will ping the host much more frequently to provide more real-time updates to the user.
- *
- * Operation automatically stops once the target service state has been reached.
- *
- * @param {string} app_guid
- * @param {string} host
- * @param {string} service
- * @param {string} target_state
- */
-function streamServiceStats(app_guid, host, service, target_state) {
-	// What's the target state for this service to stop streaming?
-	let targetKey, targetValue, targetStateMessage;
-
-	if (target_state === 'start') {
-		targetKey = 'status';
-		targetValue = 'running';
-		targetStateMessage = 'Service has started successfully.';
-	}
-	else if (target_state === 'stop') {
-		targetKey = 'status';
-		targetValue = 'stopped';
-		targetStateMessage = 'Service has stopped successfully.';
-	}
-	else if (target_state === 'restart') {
-		targetKey = 'status';
-		targetValue = 'running';
-		targetStateMessage = 'Service has restarted successfully.';
-	}
-	else if (target_state === 'enable') {
-		targetKey = 'enabled';
-		targetValue = true;
-		targetStateMessage = 'Service has been enabled to start on-boot.';
-	}
-	else if (target_state === 'disable') {
-		targetKey = 'enabled';
-		targetValue = false;
-		targetStateMessage = 'Service has been disabled from starting on-boot.';
-	}
-	else {
-		console.error('Invalid target state for streaming service stats:', target_state);
-	}
-
-	// Skip this service from lazy updates
-	liveServices.push(app_guid + '|' + host + '|' + service);
-
-	let res = stream(`/api/service/stream/${app_guid}/${host}/${service}`, 'GET',{},null,(event, data) => {
-		if (event === 'message') {
-			try {
-				let parsed = JSON.parse(data);
-				populateServicesTable(parsed);
-
-				// Has the target state been reached?
-				if (parsed.service[targetKey] === targetValue) {
-					// Remove from live services
-					liveServices = liveServices.filter(s => s !== (app_guid + '|' + host + '|' + service));
-					showToast('success', targetStateMessage);
-					return false;
-				}
-			}
-			catch (error) {
-				console.error('Error parsing service stream data:', error, data);
-			}
-		}
-		else {
-			console.warn('Service stream error:', data);
-		}
-	}, true);
 }
 
 // Dynamic events for various buttons
@@ -301,30 +148,24 @@ document.addEventListener('click', e => {
 				action = btn.dataset.action,
 				host = btn.dataset.host,
 				guid = btn.dataset.guid,
-				tr = servicesContainer.querySelector(`div[data-host="${host}"][data-service="${service}"]`);
+				row = servicesContainer.querySelector(`div[data-host="${host}"][data-service="${service}"]`);
 
 			e.preventDefault();
 
 			closeModal(stopModal);
+			row.classList.add('updating');
 
 			if (action === 'delayed-stop' || action === 'delayed-restart') {
 				// Delayed actions do not trigger live stats streaming
+				showToast('success', `Issuing ${action.replace('-', ' ')} to ${service}, task may take up to an hour to complete.`);
 				serviceAction(guid, host, service, action).then(() => {
-					showToast('success', `Sent ${action.replace('-', ' ')} command to ${service}, task may take up to an hour to complete.`);
+					row.classList.remove('updating');
 				});
 			}
 			else {
-				if (tr) {
-					tr.classList.add('updating');
-					// Swap the icon to a spinner to indicate a status change
-					let icon = tr.querySelector('.status i');
-					if (icon) {
-						icon.className = 'fas fa-sync-alt fa-spin';
-					}
-				}
-
+				showToast('success', `Issuing ${action.replace('-', ' ')} to ${service}, please wait a moment.`);
 				serviceAction(guid, host, service, action).then(() => {
-					streamServiceStats(guid, host, service, action);
+					row.classList.remove('updating');
 				});
 			}
 		}
@@ -387,25 +228,91 @@ window.addEventListener('DOMContentLoaded', () => {
 		servicesTable.dataset.mobileOverride = '1';
 	}
 
-	fetchHosts().then(hosts => {
-		if (Object.values(hosts).length === 0) {
-			noHostsAvailable();
-			return;
-		}
+	if (hostData.length === 0) {
+		noHostsAvailable();
+		return;
+	}
 
-		fetchApplications().then(applications => {
-			// Load all services and periodically update the list
-			loadAllServicesAndStats();
-			populateCreateServiceModal(applications);
-			setInterval(loadAllServicesAndStats, 60*1000); // Refresh services every 60 seconds
-		}).catch(error => {
-			document.getElementById('servicesContainer').innerHTML = `<div style="grid-column:1/-1;"><p class="error-message">${error}</p></div>`;
-			console.error('Error fetching applications:', error);
-		});
-	}).catch(error => {
-		document.getElementById('servicesContainer').innerHTML = `<div style="grid-column:1/-1;"><p class="error-message">${error}</p></div>`;
-		console.error('Error fetching hosts:', error);
+	// Load all services and then periodically update the list
+	loadAllServicesAndStats().then(() => {
+		pollServices();
 	});
+	populateCreateServiceModal(applicationData);
 });
 
+document.addEventListener('serviceChange', e => {
+	const row = servicesContainer.querySelector(`div[data-host="${e.detail.host}"][data-service="${e.detail.service}"]`);
+	if (!row) {
+		return;
+	}
 
+	if (e.detail.hasOwnProperty('status')) {
+		let cell = row.querySelector('.status');
+
+		cell.classList.remove('status-stopped', 'status-stopping', 'status-starting', 'status-running');
+		cell.classList.add('status-' + e.detail.status);
+		if (e.detail.status === 'running') {
+			cell.innerHTML = '<i class="fas fa-check-circle"></i> RUNNING';
+			row.querySelector('button[data-action="start"]').style.display = 'none';
+			row.querySelector('.open-stop-modal').style.display = 'inline-flex';
+		}
+		else if (e.detail.status === 'stopped') {
+			cell.innerHTML = '<i class="fas fa-times-circle"></i> STOPPED';
+			row.querySelector('button[data-action="start"]').style.display = 'inline-flex';
+			row.querySelector('.open-stop-modal').style.display = 'none';
+		}
+		else if (e.detail.status === 'starting') {
+			cell.innerHTML = '<i class="fas fa-sync-alt fa-spin"></i> STARTING';
+			row.querySelector('button[data-action="start"]').style.display = 'none';
+			row.querySelector('.open-stop-modal').style.display = 'inline-flex';
+		}
+		else if (e.detail.status === 'stopping') {
+			cell.innerHTML = '<i class="fas fa-sync-alt fa-spin"></i> STOPPING';
+			row.querySelector('button[data-action="start"]').style.display = 'none';
+			row.querySelector('.open-stop-modal').style.display = 'none';
+		}
+		else {
+			cell.innerHTML = '<i class="fas fa-question-circle"></i> UNKNOWN';
+			row.querySelector('button[data-action="start"]').style.display = 'none';
+			row.querySelector('.open-stop-modal').style.display = 'none';
+		}
+	}
+
+	if (e.detail.hasOwnProperty('enabled')) {
+		if (e.detail.enabled) {
+			row.querySelector('button[data-action="enable"]').style.display = 'none';
+			row.querySelector('button[data-action="disable"]').style.display = 'inline-flex';
+		}
+		else {
+			row.querySelector('button[data-action="enable"]').style.display = 'inline-flex';
+			row.querySelector('button[data-action="disable"]').style.display = 'none';
+		}
+	}
+
+	if (e.detail.hasOwnProperty('players')) {
+		let cell = row.querySelector('.players');
+		cell.dataset.players = e.detail.players;
+		cell.innerHTML = `${cell.dataset.players || 0} / ${cell.dataset.maxPlayers}`;
+	}
+
+	if (e.detail.hasOwnProperty('max_players')) {
+		let cell = row.querySelector('.players');
+		cell.dataset.maxPlayers = e.detail.max_players;
+		cell.innerHTML = `${cell.dataset.players || 0} / ${cell.dataset.maxPlayers}`;
+	}
+
+	if (e.detail.hasOwnProperty('port')) {
+		let cell = row.querySelector('.port');
+		cell.innerHTML = e.detail.port;
+	}
+
+	if (e.detail.hasOwnProperty('memory_usage')) {
+		let cell = row.querySelector('.memory');
+		numberTick(cell, e.detail.memory_usage * 1024 * 1024, v => formatFileSize(v, 0));
+	}
+
+	if (e.detail.hasOwnProperty('cpu_usage')) {
+		let cell = row.querySelector('.cpu');
+		numberTick(cell, e.detail.cpu_usage, v => v.toFixed(0) + '%');
+	}
+});
