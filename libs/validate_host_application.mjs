@@ -1,5 +1,6 @@
 import { getAllApplications } from './get_all_applications.mjs';
 import {logger} from "./logger.mjs";
+import { HostData } from './host_data.mjs';
 
 /**
  * Validate that a given host and application GUID exist on the system
@@ -21,9 +22,8 @@ export async function validateHostApplication(req, res, next) {
 	}
 
 	getAllApplications()
-		.then(applications => {
-			const apps = applications.filter(a => a.guid === guid);
-			const app = apps.length > 0 ? apps[0] : null;
+		.then(async applications => {
+			const app = applications.find(a => a.guid === guid);
 
 			if (!app) {
 				throw new Error(`Application with GUID '${guid}' not found`);
@@ -34,10 +34,18 @@ export async function validateHostApplication(req, res, next) {
 				throw new Error(`Application '${guid}' not found on host '${host}'`);
 			}
 
+			// Load the host data for this lookup, used by many endpoints
+			const hostData = new HostData(host);
+			await hostData.init();
+
 			// Attach the discovered data to the request object
+			req.applicationData = app;
 			req.appInstallData = appInstallData;
+			req.hostData = hostData;
 			// Attach the discovered data to the locals object of res so it's available in templates
+			res.locals.applicationData = app;
 			res.locals.appInstallData = appInstallData;
+			res.locals.hostData = hostData;
 			// Run next middleware function
 			next();
 		})

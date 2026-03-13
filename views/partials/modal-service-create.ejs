@@ -98,13 +98,16 @@
 					return;
 				}
 
+				closeModal(createServiceModal);
+				showToast('info', 'Creating instance, please wait...');
 				fetch(`/api/service/${app}/${host}/${instanceName}`, {method: 'PUT'})
 						.then(res => res.json())
 						.then(res => {
 							if (res.success) {
 								showToast('success', 'Instance created successfully!');
-								closeModal(createServiceModal);
-								window.location.href = `/service/details/${app}/${host}/${res.stdout}`;
+								if (res.url) {
+									window.location.href = res.url;
+								}
 							} else {
 								showToast('error', res.error || 'An error occurred while creating the instance.');
 							}

@@ -115,6 +115,7 @@ app.use('/host/firewall', require('./routes/host_firewall'));
 app.use('/host/details', require('./routes/host_details'));
 app.use('/service/logs', require('./routes/service_logs'));
 app.use('/service/configure', require('./routes/service_configure'));
+app.use('/service/uninstall', require('./routes/service_uninstall'));
 app.use('/service/details', require('./routes/service_details'));
 app.use('/application/uninstall', require('./routes/application_uninstall'));
 app.use('/application/install', require('./routes/application_install'));

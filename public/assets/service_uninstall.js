@@ -3,7 +3,7 @@
  */
 window.addEventListener('DOMContentLoaded', () => {
 
-	const {guid, host} = getPathParams('/application/uninstall/:guid/:host');
+	const {guid, host, service} = getPathParams('/service/uninstall/:guid/:host/:service');
 
 	Promise.all([
 		loadApplication(guid),
@@ -31,7 +31,7 @@ window.addEventListener('DOMContentLoaded', () => {
 				showToast('info', 'Uninstallation started. Check the terminal output for progress.');
 
 				stream(
-					`/api/application/${guid}/${host}`,
+					`/api/service/${guid}/${host}/${service}`,
 					'DELETE',
 					{},
 					null,

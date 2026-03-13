@@ -55,8 +55,20 @@ router.put('/:guid/:host/:service', validate_session, validateHostApplication, (
 			// On updates to the service state, clear the cache for the application
 			clearTaggedCache(req.appInstallData.host, req.appInstallData.guid);
 
+			// Check if the application responded "CreatedService:..." in stdout.
+			// That's the identifier of the newly created service.
+			let lines = output.stdout.trim().split('\n'),
+				lastLine = lines[lines.length - 1],
+				newService = null;
+
+			if (lastLine.startsWith('CreatedService:')) {
+				newService = lastLine.split(':')[1].trim();
+			}
+
 			res.json({
 				success: true,
+				newService: newService,
+				url: newService ? `/service/details/${req.appInstallData.guid}/${req.appInstallData.host}/${newService}` : null,
 				stdout: output.stdout,
 				stderr: output.stderr
 			});
