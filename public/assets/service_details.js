@@ -10,53 +10,24 @@ const serviceDetailsStatus = document.getElementById('serviceDetailsStatus'),
 
 function pollServiceStatus(app_guid, host, service) {
 	stream(`/api/service/stream/${app_guid}/${host}/${service}`, 'GET',{},null,(event, data) => {
-		if (event === 'message') {
-			try {
-				let parsed = JSON.parse(data);
-
-				// Check to see if state changes occurred; if so we should notify anything listening.
-				let oldStatus = loadedServiceData ? loadedServiceData.status : null;
-				let oldEnabled = loadedServiceData ? loadedServiceData.enabled : null;
-				if (parsed.service.status !== oldStatus) {
-					document.dispatchEvent(
-						new CustomEvent(
-							'serviceStatusChange',
-							{
-								detail: {
-									previous: oldStatus,
-									value: parsed.service.status
-								}
+		if (event === 'data') {
+			// Iterate over the changed keys and handle them if necessary, or just store the updated values
+			for( let key in data ) {
+				document.dispatchEvent(
+					new CustomEvent(
+						'serviceChange',
+						{
+							detail: {
+								key: key,
+								previous: loadedServiceData ? loadedServiceData[key] : null,
+								value: data[key]
 							}
-						)
-					);
-				}
-				if (parsed.service.enabled !== oldEnabled) {
-					document.dispatchEvent(
-						new CustomEvent(
-							'serviceEnabledChange',
-							{
-								detail: {
-									previous: oldEnabled,
-									value: parsed.service.enabled
-								}
-							}
-						)
-					);
-				}
+						}
+					)
+				);
 
-				// Cache this in the application state
-				loadedServiceData = parsed.service;
-				serviceDetailsPlayers.innerText = (parsed.service.player_count || 0) + ' / ' + parsed.service.max_players;
-				serviceDetailsCpu.innerText = parsed.service.cpu_usage;
-				serviceDetailsMemory.innerText = parsed.service.memory_usage;
-				serviceDetailsPort.innerText = parsed.service.port;
+				loadedServiceData[key] = data[key];
 			}
-			catch (error) {
-				console.error('Error parsing service stream data:', error, data);
-			}
-		}
-		else {
-			console.warn('Service stream error:', data);
 		}
 	}, true);
 }
@@ -267,49 +238,66 @@ window.addEventListener('DOMContentLoaded', () => {
 		});
 });
 
-document.addEventListener('serviceStatusChange', e => {
-	if (e.detail.value === 'running') {
-		serviceDetailsStatus.innerHTML = '<i class="fas fa-check-circle"></i> Running';
-		serviceDetailsStatus.classList.remove('status-stopped', 'status-stopping', 'status-starting');
-		serviceDetailsStatus.classList.add('status-running');
+document.addEventListener('serviceChange', e => {
+	if (e.detail.key === 'status') {
+		if (e.detail.value === 'running') {
+			serviceDetailsStatus.innerHTML = '<i class="fas fa-check-circle"></i> Running';
+			serviceDetailsStatus.classList.remove('status-stopped', 'status-stopping', 'status-starting');
+			serviceDetailsStatus.classList.add('status-running');
 
-		btnServiceStart.style.display = 'none';
-		btnServiceStop.style.display = 'inline-flex';
-		btnServiceRestart.style.display = 'inline-flex';
+			btnServiceStart.style.display = 'none';
+			btnServiceStop.style.display = 'inline-flex';
+			btnServiceRestart.style.display = 'inline-flex';
+		}
+		else if (e.detail.value === 'stopped') {
+			serviceDetailsStatus.innerHTML = '<i class="fas fa-times-circle"></i> Stopped';
+			serviceDetailsStatus.classList.remove('status-running', 'status-stopping', 'status-starting');
+			serviceDetailsStatus.classList.add('status-stopped');
+
+			btnServiceStart.style.display = 'inline-flex';
+			btnServiceStop.style.display = 'none';
+			btnServiceRestart.style.display = 'none';
+		}
+		else if (e.detail.value === 'starting') {
+			serviceDetailsStatus.innerHTML = '<i class="fas fa-sync-alt fa-spin"></i> Starting';
+			serviceDetailsStatus.classList.remove('status-running', 'status-stopped', 'status-stopping');
+			serviceDetailsStatus.classList.add('status-starting');
+
+			btnServiceStart.style.display = 'none';
+			btnServiceStop.style.display = 'inline-flex';
+			btnServiceRestart.style.display = 'none';
+		}
+		else if (e.detail.value === 'stopping') {
+			serviceDetailsStatus.innerHTML = '<i class="fas fa-sync-alt fa-spin"></i> Stopping';
+			serviceDetailsStatus.classList.remove('status-running', 'status-stopping', 'status-starting');
+			serviceDetailsStatus.classList.add('status-stopping');
+
+			btnServiceStart.style.display = 'none';
+			btnServiceStop.style.display = 'none';
+			btnServiceRestart.style.display = 'none';
+		}
+		else {
+			serviceDetailsStatus.innerHTML = '<i class="fas fa-question-circle"></i> Unknown';
+			serviceDetailsStatus.classList.remove('status-running', 'status-stopped', 'status-stopping', 'status-starting');
+
+			btnServiceStart.style.display = 'none';
+			btnServiceStop.style.display = 'none';
+			btnServiceRestart.style.display = 'none';
+		}
 	}
-	else if (e.detail.value === 'stopped') {
-		serviceDetailsStatus.innerHTML = '<i class="fas fa-times-circle"></i> Stopped';
-		serviceDetailsStatus.classList.remove('status-running', 'status-stopping', 'status-starting');
-		serviceDetailsStatus.classList.add('status-stopped');
-
-		btnServiceStart.style.display = 'inline-flex';
-		btnServiceStop.style.display = 'none';
-		btnServiceRestart.style.display = 'none';
+	else if (e.detail.key === 'cpu_usage') {
+		serviceDetailsCpu.innerText = e.detail.value;
 	}
-	else if (e.detail.value === 'starting') {
-		serviceDetailsStatus.innerHTML = '<i class="fas fa-sync-alt fa-spin"></i> Starting';
-		serviceDetailsStatus.classList.remove('status-running', 'status-stopped', 'status-stopping');
-		serviceDetailsStatus.classList.add('status-starting');
-
-		btnServiceStart.style.display = 'none';
-		btnServiceStop.style.display = 'inline-flex';
-		btnServiceRestart.style.display = 'none';
+	else if (e.detail.key === 'memory_usage') {
+		serviceDetailsMemory.innerText = e.detail.value;
 	}
-	else if (e.detail.value === 'stopping') {
-		serviceDetailsStatus.innerHTML = '<i class="fas fa-sync-alt fa-spin"></i> Stopping';
-		serviceDetailsStatus.classList.remove('status-running', 'status-stopping', 'status-starting');
-		serviceDetailsStatus.classList.add('status-stopping');
-
-		btnServiceStart.style.display = 'none';
-		btnServiceStop.style.display = 'none';
-		btnServiceRestart.style.display = 'none';
+	else if (e.detail.key === 'player_count') {
+		serviceDetailsPlayers.innerText = (e.detail.value || 0) + ' / ' + loadedServiceData.max_players;
 	}
-	else {
-		serviceDetailsStatus.innerHTML = '<i class="fas fa-question-circle"></i> Unknown';
-		serviceDetailsStatus.classList.remove('status-running', 'status-stopped', 'status-stopping', 'status-starting');
-
-		btnServiceStart.style.display = 'none';
-		btnServiceStop.style.display = 'none';
-		btnServiceRestart.style.display = 'none';
+	else if (e.detail.key === 'max_players') {
+		serviceDetailsPlayers.innerText = loadedServiceData.player_count + ' / ' + e.detail.value;
+	}
+	else if (e.detail.key === 'port') {
+		serviceDetailsPort.innerText = e.detail.value;
 	}
 });

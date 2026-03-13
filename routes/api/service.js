@@ -108,8 +108,15 @@ router.delete('/:guid/:host/:service', validate_session, validateHostService, (r
 		});
 });
 
+/**
+ * Stream "live" metrics and stats for a given service
+ *
+ * Only updates are sent to the client every 5 seconds.
+ */
 router.get('/stream/:guid/:host/:service', validate_session, validateHostService, (req, res) => {
-	let clientGone = false;
+	let clientGone = false,
+		serviceData = req.serviceData,
+		lastDataSent = Date.now();
 
 	res.writeHead(200, {
 		'Content-Type': 'text/event-stream; charset=utf-8',
@@ -122,6 +129,36 @@ router.get('/stream/:guid/:host/:service', validate_session, validateHostService
 		clientGone = true;
 	};
 
+	const arraysDiffer = (a, b) => {
+		const lenA = a.length, lenB = b.length;
+		if (lenA !== lenB) return true;
+		for (let i = 0; i < lenA; i++) {
+			if (a[i] !== b[i]) return true;
+		}
+		return false;
+	};
+
+	const diffKeys = (oldData, newData) => {
+		const keys = new Set([...Object.keys(oldData), ...Object.keys(newData)]),
+			diff = {};
+
+		for (const key of keys) {
+			if (newData[key] === undefined) {
+				// Key exists in the old data, but not the new; that's fine.
+				continue;
+			}
+			if (Array.isArray(oldData[key]) && Array.isArray(newData[key])) {
+				if (arraysDiffer(oldData[key], newData[key])) {
+					diff[key] = newData[key];
+				}
+			}
+			else if (oldData[key] !== newData[key]) {
+				diff[key] = newData[key];
+			}
+		}
+		return diff;
+	};
+
 	const lookup = () => {
 		if (clientGone) return;
 
@@ -129,19 +166,24 @@ router.get('/stream/:guid/:host/:service', validate_session, validateHostService
 		getApplicationMetrics(req.appInstallData, req.serviceData.service).then(results => {
 			if (clientGone) return;
 
-			let ret = {
-				host: req.appInstallData,
-				service: results.services[req.serviceData.service],
-			};
+			const newServiceData = results.services[req.serviceData.service],
+				diffData = diffKeys(serviceData, newServiceData);
 
-			// Merge the data from the original service lookup; this probably contains additional data about the service
-			Object.assign(ret.service, req.serviceData);
+			// Save the data for the next iteration
+			serviceData = Object.assign(serviceData, newServiceData);
 
-			// Tack on the response time of the metrics lookup
-			ret.service['response_time'] = results.response_time;
+			// Write a response if we have differences.
+			if (Object.keys(diffData).length > 0) {
+				res.write(`json: ${JSON.stringify(diffData)}\n\n`);
+				lastDataSent = Date.now();
+			}
+			else if (Date.now() - lastDataSent > 60000) {
+				res.write(':keepalive\n\n');
+				lastDataSent = Date.now();
+			}
 
-			res.write(`data: ${JSON.stringify(ret)}\n\n`);
-
+			// Wait 5 seconds for the next scan
+			// We do this vs an interval because the SSH connection / lookup may take a few seconds to complete.
 			setTimeout(lookup,5000);
 		}).catch(e => {
 			if (clientGone) return;

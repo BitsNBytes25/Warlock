@@ -169,6 +169,10 @@ export class AppInstallData {
 						services[service].app_dir = services[service].app_dir || (this.path + '/AppFiles');
 						services[service].bak_dir = services[service].bak_dir || (this.path + '/backups');
 						services[service].multi_binary = services[service].app_dir !== this.path + '/AppFiles';
+
+						// Remove some keys which are now unused
+						delete services[service].start_exec;
+						delete services[service].pre_exec;
 					}
 					return services;
 				}

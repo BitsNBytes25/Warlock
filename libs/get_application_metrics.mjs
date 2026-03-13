@@ -46,6 +46,10 @@ export async function getApplicationMetrics(hostData, service = null) {
 					// This is suitable to be done here since this method queries the live application.
 					for (let svcName in appServices) {
 						let svc = appServices[svcName];
+						// Remove some keys which are now unused
+						delete svc.start_exec;
+						delete svc.pre_exec;
+
 						const timestamp = Math.floor(Date.now() / 1000);
 
 						// Parse memory usage - handle MB and GB

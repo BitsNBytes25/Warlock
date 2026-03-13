@@ -782,39 +782,25 @@ async function loadService(app_guid, host, service) {
 	return new Promise((resolve, reject) => {
 		fetchService(app_guid, host, service)
 			.then(serviceData => {
-
-				// Check to see if state changes occurred; if so we should notify anything listening.
-				let oldStatus = loadedServiceData ? loadedServiceData.status : null;
-				let oldEnabled = loadedServiceData ? loadedServiceData.enabled : null;
-				if (serviceData.status !== oldStatus) {
-					document.dispatchEvent(
-						new CustomEvent(
-							'serviceStatusChange',
-							{
-								detail: {
-									previous: oldStatus,
-									value: serviceData.status
-								}
-							}
-						)
-					);
-				}
-				if (serviceData.enabled !== oldEnabled) {
-					document.dispatchEvent(
-						new CustomEvent(
-							'serviceEnabledChange',
-							{
-								detail: {
-									previous: oldEnabled,
-									value: serviceData.enabled
-								}
-							}
-						)
-					);
-				}
-
+				// Set the new data, (this is done prior to dispatching events in case a caller expects the object to be ready)
 				loadedService = serviceData.service;
 				loadedServiceData = serviceData;
+
+				// Dispatch event notifiers that things changed
+				for( let key in serviceData ) {
+					document.dispatchEvent(
+						new CustomEvent(
+							'serviceChange',
+							{
+								detail: {
+									key: key,
+									previous: loadedServiceData ? loadedServiceData[key] : null,
+									value: serviceData[key]
+								}
+							}
+						)
+					);
+				}
 
 				// Replace content from service
 				replaceServicePlaceholders(serviceData);
@@ -857,7 +843,8 @@ function stream(
 	const parseSSEBlock = (block) => {
 		// Parse SSE-style block (lines like "data: ..." and optionally "event: ...")
 		const lines = block.split(/\r?\n/);
-		let event = 'message';
+		let event = 'message',
+			data = null;
 		const dataLines = [];
 		for (const line of lines) {
 			if (line.startsWith('event:')) {
@@ -874,6 +861,16 @@ function stream(
 					throw new Error(`Execution failed with code ${code}`);
 				}
 			}
+			else if (line.startsWith('json:')) {
+				let json = line.slice(5).trim();
+				if (json.startsWith('{') && json.endsWith('}')) {
+					event = 'data';
+					data = JSON.parse(json);
+				}
+				else {
+					dataLines.push(json);
+				}
+			}
 			else if (line.startsWith('data:')) {
 				dataLines.push(line.slice(5).trim());
 			}
@@ -885,8 +882,15 @@ function stream(
 				event = 'stderr';
 				dataLines.push(line.slice(7).trim());
 			}
+			else if (line.startsWith(':')) {
+				event = 'comment';
+				dataLines.push(line.slice(1).trim());
+			}
 		}
-		const data = dataLines.join('\n');
+
+		if (data === null) {
+			data = dataLines.join('\n');
+		}
 
 		if (event === 'error') {
 			console.error(data);

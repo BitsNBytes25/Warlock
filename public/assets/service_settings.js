@@ -123,17 +123,19 @@ configureAutoRestartBtn.addEventListener('click', () => {
 })
 
 
-document.addEventListener('serviceEnabledChange', e => {
-    if (e.detail.value) {
-        automatedStartDisabledMessage.style.display = 'none';
-        automatedStartEnabledMessage.style.display = 'flex';
-        configureAutoStartEnableBtn.style.display = 'none';
-        configureAutoStartDisableBtn.style.display = 'inline-flex';
-    }
-    else {
-        automatedStartDisabledMessage.style.display = 'flex';
-        automatedStartEnabledMessage.style.display = 'none';
-        configureAutoStartEnableBtn.style.display = 'inline-flex';
-        configureAutoStartDisableBtn.style.display = 'none';
+document.addEventListener('serviceChange', e => {
+    if (e.detail.key === 'enabled') {
+        if (e.detail.value) {
+            automatedStartDisabledMessage.style.display = 'none';
+            automatedStartEnabledMessage.style.display = 'flex';
+            configureAutoStartEnableBtn.style.display = 'none';
+            configureAutoStartDisableBtn.style.display = 'inline-flex';
+        }
+        else {
+            automatedStartDisabledMessage.style.display = 'flex';
+            automatedStartEnabledMessage.style.display = 'none';
+            configureAutoStartEnableBtn.style.display = 'inline-flex';
+            configureAutoStartDisableBtn.style.display = 'none';
+        }
     }
 });
