@@ -785,20 +785,7 @@ async function loadService(app_guid, host, service) {
 				loadedServiceData = serviceData;
 
 				// Dispatch event notifiers that things changed
-				for( let key in serviceData ) {
-					document.dispatchEvent(
-						new CustomEvent(
-							'serviceChange',
-							{
-								detail: {
-									key: key,
-									previous: loadedServiceData ? loadedServiceData[key] : null,
-									value: serviceData[key]
-								}
-							}
-						)
-					);
-				}
+				document.dispatchEvent(new CustomEvent('serviceChange', {detail: loadedServiceData}));
 
 				// Replace content from service
 				replaceServicePlaceholders(serviceData);
@@ -1519,6 +1506,82 @@ function openModal(modal) {
 function closeModal(modal) {
 	modal.classList.remove('show');
 	document.body.style.overflow = '';
+}
+
+/**
+ * Poll the server for a continuous feed of changes for a given service
+ *
+ * @param {string} app_guid
+ * @param {string} host
+ * @param {string} service
+ */
+function pollService(app_guid, host, service) {
+	stream(`/api/service/stream/${app_guid}/${host}/${service}`, 'GET',{},null,(event, data) => {
+		if (event === 'data') {
+			let svcName = data.service || service;
+
+			// Keep the application state consistent with latest data if it's the currently loaded service
+			if (loadedService === svcName) {
+				loadedServiceData = Object.assign(loadedServiceData, data);
+			}
+
+			// Dispatch the change notification so dependent functions can pick up on the new data.
+			document.dispatchEvent(new CustomEvent('serviceChange', { detail: data }));
+		}
+	}, true);
+}
+
+/**
+ * Poll the server for a continuous feed of changes for all hosts
+ *
+ */
+function pollHostsMetrics() {
+	stream(`/api/hosts/metrics/stream`, 'GET',{},null,(event, data) => {
+		if (event === 'data') {
+			// Notify the application that a change was detected.
+			document.dispatchEvent(new CustomEvent('hostChange', {detail: data}));
+		}
+	}, true);
+}
+
+/**
+ * Visually tick up/down the number in a given element.
+ *
+ * If the previous number was 1 and the new number is 10,
+ * the values will be updated in the DOM to count up from 1 to 10.
+ *
+ * @param {Element} element
+ * @param {number|string} value
+ * @param {function|null} displayFormat
+ */
+function numberTick(element, value, displayFormat) {
+	const prev = parseFloat(element.textContent.replace(/[^0-9.\-]/g, ''));
+	const target = typeof value === 'number' ? value : parseFloat(value);
+	const format = typeof displayFormat === 'function' ? displayFormat : (v) => v.toFixed(1);
+
+	if (isNaN(prev) || isNaN(target) || prev === target) {
+		element.textContent = format(target);
+		return;
+	}
+
+	const step = (target - prev) / Math.max(Math.abs(target - prev), 10);
+	let current = prev,
+		interval;
+
+	const tick = () => {
+		current += step;
+		if ((step > 0 && current >= target) || (step < 0 && current <= target)) {
+			element.textContent = format(target);
+			if (interval) {
+				clearInterval(interval);
+			}
+			return;
+		}
+		element.textContent = format(current);
+	};
+
+	tick();
+	interval = setInterval(tick, 100);
 }
 
 

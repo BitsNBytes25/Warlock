@@ -1,11 +1,12 @@
 import {logger} from "../libs/logger.mjs";
 import {Host} from "../db.js";
-import {getHostMetrics} from "../libs/get_host_metrics.mjs";
+import {HostData} from "../libs/host_data.mjs";
 
 export function HostMetricsPollTask() {
 	Host.findAll().then(hosts => {
 		hosts.forEach(host => {
-			getHostMetrics(host.ip).catch(error => {
+			let hostData = new HostData(host.ip);
+			hostData.getMetrics().catch(error => {
 				logger.error(`HostMetricsPollTask: Error retrieving metrics for host ${host.ip}:`, error.message);
 			});
 		});

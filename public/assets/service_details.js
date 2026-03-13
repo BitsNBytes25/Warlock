@@ -8,30 +8,6 @@ const serviceDetailsStatus = document.getElementById('serviceDetailsStatus'),
 	btnServiceStop = document.getElementById('btnServiceStop'),
 	btnServiceRestart = document.getElementById('btnServiceRestart');
 
-function pollServiceStatus(app_guid, host, service) {
-	stream(`/api/service/stream/${app_guid}/${host}/${service}`, 'GET',{},null,(event, data) => {
-		if (event === 'data') {
-			// Iterate over the changed keys and handle them if necessary, or just store the updated values
-			for( let key in data ) {
-				document.dispatchEvent(
-					new CustomEvent(
-						'serviceChange',
-						{
-							detail: {
-								key: key,
-								previous: loadedServiceData ? loadedServiceData[key] : null,
-								value: data[key]
-							}
-						}
-					)
-				);
-
-				loadedServiceData[key] = data[key];
-			}
-		}
-	}, true);
-}
-
 function checkUpdates(app_guid, host) {
 	fetch(`/api/application/update/${app_guid}/${host}`)
 		.then(response => response.json())
@@ -185,7 +161,7 @@ window.addEventListener('DOMContentLoaded', () => {
 			btnServiceStart.dataset.host = host;
 			btnServiceStart.dataset.guid = app_guid;
 
-			pollServiceStatus(app_guid, host, service);
+			pollService(app_guid, host, service);
 
 			setTimeout(() => {
 				checkUpdates(app_guid, host);
@@ -239,8 +215,8 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 
 document.addEventListener('serviceChange', e => {
-	if (e.detail.key === 'status') {
-		if (e.detail.value === 'running') {
+	if (e.detail.hasOwnProperty('status')) {
+		if (e.detail.status === 'running') {
 			serviceDetailsStatus.innerHTML = '<i class="fas fa-check-circle"></i> Running';
 			serviceDetailsStatus.classList.remove('status-stopped', 'status-stopping', 'status-starting');
 			serviceDetailsStatus.classList.add('status-running');
@@ -249,7 +225,7 @@ document.addEventListener('serviceChange', e => {
 			btnServiceStop.style.display = 'inline-flex';
 			btnServiceRestart.style.display = 'inline-flex';
 		}
-		else if (e.detail.value === 'stopped') {
+		else if (e.detail.status === 'stopped') {
 			serviceDetailsStatus.innerHTML = '<i class="fas fa-times-circle"></i> Stopped';
 			serviceDetailsStatus.classList.remove('status-running', 'status-stopping', 'status-starting');
 			serviceDetailsStatus.classList.add('status-stopped');
@@ -258,7 +234,7 @@ document.addEventListener('serviceChange', e => {
 			btnServiceStop.style.display = 'none';
 			btnServiceRestart.style.display = 'none';
 		}
-		else if (e.detail.value === 'starting') {
+		else if (e.detail.status === 'starting') {
 			serviceDetailsStatus.innerHTML = '<i class="fas fa-sync-alt fa-spin"></i> Starting';
 			serviceDetailsStatus.classList.remove('status-running', 'status-stopped', 'status-stopping');
 			serviceDetailsStatus.classList.add('status-starting');
@@ -267,7 +243,7 @@ document.addEventListener('serviceChange', e => {
 			btnServiceStop.style.display = 'inline-flex';
 			btnServiceRestart.style.display = 'none';
 		}
-		else if (e.detail.value === 'stopping') {
+		else if (e.detail.status === 'stopping') {
 			serviceDetailsStatus.innerHTML = '<i class="fas fa-sync-alt fa-spin"></i> Stopping';
 			serviceDetailsStatus.classList.remove('status-running', 'status-stopping', 'status-starting');
 			serviceDetailsStatus.classList.add('status-stopping');
@@ -285,19 +261,24 @@ document.addEventListener('serviceChange', e => {
 			btnServiceRestart.style.display = 'none';
 		}
 	}
-	else if (e.detail.key === 'cpu_usage') {
-		serviceDetailsCpu.innerText = e.detail.value;
+
+	if (e.detail.hasOwnProperty('cpu_usage')) {
+		serviceDetailsCpu.innerText = e.detail.cpu_usage;
 	}
-	else if (e.detail.key === 'memory_usage') {
-		serviceDetailsMemory.innerText = e.detail.value;
+
+	if (e.detail.hasOwnProperty('memory_usage')) {
+		serviceDetailsMemory.innerText = e.detail.memory_usage;
 	}
-	else if (e.detail.key === 'player_count') {
-		serviceDetailsPlayers.innerText = (e.detail.value || 0) + ' / ' + loadedServiceData.max_players;
+
+	if (e.detail.hasOwnProperty('player_count')) {
+		serviceDetailsPlayers.innerText = (e.detail.player_count || 0) + ' / ' + loadedServiceData.max_players;
 	}
-	else if (e.detail.key === 'max_players') {
-		serviceDetailsPlayers.innerText = loadedServiceData.player_count + ' / ' + e.detail.value;
+
+	if (e.detail.hasOwnProperty('max_players')) {
+		serviceDetailsPlayers.innerText = loadedServiceData.player_count + ' / ' + e.detail.max_players;
 	}
-	else if (e.detail.key === 'port') {
-		serviceDetailsPort.innerText = e.detail.value;
+
+	if (e.detail.hasOwnProperty('port')) {
+		serviceDetailsPort.innerText = e.detail.port;
 	}
 });

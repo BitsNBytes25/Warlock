@@ -1,0 +1,15 @@
+meta {
+  name: Hosts Metrics
+  type: http
+  seq: 20
+}
+
+get {
+  url: {{host}}/api/hosts/metrics
+  body: none
+  auth: inherit
+}
+
+settings {
+  encodeUrl: true
+}
