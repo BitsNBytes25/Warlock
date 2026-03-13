@@ -6,12 +6,13 @@
  * @property {string} guid Globally unique identifier of the application.
  * @property {string} icon Icon URL of the application.
  * @property {string} repo Repository URL fragment of the application.
- * @property {string} branch Branch name of the application repository, or RELEASE for latest tag released.
  * @property {string} installer Installer URL fragment of the application.
  * @property {string} source Source handler for the application installer.
  * @property {string} thumbnail Thumbnail URL of the application.
  * @property {string} image Full size image URL of the application.
  * @property {string} header Header image URL of the application.
+ * @property {string} author Author information of the app, usually contains name and email.
+ * @property {string[]} supports List of OS support, usually "[Distro Name] [Version List]",...
  */
 
 /**
@@ -118,7 +119,7 @@ let applicationData = null;
 
 /**
  * Cache of host data received from the backend.
- * @type {Object<string, HostData>}
+ * @type {HostData[]|null}
  */
 let hostData = null;
 
@@ -536,7 +537,7 @@ function renderHostName(host, asHTML = true) {
  * @returns {HTMLImageElement}
  */
 function renderHostOSThumbnail(host) {
-	let hostInfo = hostData && hostData[host] || null;
+	let hostInfo = hostData.find( h => h.host === host ) || null;
 
 	const thumbnail = document.createElement('img');
 	thumbnail.className = 'os-thumbnail';
@@ -547,10 +548,7 @@ function renderHostOSThumbnail(host) {
 		return thumbnail;
 	}
 
-	if (!hostInfo.connected) {
-		thumbnail.src = '/assets/media/wallpapers/servers/disconnected.webp';
-	}
-	else if (hostInfo.os.name && hostInfo.os.version) {
+	if (hostInfo.os.name && hostInfo.os.version) {
 		thumbnail.src = `/assets/media/wallpapers/servers/${hostInfo.os.name.toLowerCase()}_${hostInfo.os.version.toLowerCase()}.webp`;
 		thumbnail.dataset.fallback = '/assets/media/wallpapers/servers/generic.webp';
 		thumbnail.alt = hostInfo.os.name;
@@ -570,9 +568,9 @@ function renderHostOSThumbnail(host) {
  * @returns {string}
  */
 function renderHostIcon(host) {
-	let hostInfo = hostData && hostData[host] || null;
+	let hostInfo = hostData.find( h => h.host === host ) || null;
 
-	if (hostInfo && hostInfo.connected && hostInfo.os.name) {
+	if (hostInfo && hostInfo.os.name) {
 		return '<img src="/assets/media/logos/servers/' + hostInfo.os.name.toLowerCase() + '.svg" alt="' + hostInfo.os.title + ' Icon" title="' + hostInfo.os.title + '">';
 	}
 	else {
@@ -696,7 +694,7 @@ function replaceServicePlaceholders(service) {
  * Load application data for the given GUID.
  *
  * @param {string} guid
- * @returns {Promise<void>}
+ * @returns {Promise<AppData>}
  */
 async function loadApplication(guid) {
 	if (applicationData && applicationData.length > 0) {

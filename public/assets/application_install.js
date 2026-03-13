@@ -9,30 +9,24 @@ function renderHost(hostData, isCompatible, compatibleNotice) {
 
 	hostContainer.className = 'host-card';
 	if (hostData.os.name) {
-		hostContainer.appendChild(renderHostOSThumbnail(hostData.ip));
+		hostContainer.appendChild(renderHostOSThumbnail(hostData.host));
 	}
 
 	if (isCompatible) {
 		hostContainer.classList.add('compatible-host');
-		hostContainer.dataset.host = hostData.ip;
+		hostContainer.dataset.host = hostData.host;
 	}
 	metricsContainer.className = 'host-metrics-list';
 
 	// Hostname
 	hostnameContainer.className = 'host-title';
 	if (hostData.os.title) {
-		const icon = renderHostIcon(hostData.ip);
+		const icon = renderHostIcon(hostData.host);
 		hostnameContainer.innerHTML = `<h4 class="host-name">${icon} ${hostData.hostname}</h4>`;
 	}
 	else {
 		hostnameContainer.innerHTML = `<h4 class="host-name">${hostData.hostname}</h4>`;
 	}
-
-	// IP
-	/*const ip = document.createElement('div');
-	ip.className = 'host-desc';
-	ip.textContent = hostData.ip || '';
-	hostnameContainer.appendChild(ip);*/
 
 	// CPU
 	const cpu = document.createElement('div');
@@ -88,129 +82,117 @@ function renderHost(hostData, isCompatible, compatibleNotice) {
 
 window.addEventListener('DOMContentLoaded', () => {
 
-	fetchApplications().then(applications => {
-		const applicationSelect = document.getElementById('selectApplication'),
-			selectedApplicationDetails = document.getElementById('selectedApplicationDetails');
+	const applicationSelect = document.getElementById('selectApplication'),
+		selectedApplicationDetails = document.getElementById('selectedApplicationDetails');
 
-		Object.keys(applications).forEach((key) => {
-			const option = document.createElement('option');
-			option.value = key;
-			option.text = applications[key].title;
-			applicationSelect.appendChild(option);
-		});
+	// Clear on first load
+	applicationSelect.value = '';
 
-		applicationSelect.addEventListener('change', () => {
-			const selectedApp = applicationSelect.value;
-			loadApplication(selectedApp).then(app => {
-				console.log(app);
+	applicationData.forEach(app => {
+		const option = document.createElement('option');
+		option.value = app.guid;
+		option.text = app.title;
+		applicationSelect.appendChild(option);
+	});
 
-				let appUrl = null, appUrlLabel = null, html = '',
-					supportedPlatforms = {};
+	applicationSelect.addEventListener('change', () => {
+		const selectedApp = applicationSelect.value;
+		loadApplication(selectedApp).then(app => {
+			let appUrl = null, appUrlLabel = null, html = '',
+				supportedPlatforms = {};
 
-				if (app.source === 'github' && app.repo) {
-					appUrl = `https://github.com/${app.repo}`;
-					appUrlLabel = `${app.repo} on GitHub`;
+			if (app.source === 'github' && app.repo) {
+				appUrl = `https://github.com/${app.repo}`;
+				appUrlLabel = `${app.repo} on GitHub`;
+			}
+
+			if (appUrl) {
+				html += `<p><strong>Source:</strong> <a href="${appUrl}" target="_blank" rel="noopener">${appUrlLabel}</a></p>`;
+			}
+			if (app.author) {
+				if (app.author.includes('@') && app.author.includes('<')) {
+					const authorMatch = app.author.match(/(.*)<(.*)>/);
+					if (authorMatch) {
+						const authorName = authorMatch[1].trim();
+						const authorEmail = authorMatch[2].trim();
+						html += `<p><strong>Author:</strong> ${authorName} <a href="mailto:${authorEmail}"><i class="fas fa-envelope"></i></a></p>`;
+					 } else {
+						html += `<p><strong>Author:</strong> ${app.author}</p>`;
+					 }
 				}
+			}
+			if (app.supports) {
+				html += `<p><strong>Supports:</strong></p><ul>`;
+				app.supports.forEach(support => {
+					html += `<li>${support}</li>`;
+					// Support is a general format, usually something like "Debian 12, 13" or "Ubuntu 20.04, 22.04"
+					// We can parse this to populate supportedPlatforms
+					const parts = support.split(' ');
+					if (parts.length >= 2) {
+						const platform = parts[0].toLowerCase();
+						const versions = parts.slice(1).join(' ').split(',').map(v => v.trim());
+						if (!supportedPlatforms[platform]) {
+							supportedPlatforms[platform] = new Set();
+						}
+						versions.forEach(version => supportedPlatforms[platform].add(version));
+					}
+					else {
+						// At least add the platform with no versions
+						const platform = support.toLowerCase();
+						if (!supportedPlatforms[platform]) {
+							supportedPlatforms[platform] = new Set();
+						}
+					}
+				});
+				html += `</ul>`;
+			}
 
-				if (appUrl) {
-					html += `<p><strong>Source:</strong> <a href="${appUrl}" target="_blank" rel="noopener">${appUrlLabel}</a></p>`;
-				}
-				if (app.branch) {
-					html += `<p><strong>Branch:</strong> ${app.branch}</p>`;
-				}
-				if (app.author) {
-					if (app.author.includes('@') && app.author.includes('<')) {
-						const authorMatch = app.author.match(/(.*)<(.*)>/);
-						if (authorMatch) {
-							const authorName = authorMatch[1].trim();
-							const authorEmail = authorMatch[2].trim();
-							html += `<p><strong>Author:</strong> ${authorName} <a href="mailto:${authorEmail}"><i class="fas fa-envelope"></i></a></p>`;
-						 } else {
-							html += `<p><strong>Author:</strong> ${app.author}</p>`;
-						 }
+			selectedApplicationDetails.style.display = 'block';
+			selectedApplicationDetails.innerHTML = html;
+
+			// Skip any host already set as having the selected application installed
+			// and any hosts which are not in the supportedPlatforms list
+			// We just need to check the platform.  If the version mismatches simply provide a warning.
+			let hostsHTML = '';
+			hostData.forEach(host => {
+				let compatibleNotice = null, isCompatible = true;
+
+				// Check if host platform is supported
+				if (host.os.name) {
+					const hostOsName = host.os.name.toLowerCase();
+
+					if (Object.keys(supportedPlatforms).length > 0) {
+						if (supportedPlatforms[hostOsName]) {
+							// Platform is supported, now check version
+							if (host.os.version) {
+								const supportedVersions = Array.from(supportedPlatforms[hostOsName]);
+								if (supportedVersions.length > 0 && !supportedVersions.includes(host.os.version)) {
+									compatibleNotice = 'Server host may not be compatible with installer';
+								}
+							}
+						} else {
+							compatibleNotice = `Unsupported Platform`;
+							isCompatible = false;
+						}
+					} else {
+						compatibleNotice = 'Unknown compatibility';
 					}
 				}
-				if (app.supports) {
-					html += `<p><strong>Supports:</strong></p><ul>`;
-					app.supports.forEach(support => {
-						html += `<li>${support}</li>`;
-						// Support is a general format, usually something like "Debian 12, 13" or "Ubuntu 20.04, 22.04"
-						// We can parse this to populate supportedPlatforms
-						const parts = support.split(' ');
-						if (parts.length >= 2) {
-							const platform = parts[0].toLowerCase();
-							const versions = parts.slice(1).join(' ').split(',').map(v => v.trim());
-							if (!supportedPlatforms[platform]) {
-								supportedPlatforms[platform] = new Set();
-							}
-							versions.forEach(version => supportedPlatforms[platform].add(version));
-						}
-						else {
-							// At least add the platform with no versions
-							const platform = support.toLowerCase();
-							if (!supportedPlatforms[platform]) {
-								supportedPlatforms[platform] = new Set();
-							}
-						}
-					});
-					html += `</ul>`;
+
+				if (app.installs) {
+					if (app.installs.map(h => h.host).includes(host.host)) {
+						compatibleNotice = 'Already Installed';
+					}
 				}
 
-				selectedApplicationDetails.style.display = 'block';
-				selectedApplicationDetails.innerHTML = html;
-
-				console.log(supportedPlatforms);
-				fetchHosts().then(hosts => {
-					// Skip any host already set as having the selected application installed
-					// and any hosts which are not in the supportedPlatforms list
-					// We just need to check the platform.  If the version mismatches simply provide a warning.
-					let hostsHTML = '';
-					Object.values(hosts).forEach(host => {
-						let compatibleNotice = null, isCompatible = true;
-
-						// Check if host platform is supported
-						if (host.os.name) {
-							const hostOsName = host.os.name.toLowerCase();
-
-							if (Object.keys(supportedPlatforms).length > 0) {
-								if (supportedPlatforms[hostOsName]) {
-									// Platform is supported, now check version
-									if (host.os.version) {
-										const supportedVersions = Array.from(supportedPlatforms[hostOsName]);
-										if (supportedVersions.length > 0 && !supportedVersions.includes(host.os.version)) {
-											compatibleNotice = 'Server host may not be compatible with installer';
-										}
-									}
-								} else {
-									compatibleNotice = `Unsupported Platform`;
-									isCompatible = false;
-								}
-							} else {
-								compatibleNotice = 'Unknown compatibility';
-							}
-						}
-
-						if (app.hosts) {
-							if (app.hosts.map(h => h.host).includes(host.ip)) {
-								compatibleNotice = 'Already Installed';
-								isCompatible = false;
-							}
-						}
-
-						// Render the host record regardless about compatiblity.
-						// This provides UX feedback that they can see the host but it is not compatible.
-						hostsHTML += renderHost(host, isCompatible, compatibleNotice);
-					});
-
-					document.getElementById('installAppHostList').innerHTML = hostsHTML;
-					document.getElementById('targetHostsContainer').style.display = 'block';
-					console.log(hosts);
-				});
+				// Render the host record regardless of compatability.
+				// This provides UX feedback that they can see the host, but it is not compatible.
+				hostsHTML += renderHost(host, isCompatible, compatibleNotice);
 			});
+
+			document.getElementById('installAppHostList').innerHTML = hostsHTML;
+			document.getElementById('targetHostsContainer').style.display = 'block';
 		});
-	}).catch(e => {
-		console.error(e);
-		//document.querySelector('.content-body').innerHTML = '<div class="alert alert-danger" role="alert">Error loading applications.</div>';
 	});
 });
 
