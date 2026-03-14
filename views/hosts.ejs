@@ -13,6 +13,9 @@
     <link rel="icon" type="image/webp" sizes="128x128" href="<%= assetUrl('/assets/media/logos/warlock/warlock-lopoly-logo-128x128.webp') %>">
     <link rel="icon" type="image/webp" sizes="256x256" href="<%= assetUrl('/assets/media/logos/warlock/warlock-lopoly-logo-256x256.webp') %>">
     <link rel="icon" type="image/webp" sizes="512x512" href="<%= assetUrl('/assets/media/logos/warlock/warlock-lopoly-logo-512x512.webp') %>">
+    <script>
+        hostData = <%- JSON.stringify(hosts) %>;
+    </script>
 </head>
 <body>
 
@@ -53,6 +56,7 @@
                         <div class="cpu">CPU</div>
                         <div class="memory">Memory</div>
                         <div class="disk">Disk</div>
+                        <div class="net">Net</div>
                         <div class="actions">Actions</div>
                     </div>
                     <div class="body">
@@ -64,6 +68,7 @@
                             <div class="cpu">-</div>
                             <div class="memory">- / -</div>
                             <div class="disk">-</div>
+                            <div class="net">-</div>
                             <div class="actions"></div>
                         </div>
                     </div>

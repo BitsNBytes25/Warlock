@@ -3,118 +3,86 @@ const hostsContainer = document.getElementById('hostsContainer'),
 
 /**
  * Populate hosts table with host data
- * @param {string} host
  * @param {HostData} hostData
  */
-function populateHostsTable(host, hostData) {
-	const table = hostsTable,
-		now = parseInt(Date.now() / 1000);
+function populateHostsTable(hostData) {
+	const table = hostsTable;
 
-	let row = table.querySelector('div.host[data-host="' + host + '"]'),
-		fields = ['thumbnail', 'hostname', 'ip', 'os', 'cpu', 'memory', 'disk', 'actions'];
+	let row,
+		fields = ['thumbnail', 'hostname', 'ip', 'os', 'cpu', 'memory', 'disk', 'net', 'actions'];
 
-	if (!row) {
-		// Create new row
-		row = document.createElement('div');
-		row.className = 'host';
-		row.setAttribute('data-host', host);
-		table.querySelector('.body').appendChild(row);
-
-		// Initialize empty cells
-		fields.forEach(field => {
-			const cell = document.createElement('div');
-			cell.className = field;
-			row.appendChild(cell);
-		});
+	// Create a field for each disk; these get displayed in the card view.
+	for(let disk of hostData.disks) {
+		fields.push('advanced-disk-' + disk.dev);
 	}
 
-	row.dataset.updated = String(now);
+	// Create new row
+	row = document.createElement('div');
+	row.className = 'host';
+	row.setAttribute('data-host', hostData.host);
+	table.querySelector('.body').appendChild(row);
 
-	// Calculate metrics
-	const used = Number(hostData.memory.used || 0),
-		total = Number(hostData.memory.total || 0) || 1,
-		memPct = Math.max(0, Math.min(100, (used / total) * 100)),
-		cpuPct = Math.max(0, Math.min(100, Number(hostData.cpu.usage) || 0));
-
-	let totalDisk = 0, totalAvail = 0;
-	hostData.disks.forEach(disk => {
-		totalDisk += Number(disk.size || 0);
-		totalAvail += Number(disk.avail || 0);
-	});
-	const totalUsed = Math.max(0, totalDisk - totalAvail),
-		diskPct = totalDisk > 0 ? Math.round((totalUsed / totalDisk) * 100) : 0;
-
-	// Prepare action buttons
-	let actionButtons = [];
-	actionButtons.push(`
-<button title="Host Details" data-href="/host/details/${encodeURIComponent(host)}" class="link-control action-view">
-<i class="fas fa-info-circle"></i><span>Details</span>
-</button>`);
-
-	// Populate cells
+	// Initialize default cells
 	fields.forEach(field => {
-		const cell = row.querySelector('div.' + field);
+		const cell = document.createElement('div');
+		cell.className = field;
 		let val = '';
 
 		if (field === 'thumbnail') {
-			val = renderHostOSThumbnail(host).outerHTML;
+			val = renderHostOSThumbnail(hostData.host).outerHTML;
 		}
 		else if (field === 'hostname') {
-			val = `${renderHostIcon(host)} <span>${hostData.hostname || host}</span>`;
+			val = `${renderHostIcon(hostData.host)} <span>${hostData.hostname}</span>`;
+		}
+		else if (field === 'actions') {
+			val = `<div class=""><button title="Host Details" data-href="/host/details/${encodeURIComponent(hostData.host)}" class="link-control action-view">
+				<i class="fas fa-info-circle"></i><span>Details</span>
+			</button></div>`
 		}
 		else if (field === 'ip') {
-			let rawIp = hostData.ip || '',
-				publicIp = hostData.public_ip || '',
-				ipDisplay = rawIp;
-
-			if (rawIp === '127.0.0.1' || rawIp === '::1' || rawIp.toLowerCase() === 'localhost' || rawIp.startsWith('127.')) {
-				if (publicIp) {
-					ipDisplay = publicIp;
-				} else {
-					ipDisplay = hostData.hostname || rawIp || '';
-				}
+			// If the user typed in a hostname for the host, (completely valid), use the public_ip instead.
+			if (!hostData.host.match(/^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$/)) {
+				val = hostData.public_ip;
 			}
-			val = ipDisplay;
+			else {
+				val = hostData.host;
+			}
 		}
 		else if (field === 'os') {
 			val = hostData.os ? hostData.os.title : 'Unknown';
 		}
 		else if (field === 'cpu') {
-			let cpuStatusClass = 'good';
-			if (memPct >= 80) {
-				cpuStatusClass = 'critical';
-			}
-			else if (memPct >= 60) {
-				cpuStatusClass = 'warning';
-			}
-
-			val = `${cpuPct}%`;
-			// Add CPU details for card view
+			cell.dataset.title = 'CPU: ';
+			val = '<span class="value"></span>';
 			if (hostData.cpu.model) {
 				val += `<div class="cpu-details">${hostData.cpu.model}</div>`;
-				val += `<div class="bargraph-h"><div class="fill ${cpuStatusClass}" style="width: ${cpuPct}%"></div></div>`;
 			}
+			val += `<div class="bargraph-h"><div class="fill" style="width: 0%"></div></div>`;
 		}
 		else if (field === 'memory') {
-			let memStatusClass = 'good';
-			if (memPct >= 80) {
-				memStatusClass = 'critical';
-			}
-			else if (memPct >= 60) {
-				memStatusClass = 'warning';
-			}
-
-			val = `${formatFileSize(used)} / ${formatFileSize(total)}`;
-			val += `<div class="bargraph-h"><div class="fill ${memStatusClass}" style="width: ${memPct}%"></div></div>`;
+			cell.dataset.title = 'Memory: ';
+			val = `<span class="value"></span> / ${formatFileSize(hostData.memory, 0)}`;
+			val += `<div class="bargraph-h"><div class="fill" style="width: 0%"></div></div>`;
 		}
 		else if (field === 'disk') {
-			val = `${formatFileSize(totalAvail)} free (${diskPct}% used)`;
+			val = '<span class="value1"></span> <span class="value2"></span>';
+			val += `<div class="bargraph-h"><div class="fill" style="width: 0%"></div></div>`;
 		}
-		else if (field === 'actions') {
-			val = '<div class="">' + actionButtons.join(' ') + '</div>';
+		else if (field === 'net') {
+			cell.dataset.title = 'Net: ';
+			val = '<span class="value1"></span> <span class="value2"></span>';
+		}
+		else if (field.startsWith('advanced-disk-')) {
+			let dev= field.replace('advanced-disk-', ''),
+				disk = hostData.disks.find(d => d.dev === dev);
+			cell.dataset.title = `Disk ${disk.mount}: `;
+			cell.className = 'advanced-disk advanced-disk-' + dev.replace(/\//g, '_');
+			val = '<span class="value1"></span> <span class="value2"></span>';
+			val += `<div class="bargraph-h"><div class="fill" style="width: 0%"></div></div>`;
 		}
 
 		cell.innerHTML = val;
+		row.appendChild(cell);
 	});
 
 	// Remove loading rows
@@ -138,19 +106,17 @@ function noHostsAvailable() {
  * Load all hosts and their stats
  */
 function loadAllHosts() {
-	fetchHosts().then(hosts => {
-		if (Object.keys(hosts).length === 0) {
-			noHostsAvailable();
-			return;
-		}
-
-		Object.entries(hosts).forEach(([host, hostData]) => {
-			populateHostsTable(host, hostData);
-		});
-	}).catch(error => {
-		console.error('Error loading hosts:', error);
+	if (hostData.length === 0) {
 		noHostsAvailable();
-	});
+		return;
+	}
+
+	for(let host of hostData) {
+		populateHostsTable(host);
+	}
+
+	// Start the poll to retrieve live stats
+	pollHostsMetrics();
 }
 
 // Dynamic events for various buttons
@@ -203,6 +169,139 @@ window.addEventListener('DOMContentLoaded', () => {
 
 	// Load all hosts and periodically update the list
 	loadAllHosts();
-	setInterval(loadAllHosts, 60*1000); // Refresh hosts every 60 seconds
 });
 
+document.addEventListener('hostChange', e => {
+	let row = hostsContainer.querySelector(`div[data-host="${e.detail.host}"]`);
+	if (!row) {
+		return;
+	}
+	let host = hostData.find(h => h.host === e.detail.host);
+
+	if (e.detail.hasOwnProperty('cpu_usage')) {
+		let cell = row.querySelector('.cpu'),
+			bar = cell.querySelector('.bargraph-h .fill');
+
+		if (e.detail.cpu_usage <= 50) {
+			bar.classList.remove('critical', 'warning');
+			bar.classList.add('good');
+		}
+		else if (e.detail.cpu_usage <= 75) {
+			bar.classList.remove('good', 'critical');
+			bar.classList.add('warning');
+		}
+		else {
+			bar.classList.remove('good', 'warning');
+			bar.classList.add('critical');
+		}
+
+		numberTick(
+			cell.querySelector('.value'),
+			e.detail.cpu_usage,
+			v => v.toFixed(1) + '%',
+		);
+
+		bar.style.width = `${e.detail.cpu_usage}%`;
+	}
+
+	if (e.detail.hasOwnProperty('memory_used')) {
+		let cell = row.querySelector('.memory'),
+			bar = cell.querySelector('.bargraph-h .fill'),
+			totalMemory = host.memory,
+			percent = (e.detail.memory_used / totalMemory) * 100;
+
+		if (percent <= 50) {
+			bar.classList.remove('critical', 'warning');
+			bar.classList.add('good');
+		}
+		else if (percent <= 75) {
+			bar.classList.remove('good', 'critical');
+			bar.classList.add('warning');
+		}
+		else {
+			bar.classList.remove('good', 'warning');
+			bar.classList.add('critical');
+		}
+
+		numberTick(
+			cell.querySelector('.value'),
+			e.detail.memory_used,
+			v => formatFileSize(v, 0),
+		);
+
+		bar.style.width = `${percent}%`;
+	}
+
+	if (e.detail.hasOwnProperty('disks_free')) {
+		let cell = row.querySelector('.disk'),
+			bar = cell.querySelector('.bargraph-h .fill'),
+			totalDisk = host.metrics.disks_total,
+			percent = (e.detail.disks_used / totalDisk) * 100;
+
+		if (percent <= 50) {
+			bar.classList.remove('critical', 'warning');
+			bar.classList.add('good');
+		}
+		else if (percent <= 75) {
+			bar.classList.remove('good', 'critical');
+			bar.classList.add('warning');
+		}
+		else {
+			bar.classList.remove('good', 'warning');
+			bar.classList.add('critical');
+		}
+
+		numberTick(
+			cell.querySelector('.value1'),
+			e.detail.disks_free,
+			v => formatFileSize(v, 1) + ' free',
+		);
+
+		bar.style.width = `${percent}%`;
+	}
+
+	// Check advanced disks
+	for(let disk of host.disks) {
+		if (e.detail.hasOwnProperty(`disk_${disk.dev}_free`)) {
+			let cell = row.querySelector('.advanced-disk-' + disk.dev.replace(/\//g, '_')),
+				bar = cell.querySelector('.bargraph-h .fill'),
+				totalDisk = host.metrics[`disk_${disk.dev}_total`],
+				percent = (e.detail[`disk_${disk.dev}_used`] / totalDisk) * 100;
+
+			if (percent <= 50) {
+				bar.classList.remove('critical', 'warning');
+				bar.classList.add('good');
+			}
+			else if (percent <= 75) {
+				bar.classList.remove('good', 'critical');
+				bar.classList.add('warning');
+			}
+			else {
+				bar.classList.remove('good', 'warning');
+				bar.classList.add('critical');
+			}
+
+			numberTick(
+				cell.querySelector('.value1'),
+				e.detail[`disk_${disk.dev}_free`],
+				v => formatFileSize(v, 1) + ' free',
+			);
+			numberTick(
+				cell.querySelector('.value2'),
+				percent,
+				v => '(' + v.toFixed(0) + '% used)',
+			);
+
+			bar.style.width = `${percent}%`;
+		}
+	}
+
+	if (e.detail.hasOwnProperty('net_tx') || e.detail.hasOwnProperty('net_rx')) {
+		let cell = row.querySelector('.net'),
+			tx = cell.querySelector('.value1'),
+			rx = cell.querySelector('.value2');
+
+		numberTick(tx, host.metrics.net_tx, v => formatBitSpeed(v) + ' ↑');
+		numberTick(rx, host.metrics.net_rx, v => '↓ ' + formatBitSpeed(v));
+	}
+});

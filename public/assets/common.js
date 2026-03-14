@@ -1561,6 +1561,11 @@ function pollServices() {
 function pollHostsMetrics() {
 	stream(`/api/hosts/metrics/stream`, 'GET',{},null,(event, data) => {
 		if (event === 'data') {
+			// Save the metrics on the loaded hosts, if there is one
+			let host = hostData.find(h => h.host === data.host);
+			if (host) {
+				host.metrics = Object.assign(host.metrics || {}, data);
+			}
 			// Notify the application that a change was detected.
 			document.dispatchEvent(new CustomEvent('hostChange', {detail: data}));
 		}
@@ -1578,7 +1583,7 @@ function pollHostsMetrics() {
  * @param {function|null} displayFormat
  */
 function numberTick(element, value, displayFormat) {
-	const prev = parseFloat(element.dataset.numberTickPrevious || 0);
+	const prev = parseFloat(element.dataset.numberTickPrevious || null);
 	const target = typeof value === 'number' ? value : parseFloat(value);
 	const format = typeof displayFormat === 'function' ? displayFormat : (v) => v.toFixed(1);
 

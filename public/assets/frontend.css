@@ -1321,8 +1321,8 @@ button.link-control span {
 #hosts-table.table-view .host {
 	display: grid;
 	align-items: center;
-	grid-template-areas: 'hostname ip os cpu memory disk actions';
-	grid-template-columns: 1fr 8rem 19rem 5rem 10rem 12rem 13rem;
+	grid-template-areas: 'hostname ip os cpu memory disk net actions';
+	grid-template-columns: 1fr 8rem 19rem 8rem 8rem 8rem 8rem 7rem;
 	gap: 1rem;
 	padding: 0.75rem 1rem;
 	border-bottom: 1px solid var(--table-border);
@@ -1344,6 +1344,9 @@ button.link-control span {
 }
 #hosts-table.table-view .thumbnail {
 	display: none;
+}
+#hosts-table.table-view .header .hostname {
+	padding-left: 2.2rem;
 }
 #hosts-table.table-view .hostname {
 	grid-area: hostname;
@@ -1370,16 +1373,28 @@ button.link-control span {
 }
 #hosts-table.table-view .memory {
 	grid-area: memory;
+	text-align: center;
 }
 #hosts-table.table-view .memory .mem-bar {
 	display: none;
 }
 #hosts-table.table-view .disk {
 	grid-area: disk;
+	text-align: center;
+}
+#hosts-table.table-view .net {
+	grid-area: net;
+	text-align: center;
+}
+#hosts-table.table-view .body .net .value1 {
+	display: block;
 }
 #hosts-table.table-view .actions {
 	grid-area: actions;
 	text-align: center;
+}
+#hosts-table.table-view .advanced-disk {
+	display: none;
 }
 #hosts-table.card-view .header {
 	display: none;
@@ -1450,7 +1465,7 @@ button.link-control span {
 	font-size: 0.9rem;
 }
 #hosts-table.card-view .cpu::before {
-	content: 'CPU: ';
+	content: attr(data-title);
 	font-weight: 600;
 	color: var(--content);
 }
@@ -1464,16 +1479,28 @@ button.link-control span {
 	font-size: 0.9rem;
 }
 #hosts-table.card-view .memory::before {
-	content: 'Memory: ';
+	content: attr(data-title);
 	font-weight: 600;
 	color: var(--content);
 }
-#hosts-table.card-view .disk {
+#hosts-table.card-view .net {
+	padding: 0.5rem 1.5rem;
+	font-size: 0.9rem;
+}
+#hosts-table.card-view .net::before {
+	content: attr(data-title);
+	font-weight: 600;
+	color: var(--content);
+}
+#hosts-table.card-view .advanced-disk {
 	padding: 0.5rem 1.5rem 1rem;
 	font-size: 0.9rem;
 }
-#hosts-table.card-view .disk::before {
-	content: 'Disk: ';
+#hosts-table.card-view .disk {
+	display: none;
+}
+#hosts-table.card-view .advanced-disk::before {
+	content: attr(data-title);
 	font-weight: 600;
 	color: var(--content);
 }
@@ -1482,6 +1509,7 @@ button.link-control span {
 	border-top: 1px solid var(--content-border);
 	display: flex;
 	gap: 0.5rem;
+	order: 99;
 }
 /** </editor-fold> **/
 
@@ -3005,7 +3033,7 @@ button.link-control span {
 }
 .bargraph-h .fill {
 	height: 100%;
-	transition: width 0.5s ease;
+	transition: width 4s linear;
 }
 .bargraph-h .fill.good {
 	background: linear-gradient(90deg, var(--status-good), var(--status-good-bg-2));
@@ -3272,8 +3300,8 @@ button.link-control span {
 
 	#hosts-table.table-view .host,
 	#hosts-table.table-view .header {
-		grid-template-areas: 'hostname ip cpu memory disk actions';
-		grid-template-columns: 1fr 8rem 5rem 10rem 12rem 13rem;
+		grid-template-areas: 'hostname ip cpu memory disk net actions';
+		grid-template-columns: 1fr 8rem 8rem 8rem 8rem 8rem 7rem;
 	}
 
 	#hosts-table.table-view .os {
