@@ -6,10 +6,11 @@ const {getAppInstaller} = require("../../libs/get_app_installer.mjs");
 const {logger} = require("../../libs/logger.mjs");
 const {Host} = require("../../db");
 const {getAllApplications} = require("../../libs/get_all_applications.mjs");
-const {clearCache} = require("../../libs/cache.mjs");
+const {clearCache, clearTaggedCache} = require("../../libs/cache.mjs");
 const {push_analytics} = require("../../libs/push_analytics.mjs");
 const {cmdRunner} = require("../../libs/cmd_runner.mjs");
 const {buildRemoteExec} = require("../../libs/build_remote_exec.mjs");
+const {Cron} = require("../../libs/cron.mjs");
 
 const router = express.Router();
 
@@ -137,9 +138,20 @@ router.delete('/:guid/:host', validate_session, validateHostApplication, (req, r
 		}
 
 		// Stream the command output back to the client
-		cmdStreamer(req.appInstallData.host, cmd, res).then(() => {
+		cmdStreamer(req.appInstallData.host, cmd, res).then(async () => {
 			// Clear the server-side application cache
-			clearCache();
+			clearTaggedCache(req.appInstallData.host);
+
+			// Clear any cron jobs that were attached to this service.
+			try {
+				await Cron.DeleteBulk(
+					req.appInstallData.host,
+					m => m.identifier.startsWith(`${req.appInstallData.guid}_`)
+				);
+			}
+			catch(e) {
+				logger.warn(e);
+			}
 		}).catch(() => { });
 	});
 });

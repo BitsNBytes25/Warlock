@@ -112,30 +112,14 @@ router.delete(
 				clearTaggedCache(req.appInstallData.host, req.appInstallData.guid);
 
 				// Clear any cron jobs that were attached to this service.
-				const jobIdentifiers = [
-					`${req.appInstallData.guid}_${req.params.service}_update`,
-					`${req.appInstallData.guid}_${req.params.service}_restart`,
-					`${req.appInstallData.guid}_${req.params.service}_backup`,
-				];
-				for (const jobIdentifier of jobIdentifiers) {
-					try {
-						const cron = await Cron.FindByIdentifier(req.appInstallData.host, jobIdentifier);
-						if (cron) {
-							const result = await cron.delete();
-							if (result.success) {
-								output.stdout += `\nDeleted cron entry ${jobIdentifier}`;
-							}
-							else {
-								output.stderr += `\nFailed to delete cron entry ${jobIdentifier}: ${result.message}`;
-							}
-						}
-						else {
-							output.stdout += `\nCron entry ${jobIdentifier} does not exist, skipping delete`;
-						}
-					}
-					catch(e) {
-						output.stderr += `\nFailed to delete cron entry ${jobIdentifier}: ${e.message}`;
-					}
+				try {
+					await Cron.DeleteBulk(
+						req.appInstallData.host,
+						m => m.identifier.startsWith(`${req.appInstallData.guid}_${req.params.service}_`)
+					);
+				}
+				catch(e) {
+					output.stderr += `\nFailed to delete cron entries: ${e.message}`;
 				}
 
 				return res.json({

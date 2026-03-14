@@ -36,7 +36,7 @@ export const tagCacheKey = (key, host, tags) => {
  * @param {string}      host
  * @param {string|null} tag
  */
-export const clearTaggedCache = (host, tag) => {
+export const clearTaggedCache = (host, tag = null) => {
 	const tagKey = tag || null;
 	const hostEntry = hostTagMap.get(host) || {};
 

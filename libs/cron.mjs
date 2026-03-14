@@ -303,4 +303,30 @@ export class Cron{
 		const jobs = await Cron.GetAll(host);
 		return jobs.find(j => j.identifier === identifier) || null;
 	}
+
+	/**
+	 * Delete bulk cron entries based on a matching function for each entry.
+	 *
+	 * @param {string} host
+	 * @param {function} match
+	 * @returns {Promise<void>}
+	 */
+	static async DeleteBulk(host, match) {
+		const jobs = await Cron.GetAll(host);
+		let newLines = [],
+			matched = false;
+
+		for(let j of jobs) {
+			if (match(j)) {
+				matched = true;
+			}
+			else {
+				newLines.push(j.getRaw());
+			}
+		}
+
+		if (matched) {
+			return pushLines(host, newLines);
+		}
+	}
 }
