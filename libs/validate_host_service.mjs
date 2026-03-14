@@ -1,6 +1,7 @@
 import { getAllApplications } from './get_all_applications.mjs';
 import {logger} from "./logger.mjs";
 import { HostData } from './host_data.mjs';
+import {BadRequestError, NotFoundError} from "./errors.mjs";
 
 /**
  * Validate that a given host, application GUID, and service name exist and are properly associated.
@@ -15,22 +16,22 @@ export async function validateHostService(req, res, next) {
 	const { host, guid, service } = req.params;
 
 	if (!guid) {
-		return res.status(400).json({ success: false, error: 'Missing guid' });
+		throw new BadRequestError('Missing guid parameter');
 	}
 	if (!host) {
-		return res.status(400).json({ success: false, error: 'Missing host' });
+		throw new BadRequestError('Missing host parameter');
 	}
 	if (!service) {
-		return res.status(400).json({ success: false, error: 'Missing service' });
+		throw new BadRequestError('Missing service parameter');
 	}
 
-	getAllApplications()
+	return getAllApplications()
 		.then(async applications => {
 			const apps = applications.filter(a => a.guid === guid);
 			const app = apps.length > 0 ? apps[0] : null;
 
 			if (!app) {
-				throw new Error(`Application with GUID '${guid}' not found`);
+				throw new NotFoundError(`Application with GUID '${guid}' not found`);
 			}
 
 			// Load the host data for this lookup, used by many endpoints
@@ -39,12 +40,12 @@ export async function validateHostService(req, res, next) {
 
 			const appInstallData = app.installs.find(h => h.host === host);
 			if (!appInstallData) {
-				throw new Error(`Application '${guid}' not found on host '${host}'`);
+				throw new NotFoundError(`Application '${guid}' not installed on host '${host}'`);
 			}
 
 			const svc = await appInstallData.getService(service);
 			if (!svc) {
-				throw new Error(`Service '${service}' not found in application '${guid}' on host '${host}'`);
+				throw new NotFoundError(`Service '${service}' not found in application '${guid}' on host '${host}'`);
 			}
 
 			// Attach the discovered data to the request object
@@ -60,9 +61,5 @@ export async function validateHostService(req, res, next) {
 			res.locals.hostData = hostData;
 			// Run next middleware function
 			next();
-		})
-		.catch (e => {
-			logger.error('validateHostService error:', e);
-			res.status(400).json({ success: false, error: e.message });
 		});
 }

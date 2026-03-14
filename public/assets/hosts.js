@@ -182,26 +182,12 @@ document.addEventListener('hostChange', e => {
 		let cell = row.querySelector('.cpu'),
 			bar = cell.querySelector('.bargraph-h .fill');
 
-		if (e.detail.cpu_usage <= 50) {
-			bar.classList.remove('critical', 'warning');
-			bar.classList.add('good');
-		}
-		else if (e.detail.cpu_usage <= 75) {
-			bar.classList.remove('good', 'critical');
-			bar.classList.add('warning');
-		}
-		else {
-			bar.classList.remove('good', 'warning');
-			bar.classList.add('critical');
-		}
-
 		numberTick(
 			cell.querySelector('.value'),
 			e.detail.cpu_usage,
 			v => v.toFixed(1) + '%',
 		);
-
-		bar.style.width = `${e.detail.cpu_usage}%`;
+		progressBarTick(bar, percent);
 	}
 
 	if (e.detail.hasOwnProperty('memory_used')) {
@@ -210,26 +196,12 @@ document.addEventListener('hostChange', e => {
 			totalMemory = host.memory,
 			percent = (e.detail.memory_used / totalMemory) * 100;
 
-		if (percent <= 50) {
-			bar.classList.remove('critical', 'warning');
-			bar.classList.add('good');
-		}
-		else if (percent <= 75) {
-			bar.classList.remove('good', 'critical');
-			bar.classList.add('warning');
-		}
-		else {
-			bar.classList.remove('good', 'warning');
-			bar.classList.add('critical');
-		}
-
 		numberTick(
 			cell.querySelector('.value'),
 			e.detail.memory_used,
 			v => formatFileSize(v, 0),
 		);
-
-		bar.style.width = `${percent}%`;
+		progressBarTick(bar, percent);
 	}
 
 	if (e.detail.hasOwnProperty('disks_free')) {
@@ -238,26 +210,12 @@ document.addEventListener('hostChange', e => {
 			totalDisk = host.metrics.disks_total,
 			percent = (e.detail.disks_used / totalDisk) * 100;
 
-		if (percent <= 50) {
-			bar.classList.remove('critical', 'warning');
-			bar.classList.add('good');
-		}
-		else if (percent <= 75) {
-			bar.classList.remove('good', 'critical');
-			bar.classList.add('warning');
-		}
-		else {
-			bar.classList.remove('good', 'warning');
-			bar.classList.add('critical');
-		}
-
 		numberTick(
 			cell.querySelector('.value1'),
 			e.detail.disks_free,
 			v => formatFileSize(v, 1) + ' free',
 		);
-
-		bar.style.width = `${percent}%`;
+		progressBarTick(bar, percent);
 	}
 
 	// Check advanced disks
@@ -267,19 +225,6 @@ document.addEventListener('hostChange', e => {
 				bar = cell.querySelector('.bargraph-h .fill'),
 				totalDisk = host.metrics[`disk_${disk.dev}_total`],
 				percent = (e.detail[`disk_${disk.dev}_used`] / totalDisk) * 100;
-
-			if (percent <= 50) {
-				bar.classList.remove('critical', 'warning');
-				bar.classList.add('good');
-			}
-			else if (percent <= 75) {
-				bar.classList.remove('good', 'critical');
-				bar.classList.add('warning');
-			}
-			else {
-				bar.classList.remove('good', 'warning');
-				bar.classList.add('critical');
-			}
 
 			numberTick(
 				cell.querySelector('.value1'),
@@ -291,8 +236,7 @@ document.addEventListener('hostChange', e => {
 				percent,
 				v => '(' + v.toFixed(0) + '% used)',
 			);
-
-			bar.style.width = `${percent}%`;
+			progressBarTick(bar, percent);
 		}
 	}
 

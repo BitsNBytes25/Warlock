@@ -1,7 +1,7 @@
 const express = require('express');
 const {validate_session} = require("../../libs/validate_session.mjs");
-const {injectHosts} = require("../../libs/inject_hosts.mjs");
 const {diffObjects} = require("../../libs/diff_objects.mjs");
+const {validateHost} = require("../../libs/validate_host.mjs");
 const {setupEventStream} = require("../../libs/setup_event_stream.mjs");
 
 const router = express.Router();
@@ -12,13 +12,13 @@ const router = express.Router();
  * API endpoint: GET /api/hosts
  */
 router.get(
-	'/',
+	'/:host',
 	validate_session,
-	injectHosts,
+	validateHost,
 	(req, res) => {
 		return res.json({
 			success: true,
-			hosts: res.locals.hosts
+			host: req.hostData
 		});
 	}
 );
@@ -29,15 +29,11 @@ router.get(
  * API endpoint: GET /api/hosts
  */
 router.get(
-	'/metrics',
+	'/metrics/:host',
 	validate_session,
-	injectHosts,
+	validateHost,
 	async (req, res) => {
-		let metrics = [];
-		for (let host of res.locals.hosts) {
-			let m = await host.getMetrics();
-			metrics.push(m);
-		}
+		let metrics = await req.hostData.getMetrics();
 
 		return res.json({
 			success: true,
@@ -52,13 +48,12 @@ router.get(
  * Only updates are sent to the client every 5 seconds.
  */
 router.get(
-	'/metrics/stream',
+	'/metrics/stream/:host',
 	validate_session,
-	injectHosts,
+	validateHost,
 	setupEventStream,
 	(req, res) => {
-		let clientGone = false,
-			hosts = res.locals.hosts,
+		let host = req.hostData,
 			data = {};
 
 		const lookup = async (host) => {
@@ -67,9 +62,9 @@ router.get(
 			// Get the live metrics for this host
 			let metrics = await host.getMetrics();
 
-			if (clientGone) return;
-			const diffData = diffObjects(data[host.host], metrics);
-			data[host.host] = metrics;
+			if (res.locals.clientGone) return;
+			const diffData = diffObjects(data, metrics);
+			data = metrics;
 
 			// Write a response if we have differences.
 			if (Object.keys(diffData).length > 0) {
@@ -84,10 +79,8 @@ router.get(
 
 		// Build the initial set of data to use as a local cache.
 		// Since we only want to send _changes_, we need to know what we've sent previously.
-		for(let host of hosts) {
-			data[host.host] = {};
-			lookup(host);
-		}
+		data = {};
+		lookup(host);
 	}
 );
 

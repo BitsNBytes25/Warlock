@@ -60,6 +60,7 @@ const {MetricsMergeTask} = require("./tasks/metrics_merge.mjs");
 const {HostMetricsMergeTask} = require("./tasks/host_metrics_merge.mjs");
 const {HostMetricsPollTask} = require("./tasks/host_metrics_poll.mjs");
 const {initializeProfiler, isEnabled: isProfilerEnabled} = require("./libs/cmd_profiler.mjs");
+const {errorHandler} = require("./libs/error_handler.mjs");
 
 // Load environment variables
 dotenv.config();
@@ -123,6 +124,7 @@ app.use('/application/backups', require('./routes/application_backups'));
 app.use('/application/configure', require('./routes/application_configure'));
 app.use('/settings', require('./routes/settings'));
 app.use('/2fa-setup', require('./routes/2fa-setup'));
+app.use('/test', require('./routes/test'));
 
 
 /***************************************************************
@@ -132,6 +134,7 @@ app.use('/2fa-setup', require('./routes/2fa-setup'));
 app.use('/api/applications', require('./routes/api/applications'));
 app.use('/api/file', require('./routes/api/file'));
 app.use('/api/files', require('./routes/api/files'));
+app.use('/api/host', require('./routes/api/host'));
 app.use('/api/hosts', require('./routes/api/hosts'));
 app.use('/api/services', require('./routes/api/services'));
 app.use('/api/service', require('./routes/api/service'));
@@ -149,6 +152,10 @@ app.use('/api/users', require('./routes/api/users'));
 app.use('/api/firewall', require('./routes/api/firewall'));
 app.use('/api/ports', require('./routes/api/ports'));
 app.use('/api/metrics', require('./routes/api/metrics'));
+
+
+// Register a generic error handler to use inside this application
+app.use(errorHandler);
 
 
 const PORT = process.env.PORT || 3077;

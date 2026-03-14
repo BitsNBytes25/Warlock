@@ -2,7 +2,8 @@ const express = require('express');
 const {validate_session} = require("../libs/validate_session.mjs");
 const {injectHosts} = require("../libs/inject_hosts.mjs");
 const {getAllApplications} = require("../libs/get_all_applications.mjs");
-const {validateHostApplication} = require("../libs/validate_host_application.mjs");
+const {validateHost} = require("../libs/validate_host.mjs");
+const {validateApplication} = require("../libs/validate_application.mjs");
 const router = express.Router();
 
 router.get(
@@ -18,7 +19,8 @@ router.get(
 router.get(
 	'/:guid/:host',
 	validate_session,
-	validateHostApplication,
+	validateApplication,
+	validateHost,
 	(req, res) => {
 		res.render('application_install2', {});
 	}

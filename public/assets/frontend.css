@@ -47,11 +47,33 @@
 	--card-bg: rgba(20, 23, 35, 0.6);
 	
 	/* Terminal */
-	--terminal: #10b981;
-	--terminal-in: #84c4f8;
-	--terminal-error: #ef4444;
+	--terminal: #51cf66; /* green */
+	--terminal-debug: #0096ff; /* blue */
+	--terminal-in: #4defff; /* bright cyan */
+	--terminal-warning: #ffd93d; /* yellow */
+	--terminal-error: #ff6b6b; /* red */
 	--terminal-bg: rgba(0, 0, 0, 0.95);
 	--terminal-border: rgba(99, 102, 241, 0.2);
+
+	/* Standard colors (0-7) */
+	--term-black: #0a0e27;
+	--term-red: #ff6b6b;
+	--term-green: #51cf66;
+	--term-yellow: #ffd93d;
+	--term-blue: #0096ff;
+	--term-magenta: #da70d6;
+	--term-cyan: #00d9ff;
+	--term-white: #e8e8e8;
+
+	/* Bright colors (8-15) */
+	--term-bright-black: #3a4555;
+	--term-bright-red: #ff8787;
+	--term-bright-green: #69e896;
+	--term-bright-yellow: #ffe066;
+	--term-bright-blue: #4db8ff;
+	--term-bright-magenta: #f087f0;
+	--term-bright-cyan: #4defff;
+	--term-bright-white: #ffffff;
 	
 	/* Buttons - Modern Flat Design */
 	--button-active-shadow: rgba(99, 102, 241, 0.3);
@@ -227,6 +249,11 @@
 		opacity: 1;
 		transform: translateY(0) scale(1);
 	}
+}
+
+@keyframes blink {
+	0%, 100% { opacity: 1; }
+	50% { opacity: 0; }
 }
 
 
@@ -551,18 +578,69 @@ table td {
 	font-family: 'JetBrains Mono', 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
 	font-size: 0.875rem;
 	line-height: 1.6;
-	white-space: pre-line;
+	white-space: pre-wrap;
 	box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 .terminal .line-stdin {
 	color: var(--terminal-in);
 }
-.terminal .line-stderr {
-	color: var(--terminal-error);
+.terminal .line-debug {
+	color: var(--terminal-debug);
 }
+.terminal .line-warning {
+	color: var(--terminal-warning);
+}
+.terminal .line-stderr,
 .terminal .line-error {
 	color: var(--terminal-error);
 }
+
+/* Foreground color classes */
+.term-fg-black { color: var(--term-black); }
+.term-fg-red { color: var(--term-red); }
+.term-fg-green { color: var(--term-green); }
+.term-fg-yellow { color: var(--term-yellow); }
+.term-fg-blue { color: var(--term-blue); }
+.term-fg-magenta { color: var(--term-magenta); }
+.term-fg-cyan { color: var(--term-cyan); }
+.term-fg-white { color: var(--term-white); }
+
+.term-fg-bright-black { color: var(--term-bright-black); }
+.term-fg-bright-red { color: var(--term-bright-red); }
+.term-fg-bright-green { color: var(--term-bright-green); }
+.term-fg-bright-yellow { color: var(--term-bright-yellow); }
+.term-fg-bright-blue { color: var(--term-bright-blue); }
+.term-fg-bright-magenta { color: var(--term-bright-magenta); }
+.term-fg-bright-cyan { color: var(--term-bright-cyan); }
+.term-fg-bright-white { color: var(--term-bright-white); }
+
+/* Background color classes */
+.term-bg-black { background-color: var(--term-black); }
+.term-bg-red { background-color: var(--term-red); }
+.term-bg-green { background-color: var(--term-green); }
+.term-bg-yellow { background-color: var(--term-yellow); }
+.term-bg-blue { background-color: var(--term-blue); }
+.term-bg-magenta { background-color: var(--term-magenta); }
+.term-bg-cyan { background-color: var(--term-cyan); }
+.term-bg-white { background-color: var(--term-white); }
+
+.term-bg-bright-black { background-color: var(--term-bright-black); }
+.term-bg-bright-red { background-color: var(--term-bright-red); }
+.term-bg-bright-green { background-color: var(--term-bright-green); }
+.term-bg-bright-yellow { background-color: var(--term-bright-yellow); }
+.term-bg-bright-blue { background-color: var(--term-bright-blue); }
+.term-bg-bright-magenta { background-color: var(--term-bright-magenta); }
+.term-bg-bright-cyan { background-color: var(--term-bright-cyan); }
+.term-bg-bright-white { background-color: var(--term-bright-white); }
+
+/* Terminal styles */
+.term-bold { font-weight: bold; }
+.term-dim { opacity: 0.7; }
+.term-italic { font-style: italic; }
+.term-underline { text-decoration: underline; }
+.term-blink { animation: blink 1s step-start infinite; }
+.term-hidden { visibility: hidden; }
+.term-strike { text-decoration: line-through; }
 
 .command-input-wrapper {
 	position: relative;
@@ -2807,10 +2885,14 @@ button.link-control span {
 	opacity: 0.7;
 	font-variant: small-caps;
 	margin-bottom: 0.5rem;
+	min-width: 7rem;
+	text-align: center;
 }
 
 .host-details-overview .value {
 	font-size: 1.25rem;
+	min-width: 7rem;
+	text-align: center;
 }
 
 .host-details-info-grid {

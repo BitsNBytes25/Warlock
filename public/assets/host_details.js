@@ -28,63 +28,6 @@ function pollHostStatus(host) {
 
 		hostDataCache = hostData;
 
-		// Update overview stats
-		hostPublicIP.innerText = hostDataCache.public_ip || 'N/A';
-		hostOSInfo.innerText = hostDataCache.os ? `${hostDataCache.os.title} ${hostDataCache.os.version || ''}` : 'Unknown';
-		hostKernel.innerText = hostDataCache.os ? hostDataCache.os.kernel : 'N/A';
-		hostCPUModel.innerText = hostDataCache.cpu ? (hostDataCache.cpu.model || 'N/A') : 'N/A';
-		hostCPUCores.innerText = hostDataCache.cpu ? `${hostDataCache.cpu.threads || 0} threads (${hostDataCache.cpu.count || 0} CPU)` : 'N/A';
-		hostMemoryTotal.innerText = hostDataCache.memory ? formatFileSize(hostDataCache.memory.total) : 'N/A';
-
-		// CPU usage (use load average as percentage relative to thread count)
-		if (hostData.cpu) {
-			const cpuPct = hostData.cpu.usage,
-				fill = hostDetailsCpu.closest('.host-cpu').querySelector('.bargraph-h .fill');
-			hostDetailsCpu.innerText = `${cpuPct}%`;
-			fill.style.width = `${cpuPct}%`;
-
-			// Set status class
-			fill.classList.remove('good', 'warning', 'critical');
-			if (cpuPct >= 80) {
-				fill.classList.add('critical');
-			}
-			else if (cpuPct >= 60) {
-				fill.classList.add('warning');
-			}
-			else {
-				fill.classList.add('good');
-			}
-		}
-
-		// Memory usage
-		if (hostData.memory) {
-			const used = hostData.memory.used,
-				total = hostData.memory.total,
-				memPct = Math.min(100, (used / total) * 100).toFixed(1),
-				fill = hostDetailsMemory.closest('.host-memory').querySelector('.bargraph-h .fill');
-			hostDetailsMemory.innerText = `${formatFileSize(used)} / ${formatFileSize(total)}`;
-			fill.style.width = `${memPct}%`;
-
-			// Set status class
-			fill.classList.remove('good', 'warning', 'critical');
-			if (memPct >= 80) {
-				fill.classList.add('critical');
-			}
-			else if (memPct >= 60) {
-				fill.classList.add('warning');
-			}
-			else {
-				fill.classList.add('good');
-			}
-		}
-
-		// Network usage
-		if (hostData.net.rx && hostData.net.tx) {
-			hostDetailsNetwork.innerText = `↓ ${formatBitSpeed(hostData.net.rx * 8)} ↑ ${formatBitSpeed(hostData.net.tx * 8)}`;
-		}
-		else {
-			hostDetailsNetwork.innerText = 'N/A';
-		}
 
 		// Disk usage
 		if (hostData.disks && hostData.disks.length > 0) {
@@ -203,9 +146,18 @@ function loadOverview() {
 
 	applicationsContainer.innerHTML = '<div><i class="fas fa-spinner fa-spin"></i> Loading applications...</div>';
 
-	const host = loadedHost;
+	hostPublicIP.innerText = loadedHostData.public_ip || 'N/A';
+	hostOSInfo.innerText = loadedHostData.os.title || 'Unknown';
+	hostKernel.innerText = loadedHostData.os.kernel || 'Unknown';
+	hostCPUModel.innerText = loadedHostData.cpu.model || 'N/A';
+	let cpuThreadInfo = `${loadedHostData.cpu.threads} threads`;
+	if (loadedHostData.cpu.sockets > 1) {
+		cpuThreadInfo += ` (${loadedHostData.cpu.sockets} sockets)`;
+	}
+	hostCPUCores.innerText = cpuThreadInfo;
 
 	fetchServices().then(services => {
+		console.log(services);
 		let hostApps = [];
 
 		services.forEach(svc => {
@@ -281,11 +233,23 @@ window.addEventListener('DOMContentLoaded', () => {
 
 	// Load host data
 	loadHost(host).then(() => {
-		// Start polling
-		pollHostStatus(host);
-		pollInterval = setInterval(() => {
-			pollHostStatus(host);
-		}, 1000 * 15);
+
+		// Start metrics poller
+		pollHostMetrics(host);
+
+		loadedHostData.disks.forEach(disk => {
+			let diskContainer;
+
+			// Create new disk entry
+			diskContainer = document.createElement('div');
+			diskContainer.dataset.dev = disk.dev;
+			diskContainer.classList.add('host-disk');
+			diskContainer.innerHTML = `<div class="label">Disk ${disk.mount} (${disk.type})</div>
+<div class="value"></div>
+<div class="bargraph-h"><div class="fill"></div></div>`;
+			hostDetailOverview.appendChild(diskContainer);
+		});
+
 
 		// Setup button handlers
 		/*btnHostFirewall.addEventListener('click', () => {
@@ -313,10 +277,58 @@ window.addEventListener('DOMContentLoaded', () => {
 	});
 });
 
-// Cleanup on page unload
-window.addEventListener('beforeunload', () => {
-	if (pollInterval) {
-		clearInterval(pollInterval);
+document.addEventListener('hostChange', e => {
+	console.log(e.detail);
+
+	if (e.detail.hasOwnProperty('cpu_usage')) {
+		let cell = hostDetailOverview.querySelector('.host-cpu'),
+			bar = cell.querySelector('.bargraph-h .fill');
+
+		numberTick(
+			hostDetailsCpu,
+			e.detail.cpu_usage,
+			v => v.toFixed(1) + '%',
+		);
+		progressBarTick(bar, e.detail.cpu_usage);
+	}
+
+	if (e.detail.hasOwnProperty('memory_used')) {
+		let cell = hostDetailOverview.querySelector('.host-memory'),
+			bar = cell.querySelector('.bargraph-h .fill'),
+			totalMemory = loadedHostData.memory,
+			percent = (e.detail.memory_used / totalMemory) * 100;
+
+		numberTick(
+			cell.querySelector('.value'),
+			e.detail.memory_used,
+			v => formatFileSize(v, 0) + ' / ' + formatFileSize(totalMemory, 0)
+		);
+		progressBarTick(bar, percent);
+	}
+
+	if (e.detail.hasOwnProperty('net_tx') || e.detail.hasOwnProperty('net_rx')) {
+		let cell = hostDetailOverview.querySelector('.host-network'),
+			tx = cell.querySelector('.value1'),
+			rx = cell.querySelector('.value2');
+
+		numberTick(tx, loadedHostData.metrics.net_tx, v => formatBitSpeed(v) + ' ↑');
+		numberTick(rx, loadedHostData.metrics.net_rx, v => '↓ ' + formatBitSpeed(v));
+	}
+
+	// Check advanced disks
+	for(let disk of loadedHostData.disks) {
+		if (e.detail.hasOwnProperty(`disk_${disk.dev}_used`)) {
+			let cell = hostDetailOverview.querySelector('.host-disk[data-dev="' + disk.dev + '"]'),
+				bar = cell.querySelector('.bargraph-h .fill'),
+				totalDisk = loadedHostData.metrics[`disk_${disk.dev}_total`],
+				percent = (e.detail[`disk_${disk.dev}_used`] / totalDisk) * 100;
+
+			numberTick(
+				cell.querySelector('.value'),
+				e.detail[`disk_${disk.dev}_used`],
+				v => formatFileSize(v, 1) + ' / ' + formatFileSize(totalDisk, 1)
+			);
+			progressBarTick(bar, percent);
+		}
 	}
 });
-

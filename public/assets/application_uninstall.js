@@ -40,7 +40,6 @@ window.addEventListener('DOMContentLoaded', () => {
 					}).then(() => {
 						// Stream ended
 						showToast('success', 'Uninstallation process completed.');
-						window.location.href = '/dashboard';
 					})
 					.catch(() => {
 						showToast('error', 'Uninstallation process encountered an error. See terminal output for details.');

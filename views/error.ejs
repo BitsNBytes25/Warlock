@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Warlock - Server Management</title>
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+	<link rel="stylesheet" href="<%= assetUrl('/assets/frontend.css') %>">
+	<link rel="stylesheet" href="<%= assetUrl('/assets/themes.css') %>">
+	<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+	<script src="<%= assetUrl('/assets/common.js') %>"></script>
+	<link rel="icon" type="image/webp" sizes="64x64" href="<%= assetUrl('/assets/media/logos/warlock/warlock-lopoly-logo-64x64.webp') %>">
+	<link rel="icon" type="image/webp" sizes="128x128" href="<%= assetUrl('/assets/media/logos/warlock/warlock-lopoly-logo-128x128.webp') %>">
+	<link rel="icon" type="image/webp" sizes="256x256" href="<%= assetUrl('/assets/media/logos/warlock/warlock-lopoly-logo-256x256.webp') %>">
+	<link rel="icon" type="image/webp" sizes="512x512" href="<%= assetUrl('/assets/media/logos/warlock/warlock-lopoly-logo-512x512.webp') %>">
+</head>
+<body>
+	<%- include('partials/nav.ejs') %>
+
+	<div class="main-container" style="grid-template-columns: 1fr; max-width: 1600px;">
+		<main class="content-area">
+			<div class="content-header">
+				<div class="content-header-inner">
+					<h2>
+						<i class="fas fa-exclamation-triangle"></i>
+						<%= error.title || 'Something went wrong' %>
+					</h2>
+					<p><%= tagLine %></p>
+				</div>
+			</div>
+			
+			<div class="content-body">
+				<p class="error-message">
+					<%= error.message %>
+				</p>
+			</div>
+		</main>
+	</div>
+</body>
+</html>

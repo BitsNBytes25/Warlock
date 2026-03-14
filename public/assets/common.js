@@ -593,21 +593,26 @@ function formatFileSize(bytes, precision) {
 	const k = 1024;
 	const sizes = ['B', 'KB', 'MB', 'GB', 'TB', 'PB'];
 	const i = Math.floor(Math.log(bytes) / Math.log(k));
-	return parseFloat((bytes / Math.pow(k, i)).toFixed(precision)) + ' ' + sizes[i];
+	return parseFloat(bytes / Math.pow(k, i)).toFixed(precision) + ' ' + sizes[i];
 }
 
 /**
  * Format bits per second as human-readable text.
  *
  * @param {number} bits
+ * @param {number|null} precision
  * @returns {string}
  */
-function formatBitSpeed(bits) {
+function formatBitSpeed(bits, precision) {
+	precision = (precision === undefined || precision === null) ? 1 : precision;
+
+	if (bits < 1 || bits === null || bits === undefined) return '0 bps';
+
 	if (bits === 0) return '0 bps';
 	const k = 1024;
 	const sizes = ['bps', 'Kbps', 'Mbps', 'Gbps', 'Tbps', 'Pbps'];
 	const i = Math.floor(Math.log(bits) / Math.log(k));
-	return parseFloat((bits / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+	return parseFloat(bits / Math.pow(k, i)).toFixed(precision) + ' ' + sizes[i];
 }
 
 /**
@@ -1034,43 +1039,45 @@ function parseTerminalCodes(data) {
 	const ESC = '\u001b[';
 	const RESET = ESC + '0m';
 
-	const styleMap = {
-		'30': 'color: black;',
-		'31': 'color: red;',
-		'32': 'color: green;',
-		'33': 'color: yellow;',
-		'34': 'color: blue;',
-		'35': 'color: magenta;',
-		'36': 'color: cyan;',
-		'37': 'color: white;',
-		'40': 'background-color: black;',
-		'41': 'background-color: red;',
-		'42': 'background-color: green;',
-		'43': 'background-color: yellow;',
-		'44': 'background-color: blue;',
-		'45': 'background-color: magenta;',
-		'46': 'background-color: cyan;',
-		'47': 'background-color: white;',
-		'90': 'color: gray;',
-		'91': 'color: lightred;',
-		'92': 'color: lightgreen;',
-		'93': 'color: lightyellow;',
-		'94': 'color: lightblue;',
-		'95': 'color: lightmagenta;',
-		'96': 'color: lightcyan;',
-		'97': 'color: lightwhite;',
-		'100': 'background-color: gray;',
-		'101': 'background-color: lightred;',
-		'102': 'background-color: lightgreen;',
-		'103': 'background-color: lightyellow;',
-		'104': 'background-color: lightblue;',
-		'105': 'background-color: lightmagenta;',
-		'106': 'background-color: lightcyan;',
-		'107': 'background-color: lightwhite;',
-		'1': 'font-weight: bold;',
-		'2': 'opacity: 0.8;',
-		'3': 'font-style: italic;',
-		'4': 'text-decoration: underline;',
+	const classMap = {
+		'30': 'term-fg-black',
+		'31': 'term-fg-red',
+		'32': 'term-fg-green',
+		'33': 'term-fg-yellow',
+		'34': 'term-fg-blue',
+		'35': 'term-fg-magenta',
+		'36': 'term-fg-cyan',
+		'37': 'term-fg-white',
+		'40': 'term-bg-black',
+		'41': 'term-bg-red',
+		'42': 'term-bg-green',
+		'43': 'term-bg-yellow',
+		'44': 'term-bg-blue',
+		'45': 'term-bg-magenta',
+		'46': 'term-bg-cyan',
+		'47': 'term-bg-white',
+		'90': 'term-fg-bright-black',
+		'91': 'term-fg-bright-red',
+		'92': 'term-fg-bright-green',
+		'93': 'term-fg-bright-yellow',
+		'94': 'term-fg-bright-blue',
+		'95': 'term-fg-bright-magenta',
+		'96': 'term-fg-bright-cyan',
+		'97': 'term-fg-bright-white',
+		'100': 'term-bg-bright-black',
+		'101': 'term-bg-bright-red',
+		'102': 'term-bg-bright-green',
+		'103': 'term-bg-bright-yellow',
+		'104': 'term-bg-bright-blue',
+		'105': 'term-bg-bright-magenta',
+		'106': 'term-bg-bright-cyan',
+		'107': 'term-bg-bright-white',
+		'1': 'term-bold',
+		'2': 'term-dim',
+		'3': 'term-italic',
+		'4': 'term-underline',
+		'5': 'term-blink',
+		'9': 'term-strike',
 	};
 
 	let result = '';
@@ -1090,9 +1097,9 @@ function parseTerminalCodes(data) {
 				// Reset code
 				result += '</span>' + text;
 				depth = Math.max(0, depth - 1);
-			} else if (styleMap[code]) {
+			} else if (classMap[code]) {
 				// Known style code
-				result += `<span style="${styleMap[code]}">` + text;
+				result += `<span class="${classMap[code]}">` + text;
 				depth += 1;
 			} else {
 				// Unknown code
@@ -1190,8 +1197,28 @@ function terminalOutputHelper(terminalOutput, event, data) {
 	// Swap any < ... > to prevent HTML issues
 	data = data.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
+	// Is this a clear command?
+	if (data === '\x1b[2J\x1b[H') {
+		terminalOutput.innerHTML = '';
+		return;
+	}
+
 	// Put pretty colors in place
 	data = parseTerminalCodes(data);
+
+	if (event === 'stderr') {
+		// Check if logs should be reclassified.
+		// They are sent on stderr, but they're not necessarily errors.
+		if (data.substring(0, 50).includes('[DEBUG]')) {
+			event = 'debug';
+		}
+		else if (data.substring(0, 50).includes('[INFO]')) {
+			event = 'stdout';
+		}
+		else if (data.substring(0, 50).includes('[WARN]')) {
+			event = 'warning';
+		}
+	}
 
 	// Append output
 	let line = document.createElement('div');
@@ -1555,6 +1582,24 @@ function pollServices() {
 }
 
 /**
+ * Poll the server for a continuous feed of changes for a single
+ *
+ */
+function pollHostMetrics(host) {
+	stream(`/api/host/metrics/stream/${host}`, 'GET',{},null,(event, data) => {
+		if (event === 'data') {
+			// Save the metrics on the loaded hosts, if there is one
+			if (loadedHostData && loadedHostData.host === data.host) {
+				loadedHostData.metrics = Object.assign(loadedHostData.metrics || {}, data);
+			}
+
+			// Notify the application that a change was detected.
+			document.dispatchEvent(new CustomEvent('hostChange', {detail: data}));
+		}
+	}, true);
+}
+
+/**
  * Poll the server for a continuous feed of changes for all hosts
  *
  */
@@ -1611,6 +1656,34 @@ function numberTick(element, value, displayFormat) {
 
 	tick();
 	interval = setInterval(tick, 200);
+}
+
+/**
+ * Simple helper function to update a progress bar with a new percentage.
+ *
+ * Does not handle animations, just sets the class to "good", "warning", or "critical"
+ * and sets the width of the bar.
+ *
+ * @param {Element} barFill    DOMElement to update, should be the inner fill object.
+ * @param {number} percent     Current value of progress bar, in 0-100 percent
+ * @param {number} goodMax     Maximum value for good styling
+ * @param {number} warningMax  Maximum value for warning styling
+ */
+function progressBarTick(barFill, percent, goodMax = 50, warningMax = 75) {
+	if (percent <= goodMax) {
+		barFill.classList.remove('critical', 'warning');
+		barFill.classList.add('good');
+	}
+	else if (percent <= warningMax) {
+		barFill.classList.remove('good', 'critical');
+		barFill.classList.add('warning');
+	}
+	else {
+		barFill.classList.remove('good', 'warning');
+		barFill.classList.add('critical');
+	}
+
+	barFill.style.width = `${Math.max(Math.min(percent, 100), 0)}%`;
 }
 
 

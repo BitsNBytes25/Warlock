@@ -1,11 +1,11 @@
 meta {
-  name: Host Firewall
+  name: Host Metrics (Stream)
   type: http
-  seq: 27
+  seq: 25
 }
 
 get {
-  url: {{host}}/api/firewall/:host
+  url: {{host}}/api/host/metrics/stream/:host
   body: none
   auth: inherit
 }

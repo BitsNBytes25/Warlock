@@ -15,6 +15,10 @@
     <link rel="icon" type="image/webp" sizes="128x128" href="<%= assetUrl('/assets/media/logos/warlock/warlock-lopoly-logo-128x128.webp') %>">
     <link rel="icon" type="image/webp" sizes="256x256" href="<%= assetUrl('/assets/media/logos/warlock/warlock-lopoly-logo-256x256.webp') %>">
     <link rel="icon" type="image/webp" sizes="512x512" href="<%= assetUrl('/assets/media/logos/warlock/warlock-lopoly-logo-512x512.webp') %>">
+    <script>
+        hostData = [<%- JSON.stringify(hostData) %>];
+        applicationData = <%- JSON.stringify(apps) %>;
+    </script>
 </head>
 <body data-use-app-background="1">
 <%- include('partials/nav.ejs') %>
@@ -59,7 +63,7 @@
                 </div>
                 <div class="host-network">
                     <div class="label">Network</div>
-                    <div id="hostDetailsNetwork" class="value">N/A</div>
+                    <div id="hostDetailsNetwork" class="value"><span class="value1"></span> <span class="value2"></span></div>
                 </div>
             </div>
         </div>
@@ -108,9 +112,11 @@
     </main>
 </div>
 
-<%- include('partials/host-firewall-modals.ejs') %>
-<%- include('partials/host-cron-modals.ejs') %>
-<%- include('partials/service-files-modals.ejs') %>
+<!--
+< %- include('partials/host-firewall-modals.ejs') %>
+< %- include('partials/host-cron-modals.ejs') %>
+< %- include('partials/service-files-modals.ejs') %>
+-->
 
 <%- include('partials/theme-selector.ejs') %>
 <script src="<%= assetUrl('/assets/host_details.js') %>"></script>

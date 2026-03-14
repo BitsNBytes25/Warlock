@@ -1,5 +1,6 @@
 import {Host} from '../db.js';
 import {HostData} from './host_data.mjs';
+import {BadRequestError, NotFoundError} from "./errors.mjs";
 
 /**
  * Validate that a given host exists on the system
@@ -14,12 +15,12 @@ export async function validateHost(req, res, next) {
 	const { host } = req.params;
 
 	if (!host) {
-		return res.status(400).json({ success: false, error: 'Missing host' });
+		throw new BadRequestError('Missing host parameter');
 	}
 
 	let count = await Host.count({ where: { ip: host } });
 	if (count === 0) {
-		return res.status(404).json({ success: false, error: 'Requested host is not in the configured HOSTS list' });
+		throw new NotFoundError('Requested host is not registered in Warlock');
 	}
 
 	const hostData = new HostData(host);
