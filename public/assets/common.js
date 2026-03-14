@@ -1588,7 +1588,7 @@ function numberTick(element, value, displayFormat) {
 		return;
 	}
 
-	const step = (target - prev) / 10;
+	const step = (target - prev) / 20;
 	let current = prev,
 		interval;
 
@@ -1605,7 +1605,7 @@ function numberTick(element, value, displayFormat) {
 	};
 
 	tick();
-	interval = setInterval(tick, 100);
+	interval = setInterval(tick, 200);
 }
 
 

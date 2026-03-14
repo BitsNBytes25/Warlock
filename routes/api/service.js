@@ -6,6 +6,7 @@ const {getApplicationMetrics} = require("../../libs/get_application_metrics.mjs"
 const {cmdRunner} = require("../../libs/cmd_runner.mjs");
 const {validateHostApplication} = require("../../libs/validate_host_application.mjs");
 const {clearTaggedCache} = require("../../libs/cache.mjs");
+const {Cron} = require("../../libs/cron.mjs");
 
 const router = express.Router();
 
@@ -91,34 +92,66 @@ router.put('/:guid/:host/:service', validate_session, validateHostApplication, (
  * @property {AppInstallData} req.appInstallData
  * @property {ServiceData} req.serviceData
  */
-router.delete('/:guid/:host/:service', validate_session, validateHostService, (req, res) => {
-	if (!req.appInstallData.options.includes('remove-service')) {
-		return res.json({
-			success: false,
-			error: 'This application does not support deleting services'
-		});
-	}
-
-	// Execute the command via manage.py
-	const cmd = req.appInstallData.getServiceCommandString('remove-service', req.params.service);
-	cmdRunner(req.appInstallData.host, cmd)
-		.then(output => {
-			// On updates to the service state, clear the cache for the application
-			clearTaggedCache(req.appInstallData.host, req.appInstallData.guid);
-
-			res.json({
-				success: true,
-				stdout: output.stdout,
-				stderr: output.stderr
-			});
-		})
-		.catch(e => {
-			res.json({
+router.delete(
+	'/:guid/:host/:service',
+	validate_session,
+	validateHostService,
+	async (req, res) => {
+		if (!req.appInstallData.options.includes('remove-service')) {
+			return res.json({
 				success: false,
-				error: e.error ? e.error.message : e.message
+				error: 'This application does not support deleting services'
 			});
-		});
-});
+		}
+
+		// Execute the command via manage.py
+		const cmd = req.appInstallData.getServiceCommandString('remove-service', req.params.service);
+		return cmdRunner(req.appInstallData.host, cmd)
+			.then(async output => {
+				// On updates to the service state, clear the cache for the application
+				clearTaggedCache(req.appInstallData.host, req.appInstallData.guid);
+
+				// Clear any cron jobs that were attached to this service.
+				const jobIdentifiers = [
+					`${req.appInstallData.guid}_${req.params.service}_update`,
+					`${req.appInstallData.guid}_${req.params.service}_restart`,
+					`${req.appInstallData.guid}_${req.params.service}_backup`,
+				];
+				for (const jobIdentifier of jobIdentifiers) {
+					try {
+						const cron = await Cron.FindByIdentifier(req.appInstallData.host, jobIdentifier);
+						if (cron) {
+							const result = await cron.delete();
+							if (result.success) {
+								output.stdout += `\nDeleted cron entry ${jobIdentifier}`;
+							}
+							else {
+								output.stderr += `\nFailed to delete cron entry ${jobIdentifier}: ${result.message}`;
+							}
+						}
+						else {
+							output.stdout += `\nCron entry ${jobIdentifier} does not exist, skipping delete`;
+						}
+					}
+					catch(e) {
+						output.stderr += `\nFailed to delete cron entry ${jobIdentifier}: ${e.message}`;
+					}
+				}
+
+				return res.json({
+					success: true,
+					stdout: output.stdout,
+					stderr: output.stderr
+				});
+			})
+			.catch(e => {
+				return res.json({
+					success: false,
+					error: e.error ? e.error.message : e.message
+				});
+			});
+	}
+);
 
 /**
  * Stream "live" metrics and stats for a given service
