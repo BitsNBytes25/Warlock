@@ -19,9 +19,3 @@ Manager:
 Images:
 
 Resize the lo-poly icons to be squares so favicons work better.  Then implement:
-
-```html
-    <link rel="icon" type="image/webp" sizes="64x48" href="<%= assetUrl('/assets/media/logos/warlock/warlock-lopoly-logo-64x48.webp') %>">
-    <link rel="icon" type="image/webp" sizes="128x96" href="<%= assetUrl('/assets/media/logos/warlock/warlock-lopoly-logo-128x96.webp') %>">
-    <link rel="icon" type="image/webp" sizes="256x192" href="<%= assetUrl('/assets/media/logos/warlock/warlock-lopoly-logo-256x192.webp') %>">
-```
