@@ -16,49 +16,6 @@ let hostDataCache = null,
 	pollInterval = null;
 
 /**
- * Poll host status from the API
- */
-function pollHostStatus(host) {
-	fetchHosts().then(hosts => {
-		const hostData = hosts[host];
-		if (!hostData) {
-			console.error('Host not found in API response');
-			return;
-		}
-
-		hostDataCache = hostData;
-
-
-		// Disk usage
-		if (hostData.disks && hostData.disks.length > 0) {
-			hostData.disks.forEach(disk => {
-				let diskContainer = hostDetailOverview.querySelector('[data-disk="' + disk.filesystem + '"]');
-				if (!diskContainer) {
-					// Create new disk entry
-					diskContainer = document.createElement('div');
-					diskContainer.dataset.disk = disk.filesystem;
-					diskContainer.classList.add('host-disk');
-					hostDetailOverview.appendChild(diskContainer);
-				}
-				let diskPct = Math.min(100, ((disk.used / disk.size) * 100).toFixed(1)),
-					diskStatus = 'good';
-				if (diskPct >= 80) {
-					diskStatus = 'critical';
-				}
-				else if (diskPct >= 60) {
-					diskStatus = 'warning';
-				}
-				diskContainer.innerHTML = `<div class="label">Disk ${disk.mountpoint} (${disk.filesystem})</div>
-<div class="value">${formatFileSize(disk.used)} / ${formatFileSize(disk.size)}</div>
-<div class="bargraph-h"><div class="fill ${diskStatus}" style="width: ${diskPct}%"></div></div>`;
-			});
-		}
-	}).catch(error => {
-		console.error('Error fetching host data:', error);
-	});
-}
-
-/**
  * Activate a specific tab
  */
 function activateHostTab(tab, jumpTo = true) {
@@ -97,7 +54,9 @@ function activateHostTab(tab, jumpTo = true) {
 		loadMetrics();
 	}
 	else if (tab === 'files') {
-		loadDirectory('/');
+		if (currentPathEl.textContent === '') {
+			loadDirectory('/');
+		}
 	}
 	else if (tab === 'firewall') {
 		loadFirewall();
@@ -177,40 +136,54 @@ function loadOverview() {
 			hostData = app.installs.find(i => i.host === loadedHostData.host),
 			thumbnail = getAppThumbnail(appGUID);
 
-		console.log(hostData);
-
 		const appCard = `
-			<div class="application-card">
-				<div class="application-header">
+			<div class="application-entry">
+				<div class="thumbnail">
 					<img src="${thumbnail}" alt="${app.title}" class="app-thumbnail">
-					<div class="app-info">
-						<h3>${app.title}</h3>
-						<ul>
-							<li>Install Directory: ${hostData.path}</li>
-							<li>API Version: ${hostData.version}</li>
-						</ul>
-					</div>
-					<div class="actions">
-						<button>Remove</button>
-						<button>Browse Files</button>
-						<button>Reinstall</button>
-					</div>
+				</div>
+				<div class="name">${app.title}</div>
+				<div class="description">${hostData.path}</div>
+				<ul>
+					<li>API Version: ${hostData.version}</li>
+				</ul>
+				<div class="actions">
+					<button class="action-remove" data-app="${appGUID}" data-host="${loadedHostData.host}">
+						<i class="fas fa-trash-alt"></i>
+						Uninstall
+					</button>
+					<button class="action-browse" data-path="${hostData.path}">
+						<i class="fas fa-folder-open"></i>
+						Browse Files
+					</button>
+					<button class="action-edit" data-app="${appGUID}" data-host="${loadedHostData.host}">
+						<i class="fas fa-redo"></i>
+						Reinstall
+					</button>
 				</div>
 			</div>
 		`;
 
 		applicationsContainer.insertAdjacentHTML('beforeend', appCard);
 	});
-}
 
-/**
- * Load metrics placeholder
- */
-function loadMetricsPlaceholder() {
-	// Placeholder for future metrics implementation
-	console.log('Metrics tab activated - placeholder for now');
+	// Events for application buttons
+	applicationsContainer.querySelectorAll('.action-browse').forEach((btn) => {
+		btn.addEventListener('click', () => {
+			loadDirectory(btn.dataset.path);
+			activateHostTab('files');
+		});
+	});
+	applicationsContainer.querySelectorAll('.action-remove').forEach((btn) => {
+		btn.addEventListener('click', () => {
+			window.location.href = `/application/uninstall/${btn.dataset.app}/${loadedHostData.host}`;
+		});
+	});
+	applicationsContainer.querySelectorAll('.action-edit').forEach((btn) => {
+		btn.addEventListener('click', () => {
+			window.location.href = `/application/install/${btn.dataset.app}/${loadedHostData.host}`;
+		});
+	});
 }
-
 
 
 /**

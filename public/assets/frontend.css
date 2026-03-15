@@ -1542,7 +1542,7 @@ host-connected-metric .critical {
 /* Card container */
 .card-view .service-entry,
 .card-view .host-entry,
-.application-card,
+.card-view .application-entry,
 .host-card,
 .backup-file-item {
 	display: flex;
@@ -1563,7 +1563,7 @@ host-connected-metric .critical {
 }
 .card-view .host-entry:hover,
 .card-view .service-entry:hover,
-.application-card:hover,
+.card-view .application-entry:hover,
 .host-card:hover,
 .backup-file-item:hover {
 	border-color: var(--content-hover-border);
@@ -1575,7 +1575,7 @@ host-connected-metric .critical {
 /* Thumbnail container, fixed to the top of the container and full width */
 .card-view .host-entry .thumbnail,
 .card-view .service-entry .thumbnail,
-.application-card .app-thumbnail,
+.card-view .application-entry .thumbnail,
 .host-card .os-thumbnail {
 	position: absolute;
 	width: 100%;
@@ -1586,7 +1586,8 @@ host-connected-metric .critical {
 	border-radius: 12px 12px 0 0;
 }
 .card-view .host-entry .thumbnail img,
-.card-view .service-entry .thumbnail img {
+.card-view .service-entry .thumbnail img,
+.card-view .application-entry .thumbnail img {
 	width: 100%;
 	height: 100%;
 	object-fit: cover;
@@ -1595,7 +1596,8 @@ host-connected-metric .critical {
 
 /* Card primary name, displayed at the top over the thumbnail */
 .card-view .service-entry .name,
-.card-view .host-entry .hostname {
+.card-view .host-entry .hostname,
+.card-view .application-entry .name {
 	order: 1;
 	z-index: 2;
 	flex: 4 100%;
@@ -1615,7 +1617,8 @@ host-connected-metric .critical {
 
 /* Card descriptor, displayed over the thumbnail below the title in smaller text */
 .card-view .host-entry .ip,
-.card-view .service-entry .host {
+.card-view .service-entry .host,
+.card-view .application-entry .description {
 	order: 2;
 	z-index: 2;
 	flex: 4 100%;
@@ -1631,7 +1634,8 @@ host-connected-metric .critical {
 .card-view .host-entry .disks,
 .card-view .host-entry .advanced-disk,
 .card-view .host-entry .status,
-.card-view .host-entry p {
+.card-view .host-entry p,
+.card-view .application-entry ul {
 	order: 10;
 	z-index: 2;
 	flex: 1 100%;
@@ -1684,7 +1688,8 @@ host-connected-metric .critical {
 
 /* Action buttons at the bottom of the card */
 .card-view .host-entry .actions,
-.card-view .service-entry .actions {
+.card-view .service-entry .actions,
+.card-view .application-entry .actions {
 	order: 99;
 	z-index: 2;
 	margin-left: auto;
