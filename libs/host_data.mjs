@@ -149,7 +149,8 @@ export class HostData {
 			'echo "THREAD_COUNT: $(nproc)"; ' +
 			'echo "MEMORY_STATS: $(free | grep "^Mem:" | tr -s " " | cut -d" " -f2,3,4,5,6,7)"; ' +
 			'echo "DISK_INFO:"; df --output=source,used,avail -x tmpfs -x devtmpfs -x squashfs -x efivarfs;' +
-			'echo "NET_INFO:"; cat /proc/net/dev | grep -v "lo:" | grep ":";'
+			'echo "NET_INFO:"; cat /proc/net/dev | grep -v "lo:" | grep ":";',
+			5
 		)
 			.then(async result => {
 				const timestamp = Math.floor(Date.now() / 1000);

@@ -14,6 +14,7 @@ class HostDiskMetricElement extends HTMLElement {
 		this.fillNode = null;
 		this.percentageNode = null;
 		this._attached = false;
+		this._value = {};
 
 		/**
 		 * Handler for live host data updates.
@@ -208,9 +209,12 @@ class HostDiskMetricElement extends HTMLElement {
 			diskData = { free: 0, used: 0, total: 0 };
 		}
 
-		const free = parseFloat(diskData.free) || 0,
-			used = parseFloat(diskData.used) || 0,
-			total = parseFloat(diskData.total) || 1;
+		const free = parseFloat(diskData.free) || this._value.free || 0,
+			used = parseFloat(diskData.used) || this._value.used || 0,
+			total = parseFloat(diskData.total) || this._value.total || 1;
+
+		// Save for future use.  Updates to the disk will only update free/used, so we need to keep total in memory.
+		this._value = { free, used, total };
 
 		const percentage = Math.max(0, Math.min(100, (used / total) * 100));
 

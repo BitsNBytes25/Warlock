@@ -52,27 +52,22 @@ function populateHostsTable(hostData) {
 			val = hostData.os ? hostData.os.title : 'Unknown';
 		}
 		else if (field === 'cpu') {
-			cell.dataset.title = 'CPU: ';
-			val = `<host-cpu-metric host=${hostData.host} model=1 bargraph=1></host-cpu-metric>`;
+			val = `<host-cpu-metric host=${hostData.host} model=1 bargraph=1 data-title="CPU: "></host-cpu-metric>`;
 		}
 		else if (field === 'memory') {
-			cell.dataset.title = 'Memory: ';
-			val = `<host-memory-metric host=${hostData.host} bargraph=1></host-memory-metric>`;
+			val = `<host-memory-metric host=${hostData.host} bargraph=1 data-title="MEM: "></host-memory-metric>`;
 		}
 		else if (field === 'disk') {
-			cell.dataset.title = 'Disk: ';
-			val = `<host-disks-metric host=${hostData.host} bargraph=1></host-disks-metric>`;
+			val = `<host-disks-metric host=${hostData.host} bargraph=1 data-title="DISK: "></host-disks-metric>`;
 		}
 		else if (field === 'net') {
-			cell.dataset.title = 'Net: ';
-			val = `<host-network-metric host=${hostData.host}></host-network-metric>`;
+			val = `<host-network-metric host=${hostData.host} data-title="NET: "></host-network-metric>`;
 		}
 		else if (field.startsWith('advanced-disk-')) {
 			let dev= field.replace('advanced-disk-', ''),
 				disk = hostData.disks.find(d => d.dev === dev);
-			cell.dataset.title = `Disk ${disk.mount}: `;
-			cell.className = 'advanced-disk advanced-disk-' + dev.replace(/\//g, '_');
-			val = `<host-disk-metric host=${hostData.host} dev=${dev} bargraph=1></host-disk-metric>`;
+			cell.className = 'advanced-disk';
+			val = `<host-disk-metric host=${hostData.host} dev=${dev} bargraph=1 data-title="DISK ${disk.mount}: "></host-disk-metric>`;
 		}
 
 		cell.innerHTML = val;

@@ -1407,46 +1407,17 @@ button.link-control span {
 #hosts-table.card-view .no-hosts-available .warning-message {
 	flex: 1 100%;
 }
-#hosts-table.card-view .cpu::before {
-	content: attr(data-title);
-	font-weight: 600;
-	color: var(--content);
-}
-#hosts-table.card-view .cpu .cpu-details {
-	font-size: 0.85rem;
-	color: var(--muted);
-	margin-top: 0.25rem;
-}
-#hosts-table.card-view .memory::before {
-	content: attr(data-title);
-	font-weight: 600;
-	color: var(--content);
-}
-#hosts-table.card-view host-network-metric {
-	display: inline-block;
-}
-#hosts-table.card-view .net::before {
-	content: attr(data-title);
-	font-weight: 600;
-	color: var(--content);
-}
 #hosts-table.card-view .disk {
 	display: none;
 }
-#hosts-table.card-view host-disk-metric .percentage {
-	padding-left: 0.5em;
-}
-#hosts-table.card-view .advanced-disk::before {
-	content: attr(data-title);
-	font-weight: 600;
-	color: var(--content);
-}
+
 /** </editor-fold> **/
 
-/** <editor-fold desc="Service Status Colors"> **/
+/** <editor-fold desc="Service/Host Status Colors"> **/
 
 #services-table .status.status-running,
-.service-details-overview .service-status.status-running {
+.service-details-overview .service-status.status-running,
+host-connected-metric .good {
 	color: var(--status-running);
 }
 #services-table .status.status-starting,
@@ -1455,7 +1426,8 @@ button.link-control span {
 	animation: blinker 4s infinite;
 }
 #services-table .status.status-stopped,
-.service-details-overview .service-status.status-stopped{
+.service-details-overview .service-status.status-stopped,
+host-connected-metric .critical {
 	color: var(--status-stopped);
 }
 #services-table .status.status-stopping,
@@ -1543,20 +1515,13 @@ button.link-control span {
 	color: var(--status-critical);
 }
 
-#applicationsList,
-#hostsList {
-	display: grid;
-	grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-	gap: 1.25rem;
-}
-
 #installAppHostList {
 	display: grid;
 	grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
 	gap: 1rem;
 	margin-top: 1rem;
 }
-#installAppHostList .host-card.compatible-host {
+#installAppHostList .host-entry.compatible-host {
 	cursor: pointer;
 }
 #backupsList {
@@ -1664,7 +1629,9 @@ button.link-control span {
 .card-view .host-entry .memory,
 .card-view .host-entry .net,
 .card-view .host-entry .disks,
-.card-view .host-entry .advanced-disk {
+.card-view .host-entry .advanced-disk,
+.card-view .host-entry .status,
+.card-view .host-entry p {
 	order: 10;
 	z-index: 2;
 	flex: 1 100%;
@@ -1689,6 +1656,30 @@ button.link-control span {
 	z-index: 2;
 	flex: 1 20%;
 	margin-bottom: 1rem;
+}
+
+/* Content-specific styles for common elements */
+.card-view .host-entry host-memory-metric::before,
+.card-view .host-entry host-cpu-metric::before,
+.card-view .host-entry host-network-metric::before,
+.card-view .host-entry host-disk-metric::before,
+.card-view .host-entry host-disks-metric::before,
+.card-view .host-entry host-connected-metric::before {
+	content: attr(data-title);
+	font-weight: bold;
+	color: var(--muted);
+}
+.card-view .host-entry host-cpu-metric .cpu-details {
+	font-size: 0.85rem;
+	color: var(--muted);
+	margin-top: 0.25rem;
+}
+#hosts-table.card-view host-network-metric {
+	display: inline-block;
+}
+.card-view .host-entry host-disk-metric .percentage,
+.card-view .host-entry host-disks-metric .percentage {
+	padding-left: 0.5em;
 }
 
 /* Action buttons at the bottom of the card */

@@ -3,9 +3,7 @@
  */
 
 function renderHost(hostData) {
-	const hostContainer = document.createElement('div'),
-		hostnameContainer = document.createElement('div'),
-		metricsContainer = document.createElement('div');
+	const hostContainer = document.createElement('div');
 
 	hostContainer.className = 'host-entry';
 	hostContainer.dataset.host = hostData.host;
@@ -17,6 +15,7 @@ function renderHost(hostData) {
 	}
 
 	// Hostname
+	const hostnameContainer = document.createElement('div')
 	hostnameContainer.className = 'hostname';
 	if (hostData.os.title) {
 		const icon = renderHostIcon(hostData.host);
@@ -27,35 +26,42 @@ function renderHost(hostData) {
 	}
 	hostContainer.appendChild(hostnameContainer);
 
+	// IP
+	const ipContainer = document.createElement('div');
+	ipContainer.className = 'ip';
+	ipContainer.innerHTML = hostData.host;
+	hostContainer.appendChild(ipContainer);
+
+
 	// Connected/Disconnected Status
 	const status = document.createElement('div');
 	status.className = 'metric-item metric-status status';
-	status.innerHTML = `Status: <span class="connected"></span>`;
+	status.innerHTML = `<host-connected-metric host="${hostData.host}" data-title="ON: "></host-connected-metric>`;
 	hostContainer.appendChild(status);
 
 	// CPU
 	const cpu = document.createElement('div');
 	cpu.className = 'metric-item metric-cpu cpu';
-	cpu.innerHTML = `CPU: <span class="cpu_usage"></span><div class="cpu-cores-inline">${hostData.cpu.model}<br/>${hostData.cpu.threads} threads</div>`;
+	cpu.innerHTML = `<host-cpu-metric host="${hostData.host}" model="1" bargraph="1" data-title="CPU: "></host-cpu-metric>`;
 	hostContainer.appendChild(cpu);
 
 	// Memory
 	const memory = document.createElement('div');
 	memory.className = 'metric-item metric-memory memory';
-	memory.innerHTML = `Memory: <span class="memory_free"></span>`;
+	memory.innerHTML = `<host-memory-metric host="${hostData.host}" bargraph="1" data-title="MEM: "></host-memory-metric>`;
 	hostContainer.appendChild(memory);
 
 	// Disks
 	const disks = document.createElement('div');
 	disks.className = 'metric-item metric-disks disks';
-	disks.innerHTML = `Disks: <span class="disks_free"></span>`;
+	disks.innerHTML = `<host-disks-metric host="${hostData.host}" bargraph="1" data-title="DISKS: "></host-disks-metric>`;
 	hostContainer.appendChild(disks);
 
 	const msg = document.createElement('p');
 	msg.className = 'compatible-message';
 	hostContainer.appendChild(msg);
 
-	return hostContainer.outerHTML;
+	return hostContainer;
 }
 
 window.addEventListener('DOMContentLoaded', () => {
@@ -73,12 +79,11 @@ window.addEventListener('DOMContentLoaded', () => {
 		applicationSelect.appendChild(option);
 	});
 
-	let hostsHTML = '';
+	let hostsTarget = document.getElementById('installAppHostList');
 	hostData.forEach(host => {
 		// Render each host on page load so they're available for metrics polling.
-		hostsHTML += renderHost(host);
+		hostsTarget.appendChild(renderHost(host));
 	});
-	document.getElementById('installAppHostList').innerHTML = hostsHTML;
 
 	applicationSelect.addEventListener('change', () => {
 		const selectedApp = applicationSelect.value;
@@ -202,40 +207,6 @@ window.addEventListener('DOMContentLoaded', () => {
 			//document.getElementById('installAppHostList').innerHTML = hostsHTML;
 			document.getElementById('targetHostsContainer').style.display = 'block';
 		});
-	});
-
-	document.addEventListener('hostChange', e => {
-
-		let hostCard = document.querySelector('.host-entry[data-host="' + e.detail.host + '"]');
-
-		if (!hostCard) {
-			return;
-		}
-
-		if (e.detail.hasOwnProperty('cpu_usage')) {
-			numberTick(
-				hostCard.querySelector('.cpu_usage'),
-				e.detail.cpu_usage,
-				v => { return v.toFixed(1) + '%'; },
-			);
-		}
-
-		if (e.detail.hasOwnProperty('memory_free')) {
-			hostCard.querySelector('.memory_free').textContent = formatFileSize(e.detail.memory_free) + ' free';
-		}
-
-		if (e.detail.hasOwnProperty('disks_free')) {
-			hostCard.querySelector('.disks_free').textContent = formatFileSize(e.detail.disks_free) + ' free';
-		}
-
-		if (e.detail.hasOwnProperty('connected')) {
-			if (e.detail.connected) {
-				hostCard.querySelector('.connected').innerHTML = '<i class="fas fa-check"></i> Connected';
-			}
-			else {
-				hostCard.querySelector('.connected').innerHTML = '<i class="fas fa-times"></i> Disconnected';
-			}
-		}
 	});
 
 	// Start the watcher for metric changes in hosts.
