@@ -18,7 +18,7 @@ function populateHostsTable(hostData) {
 
 	// Create new row
 	row = document.createElement('div');
-	row.className = 'host';
+	row.className = 'host-entry';
 	row.setAttribute('data-host', hostData.host);
 	table.querySelector('.body').appendChild(row);
 
@@ -53,11 +53,13 @@ function populateHostsTable(hostData) {
 		}
 		else if (field === 'cpu') {
 			cell.dataset.title = 'CPU: ';
+			val = `<host-cpu host=${hostData.host} model=1 bargraph=1></host-cpu>`;
+			/*
 			val = '<span class="value"></span>';
 			if (hostData.cpu.model) {
 				val += `<div class="cpu-details">${hostData.cpu.model}</div>`;
 			}
-			val += `<div class="bargraph-h"><div class="fill" style="width: 0%"></div></div>`;
+			val += `<div class="bargraph-h"><div class="fill" style="width: 0%"></div></div>`;*/
 		}
 		else if (field === 'memory') {
 			cell.dataset.title = 'Memory: ';
@@ -177,18 +179,6 @@ document.addEventListener('hostChange', e => {
 		return;
 	}
 	let host = hostData.find(h => h.host === e.detail.host);
-
-	if (e.detail.hasOwnProperty('cpu_usage')) {
-		let cell = row.querySelector('.cpu'),
-			bar = cell.querySelector('.bargraph-h .fill');
-
-		numberTick(
-			cell.querySelector('.value'),
-			e.detail.cpu_usage,
-			v => v.toFixed(1) + '%',
-		);
-		progressBarTick(bar, percent);
-	}
 
 	if (e.detail.hasOwnProperty('memory_used')) {
 		let cell = row.querySelector('.memory'),

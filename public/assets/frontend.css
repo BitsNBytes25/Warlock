@@ -44,7 +44,7 @@
 	--content-border: rgba(121, 123, 243, 0.4);
 	--content-hover-border: rgba(99, 102, 241, 0.4);
 	--content-shadow: rgba(155, 155, 155, 0.6);
-	--card-bg: rgba(20, 23, 35, 0.6);
+	--card-bg: rgba(30, 41, 59, 0.6);
 	
 	/* Terminal */
 	--terminal: #51cf66; /* green */
@@ -1174,15 +1174,15 @@ button.link-control span {
 
 /** <editor-fold desc="Services Table - Modern Design"> **/
 
+/* Table view */
 #services-table .header {
 	background: linear-gradient(135deg, var(--table-header-bg-1) 0%, var(--table-header-bg-2) 100%);
 	border-bottom: 1px solid var(--table-border);
 	color: var(--table-header);
 	border-radius: 1rem 1rem 0 0;
 }
-
 #services-table.table-view .header,
-#services-table.table-view .service {
+#services-table.table-view .service-entry {
 	display: grid;
 	align-items: center;
 	grid-template-areas: 'host icon name enabled status port players memory cpu actions';
@@ -1191,23 +1191,21 @@ button.link-control span {
 	padding: 0.5rem 0;
 	border-bottom: 1px solid var(--table-border);
 }
-#services-table.table-view .service {
+#services-table.table-view .service-entry {
 	background-color: var(--table-row-bg-1);
 }
-#services-table.table-view .service:nth-child(even) {
+#services-table.table-view .service-entry:nth-child(even) {
 	background-color: var(--table-row-bg-2);
 }
-#services-table.table-view .service:hover {
+#services-table.table-view .service-entry:hover {
 	background-color: var(--table-row-hover);
 }
-
 #services-table.table-view .no-services-available {
 	display: flex;
 }
 #services-table.table-view .no-services-available .warning-message {
 	flex: 1 100%;
 }
-
 #services-table.table-view .thumbnail {
 	display: none;
 }
@@ -1254,78 +1252,23 @@ button.link-control span {
 	padding-right: 1rem;
 }
 
+/* Card view */
 #services-table.card-view .header {
 	display: none;
 }
-
 #services-table.card-view .body {
-	display: flex;
+	display: grid;
+	grid-template-columns: repeat(3, 1fr);
 	gap: 2rem;
-	flex-wrap: wrap;
-}
-
-#services-table.card-view .service {
-	display: flex;
-	background-color: var(--table-row-bg-1);
-	border: 1px solid var(--table-border);
-	border-radius: 12px;
-	padding: 0 1.5rem 1rem;
-	margin-bottom: 1rem;
-	transition: all 0.2s ease;
-	flex-wrap: wrap;
-	position: relative;
-	flex: 1 30%;
-	overflow: hidden;
 }
 #services-table.card-view .no-services-available .warning-message {
 	flex: 1 100%;
 }
-
-#services-table.card-view .thumbnail {
-	position: absolute;
-	width: 100%;
-	height: 7rem;
-	margin: 0 -1.5rem;
-	overflow: hidden;
-	z-index: 1;
-}
-#services-table.card-view .thumbnail img {
-	width: 100%;
-	height: 100%;
-	object-fit: cover;
-	/* image should be partially transparent with a black overlay filter */
-	filter: brightness(0.4);
-}
-
 #services-table.card-view .icon {
 	display: none;
 }
-#services-table.card-view .name {
-	order: 1;
-	z-index: 2;
-	flex: 4 100%;
-	height: 4.5rem;
-	font-weight: bold;
-	font-size: 1.25rem;
-	text-align: center;
-	padding-top: 0.5rem;
-	overflow: hidden;
-}
-#services-table.card-view .host {
-	order: 2;
-	z-index: 2;
-	flex: 4 100%;
-	height: 4rem;
-	text-align: center;
-}
 #services-table.card-view .enabled {
 	display: none;
-}
-#services-table.card-view .status {
-	order: 4;
-	z-index: 2;
-	flex: 2 40%;
-	margin-bottom: 1rem;
 }
 #services-table.card-view .status:before {
 	content: 'STATUS';
@@ -1333,62 +1276,32 @@ button.link-control span {
 	display: block;
 	color: var(--content);
 }
-#services-table.card-view .port {
-	order: 5;
-	z-index: 2;
-	flex: 2 40%;
-	margin-bottom: 1rem;
-}
 #services-table.card-view .port:before {
 	content: 'PORT';
 	opacity: 0.5;
 	display: block;
-}
-#services-table.card-view .players {
-	order: 6;
-	z-index: 2;
-	flex: 2 40%;
-	margin-bottom: 1rem;
 }
 #services-table.card-view .players:before {
 	content: 'PLAYERS';
 	display: block;
 	opacity: 0.5;
 }
-#services-table.card-view .memory {
-	order: 7;
-	z-index: 2;
-	flex: 1 20%;
-	margin-bottom: 1rem;
-}
 #services-table.card-view .memory:before {
 	content: 'MEM';
 	opacity: 0.5;
 	display: block;
-}
-#services-table.card-view .cpu {
-	order: 8;
-	z-index: 2;
-	flex: 1 20%;
-	margin-bottom: 1rem;
 }
 #services-table.card-view .cpu:before {
 	content: 'CPU';
 	opacity: 0.5;
 	display: block;
 }
-#services-table.card-view .actions {
-	order: 9;
-	z-index: 2;
-	margin-left: auto;
-	border-top: 1px solid var(--table-border);
-	flex: 2 100%;
-	padding: 1rem;
-}
 
 /** </editor-fold> **/
 
 /** <editor-fold desc="Hosts Table - Modern Design"> **/
+
+/* Table View */
 #hosts-table .header {
 	background: linear-gradient(135deg, var(--table-header-bg-1) 0%, var(--table-header-bg-2) 100%);
 	border-bottom: 1px solid var(--table-border);
@@ -1396,7 +1309,7 @@ button.link-control span {
 	border-radius: 1rem 1rem 0 0;
 }
 #hosts-table.table-view .header,
-#hosts-table.table-view .host {
+#hosts-table.table-view .host-entry {
 	display: grid;
 	align-items: center;
 	grid-template-areas: 'hostname ip os cpu memory disk net actions';
@@ -1405,13 +1318,13 @@ button.link-control span {
 	padding: 0.75rem 1rem;
 	border-bottom: 1px solid var(--table-border);
 }
-#hosts-table.table-view .host {
+#hosts-table.table-view .host-entry {
 	background-color: var(--table-row-bg-1);
 }
-#hosts-table.table-view .host:nth-child(even) {
+#hosts-table.table-view .host-entry:nth-child(even) {
 	background-color: var(--table-row-bg-2);
 }
-#hosts-table.table-view .host:hover {
+#hosts-table.table-view .host-entry:hover {
 	background-color: rgba(99, 102, 241, 0.15);
 }
 #hosts-table.table-view .no-hosts-available {
@@ -1441,6 +1354,7 @@ button.link-control span {
 }
 #hosts-table.table-view .os {
 	grid-area: os;
+	font-size: 0.9rem;
 }
 #hosts-table.table-view .cpu {
 	grid-area: cpu;
@@ -1474,6 +1388,8 @@ button.link-control span {
 #hosts-table.table-view .advanced-disk {
 	display: none;
 }
+
+/* Card View */
 #hosts-table.card-view .header {
 	display: none;
 }
@@ -1482,65 +1398,11 @@ button.link-control span {
 	grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
 	gap: 1.5rem;
 }
-#hosts-table.card-view .host {
-	display: flex;
-	flex-direction: column;
-	background-color: var(--card-bg);
-	border: 1px solid var(--content-border);
-	border-radius: 12px;
-	padding: 0;
-	transition: all 0.25s ease;
-	overflow: hidden;
-	position: relative;
-}
 #hosts-table.card-view .no-hosts-available {
 	grid-column: 1 / -1;
 }
 #hosts-table.card-view .no-hosts-available .warning-message {
 	flex: 1 100%;
-}
-#hosts-table.card-view .thumbnail {
-	width: 100%;
-	height: 9rem;
-	overflow: hidden;
-	position: absolute;
-	z-index: 1;
-}
-#hosts-table.card-view .thumbnail img {
-	width: 100%;
-	height: 100%;
-	object-fit: cover;
-	/* image should be partially transparent with a black overlay filter */
-	filter: brightness(0.4);
-}
-#hosts-table.card-view .hostname {
-	padding: 1rem 1.5rem 0.5rem;
-	font-weight: 700;
-	font-size: 1.25rem;
-	text-align: center;
-	z-index: 2;
-	height: 5rem;
-	overflow: hidden;
-}
-#hosts-table.card-view .hostname img {
-	width: 1.5rem;
-	height: 1.5rem;
-}
-#hosts-table.card-view .ip {
-	padding: 0 1.5rem 0.5rem;
-	font-size: 0.9rem;
-	z-index: 2;
-	text-align: center;
-}
-#hosts-table.card-view .os {
-	padding: 0 1.5rem 1.25rem;
-	font-size: 0.9rem;
-	z-index: 2;
-	text-align: center;
-}
-#hosts-table.card-view .cpu {
-	padding: 0.5rem 1.5rem;
-	font-size: 0.9rem;
 }
 #hosts-table.card-view .cpu::before {
 	content: attr(data-title);
@@ -1552,27 +1414,15 @@ button.link-control span {
 	color: var(--muted);
 	margin-top: 0.25rem;
 }
-#hosts-table.card-view .memory {
-	padding: 0.5rem 1.5rem;
-	font-size: 0.9rem;
-}
 #hosts-table.card-view .memory::before {
 	content: attr(data-title);
 	font-weight: 600;
 	color: var(--content);
 }
-#hosts-table.card-view .net {
-	padding: 0.5rem 1.5rem;
-	font-size: 0.9rem;
-}
 #hosts-table.card-view .net::before {
 	content: attr(data-title);
 	font-weight: 600;
 	color: var(--content);
-}
-#hosts-table.card-view .advanced-disk {
-	padding: 0.5rem 1.5rem 1rem;
-	font-size: 0.9rem;
 }
 #hosts-table.card-view .disk {
 	display: none;
@@ -1582,31 +1432,24 @@ button.link-control span {
 	font-weight: 600;
 	color: var(--content);
 }
-#hosts-table.card-view .actions {
-	padding: 0.75rem 1.5rem 1rem;
-	border-top: 1px solid var(--content-border);
-	display: flex;
-	gap: 0.5rem;
-	order: 99;
-}
 /** </editor-fold> **/
 
 /** <editor-fold desc="Service Status Colors"> **/
 
-#services-table.card-view .status.status-running,
+#services-table .status.status-running,
 .service-details-overview .service-status.status-running {
 	color: var(--status-running);
 }
-#services-table.card-view .status.status-starting,
+#services-table .status.status-starting,
 .service-details-overview .service-status.status-starting{
 	color: var(--status-starting);
 	animation: blinker 4s infinite;
 }
-#services-table.card-view .status.status-stopped,
+#services-table .status.status-stopped,
 .service-details-overview .service-status.status-stopped{
 	color: var(--status-stopped);
 }
-#services-table.card-view .status.status-stopping,
+#services-table .status.status-stopping,
 .service-details-overview .service-status.status-stopping{
 	color: var(--status-stopped);
 	animation: blinker 4s infinite;
@@ -1691,14 +1534,6 @@ button.link-control span {
 	color: var(--status-critical);
 }
 
-/* ==========================
-   Application/Host cards
-   ========================== */
-
-#applicationsContainer {
-	margin-bottom: 3rem;
-}
-
 #applicationsList,
 #hostsList {
 	display: grid;
@@ -1721,11 +1556,25 @@ button.link-control span {
 	gap: 1rem;
 }
 
+/* ==========================
+   Application/Host/Service cards
+
+   .card-view .service-entry - Service cards listed on /dashboard when on card view
+   .card-view .host-entry    - Host cards listed on /hosts when on card view
+                             - Also used on /application/install when selecting the host
+   ========================== */
+/** <editor-fold desc="Cards"> **/
+
+/* Card container */
+.card-view .service-entry,
+.card-view .host-entry,
 .application-card,
 .host-card,
 .backup-file-item {
+	display: flex;
+	flex-wrap: wrap;
 	border-radius: 12px;
-	padding: 1.25rem;
+	padding: 0 1.5rem 1rem;
 	transition: all 0.25s ease;
 	position: relative;
 	overflow: hidden;
@@ -1735,8 +1584,11 @@ button.link-control span {
 	-webkit-backdrop-filter: blur(12px);
 	border: 1px solid var(--content-border);
 	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+	margin-bottom: 1rem;
+	min-width: 0;
 }
-
+.card-view .host-entry:hover,
+.card-view .service-entry:hover,
 .application-card:hover,
 .host-card:hover,
 .backup-file-item:hover {
@@ -1746,13 +1598,99 @@ button.link-control span {
 	background: var(--content-hover-bg);
 }
 
+/* Thumbnail container, fixed to the top of the container and full width */
+.card-view .host-entry .thumbnail,
+.card-view .service-entry .thumbnail,
 .application-card .app-thumbnail,
 .host-card .os-thumbnail {
-	width: calc(100% + 2.5rem);
-	height: 10rem;
-	margin: -1.25rem -1.25rem 1rem;
-	object-fit: cover;
+	position: absolute;
+	width: 100%;
+	height: 7rem;
+	margin: 0 -1.5rem;
+	overflow: hidden;
+	z-index: 1;
 	border-radius: 12px 12px 0 0;
+}
+.card-view .host-entry .thumbnail img,
+.card-view .service-entry .thumbnail img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	filter: brightness(0.4);
+}
+
+/* Card primary name, displayed at the top over the thumbnail */
+.card-view .service-entry .name,
+.card-view .host-entry .hostname {
+	order: 1;
+	z-index: 2;
+	flex: 4 100%;
+	height: 4.5rem;
+	font-weight: bold;
+	font-size: 1.25rem;
+	text-align: center;
+	padding-top: 0.5rem;
+	overflow: hidden;
+}
+
+/* Some cards have a small image in their primary name */
+.card-view .host-entry .hostname img {
+	width: 1.5rem;
+	height: 1.5rem;
+}
+
+/* Card descriptor, displayed over the thumbnail below the title in smaller text */
+.card-view .host-entry .ip,
+.card-view .service-entry .host {
+	order: 2;
+	z-index: 2;
+	flex: 4 100%;
+	height: 4rem;
+	text-align: center;
+}
+
+/* Body elements that are 4-columns wide */
+.card-view .host-entry .os,
+.card-view .host-entry .cpu,
+.card-view .host-entry .memory,
+.card-view .host-entry .net,
+.card-view .host-entry .disks,
+.card-view .host-entry .advanced-disk {
+	order: 10;
+	z-index: 2;
+	flex: 1 100%;
+	margin-bottom: 1.25rem;
+}
+
+
+/* Body elements that are 2-columns wide */
+.card-view .service-entry .status,
+.card-view .service-entry .port,
+.card-view .service-entry .players {
+	order: 10;
+	z-index: 2;
+	flex: 2 40%;
+	margin-bottom: 1.25rem;
+}
+
+/* Body elements that are 1-column wide */
+.card-view .service-entry .memory,
+.card-view .service-entry .cpu {
+	order: 10;
+	z-index: 2;
+	flex: 1 20%;
+	margin-bottom: 1rem;
+}
+
+/* Action buttons at the bottom of the card */
+.card-view .host-entry .actions,
+.card-view .service-entry .actions {
+	order: 99;
+	z-index: 2;
+	margin-left: auto;
+	border-top: 1px solid var(--table-border);
+	flex: 2 100%;
+	padding: 1rem;
 }
 
 .application-card .app-install,
@@ -1856,17 +1794,6 @@ button.link-control span {
 	color: var(--table-header);
 }
 
-.application-card .app-name {
-	grid-area: name;
-}
-
-.application-card .app-desc {
-	grid-area: desc;
-}
-
-.application-card .app-actions {
-	grid-area: actions;
-}
 
 .application-card .host-actions button,
 .host-card .host-actions button {
@@ -2081,6 +2008,8 @@ button.link-control span {
 	background: linear-gradient(0deg, var(--status-critical), var(--status-critical-bg-2));
 	box-shadow: inset 0 0 6px rgba(0,0,0,0.4);
 }
+
+/** </editor-fold> **/
 
 .cpu-speedometer .gauge-bg {
 	stroke: var(--graph-bg);
@@ -2911,6 +2840,17 @@ button.link-control span {
 	font-size: 1.25rem;
 }
 
+#applicationsContainer {
+	margin-bottom: 3rem;
+}
+
+#hostApplicationsList {
+	display: grid;
+	grid-template-columns: repeat(3, 1fr);
+	gap: 1rem;
+	margin: 2rem 3rem;
+}
+
 /** </editor-fold> **/
 
 /** <editor-fold desc="Details Shared"> **/
@@ -3372,7 +3312,7 @@ button.link-control span {
 
 @media (max-width: 1550px) {
 	#services-table.table-view .header,
-	#services-table.table-view .service {
+	#services-table.table-view .service-entry {
 		grid-template-areas: 'host icon name enabled status players memory cpu actions';
 		grid-template-columns: 12rem 3rem 1fr 4rem 9rem 5rem 5rem 3rem 13rem;
 	}
@@ -3393,7 +3333,7 @@ button.link-control span {
 
 @media (max-width: 1400px) {
 	#services-table.table-view .header,
-	#services-table.table-view .service {
+	#services-table.table-view .service-entry {
 		grid-template-areas: 'icon name enabled status players memory cpu actions';
 		grid-template-columns: 3rem 1fr 4rem 9rem 5rem 5rem 3rem 13rem;
 	}
@@ -3420,7 +3360,7 @@ button.link-control span {
 		font-size: 1.5rem;
 	}
 
-	#services-table.card-view .service {
+	#services-table.card-view .service-entry {
 		flex: 1 40%;
 	}
 
@@ -3484,7 +3424,7 @@ button.link-control span {
 
 @media (max-width: 900px) {
 	/* Switch dashboard cards to single column */
-	#services-table.card-view .service {
+	#services-table.card-view .service-entry {
 		flex: 1 100%;
 	}
 

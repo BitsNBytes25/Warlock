@@ -2,17 +2,18 @@
  * Represents the details of an application.
  *
  * @typedef {Object} AppData
- * @property {string} title Name of the application.
- * @property {string} guid Globally unique identifier of the application.
- * @property {string} icon Icon URL of the application.
- * @property {string} repo Repository URL fragment of the application.
- * @property {string} installer Installer URL fragment of the application.
- * @property {string} source Source handler for the application installer.
- * @property {string} thumbnail Thumbnail URL of the application.
- * @property {string} image Full size image URL of the application.
- * @property {string} header Header image URL of the application.
- * @property {string} author Author information of the app, usually contains name and email.
- * @property {string[]} supports List of OS support, usually "[Distro Name] [Version List]",...
+ * @property {string}        title     Name of the application.
+ * @property {string}        guid      Globally unique identifier of the application.
+ * @property {string}        icon      Icon URL of the application.
+ * @property {string}        repo      Repository URL fragment of the application.
+ * @property {string}        installer Installer URL fragment of the application.
+ * @property {string}        source    Source handler for the application installer.
+ * @property {string}        thumbnail Thumbnail URL of the application.
+ * @property {string}        image     Full size image URL of the application.
+ * @property {string}        header    Header image URL of the application.
+ * @property {string}        author    Author information of the app, usually contains name and email.
+ * @property {string[]}      supports  List of OS support, usually "[Distro Name] [Version List]",...
+ * @property {HostAppData[]} installs  List of host installations for the application.
  */
 
 /**
@@ -739,22 +740,16 @@ async function loadApplication(guid) {
 }
 
 /**
- * Load host data for the given host identifier.
+ * Retrieve host data for the given host identifier.
  *
  * @param {string} host
- * @returns {Promise<unknown>}
+ * @returns {Promise<HostData>}
  */
-async function loadHost(host) {
+async function getHost(host) {
 	if (hostData && hostData.length > 0) {
 		// Try to find the application that's in the cache.
 		let cachedHost = hostData.find(h => h.host === host) || null;
 		if (cachedHost) {
-			loadedHost = host;
-			loadedHostData = cachedHost;
-
-			// Replace content from application
-			replaceHostPlaceholders(cachedHost);
-
 			return cachedHost;
 		}
 	}
@@ -766,15 +761,28 @@ async function loadHost(host) {
 			if (!hostInfo) {
 				throw new Error(`Host '${host}' not found.`);
 			}
-
-			loadedHost = host;
-			loadedHostData = hostInfo;
-
-			// Replace content from application
-			replaceHostPlaceholders(hostInfo);
-
 			return hostInfo;
 		});
+}
+
+/**
+ * Load host data for the given host identifier.
+ *
+ * Will register this host as the "loaded" host for the page
+ *
+ * @param {string} host
+ * @returns {Promise<unknown>}
+ */
+async function loadHost(host) {
+	return getHost(host).then(hostInfo => {
+		loadedHost = host;
+		loadedHostData = hostInfo;
+
+		// Replace content from application
+		replaceHostPlaceholders(hostInfo);
+
+		return hostInfo;
+	});
 }
 
 /**

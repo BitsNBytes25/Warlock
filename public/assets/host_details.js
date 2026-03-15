@@ -156,54 +156,50 @@ function loadOverview() {
 	}
 	hostCPUCores.innerText = cpuThreadInfo;
 
-	fetchServices().then(services => {
-		console.log(services);
-		let hostApps = [];
-
-		services.forEach(svc => {
-			if (svc.host.host === host) {
-				hostApps.push(svc);
-			}
-		});
-
-		if (hostApps.length === 0) {
-			applicationsContainer.innerHTML = '<div class="warning-message">No applications installed on this host.</div>';
-			return;
+	// Render the list of applications installed on this host
+	let installedAppGUIDs = [];
+	applicationData.forEach(app => {
+		if (app.installs.find(i => i.host === loadedHostData.host)) {
+			installedAppGUIDs.push(app.guid);
 		}
+	});
 
+	if (installedAppGUIDs.length === 0) {
+		applicationsContainer.innerHTML = '<div class="warning-message">No applications installed on this host.</div>';
 		return;
-		// @todo
+	}
 
-		let servicesHtml = '';
-		const serviceCount = hostApps.length;
-		hostApps.forEach(service => {
-			servicesHtml += `
-				<div class="service-item">
-					<a href="/service/details/${app.guid}/${host}/${service.service}" class="service-link">
-						<i class="fas fa-server"></i>
-						<span>${service.name || service.service}</span>
-						<span class="service-status status-${service.status || 'unknown'}">${service.status || 'unknown'}</span>
-					</a>
-				</div>
-			`;
+	// Clear loading prior to rendering
+	applicationsContainer.innerHTML = '';
 
-			const appCard = `
-				<div class="application-card">
-					<div class="application-header">
-						<img src="${app.thumbnail || app.icon || ''}" alt="${app.title}" class="app-thumbnail">
-						<div class="app-info">
-							<h3>${app.title}</h3>
-							<p>${serviceCount} service${serviceCount !== 1 ? 's' : ''}</p>
-						</div>
+	installedAppGUIDs.forEach(appGUID => {
+		let app = applicationData.find(a => a.guid === appGUID),
+			hostData = app.installs.find(i => i.host === loadedHostData.host),
+			thumbnail = getAppThumbnail(appGUID);
+
+		console.log(hostData);
+
+		const appCard = `
+			<div class="application-card">
+				<div class="application-header">
+					<img src="${thumbnail}" alt="${app.title}" class="app-thumbnail">
+					<div class="app-info">
+						<h3>${app.title}</h3>
+						<ul>
+							<li>Install Directory: ${hostData.path}</li>
+							<li>API Version: ${hostData.version}</li>
+						</ul>
 					</div>
-					<div class="application-services">
-						${servicesHtml}
+					<div class="actions">
+						<button>Remove</button>
+						<button>Browse Files</button>
+						<button>Reinstall</button>
 					</div>
 				</div>
-			`;
+			</div>
+		`;
 
-			applicationsContainer.insertAdjacentHTML('beforeend', appCard);
-		});
+		applicationsContainer.insertAdjacentHTML('beforeend', appCard);
 	});
 }
 

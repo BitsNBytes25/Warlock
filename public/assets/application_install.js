@@ -7,50 +7,49 @@ function renderHost(hostData) {
 		hostnameContainer = document.createElement('div'),
 		metricsContainer = document.createElement('div');
 
-	hostContainer.className = 'host-card';
+	hostContainer.className = 'host-entry';
 	hostContainer.dataset.host = hostData.host;
 	if (hostData.os.name) {
-		hostContainer.appendChild(renderHostOSThumbnail(hostData.host));
+		let thumbnail = document.createElement('div');
+		thumbnail.className = 'thumbnail';
+		thumbnail.appendChild(renderHostOSThumbnail(hostData.host));
+		hostContainer.appendChild(thumbnail);
 	}
-
-	metricsContainer.className = 'host-metrics-list';
 
 	// Hostname
-	hostnameContainer.className = 'host-title';
+	hostnameContainer.className = 'hostname';
 	if (hostData.os.title) {
 		const icon = renderHostIcon(hostData.host);
-		hostnameContainer.innerHTML = `<h4 class="host-name">${icon} ${hostData.hostname}</h4>`;
+		hostnameContainer.innerHTML = `${icon} ${hostData.hostname}`;
 	}
 	else {
-		hostnameContainer.innerHTML = `<h4 class="host-name">${hostData.hostname}</h4>`;
+		hostnameContainer.innerHTML = hostData.hostname;
 	}
+	hostContainer.appendChild(hostnameContainer);
 
 	// Connected/Disconnected Status
 	const status = document.createElement('div');
-	status.className = 'metric-item metric-status';
+	status.className = 'metric-item metric-status status';
 	status.innerHTML = `Status: <span class="connected"></span>`;
-	metricsContainer.appendChild(status);
+	hostContainer.appendChild(status);
 
 	// CPU
 	const cpu = document.createElement('div');
-	cpu.className = 'metric-item metric-cpu';
+	cpu.className = 'metric-item metric-cpu cpu';
 	cpu.innerHTML = `CPU: <span class="cpu_usage"></span><div class="cpu-cores-inline">${hostData.cpu.model}<br/>${hostData.cpu.threads} threads</div>`;
-	metricsContainer.appendChild(cpu);
+	hostContainer.appendChild(cpu);
 
 	// Memory
 	const memory = document.createElement('div');
-	memory.className = 'metric-item metric-memory';
+	memory.className = 'metric-item metric-memory memory';
 	memory.innerHTML = `Memory: <span class="memory_free"></span>`;
-	metricsContainer.appendChild(memory);
+	hostContainer.appendChild(memory);
 
 	// Disks
 	const disks = document.createElement('div');
-	disks.className = 'metric-item metric-disks';
+	disks.className = 'metric-item metric-disks disks';
 	disks.innerHTML = `Disks: <span class="disks_free"></span>`;
-	metricsContainer.appendChild(disks);
-
-	hostContainer.appendChild(hostnameContainer);
-	hostContainer.appendChild(metricsContainer);
+	hostContainer.appendChild(disks);
 
 	const msg = document.createElement('p');
 	msg.className = 'compatible-message';
@@ -141,7 +140,7 @@ window.addEventListener('DOMContentLoaded', () => {
 			// We just need to check the platform.  If the version mismatches simply provide a warning.
 			let hostsHTML = '';
 			hostData.forEach(host => {
-				const hostCard = document.querySelector('.host-card[data-host="' + host.host + '"]');
+				const hostCard = document.querySelector('.host-entry[data-host="' + host.host + '"]');
 				if (!hostCard) {
 					return;
 				}
@@ -207,7 +206,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
 	document.addEventListener('hostChange', e => {
 
-		let hostCard = document.querySelector('.host-card[data-host="' + e.detail.host + '"]');
+		let hostCard = document.querySelector('.host-entry[data-host="' + e.detail.host + '"]');
 
 		if (!hostCard) {
 			return;
@@ -247,11 +246,11 @@ window.addEventListener('DOMContentLoaded', () => {
 document.getElementById('targetHostsContainer').addEventListener('click', (e) => {
 	let hostCard = null;
 
-	if (e.target && e.target.classList.contains('host-card')) {
+	if (e.target && e.target.classList.contains('host-entry')) {
 		hostCard = e.target;
 	}
-	else if (e.target && e.target.closest('.host-card')) {
-		hostCard = e.target.closest('.host-card');
+	else if (e.target && e.target.closest('.host-entry')) {
+		hostCard = e.target.closest('.host-entry');
 	}
 
 	if (hostCard && hostCard.classList.contains('compatible-host')) {

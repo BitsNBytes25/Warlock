@@ -23,7 +23,7 @@ function populateServicesTable(servicesWithStats) {
 
 	// Create new row
 	row = document.createElement('div');
-	row.className = 'service';
+	row.className = 'service-entry';
 	row.setAttribute('data-host', host.host);
 	row.setAttribute('data-service', service.service);
 	table.querySelector('.body').appendChild(row);
