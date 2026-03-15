@@ -38,15 +38,6 @@
                         Host Details
                     </span>
                 </h2>
-
-                <!--<div class="content-header-buttons">
-                    <button class="action-edit" id="btnHostFirewall">
-                        <i class="fas fa-shield"></i> Firewall
-                    </button>
-                    <button class="action-remove" id="btnHostDelete">
-                        <i class="fas fa-trash"></i> Delete
-                    </button>
-                </div>-->
             </div>
         </div>
 
@@ -111,12 +102,8 @@
     </main>
 </div>
 
-<!--
-< %- include('partials/host-firewall-modals.ejs') %>
-< %- include('partials/host-cron-modals.ejs') %>
-< %- include('partials/service-files-modals.ejs') %>
--->
-
+<%- include('partials/host-firewall-modals.ejs') %>
+<%- include('partials/host-cron-modals.ejs') %>
 <%- include('modals/file-create-folder-modal.ejs') %>
 <%- include('modals/file-create-file-modal.ejs') %>
 <%- include('modals/file-upload-modal.ejs') %>
