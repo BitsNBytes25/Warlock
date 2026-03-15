@@ -567,6 +567,8 @@ table td {
 	font-size: 0.9375rem;
 }
 
+/* <editor-fold desc="Terminal and Console"> */
+
 .terminal {
 	color: var(--terminal);
 	background: var(--terminal-bg);
@@ -702,6 +704,8 @@ table td {
 .autocomplete-list li.active {
 	background-color: rgba(0, 150, 255, 0.25);
 }
+
+/* </editor-fold> */
 
 
 
@@ -1072,36 +1076,6 @@ button.link-control span {
 }
 /** </editor-fold> **/
 
-/* Hologram loader */
-.hologram-loader {
-	display: inline-block;
-	position: relative;
-	width: 20px;
-	height: 20px;
-}
-
-.hologram-loader::before {
-	content: '';
-	position: absolute;
-	inset: 0;
-	border: 2px solid transparent;
-	border-top: 2px solid var(--primary-strong);
-	border-radius: 50%;
-	animation: spin 1s linear infinite;
-}
-
-.hologram-loader::after {
-	content: '';
-	position: absolute;
-	top: 2px;
-	left: 2px;
-	right: 2px;
-	bottom: 2px;
-	border: 1px solid transparent;
-	border-bottom: 1px solid var(--accent);
-	border-radius: 50%;
-	animation: spin 0.8s linear infinite reverse;
-}
 
 /* Loading spinner (general) */
 .loading-spinner {
@@ -1543,7 +1517,6 @@ host-connected-metric .critical {
 .card-view .service-entry,
 .card-view .host-entry,
 .card-view .application-entry,
-.host-card,
 .backup-file-item {
 	display: flex;
 	flex-wrap: wrap;
@@ -1564,7 +1537,6 @@ host-connected-metric .critical {
 .card-view .host-entry:hover,
 .card-view .service-entry:hover,
 .card-view .application-entry:hover,
-.host-card:hover,
 .backup-file-item:hover {
 	border-color: var(--content-hover-border);
 	transform: translateY(-2px);
@@ -1575,8 +1547,7 @@ host-connected-metric .critical {
 /* Thumbnail container, fixed to the top of the container and full width */
 .card-view .host-entry .thumbnail,
 .card-view .service-entry .thumbnail,
-.card-view .application-entry .thumbnail,
-.host-card .os-thumbnail {
+.card-view .application-entry .thumbnail {
 	position: absolute;
 	width: 100%;
 	height: 7rem;
@@ -1698,343 +1669,7 @@ host-connected-metric .critical {
 	padding: 1rem;
 }
 
-.application-card .app-install,
-.host-card .host-title {
-	display: flex;
-	align-content: space-between;
-	align-items: center;
-	margin: 0 0 1.25rem;
-	flex-wrap: wrap;
-	gap: 0.75rem;
-	border: 1px solid transparent;
-	border-radius: 0.5rem;
-	padding: 0.5rem;
-}
-.application-card .app-install:hover {
-	background: var(--content-hover-bg);
-	border: 1px solid var(--content-hover-border);
-	color: var(--content-hover);
-	text-shadow: 0 0 8px rgba(0, 150, 255, 0.3);
-}
-.host-card .filesystem-row-header,
-.host-card .app-install {
-	display: flex;
-	align-content: space-between;
-	align-items: center;
-	margin: 0 0 1.25rem;
-}
-.host-card .filesystem-row-header {
-	display: flex;
-	align-content: space-between;
-	align-items: center;
-	margin: 0 0 0.5rem;
-}
-.application-card .app-install .host-name,
-.host-card .host-name {
-	flex: 3 100%;
-	display: flex;
-	align-items: center;
-	gap: 0.25rem;
-}
-.host-card .filesystem-row-header .filesystem-path,
-.host-card .app-install .app-name {
-	flex: 2;
-	display: flex;
-	align-items: center;
-	gap: 0.25rem;
-}
-.application-card .app-install .host-name img,
-.host-card .app-install .app-name img,
-.host-card .host-name img {
-	width: 1.25em;
-}
-.application-card .app-install .host-actions,
-.host-card .host-title .host-actions {
-	flex: 3 100%;
-	display: flex;
-	gap: 0.35rem;
-}
-.host-card .filesystem-row-header .filesystem-actions,
-.host-card .app-install .app-actions {
-	flex: 1;
-	text-align: right;
-}
-
-.application-card .app-install .host-actions .update-available i {
-	animation: pulse 4s infinite;
-}
-
-.application-card .app-title {
-	display: grid;
-	align-items: center;
-	gap: 1rem;
-	margin-bottom: 1rem;
-	grid-template-areas: 'logo name actions' 'logo desc desc';
-}
-
-.application-card .app-icon,
-.host-card .host-icon {
-	width: 48px;
-	height: 48px;
-	border-radius: 10px;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	grid-area: logo;
-}
-.application-card .app-icon {
-	background-color: var(--table-header-bg-2);
-	box-shadow: 0 4px 12px var(--table-header-bg-1);
-}
-
-.application-card .app-icon img,
-.host-card .host-icon img {
-	max-width: 100%;
-	max-height: 100%;
-	border-radius: 8px;
-}
-
-.application-card .app-icon i,
-.host-card .host-icon i {
-	color: var(--table-header);
-}
-
-
-.application-card .host-actions button,
-.host-card .host-actions button {
-	padding: 0.25rem 0.5rem;
-	border-radius: 5px;
-	cursor: pointer;
-	font-weight: 500;
-	font-size: 0.85rem;
-	transition: all 0.3s;
-	flex: 1;
-}
-
-.host-card .filesystem,
-.host-card .app-install {
-	border-radius: 8px;
-	transition: all 0.3s ease;
-	border: 1px solid transparent;
-	margin: 0.5em -0.5em;
-	padding: 0.5em;
-	cursor: pointer;
-}
-
-.host-card .filesystem:hover,
-.host-card .app-install:hover {
-	background: var(--content-hover-bg);
-	border: 1px solid var(--content-hover-border);
-	color: var(--content-hover);
-	text-shadow: 0 0 8px rgba(0, 150, 255, 0.3);
-}
-
-.host-card .filesystem-usage-bar {
-	width: 100%;
-	height: 1.4rem;
-	background: rgba(189, 189, 189, 0.4);
-	border-radius: 6px;
-	overflow: hidden;
-	position: relative;
-}
-.host-card .filesystem-usage-bar .usage-fill {
-	height: 100%;
-	transition: width 0.5s ease;
-	position: absolute;
-	top: 0;
-	left: -4px;
-	transform: skewX(-30deg);
-}
-.host-card .filesystem-usage-bar .usage-fill.usage-status-normal {
-	background: linear-gradient(90deg, var(--status-good-bg-1), var(--status-good-bg-2));
-}
-.host-card .filesystem-usage-bar .usage-fill.usage-status-warning {
-	background: linear-gradient(90deg, var(--status-warning-bg-1), var(--status-warning-bg-2));
-}
-.host-card .filesystem-usage-bar .usage-fill.usage-status-critical {
-	background: linear-gradient(90deg, var(--status-critical-bg-1), var(--status-critical-bg-2));
-}
-
-.host-card .filesystem-usage-text {
-	color: var(--content);
-	text-shadow: 0 0 1px var(--content-bg);
-	position: relative;
-	z-index: 2;
-	text-align: center;
-}
-
-.host-card .host-metrics {
-	display: flex;
-	gap: 1rem;
-	align-items: center;
-}
-.host-card .host-metrics .metric-item {
-	flex: 1;
-	min-width: 90px;
-	display:flex;
-	flex-direction:column;
-	align-items:center;
-	gap:0.5rem;
-}
-.host-card .host-metrics .metric-label {
-	text-align: center;
-	font-size: 0.85rem;
-	opacity: 0.95;
-}
-/* CPU meta and percent */
-.host-card .metric-cpu .metric-meta {
-	display:flex;
-	flex-direction:column;
-	align-items:center;
-	gap:0.25rem;
-}
-.host-card .cpu-percent {
-	font-weight:700;
-	font-family: Rajdhani, sans-serif;
-	font-size: 1.05rem;
-	color: var(--content);
-}
-/* Memory summary */
-.host-card .metric-memory .mem-summary {
-	font-size: 0.85rem;
-}
-/* Disk summary */
-.host-card .metric-disk-summary {
-	display:flex;
-	flex-direction:column;
-	align-items:center;
-	justify-content:center;
-}
-.host-card .metric-disk-summary .metric-value {
-	font-weight:600;
-	font-size:0.9rem;
-}
-/* Host details area */
-.host-card .host-details {
-	display: grid;
-	grid-template-columns: repeat(2, 1fr);
-	gap: 0.5rem 1rem;
-	margin-top: 1rem;
-	border-top: 1px dashed rgba(255,255,255,0.03);
-	padding-top: 0.75rem;
-}
-.host-card .host-details .detail-item {
-	display:flex;
-	align-items:center;
-	gap:0.5rem;
-	font-size:0.875rem;
-	color: var(--muted-color, #9aa);
-}
-.host-card .host-details .detail-item i {
-	width:18px;
-	text-align:center;
-	color: var(--table-header);
-	opacity:0.95;
-}
-.host-card .host-details .detail-label {
-	flex:1;
-	opacity:0.9;
-}
-.host-card .host-details .detail-value {
-	font-weight:600;
-	text-align:right;
-	min-width:56px;
-}
-/* Inline CPU cores in compact host listings */
-.cpu-cores-inline {
-	display:block;
-	font-size:0.82rem;
-	color:var(--muted-color, #9aa);
-	margin-top:0.25rem;
-}
-/* Loopback IP styling */
-.host-card .detail-ip .ip-value.loopback {
-	opacity:0.85;
-	font-style:italic;
-	color: var(--muted-color, #9aa);
-	font-weight:600;
-}
-.host-card .detail-ip .ip-value.public {
-	color: var(--status-good);
-	font-weight:700;
-}
-.host-card .detail-ip .ip-value { font-weight:600; }
-/* Disk list (small) */
-.host-card .disk-list {
-	grid-column: 1 / -1;
-	display:flex;
-	gap:0.5rem;
-	flex-wrap:wrap;
-	margin-top:0.25rem;
-}
-.host-card .disk-item {
-	display:flex;
-	gap:0.5rem;
-	align-items:center;
-	font-size:0.80rem;
-	color:var(--muted-color, #9aa);
-}
-.host-card .disk-item .disk-pct {
-	font-weight:700;
-	margin-left:0.5rem;
-}
-
-.host-card .mem-graph {
-	width: 100%;
-	height: 80px;
-	border-radius: 8px;
-	background: repeating-linear-gradient(
-		0deg,
-		var(--graph-bg) 0,
-		var(--graph-bg) 5px,
-		transparent 5px,
-		transparent 6px
-	);
-	border: 1px solid rgba(0, 150, 255, 0.1);
-	overflow: hidden;
-	position: relative;
-}
-.host-card .mem-graph .mem-used {
-	position: absolute;
-	bottom: 0;
-	left: 0;
-	width: 100%;
-	transition: height 0.5s ease;
-}
-.host-card .mem-graph.usage-status-normal .mem-used {
-	background: linear-gradient(0deg, var(--status-good), var(--status-good-bg-2));
-	box-shadow: inset 0 0 6px rgba(0,0,0,0.4);
-}
-.host-card .mem-graph.usage-status-warning .mem-used {
-	background: linear-gradient(0deg, var(--status-warning), var(--status-warning-bg-2));
-	box-shadow: inset 0 0 6px rgba(0,0,0,0.4);
-}
-.host-card .mem-graph.usage-status-critical .mem-used {
-	background: linear-gradient(0deg, var(--status-critical), var(--status-critical-bg-2));
-	box-shadow: inset 0 0 6px rgba(0,0,0,0.4);
-}
-
 /** </editor-fold> **/
-
-.cpu-speedometer .gauge-bg {
-	stroke: var(--graph-bg);
-}
-.cpu-speedometer .gauge-arc {
-	transition: all 0.5s ease;
-	filter: drop-shadow(0 2px 6px rgba(0,0,0,0.6));
-}
-.cpu-speedometer .gauge-needle {
-	transition: all 0.5s ease;
-}
-.cpu-speedometer .bg-start {
-	stop-color: var(--status-good);
-}
-.cpu-speedometer .bg-mid {
-	stop-color: var(--status-warning);
-}
-.cpu-speedometer .bg-stop {
-	stop-color: var(--status-critical);
-}
 
 .backup-file-item {
 	display: flex;
@@ -2105,34 +1740,6 @@ host-connected-metric .critical {
 	flex: 1;
 	text-align: right;
 	margin-right: 1rem;
-}
-
-.resizer {
-	width: 5px;
-	background: var(--content-border);
-	cursor: col-resize;
-	flex-shrink: 0;
-	position: relative;
-	transition: background 0.3s ease;
-}
-.resizer:hover {
-	background: var(--content-hover-border);
-}
-
-.resizer::before {
-	content: '';
-	position: absolute;
-	top: 50%;
-	left: 50%;
-	transform: translate(-50%, -50%);
-	width: 3px;
-	height: 40px;
-	background: rgba(0, 150, 255, 0.6);
-	border-radius: 2px;
-}
-
-.resizer.resizing {
-	background: rgba(0, 150, 255, 0.8);
 }
 
 .file-viewer-card {
