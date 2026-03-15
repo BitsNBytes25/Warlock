@@ -9,19 +9,17 @@ class HostNetworkMetricElement extends HTMLElement {
 		// Always call super first in constructor
 		super();
 
-		this.txNode = document.createElement('span');
-		this.rxNode = document.createElement('span');
-		this.host = null;
-	}
+		this.txNode = null;
+		this.rxNode = null;
+		this._attached = false;
 
-	/**
-	 * Called when the element is added to the DOM.
-	 */
-	connectedCallback() {
-		this.render();
-
-		// Attach the event listener for this node to retrieve live metrics.
-		document.addEventListener('hostChange', e => {
+		/**
+		 * Handler for live host data updates.
+		 *
+		 * @param {CustomEvent} e
+		 */
+		this.hostChangeListener = e => {
+			// Attach the event listener for this node to retrieve live metrics.
 			if (e.detail.host === this.host) {
 				if (e.detail.hasOwnProperty('net_tx')) {
 					this.txValue = e.detail.net_tx;
@@ -30,30 +28,71 @@ class HostNetworkMetricElement extends HTMLElement {
 					this.rxValue = e.detail.net_rx;
 				}
 			}
-		});
+		};
+	}
+
+	/**
+	 * Called when the element is added to the DOM.
+	 */
+	connectedCallback() {
+		this._attached = true;
+		this.render();
+		document.addEventListener('hostChange', this.hostChangeListener);
+	}
+
+	/**
+	 * Called when the element is removed from the DOM.
+	 */
+	disconnectedCallback() {
+		this._attached = false;
+		document.removeEventListener('hostChange', this.hostChangeListener);
+	}
+
+	/**
+	 * Called when an observed attribute changes.
+	 */
+	static get observedAttributes() {
+		return ['host'];
+	}
+
+	/**
+	 * Called when an observed attribute changes.
+	 *
+	 * Only fires when setAttribute is called.
+	 *
+	 * @param {string} name
+	 * @param oldValue
+	 * @param newValue
+	 */
+	attributeChangedCallback(name, oldValue, newValue) {
+		if (oldValue !== newValue) {
+			// General attribute change, we don't really care which one.
+			this.render();
+		}
 	}
 
 	render() {
-		this.host = this.getAttribute('host');
-
-		// This module requires a host to be specified.
-		if (!this.host) {
-			this.innerHTML = 'ERROR: No host specified';
+		// Skip rendering if we're not ready yet.
+		if (!(this._attached && this.host)) {
 			return;
 		}
 
-		const container = document.createElement('div');
-		container.className = 'network-values';
+		const txNode = this.txNode || document.createElement('span'),
+			rxNode = this.rxNode || document.createElement('span');
 
-		this.txNode.className = 'net-tx';
-		this.txNode.textContent = '0 bps ↑';
-		container.appendChild(this.txNode);
+		txNode.className = 'net-tx';
+		txNode.textContent = '0 bps ↑';
+		if (!this.txNode) {
+			this.appendChild(txNode);
+			this.txNode = txNode;
+		}
 
-		this.rxNode.className = 'net-rx';
-		this.rxNode.textContent = '↓ 0 bps';
-		container.appendChild(this.rxNode);
-
-		this.appendChild(container);
+		rxNode.className = 'net-rx';
+		rxNode.textContent = '↓ 0 bps';
+		if (!this.rxNode) {
+			this.appendChild(rxNode);
+			this.rxNode = rxNode;
+		}
 
 		// Initial data lookup
 		getHost(this.host).then(hostData => {
@@ -62,7 +101,27 @@ class HostNetworkMetricElement extends HTMLElement {
 				this.txValue = hostData.metrics.net_tx;
 				this.rxValue = hostData.metrics.net_rx;
 			}
+		}).catch(() => {
+
 		});
+	}
+
+	/**
+	 * Get the host identifier.
+	 *
+	 * @returns {string}
+	 */
+	get host() {
+		return this.getAttribute('host');
+	}
+
+	/**
+	 * Set the host identifier.
+	 *
+	 * @param {string} value
+	 */
+	set host(value) {
+		this.setAttribute('host', value);
 	}
 
 	/**
@@ -115,4 +174,3 @@ class HostNetworkMetricElement extends HTMLElement {
 }
 
 customElements.define('host-network-metric', HostNetworkMetricElement);
-

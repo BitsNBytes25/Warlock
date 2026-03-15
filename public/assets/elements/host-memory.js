@@ -9,50 +9,99 @@ class HostMemoryMetricElement extends HTMLElement {
 		// Always call super first in constructor
 		super();
 
-		this.usedNode = document.createElement('span');
+		this.valueNode = null;
 		this.graphNode = null;
-		this.rawValue = null;
-		this.host = null;
+		this.fillNode = null;
+		this.detailsNode = null;
+		this._attached = false;
 		this.totalMemory = null;
+
+		/**
+		 * Handler for live host data updates.
+		 *
+		 * @param {CustomEvent} e
+		 */
+		this.hostChangeListener = e => {
+			// Attach the event listener for this node to retrieve live metrics.
+			if (e.detail.host === this.host && e.detail.hasOwnProperty('cpu_usage')) {
+				this.value = e.detail.memory_used;
+			}
+		};
 	}
 
 	/**
 	 * Called when the element is added to the DOM.
 	 */
 	connectedCallback() {
+		this._attached = true;
 		this.render();
+		document.addEventListener('hostChange', this.hostChangeListener);
+	}
 
-		// Attach the event listener for this node to retrieve live metrics.
-		document.addEventListener('hostChange', e => {
-			if (e.detail.host === this.host && e.detail.hasOwnProperty('memory_used')) {
-				this.value = e.detail.memory_used;
-			}
-		});
+	/**
+	 * Called when the element is removed from the DOM.
+	 */
+	disconnectedCallback() {
+		this._attached = false;
+		document.removeEventListener('hostChange', this.hostChangeListener);
+	}
+
+	/**
+	 * Called when an observed attribute changes.
+	 */
+	static get observedAttributes() {
+		return ['host', 'bargraph'];
+	}
+
+	/**
+	 * Called when an observed attribute changes.
+	 *
+	 * Only fires when setAttribute is called.
+	 *
+	 * @param {string} name
+	 * @param oldValue
+	 * @param newValue
+	 */
+	attributeChangedCallback(name, oldValue, newValue) {
+		if (oldValue !== newValue) {
+			// General attribute change, we don't really care which one.
+			this.render();
+		}
 	}
 
 	render() {
-		const bargraph = parseInt(this.getAttribute('bargraph') || 0) === 1,
-			bar = document.createElement('div'),
-			fill = document.createElement('div');
-
-		this.host = this.getAttribute('host');
-
-		// This module requires a host to be specified.
-		if (!this.host) {
-			this.innerHTML = 'ERROR: No host specified';
+		// Skip rendering if we're not ready yet.
+		if (!(this._attached && this.host)) {
 			return;
 		}
 
-		this.usedNode.className = 'value';
-		this.appendChild(this.usedNode);
+		const valueNode = this.valueNode || document.createElement('span'),
+			graphNode = this.graphNode || document.createElement('div'),
+			fillNode = this.fillNode || document.createElement('div');
 
-		if (bargraph) {
-			bar.className = 'bargraph-h';
-			fill.className = 'fill';
+		valueNode.className = 'value';
+		if (!this.valueNode) {
+			this.appendChild(valueNode);
+			this.valueNode = valueNode;
+		}
 
-			this.graphNode = fill;
-			bar.appendChild(fill);
-			this.appendChild(bar);
+		if (this.bargraph) {
+			// Bar graph selected, ensure it's rendered
+			graphNode.className = 'bargraph-h';
+			fillNode.className = 'fill';
+
+			if (!this.graphNode) {
+				graphNode.appendChild(fillNode);
+				this.appendChild(graphNode);
+				this.graphNode = graphNode;
+				this.fillNode = fillNode;
+			}
+		}
+		else if(this.graphNode) {
+			// Bargraph is present but not requested, remove it.
+			this.removeChild(this.graphNode);
+			this.graphNode = null;
+			this.fillNode = null;
 		}
 
 		// Initial data lookup
@@ -63,7 +112,45 @@ class HostMemoryMetricElement extends HTMLElement {
 			if (hostData.hasOwnProperty('metrics')) {
 				this.value = hostData.metrics.memory_used;
 			}
+		}).catch(() => {
+
 		});
+	}
+
+	/**
+	 * Get the host identifier.
+	 *
+	 * @returns {string}
+	 */
+	get host() {
+		return this.getAttribute('host');
+	}
+
+	/**
+	 * Set the host identifier.
+	 *
+	 * @param {string} value
+	 */
+	set host(value) {
+		this.setAttribute('host', value);
+	}
+
+	/**
+	 * Get if the bargraph should be displayed.
+	 *
+	 * @returns {boolean}
+	 */
+	get bargraph() {
+		return this.getAttribute('bargraph') === '1';
+	}
+
+	/**
+	 * Enable/disable bargraph rendering
+	 *
+	 * @param {boolean} value
+	 */
+	set bargraph(value) {
+		this.setAttribute('bargraph', value ? '1' : '0');
 	}
 
 	/**
@@ -77,42 +164,33 @@ class HostMemoryMetricElement extends HTMLElement {
 		if (isNaN(bytes)) {
 			bytes = 0;
 		}
-		this.rawValue = Math.max(0, bytes);
+		bytes = Math.max(0, bytes);
 
 		// Calculate percentage for bar graph
 		const totalBytes = this.totalMemory || 1;
-		const percentage = Math.max(0, Math.min(100, (this.rawValue / totalBytes) * 100));
+		const percentage = Math.max(0, Math.min(100, (bytes / totalBytes) * 100));
 
 		// Use numberTick for updating the value if it's available.
 		if (typeof numberTick === 'function') {
 			numberTick(
-				this.usedNode,
-				this.rawValue,
+				this.valueNode,
+				bytes,
 				v => formatFileSize(v, 0) + ' / ' + formatFileSize(totalBytes, 0)
 			);
 		}
 		else {
-			this.usedNode.innerHTML = formatFileSize(this.rawValue, 0) + ' / ' + formatFileSize(totalBytes, 0);
+			this.valueNode.innerHTML = formatFileSize(bytes, 0) + ' / ' + formatFileSize(totalBytes, 0);
 		}
 
 		// Use progressBarTick to update the bargraph if it's available
-		if (this.graphNode) {
+		if (this.fillNode) {
 			if (typeof progressBarTick === 'function') {
-				progressBarTick(this.graphNode, percentage);
+				progressBarTick(this.fillNode, percentage);
 			}
 			else {
-				this.graphNode.style.width = percentage + '%';
+				this.fillNode.style.width = percentage + '%';
 			}
 		}
-	}
-
-	/**
-	 * Get the current raw value of memory used in bytes.
-	 *
-	 * @returns {float}
-	 */
-	get value() {
-		return this.rawValue || 0.0;
 	}
 }
 

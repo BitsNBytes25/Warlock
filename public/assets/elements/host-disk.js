@@ -9,22 +9,18 @@ class HostDiskMetricElement extends HTMLElement {
 		// Always call super first in constructor
 		super();
 
-		this.valueNode = document.createElement('span');
-		this.percentageNode = document.createElement('span');
+		this.valueNode = null;
 		this.graphNode = null;
-		this.rawValue = null;
-		this.host = null;
-		this.dev = null;
-	}
+		this.fillNode = null;
+		this.percentageNode = null;
+		this._attached = false;
 
-	/**
-	 * Called when the element is added to the DOM.
-	 */
-	connectedCallback() {
-		this.render();
-
-		// Attach the event listener for this node to retrieve live metrics.
-		document.addEventListener('hostChange', e => {
+		/**
+		 * Handler for live host data updates.
+		 *
+		 * @param {CustomEvent} e
+		 */
+		this.hostChangeListener = e => {
 			if (e.detail.host === this.host && this.dev) {
 				const freeKey = `disk_${this.dev}_free`;
 				const usedKey = `disk_${this.dev}_used`;
@@ -38,41 +34,89 @@ class HostDiskMetricElement extends HTMLElement {
 					};
 				}
 			}
-		});
+		};
+	}
+
+	/**
+	 * Called when the element is added to the DOM.
+	 */
+	connectedCallback() {
+		this._attached = true;
+		this.render();
+		document.addEventListener('hostChange', this.hostChangeListener);
+	}
+
+	/**
+	 * Called when the element is removed from the DOM.
+	 */
+	disconnectedCallback() {
+		this._attached = false;
+		document.removeEventListener('hostChange', this.hostChangeListener);
+	}
+
+	/**
+	 * Called when an observed attribute changes.
+	 */
+	static get observedAttributes() {
+		return ['host', 'dev', 'bargraph'];
+	}
+
+	/**
+	 * Called when an observed attribute changes.
+	 *
+	 * Only fires when setAttribute is called.
+	 *
+	 * @param {string} name
+	 * @param oldValue
+	 * @param newValue
+	 */
+	attributeChangedCallback(name, oldValue, newValue) {
+		if (oldValue !== newValue) {
+			// General attribute change, we don't really care which one.
+			this.render();
+		}
 	}
 
 	render() {
-		const bargraph = parseInt(this.getAttribute('bargraph') || 0) === 1,
-			bar = document.createElement('div'),
-			fill = document.createElement('div');
-
-		this.host = this.getAttribute('host');
-		this.dev = this.getAttribute('dev');
-
-		// This module requires both a host and a device to be specified.
-		if (!this.host) {
-			this.innerHTML = 'ERROR: No host specified';
+		// Skip rendering if we're not ready yet.
+		if (!(this._attached && this.host && this.dev)) {
 			return;
 		}
 
-		if (!this.dev) {
-			this.innerHTML = 'ERROR: No disk device specified';
-			return;
+		const valueNode = this.valueNode || document.createElement('span'),
+			percentageNode = this.percentageNode || document.createElement('span'),
+			graphNode = this.graphNode || document.createElement('div'),
+			fillNode = this.fillNode || document.createElement('div');
+
+		valueNode.className = 'value';
+		if (!this.valueNode) {
+			this.appendChild(valueNode);
+			this.valueNode = valueNode;
 		}
 
-		this.valueNode.className = 'value';
-		this.appendChild(this.valueNode);
+		percentageNode.className = 'percentage';
+		if (!this.percentageNode) {
+			this.appendChild(percentageNode);
+			this.percentageNode = percentageNode;
+		}
 
-		this.percentageNode.className = 'percentage';
-		this.appendChild(this.percentageNode);
+		if (this.bargraph) {
+			// Bar graph selected, ensure it's rendered
+			graphNode.className = 'bargraph-h';
+			fillNode.className = 'fill';
 
-		if (bargraph) {
-			bar.className = 'bargraph-h';
-			fill.className = 'fill';
-
-			this.graphNode = fill;
-			bar.appendChild(fill);
-			this.appendChild(bar);
+			if (!this.graphNode) {
+				graphNode.appendChild(fillNode);
+				this.appendChild(graphNode);
+				this.graphNode = graphNode;
+				this.fillNode = fillNode;
+			}
+		}
+		else if(this.graphNode) {
+			// Bargraph is present but not requested, remove it.
+			this.removeChild(this.graphNode);
+			this.graphNode = null;
+			this.fillNode = null;
 		}
 
 		// Initial data lookup
@@ -91,7 +135,63 @@ class HostDiskMetricElement extends HTMLElement {
 					};
 				}
 			}
+		}).catch(() => {
+
 		});
+	}
+
+	/**
+	 * Get the host identifier.
+	 *
+	 * @returns {string}
+	 */
+	get host() {
+		return this.getAttribute('host');
+	}
+
+	/**
+	 * Set the host identifier.
+	 *
+	 * @param {string} value
+	 */
+	set host(value) {
+		this.setAttribute('host', value);
+	}
+
+	/**
+	 * Get the device name.
+	 *
+	 * @returns {string}
+	 */
+	get dev() {
+		return this.getAttribute('dev');
+	}
+
+	/**
+	 * Set the device name.
+	 *
+	 * @param {string} value
+	 */
+	set dev(value) {
+		this.setAttribute('dev', value);
+	}
+
+	/**
+	 * Get if the bargraph should be displayed.
+	 *
+	 * @returns {boolean}
+	 */
+	get bargraph() {
+		return this.getAttribute('bargraph') === '1';
+	}
+
+	/**
+	 * Enable/disable bargraph rendering
+	 *
+	 * @param {boolean} value
+	 */
+	set bargraph(value) {
+		this.setAttribute('bargraph', value ? '1' : '0');
 	}
 
 	/**
@@ -111,8 +211,6 @@ class HostDiskMetricElement extends HTMLElement {
 		const free = parseFloat(diskData.free) || 0,
 			used = parseFloat(diskData.used) || 0,
 			total = parseFloat(diskData.total) || 1;
-
-		this.rawValue = free;
 
 		const percentage = Math.max(0, Math.min(100, (used / total) * 100));
 
@@ -135,25 +233,15 @@ class HostDiskMetricElement extends HTMLElement {
 		}
 
 		// Use progressBarTick to update the bargraph if it's available
-		if (this.graphNode) {
+		if (this.fillNode) {
 			if (typeof progressBarTick === 'function') {
-				progressBarTick(this.graphNode, percentage);
+				progressBarTick(this.fillNode, percentage);
 			}
 			else {
-				this.graphNode.style.width = percentage + '%';
+				this.fillNode.style.width = percentage + '%';
 			}
 		}
-	}
-
-	/**
-	 * Get the current raw value of disk free space in bytes.
-	 *
-	 * @returns {float}
-	 */
-	get value() {
-		return this.rawValue || 0.0;
 	}
 }
 
 customElements.define('host-disk-metric', HostDiskMetricElement);
-
