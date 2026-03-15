@@ -1374,11 +1374,14 @@ button.link-control span {
 	grid-area: disk;
 	text-align: center;
 }
+#hosts-table.table-view host-disks-metric .percentage {
+	display: none;
+}
 #hosts-table.table-view .net {
 	grid-area: net;
 	text-align: center;
 }
-#hosts-table.table-view .body .net .value1 {
+#hosts-table.table-view host-network-metric .net-tx {
 	display: block;
 }
 #hosts-table.table-view .actions {
@@ -1419,6 +1422,9 @@ button.link-control span {
 	font-weight: 600;
 	color: var(--content);
 }
+#hosts-table.card-view host-network-metric {
+	display: inline-block;
+}
 #hosts-table.card-view .net::before {
 	content: attr(data-title);
 	font-weight: 600;
@@ -1426,6 +1432,9 @@ button.link-control span {
 }
 #hosts-table.card-view .disk {
 	display: none;
+}
+#hosts-table.card-view host-disk-metric .percentage {
+	padding-left: 0.5em;
 }
 #hosts-table.card-view .advanced-disk::before {
 	content: attr(data-title);

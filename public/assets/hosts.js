@@ -53,34 +53,26 @@ function populateHostsTable(hostData) {
 		}
 		else if (field === 'cpu') {
 			cell.dataset.title = 'CPU: ';
-			val = `<host-cpu host=${hostData.host} model=1 bargraph=1></host-cpu>`;
-			/*
-			val = '<span class="value"></span>';
-			if (hostData.cpu.model) {
-				val += `<div class="cpu-details">${hostData.cpu.model}</div>`;
-			}
-			val += `<div class="bargraph-h"><div class="fill" style="width: 0%"></div></div>`;*/
+			val = `<host-cpu-metric host=${hostData.host} model=1 bargraph=1></host-cpu-metric>`;
 		}
 		else if (field === 'memory') {
 			cell.dataset.title = 'Memory: ';
-			val = `<span class="value"></span> / ${formatFileSize(hostData.memory, 0)}`;
-			val += `<div class="bargraph-h"><div class="fill" style="width: 0%"></div></div>`;
+			val = `<host-memory-metric host=${hostData.host} bargraph=1></host-memory-metric>`;
 		}
 		else if (field === 'disk') {
-			val = '<span class="value1"></span> <span class="value2"></span>';
-			val += `<div class="bargraph-h"><div class="fill" style="width: 0%"></div></div>`;
+			cell.dataset.title = 'Disk: ';
+			val = `<host-disks-metric host=${hostData.host} bargraph=1></host-disks-metric>`;
 		}
 		else if (field === 'net') {
 			cell.dataset.title = 'Net: ';
-			val = '<span class="value1"></span> <span class="value2"></span>';
+			val = `<host-network-metric host=${hostData.host}></host-network-metric>`;
 		}
 		else if (field.startsWith('advanced-disk-')) {
 			let dev= field.replace('advanced-disk-', ''),
 				disk = hostData.disks.find(d => d.dev === dev);
 			cell.dataset.title = `Disk ${disk.mount}: `;
 			cell.className = 'advanced-disk advanced-disk-' + dev.replace(/\//g, '_');
-			val = '<span class="value1"></span> <span class="value2"></span>';
-			val += `<div class="bargraph-h"><div class="fill" style="width: 0%"></div></div>`;
+			val = `<host-disk-metric host=${hostData.host} dev=${dev} bargraph=1></host-disk-metric>`;
 		}
 
 		cell.innerHTML = val;
@@ -171,71 +163,4 @@ window.addEventListener('DOMContentLoaded', () => {
 
 	// Load all hosts and periodically update the list
 	loadAllHosts();
-});
-
-document.addEventListener('hostChange', e => {
-	let row = hostsContainer.querySelector(`div[data-host="${e.detail.host}"]`);
-	if (!row) {
-		return;
-	}
-	let host = hostData.find(h => h.host === e.detail.host);
-
-	if (e.detail.hasOwnProperty('memory_used')) {
-		let cell = row.querySelector('.memory'),
-			bar = cell.querySelector('.bargraph-h .fill'),
-			totalMemory = host.memory,
-			percent = (e.detail.memory_used / totalMemory) * 100;
-
-		numberTick(
-			cell.querySelector('.value'),
-			e.detail.memory_used,
-			v => formatFileSize(v, 0),
-		);
-		progressBarTick(bar, percent);
-	}
-
-	if (e.detail.hasOwnProperty('disks_free')) {
-		let cell = row.querySelector('.disk'),
-			bar = cell.querySelector('.bargraph-h .fill'),
-			totalDisk = host.metrics.disks_total,
-			percent = (e.detail.disks_used / totalDisk) * 100;
-
-		numberTick(
-			cell.querySelector('.value1'),
-			e.detail.disks_free,
-			v => formatFileSize(v, 1) + ' free',
-		);
-		progressBarTick(bar, percent);
-	}
-
-	// Check advanced disks
-	for(let disk of host.disks) {
-		if (e.detail.hasOwnProperty(`disk_${disk.dev}_free`)) {
-			let cell = row.querySelector('.advanced-disk-' + disk.dev.replace(/\//g, '_')),
-				bar = cell.querySelector('.bargraph-h .fill'),
-				totalDisk = host.metrics[`disk_${disk.dev}_total`],
-				percent = (e.detail[`disk_${disk.dev}_used`] / totalDisk) * 100;
-
-			numberTick(
-				cell.querySelector('.value1'),
-				e.detail[`disk_${disk.dev}_free`],
-				v => formatFileSize(v, 1) + ' free',
-			);
-			numberTick(
-				cell.querySelector('.value2'),
-				percent,
-				v => '(' + v.toFixed(0) + '% used)',
-			);
-			progressBarTick(bar, percent);
-		}
-	}
-
-	if (e.detail.hasOwnProperty('net_tx') || e.detail.hasOwnProperty('net_rx')) {
-		let cell = row.querySelector('.net'),
-			tx = cell.querySelector('.value1'),
-			rx = cell.querySelector('.value2');
-
-		numberTick(tx, host.metrics.net_tx, v => formatBitSpeed(v) + ' ↑');
-		numberTick(rx, host.metrics.net_rx, v => '↓ ' + formatBitSpeed(v));
-	}
 });

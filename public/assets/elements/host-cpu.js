@@ -4,7 +4,7 @@
  * @license AGPLv3
  * @author Charlie Powell <cdp1337@bitsnbytes.dev>
  */
-class HostCPUElement extends HTMLElement {
+class HostCPUMetricElement extends HTMLElement {
 	constructor() {
 		// Always call super first in constructor
 		super();
@@ -121,4 +121,4 @@ class HostCPUElement extends HTMLElement {
 	}
 }
 
-customElements.define('host-cpu', HostCPUElement);
+customElements.define('host-cpu-metric', HostCPUMetricElement);
