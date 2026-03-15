@@ -230,6 +230,10 @@ window.addEventListener('DOMContentLoaded', () => {
 	// Load host data
 	loadHost(host).then(() => {
 
+		hostDetailsCpu.host = host;
+		hostDetailsMemory.host = host;
+		hostDetailsNetwork.host = host;
+
 		// Start metrics poller
 		pollHostMetrics(host);
 
@@ -238,11 +242,9 @@ window.addEventListener('DOMContentLoaded', () => {
 
 			// Create new disk entry
 			diskContainer = document.createElement('div');
-			diskContainer.dataset.dev = disk.dev;
 			diskContainer.classList.add('host-disk');
-			diskContainer.innerHTML = `<div class="label">Disk ${disk.mount} (${disk.type})</div>
-<div class="value"></div>
-<div class="bargraph-h"><div class="fill"></div></div>`;
+			diskContainer.innerHTML = `<div class="metric-label">Disk ${disk.mount} (${disk.type})</div>
+<host-disk-metric class="metric-value" host="${host}" dev="${disk.dev}" bargraph="1"></host-disk-metric>`;
 			hostDetailOverview.appendChild(diskContainer);
 		});
 
@@ -271,60 +273,4 @@ window.addEventListener('DOMContentLoaded', () => {
 		console.error('Error loading host:', error);
 		document.querySelector('.content-body').innerHTML = '<div class="error-message">Error loading host data.</div>';
 	});
-});
-
-document.addEventListener('hostChange', e => {
-	console.log(e.detail);
-
-	if (e.detail.hasOwnProperty('cpu_usage')) {
-		let cell = hostDetailOverview.querySelector('.host-cpu'),
-			bar = cell.querySelector('.bargraph-h .fill');
-
-		numberTick(
-			hostDetailsCpu,
-			e.detail.cpu_usage,
-			v => v.toFixed(1) + '%',
-		);
-		progressBarTick(bar, e.detail.cpu_usage);
-	}
-
-	if (e.detail.hasOwnProperty('memory_used')) {
-		let cell = hostDetailOverview.querySelector('.host-memory'),
-			bar = cell.querySelector('.bargraph-h .fill'),
-			totalMemory = loadedHostData.memory,
-			percent = (e.detail.memory_used / totalMemory) * 100;
-
-		numberTick(
-			cell.querySelector('.value'),
-			e.detail.memory_used,
-			v => formatFileSize(v, 0) + ' / ' + formatFileSize(totalMemory, 0)
-		);
-		progressBarTick(bar, percent);
-	}
-
-	if (e.detail.hasOwnProperty('net_tx') || e.detail.hasOwnProperty('net_rx')) {
-		let cell = hostDetailOverview.querySelector('.host-network'),
-			tx = cell.querySelector('.value1'),
-			rx = cell.querySelector('.value2');
-
-		numberTick(tx, loadedHostData.metrics.net_tx, v => formatBitSpeed(v) + ' ↑');
-		numberTick(rx, loadedHostData.metrics.net_rx, v => '↓ ' + formatBitSpeed(v));
-	}
-
-	// Check advanced disks
-	for(let disk of loadedHostData.disks) {
-		if (e.detail.hasOwnProperty(`disk_${disk.dev}_used`)) {
-			let cell = hostDetailOverview.querySelector('.host-disk[data-dev="' + disk.dev + '"]'),
-				bar = cell.querySelector('.bargraph-h .fill'),
-				totalDisk = loadedHostData.metrics[`disk_${disk.dev}_total`],
-				percent = (e.detail[`disk_${disk.dev}_used`] / totalDisk) * 100;
-
-			numberTick(
-				cell.querySelector('.value'),
-				e.detail[`disk_${disk.dev}_used`],
-				v => formatFileSize(v, 1) + ' / ' + formatFileSize(totalDisk, 1)
-			);
-			progressBarTick(bar, percent);
-		}
-	}
 });

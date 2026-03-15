@@ -2819,7 +2819,7 @@ button.link-control span {
 	flex-wrap: wrap;
 }
 
-.host-details-overview .label {
+.host-details-overview .metric-label {
 	opacity: 0.7;
 	font-variant: small-caps;
 	margin-bottom: 0.5rem;
@@ -2827,10 +2827,15 @@ button.link-control span {
 	text-align: center;
 }
 
-.host-details-overview .value {
+.host-details-overview .metric-value {
 	font-size: 1.25rem;
 	min-width: 7rem;
 	text-align: center;
+	display: block;
+}
+.host-details-overview host-disk-metric .percentage {
+	padding-left: 0.5em;
+	font-size: 1rem;
 }
 
 .host-details-info-grid {

@@ -23,7 +23,7 @@ class HostMemoryMetricElement extends HTMLElement {
 		 */
 		this.hostChangeListener = e => {
 			// Attach the event listener for this node to retrieve live metrics.
-			if (e.detail.host === this.host && e.detail.hasOwnProperty('cpu_usage')) {
+			if (e.detail.host === this.host && e.detail.hasOwnProperty('memory_used')) {
 				this.value = e.detail.memory_used;
 			}
 		};
