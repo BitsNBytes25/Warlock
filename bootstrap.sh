@@ -47,8 +47,11 @@ fi
 
 # Create installation directory
 INSTALL_DIR="/var/www/Warlock"
-echo -e "${YELLOW}Creating installation directory: $INSTALL_DIR${NC}"
-mkdir -p /var/www
+if [ ! -d "$INSTALL_DIR" ]; then
+	echo -e "${YELLOW}Creating installation directory: $INSTALL_DIR${NC}"
+    mkdir -p /var/www
+fi
+
 chmod a+rx /var/www
 
 # Check if directory already exists

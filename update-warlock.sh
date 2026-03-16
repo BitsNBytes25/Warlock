@@ -47,6 +47,11 @@ while IFS=$'\t' read -r branch date commit; do
 	if [ "$branch_name" == "HEAD" ]; then
 		continue
 	fi
+	# Only load main, release-*, and current branches.
+	# This is done because update is meant to be an end-user utility, not a developer utility.
+	if [[ "$branch_name" != "main" && "$branch_name" != "release-"* && "$branch_name" != "$CURRENT_BRANCH" ]]; then
+		continue
+	fi
 	branches+=("$branch_name")
 	dates+=("$date")
 	commits+=("$commit")
