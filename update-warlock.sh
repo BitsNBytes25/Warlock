@@ -1,8 +1,17 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Update Warlock application to the newest version available in git.
 #
 # Checks which branch the user is currently on and checks permissions to require running as the owner of Warlock.
+#
+# Usage:
+#   ./update-warlock.sh
+#
+# @author Charlie Powell <cdp1337@bitsnbytes.dev>
+# @license AGPLv3.0
+# @see https://warlock.nexus
+# @source https://github.com/BitsNBytes25/Warlock
+#
 
 # Get the owner of the .git directory
 if [ ! -d ".git" ]; then

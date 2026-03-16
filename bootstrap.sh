@@ -1,10 +1,19 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Bootstrap script to set up the Warlock environment.
 # This script will install git (if necessary), clone the Warlock repository in /var/www/Warlock,
-# and run install-warlock.sh in that directory to complete the setup.
+# and run update-warlock.sh in that directory to complete the setup.
 #
 # This is meant as a one-liner that users can run with curl or wget to quickly set up Warlock.
+#
+# Usage:
+#   curl -sSL https://raw.githubusercontent.com/BitsNBytes25/Warlock/main/bootstrap.sh | bash
+#
+# @author Charlie Powell <cdp1337@bitsnbytes.dev>
+# @license AGPLv3.0
+# @see https://warlock.nexus
+# @source https://github.com/BitsNBytes25/Warlock
+#
 
 set -e  # Exit on any error
 

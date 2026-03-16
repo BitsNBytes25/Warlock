@@ -1,7 +1,17 @@
 #!/usr/bin/env bash
-# install-warlock.sh
+#
 # Install Warlock as a systemd service in-place (service runs from the directory where this script lives)
-# Usage: install-warlock.sh [--user <name>] [--help]
+#
+# Usage:
+#   install-warlock.sh [--user <name>] [--help] [--skip-nginx] [--skip-systemd] [--update]
+#
+# Running with --update will skip nginx and systemd configuration and just update dependencies and the .env file if needed.
+#
+# @author Charlie Powell <cdp1337@bitsnbytes.dev>
+# @license AGPLv3.0
+# @see https://warlock.nexus
+# @source https://github.com/BitsNBytes25/Warlock
+#
 
 SCRIPT_NAME=$(basename "$0")
 INSTALL_DIR="$(dirname "$(readlink -f "$0")")"
@@ -277,6 +287,7 @@ PWD="$(pwd)"
 if [ "$PWD" != "$INSTALL_DIR" ]; then
 	cd "$INSTALL_DIR"
 fi
+echo "Running npm install in $INSTALL_DIR to handle all dependencies..."
 npm install
 if [ "$PWD" != "$INSTALL_DIR" ]; then
 	cd "$PWD"
@@ -415,7 +426,7 @@ NGINX
 		echo "Warning: generated nginx configuration failed nginx -t. Leaving the file in $NGINX_AVAILABLE for inspection." >&2
 	fi
 else
-	echo "Note: nginx not found; skipping nginx site generation."
+	echo "Note: nginx not requested or updating only; skipping nginx site generation."
 fi
 
 # Output quick verification
