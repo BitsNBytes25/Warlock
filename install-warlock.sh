@@ -112,9 +112,15 @@ if [ $CONFIGURE_SYSTEMD -eq 1 ]; then
 	echo "  * Create /etc/systemd/system/warlock.service"
 fi
 if [ $CONFIGURE_NGINX -eq 1 ]; then
-	echo "  * Create /etc/nginx/sites-available/warlock and enable it (if nginx is installed)"
+	if ! which nginx >/dev/null; then
+		echo "  * Install nginx for HTTP/HTTPS reverse proxy"
+	fi
+	if ! which certbot >/dev/null; then
+		echo "  * Install certbot for SSL certificate management"
+	fi
+	echo "  * Create and enable /etc/nginx/sites-available/warlock"
 fi
-if ! which node; then
+if ! which node >/dev/null; then
 	echo "  * Install Node.js version 24"
 else
 	VERSION="$(node --version | sed 's:v::' | cut -d '.' -f 1)"
@@ -274,12 +280,12 @@ if [ -e "/etc/nginx/sites-available/warlock" ]; then
 fi
 
 if [ $CONFIGURE_NGINX -eq 1 ]; then
-	if ! which nginx; then
+	if ! which nginx >/dev/null; then
 		echo "Warning: Nginx not found in PATH.  Attempting auto install" >&2
 		install_nginx
 	fi
 
-	if ! which certbot; then
+	if ! which certbot >/dev/null; then
 		echo "Warning: certbot not found in PATH.  Attempting auto install" >&2
 		install_certbot
 	fi
