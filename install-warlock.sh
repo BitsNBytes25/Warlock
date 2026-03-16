@@ -83,103 +83,6 @@ while [[ $# -gt 0 ]]; do
 	esac
 done
 
-# Confirm this script is located within /var/www
-if [[ "$INSTALL_DIR" != /var/www* ]]; then
-	echo "Warlock not located in /var/www/..., disabling nginx and systemd integration"
-	CONFIGURE_NGINX=0
-	CONFIGURE_SYSTEMD=0
-fi
-
-if [ "$EUID" -ne 0 ]; then
-	echo "Not running as root, disabling nginx and systemd integration"
-	CONFIGURE_NGINX=0
-	CONFIGURE_SYSTEMD=0
-fi
-
-echo ""
-cat <<EOD
-##############################################################
-##                 WARLOCK SERVER INSTALLER                 ##
-##############################################################
-
-This script will install Warlock Game Server Manager and:
-EOD
-
-if [ ! -f "$ENV_FILE" ]; then
-	echo "  * Create $ENV_FILE with defaults"
-fi
-if [ $CONFIGURE_SYSTEMD -eq 1 ]; then
-	echo "  * Create /etc/systemd/system/warlock.service"
-fi
-if [ $CONFIGURE_NGINX -eq 1 ]; then
-	if ! which nginx >/dev/null; then
-		echo "  * Install nginx for HTTP/HTTPS reverse proxy"
-	fi
-	if ! which certbot >/dev/null; then
-		echo "  * Install certbot for SSL certificate management"
-	fi
-	echo "  * Create and enable /etc/nginx/sites-available/warlock"
-fi
-if ! which curl >/dev/null; then
-	echo "  * Install curl"
-fi
-if ! which node >/dev/null; then
-	echo "  * Install Node.js version 24"
-else
-	VERSION="$(node --version | sed 's:v::' | cut -d '.' -f 1)"
-	if [[ "$VERSION" -lt 24 ]]; then
-		echo "  * Upgrade Node.js to version 24"
-	fi
-fi
-echo "  * Run npm install to install dependencies for Warlock"
-echo ""
-
-if [ $ONLY_UPDATE -eq 0 ]; then
-	echo "Press ENTER to continue or CTRL+C to abort."
-	read -r
-
-	cat <<EOF
-
-
-
-##  TERMS AND CONDITIONS
-
-By installing Warlock you are agreeing to the following terms:
-
-Warlock is provided 'as-is', without any express or implied warranty
-  and is published under the AGPLv3 license,
-  (which in short means that if you modify and distribute the code, you must also
-  distribute your modifications under the same license and provide attribution).
-
-Warlock is offered as free software, but a monthly licensing option is encouraged
-  to support the project and fund continued development.
-  (@todo implement licensing, but meanwhile https://ko-fi.com/bitsandbytes is our donation site.)
-
-Metrics of the server are collected to help improve the project, including:
- * Server OS type and version
- * Warlock version
- * Random Warlock installation identifier
- * Country and approximate region of server
- * Server events such as start or game installation
-
-Metrics such as community information, email addresses, user activity,
-  or personally identifiable information are NOT collected.
-
-For more information, please refer to
- * Warlock Documentation: (@todo link to warlock.nexus)
- * Discord: https://discord.gg/jyFsweECPb
- * Mastodon: https://social.bitsnbytes.dev/@sitenews
- * Bits N Bytes: https://bitsnbytes.dev
-
-Do you agree to these terms? (y/N)
-EOF
-	read -r AGREE
-	case "$AGREE" in
-    	[yY][eE][sS]|[yY]) ;;
-    	*) echo "Aborted by user."; exit 1 ;;
-    esac
-fi
-
 DISTRO="$(lsb_release -i 2>/dev/null | sed "s#.*:\t##" | tr '[:upper:]' '[:lower:]')"
 
 install_node() {
@@ -206,6 +109,18 @@ install_node() {
 			exit 1
 			;;
 	esac
+}
+
+find_nginx() {
+	# Debian ships nginx in /usr/sbin/nginx, which is not in the path for non-root users.
+	# Check the path manually if necessary.
+	if which nginx >/dev/null; then
+		which nginx
+	elif [ -x "/usr/sbin/nginx" ]; then
+		echo "/usr/sbin/nginx"
+	else
+		echo ""
+	fi
 }
 
 install_nginx() {
@@ -276,6 +191,105 @@ install_curl() {
 	esac
 }
 
+# Confirm this script is located within /var/www
+if [[ "$INSTALL_DIR" != /var/www* ]]; then
+	echo "Warlock not located in /var/www/..., disabling nginx and systemd integration"
+	CONFIGURE_NGINX=0
+	CONFIGURE_SYSTEMD=0
+fi
+
+if [ "$EUID" -ne 0 ]; then
+	echo "Not running as root, disabling nginx and systemd integration"
+	CONFIGURE_NGINX=0
+	CONFIGURE_SYSTEMD=0
+fi
+
+echo ""
+cat <<EOD
+##############################################################
+##                 WARLOCK SERVER INSTALLER                 ##
+##############################################################
+
+This script will install Warlock Game Server Manager and:
+EOD
+
+if [ ! -f "$ENV_FILE" ]; then
+	echo "  * Create $ENV_FILE with defaults"
+fi
+if [ $CONFIGURE_SYSTEMD -eq 1 ]; then
+	echo "  * Create /etc/systemd/system/warlock.service"
+fi
+if [ $CONFIGURE_NGINX -eq 1 ]; then
+	if [ -z "$(find_nginx)" ]; then
+		echo "  * Install nginx for HTTP/HTTPS reverse proxy"
+	fi
+	if ! which certbot >/dev/null; then
+		echo "  * Install certbot for SSL certificate management"
+	fi
+	echo "  * Create and enable /etc/nginx/sites-available/warlock"
+fi
+if ! which curl >/dev/null; then
+	echo "  * Install curl"
+fi
+if ! which node >/dev/null; then
+	echo "  * Install Node.js version 24"
+else
+	VERSION="$(node --version | sed 's:v::' | cut -d '.' -f 1)"
+	if [[ "$VERSION" -lt 24 ]]; then
+		echo "  * Upgrade Node.js from version $VERSION to version 24"
+	fi
+fi
+echo "  * Run npm install to install dependencies for Warlock"
+echo ""
+
+if [ $ONLY_UPDATE -eq 0 ]; then
+	echo "Press ENTER to continue or CTRL+C to abort."
+	read -r
+
+	cat <<EOF
+
+
+
+##  TERMS AND CONDITIONS
+
+By installing Warlock you are agreeing to the following terms:
+
+Warlock is provided 'as-is', without any express or implied warranty
+  and is published under the AGPLv3 license,
+  (which in short means that if you modify and distribute the code, you must also
+  distribute your modifications under the same license and provide attribution).
+
+Warlock is offered as free software, but a monthly licensing option is encouraged
+  to support the project and fund continued development.
+  (@todo implement licensing, but meanwhile https://ko-fi.com/bitsandbytes is our donation site.)
+
+Metrics of the server are collected to help improve the project, including:
+ * Server OS type and version
+ * Warlock version
+ * Random Warlock installation identifier
+ * Country and approximate region of server
+ * Server events such as start or game installation
+
+Metrics such as community information, email addresses, user activity,
+  or personally identifiable information are NOT collected.
+
+For more information, please refer to
+ * Warlock Documentation: (@todo link to warlock.nexus)
+ * Discord: https://discord.gg/jyFsweECPb
+ * Mastodon: https://social.bitsnbytes.dev/@sitenews
+ * Bits N Bytes: https://bitsnbytes.dev
+
+Do you agree to these terms? (y/N)
+EOF
+	read -r AGREE
+	case "$AGREE" in
+    	[yY][eE][sS]|[yY]) ;;
+    	*) echo "Aborted by user."; exit 1 ;;
+    esac
+fi
+
+
+
 # Ensure curl is available, (Debian doesn't ship with it by default)
 if ! which curl >/dev/null; then
 	echo "curl binary not found in PATH. Attempting installation" >&2
@@ -296,9 +310,7 @@ fi
 
 VERSION="$(node --version | sed 's:v::' | cut -d '.' -f 1)"
 if [[ "$VERSION" -lt 24 ]]; then
-	echo "Node.js version 24 or higher is required. Detected version: $VERSION" >&2
-	echo "Press ENTER to attempt auto-installation, or CTRL+C to abort."
-	read -r
+	echo "Node.js requires upgrading.  Attempting installation" >&2
 	install_node
 fi
 
@@ -313,8 +325,8 @@ if [ -e "/etc/nginx/sites-available/warlock" ]; then
 fi
 
 if [ $CONFIGURE_NGINX -eq 1 ]; then
-	if ! which nginx >/dev/null; then
-		echo "Warning: Nginx not found in PATH.  Attempting auto install" >&2
+	if [ -z "$(find_nginx)" ]; then
+		echo "Warning: Nginx not found.  Attempting auto install" >&2
 		install_nginx
 	fi
 
@@ -326,13 +338,20 @@ if [ $CONFIGURE_NGINX -eq 1 ]; then
 	if [ -n "$FQDN" ]; then
 		echo "Using existing FQDN from nginx config: $FQDN"
 	else
-		echo "Warlock is access via a web browser by either an IP address or a domain name."
-		echo "If you have a domain name pointed to this server, please enter it here."
-		echo ""
-		echo "This will enable SSL certificate generation via certbot."
-		echo "If you do not have a domain name, just press ENTER to continue."
-		echo ""
-		echo "What is the fully qualified domain name (FQDN) for this server? (used in nginx config and SSL registration)"
+		cat <<EOD
+
+
+
+##  DOMAIN NAME FOR WARLOCK
+
+Warlock is accessed via a web browser by either an IP address or a domain name.
+If you have a domain name pointed to this server, please enter it here.
+
+This will enable SSL certificate generation via certbot.
+If you do not have a domain name, just press ENTER to continue.
+
+What is the fully qualified domain name (FQDN) for this server? (used in nginx config and SSL registration)
+EOD
 		read -r FQDN
 	fi
 
@@ -469,7 +488,8 @@ NGINX
 	ln -sf "$NGINX_AVAILABLE" "$NGINX_ENABLED"
 
 	# Test nginx config and reload if valid
-	if nginx -t >/dev/null 2>&1; then
+	NGINX_PATH="$(find_nginx)"
+	if $NGINX_PATH -t >/dev/null 2>&1; then
 		echo "Nginx configuration OK — reloading nginx"
 		systemctl reload nginx || echo "Warning: failed to reload nginx" >&2
 
