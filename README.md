@@ -150,7 +150,50 @@ for example code and instructions on getting started!
 
 ## Updating Warlock
 
-(@todo)
+To update Warlock, connect to your server via SSH and run:
+
+```bash
+sudo /var/www/Warlock/update-warlock.sh
+```
+
+This should prompt with available branches, continuing through will default will use the current branch.
+
+```
+Fetching remote branch information...
+remote: Enumerating objects: 3, done.
+remote: Counting objects: 100% (3/3), done.
+remote: Total 3 (delta 2), reused 3 (delta 2), pack-reused 0 (from 0)
+Unpacking objects: 100% (3/3), 544 bytes | 544.00 KiB/s, done.
+From https://github.com/BitsNBytes25/Warlock
+   8b9c069..b9e5c0c  main       -> origin/main
+
+Available remote branches:
+
+  [1] * main (2026-03-16) b9e5c0c [CURRENT]
+  [2] release-v1.2 (2026-03-15) 75a41dc
+  [3] release-v1.0 (2026-01-16) 93b34a1
+
+  [0] Cancel
+
+Select branch number to switch/upgrade (default: main): 
+Using current branch: main
+Checking for updates on current branch...
+From https://github.com/BitsNBytes25/Warlock
+ * branch            main       -> FETCH_HEAD
+Stopping Warlock service...
+Pulling latest changes...
+From https://github.com/BitsNBytes25/Warlock
+ * branch            main       -> FETCH_HEAD
+Updating 8b9c069..b9e5c0c
+Fast-forward
+ install-warlock.sh | 3 +++
+ 1 file changed, 3 insertions(+)
+Successfully updated to branch: main
+Running installer to apply any necessary updates...
+```
+
+The updater will handle switching branches (if requested) and running the installer in update mode
+to complete the upgrade process.
 
 ## Links and Contact
 

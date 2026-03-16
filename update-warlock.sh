@@ -13,11 +13,15 @@
 # @source https://github.com/BitsNBytes25/Warlock
 #
 
+INSTALL_DIR="$(dirname "$(readlink -f "$0")")"
+
 # Get the owner of the .git directory
-if [ ! -d ".git" ]; then
-	echo "Error: .git directory not found. Are you in the Warlock root directory?"
+if [ ! -d "$INSTALL_DIR/.git" ]; then
+	echo "Error: .git directory not found!  Unable to update." >&2
 	exit 1
 fi
+
+cd "$INSTALL_DIR" || exit 1
 
 GIT_OWNER=$(stat -c '%U' .git)
 CURRENT_USER=$(whoami)
