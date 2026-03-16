@@ -1,6 +1,6 @@
 {
   "name": "warlock-express-app",
-  "version": "1.2.0~20260315",
+  "version": "1.2.0~20260316",
   "description": "Express app serving HTML pages",
   "main": "app.js",
   "engines": {
@@ -8,11 +8,11 @@
   },
   "scripts": {
     "start": "node app.js",
+    "start:profile": "WARLOCK_PROFILE=1 node app.js",
     "dev": "NODE_ENV=development nodemon app.js",
     "dev:quick": "NODE_ENV=development SKIP_AUTOMATIONS=1 nodemon app.js",
     "dev:profile": "NODE_ENV=development WARLOCK_PROFILE=1 nodemon app.js",
-    "dev:docker": "docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build",
-    "start:profile": "WARLOCK_PROFILE=1 node app.js",
+    "docker": "docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build",
     "cli": "node cli.js",
     "prune-duplicates": "node tasks/prune_duplicates.js",
     "test": "node --test --experimental-test-module-mocks tests/*"

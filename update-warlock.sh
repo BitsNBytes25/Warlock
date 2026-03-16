@@ -120,7 +120,12 @@ if [ "$selected_branch" == "$CURRENT_BRANCH" ]; then
 	local_changes=$(git diff --name-only HEAD origin/"$CURRENT_BRANCH")
 	if [ -z "$local_changes" ]; then
 		echo "Already up to date on branch: $CURRENT_BRANCH"
-		exit 0
+		if [ -f ".env" ]; then
+			# If there's an environment variable and no changes,
+			# we can safely bail out.
+			# If there's no env file, we should still continue to run the install process.
+			exit 0
+		fi
 	fi
 fi
 
