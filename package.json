@@ -13,6 +13,7 @@
     "dev:profile": "NODE_ENV=development WARLOCK_PROFILE=1 nodemon app.js",
     "dev:docker": "docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build",
     "start:profile": "WARLOCK_PROFILE=1 node app.js",
+    "cli": "node cli.js",
     "prune-duplicates": "node tasks/prune_duplicates.js",
     "test": "node --test --experimental-test-module-mocks tests/*"
   },
