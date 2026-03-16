@@ -231,6 +231,8 @@ if [[ "$VERSION" -lt 24 ]]; then
 	install_node
 fi
 
+echo "Using Node $(node --version) at $NODE_BIN"
+
 FQDN=""
 if [ -e "/etc/nginx/sites-available/warlock" ]; then
 	FQDN=$(grep -m1 'server_name' /etc/nginx/sites-available/warlock | awk '{print $2}' | tr -d ';')
@@ -431,22 +433,23 @@ elif [ $ONLY_UPDATE -eq 1 ] && [ "$EUID" -eq 0 ] && [ -e /etc/systemd/system/war
 fi
 
 echo "You can access the Warlock web interface at:"
-if [ $CONFIGURE_NGINX -eq 1 ]; then
-	if [ "$FQDN" == "_" ] || [ "$FQDN" == "" ]; then
-		for IP in $(hostname -I); do
-			echo "http://$IP/"
-		done
-	else
-		if [ $SSL -eq 1 ]; then
-			echo "https://$FQDN/"
-		else
-			echo "http://$FQDN/"
-		fi
-	fi
-else
+if [ "$FQDN" == "_" ]; then
+	# '_' is for wildcard in nginx; it means it's accessible from any IP.
+	for IP in $(hostname -I); do
+		echo "http://$IP/"
+	done
+elif [ "$FQDN" == "" ]; then
+	# An empty FQDN means nginx is not configured, so we should provide the IP and port directly from the .env file
 	IP="$(egrep '^IP' .env | sed 's:.*=::')";
 	PORT="$(egrep '^PORT' .env | sed 's:.*=::')";
 	echo "http://${IP:-127.0.0.1}:${PORT:-3077}/"
+else
+	# Any other means nginx is configured with a specific FQDN.
+	if [ $SSL -eq 1 ]; then
+		echo "https://$FQDN/"
+	else
+		echo "http://$FQDN/"
+	fi
 fi
 
 echo "Installation complete. To uninstall, run: sudo ./uninstall-warlock.sh"
