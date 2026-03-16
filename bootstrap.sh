@@ -55,7 +55,15 @@ else
 fi
 
 # Create installation directory
-INSTALL_DIR="/var/www/Warlock"
+if [ -e "/var/www/Warlock" ]; then
+	# Previous instructions used uppercase 'Warlock' for the directory, so check for that first and use it if it exists
+	# I realized this was silly when I had to use SHIFT when navigating to the directory...
+	# If it's there though, go ahead and support it.
+	INSTALL_DIR="/var/www/Warlock"
+else
+	INSTALL_DIR="/var/www/warlock"
+fi
+
 if [ ! -d "$INSTALL_DIR" ]; then
 	echo -e "${YELLOW}Creating installation directory: $INSTALL_DIR${NC}"
     mkdir -p /var/www
