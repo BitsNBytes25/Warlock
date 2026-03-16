@@ -120,6 +120,9 @@ if [ $CONFIGURE_NGINX -eq 1 ]; then
 	fi
 	echo "  * Create and enable /etc/nginx/sites-available/warlock"
 fi
+if ! which curl >/dev/null; then
+	echo "  * Install curl"
+fi
 if ! which node >/dev/null; then
 	echo "  * Install Node.js version 24"
 else
@@ -250,12 +253,42 @@ install_certbot() {
 	esac
 }
 
+install_curl() {
+	if [ "$EUID" -ne 0 ]; then
+		echo "Unable to install curl without root permissions!  Please install curl manually." >&2
+		exit 1
+	fi
+
+	case "$DISTRO" in
+		"ubuntu"|"debian")
+			apt install -y curl
+			;;
+		"centos"|"rhel"|"rocky"|"almalinux")
+			yum install -y curl
+			;;
+		"fedora")
+			dnf install -y curl
+			;;
+		*)
+			echo "Automatic curl installation not supported on this distribution ($DISTRO). Please install curl manually." >&2
+			exit 1
+			;;
+	esac
+}
+
+# Ensure curl is available, (Debian doesn't ship with it by default)
+if ! which curl >/dev/null; then
+	echo "curl binary not found in PATH. Attempting installation" >&2
+	install_curl
+fi
+
 # Locate node
-if ! which node; then
+if ! which node >/dev/null; then
 	echo "Node.js binary not found in PATH. Attempting installation" >&2
 	install_node
 fi
 
+# Node should be installed now, but check again.
 if ! NODE_BIN=$(command -v node); then
 	echo "Node.js binary not found in PATH.  Cannot continue!" >&2
 	exit 1
