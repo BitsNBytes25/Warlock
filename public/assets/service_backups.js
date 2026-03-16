@@ -19,14 +19,13 @@ function renderBackupFile(fileData) {
 	const fileItem = document.createElement('div');
 	fileItem.classList.add('backup-file-item');
 	fileItem.innerHTML = `
-		<div class="file-name">${fileData.name}</div>
+		<div class="file-name">
+			${fileData.name}
+			<span class="action-rename" title="Rename Backup"><i class="fas fa-pencil"></i></span>
+		</div>
 		<div class="file-modified">${convertTimestampToDateTimeString(fileData.modified)}</div>
 		<div class="file-size">${formatFileSize(fileData.size)}</div>
 		<div class="file-actions button-group">
-			<button class="action-rename">
-				<i class="fas fa-pencil"></i>
-				Rename
-			</button>
 			<button class="action-download">
 				<i class="fas fa-download"></i>
 				Download

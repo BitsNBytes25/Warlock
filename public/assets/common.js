@@ -499,7 +499,7 @@ function getAppAPIVersion(guid, host) {
 		return null;
 	}
 
-	hostData = appData.hosts.find(h => h.host === host) || null;
+	hostData = appData.installs.find(h => h.host === host) || null;
 	if (!hostData) {
 		// Host not found for this application.
 		return null;

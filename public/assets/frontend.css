@@ -1042,6 +1042,17 @@ button.action-backup:hover, a.button.action-backup:hover {
 	border-color: var(--button-backup-border);
 }
 
+button.action-restore, a.button.action-restore {
+	background: var(--button-backup-bg-1);
+	color: var(--button-backup);
+	border-color: var(--button-backup-border);
+}
+button.action-restore:hover, a.button.action-restore:hover {
+	background: var(--button-backup-bg-2);
+	box-shadow: 0 2px 8px var(--button-backup-shadow);
+	border-color: var(--button-backup-border);
+}
+
 /* Ensure icon visibility in link-control buttons */
 button.link-control i,
 button.link-control span {
@@ -1498,11 +1509,56 @@ host-connected-metric .critical {
 #installAppHostList .host-entry.compatible-host {
 	cursor: pointer;
 }
+
+/** <editor-fold desc="Cards"> **/
+
 #backupsList {
 	display: flex;
 	flex-direction: column;
 	gap: 1rem;
+	border-radius: 12px;
+	background: var(--card-bg);
+	border: 1px solid var(--content-border);
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
+
+.backup-file-item {
+	border-radius: 12px;
+	display: flex;
+	flex-wrap: wrap;
+	padding: 0.5rem 1.5rem;
+}
+.backup-file-item .action-rename {
+	opacity: 0;
+	transition: opacity 0.3s ease;
+	cursor: pointer;
+}
+.backup-file-item:hover {
+	border-color: var(--content-hover-border);
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(99, 102, 241, 0.1);
+	background: var(--content-hover-bg);
+}
+.backup-file-item:hover .action-rename {
+	opacity: 1;
+}
+
+.backup-file-item .file-name {
+	flex: 3;
+}
+
+.backup-file-item .file-modified {
+	flex: 2;
+}
+.backup-file-item .file-size {
+	flex: 1;
+}
+.backup-file-item .file-actions {
+	flex: 3;
+}
+
+
+
+/** </editor-fold> **/
 
 /* ==========================
    Application/Host/Service cards
@@ -1516,8 +1572,7 @@ host-connected-metric .critical {
 /* Card container */
 .card-view .service-entry,
 .card-view .host-entry,
-.card-view .application-entry,
-.backup-file-item {
+.card-view .application-entry {
 	display: flex;
 	flex-wrap: wrap;
 	border-radius: 12px;
@@ -1536,8 +1591,7 @@ host-connected-metric .critical {
 }
 .card-view .host-entry:hover,
 .card-view .service-entry:hover,
-.card-view .application-entry:hover,
-.backup-file-item:hover {
+.card-view .application-entry:hover {
 	border-color: var(--content-hover-border);
 	transform: translateY(-2px);
 	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(99, 102, 241, 0.1);
@@ -1676,24 +1730,7 @@ host-connected-metric .critical {
 
 /** </editor-fold> **/
 
-.backup-file-item {
-	display: flex;
-	flex-wrap: wrap;
-}
 
-.backup-file-item .file-name {
-	flex: 3;
-}
-
-.backup-file-item .file-modified {
-	flex: 2;
-}
-.backup-file-item .file-size {
-	flex: 1;
-}
-.backup-file-item .file-actions {
-	flex: 3;
-}
 
 /* ==========================
    File browser / viewer / editor
@@ -2964,6 +3001,9 @@ host-connected-metric .critical {
 	}
 	#services-table.table-view .icon {
 		padding-left: 1rem;
+	}
+	.backup-file-item .file-modified {
+		display: none;
 	}
 }
 
