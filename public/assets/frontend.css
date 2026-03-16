@@ -1232,7 +1232,7 @@ button.link-control span {
 }
 #services-table.card-view .body {
 	display: grid;
-	grid-template-columns: repeat(3, 1fr);
+	grid-template-columns: repeat(auto-fill, minmax(22rem, 1fr));
 	gap: 2rem;
 }
 #services-table.card-view .no-services-available .warning-message {
@@ -1372,7 +1372,7 @@ button.link-control span {
 }
 #hosts-table.card-view .body {
 	display: grid;
-	grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+	grid-template-columns: repeat(auto-fill, minmax(22rem, 1fr));
 	gap: 1.5rem;
 }
 #hosts-table.card-view .no-hosts-available {
@@ -1667,6 +1667,11 @@ host-connected-metric .critical {
 	border-top: 1px solid var(--table-border);
 	flex: 2 100%;
 	padding: 1rem;
+}
+.card-view .host-entry .actions button,
+.card-view .service-entry .actions button,
+.card-view .application-entry .actions button {
+	margin: 0.25rem;
 }
 
 /** </editor-fold> **/
@@ -2463,7 +2468,7 @@ host-connected-metric .critical {
 
 #hostApplicationsList {
 	display: grid;
-	grid-template-columns: repeat(3, 1fr);
+	grid-template-columns: repeat(auto-fill, minmax(22rem, 1fr));
 	gap: 1rem;
 	margin: 2rem 3rem;
 }
@@ -2975,10 +2980,6 @@ host-connected-metric .critical {
 
 	.logo {
 		font-size: 1.5rem;
-	}
-
-	#services-table.card-view .service-entry {
-		flex: 1 40%;
 	}
 
 	/* Hide the view-changer buttons on smaller screens */

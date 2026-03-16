@@ -153,7 +153,7 @@ function loadOverview() {
 					</button>
 					<button class="action-browse" data-path="${hostData.path}">
 						<i class="fas fa-folder-open"></i>
-						Browse Files
+						Files
 					</button>
 					<button class="action-edit" data-app="${appGUID}" data-host="${loadedHostData.host}">
 						<i class="fas fa-redo"></i>
