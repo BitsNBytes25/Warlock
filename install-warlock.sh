@@ -16,7 +16,7 @@ FQDN=""
 SSL=0
 
 print_help() {
-  cat <<EOF
+	cat <<EOF
 Usage: $SCRIPT_NAME [options]
 
 Options:
@@ -102,33 +102,41 @@ if [ $ONLY_UPDATE -eq 0 ]; then
 	echo "Press ENTER to continue or CTRL+C to abort."
 	read -r
 
-	echo "By installing Warlock you are agreeing to the following terms:"
-    echo ""
-    echo "Warlock is provided 'as-is', without any express or implied warranty"
-    echo " and is published under the AGPLv3 license,"
-    echo " (which in short means that if you modify and distribute the code, you must also"
-    echo " distribute your modifications under the same license)."
-    echo ""
-    echo "Commercial paid support IS available from eVAL Agency."
-    echo ""
-    echo "Metrics of the server are collected to help improve the project, including:"
-    echo " * Server OS type and version"
-    echo " * Warlock version"
-    echo " * Random Warlock installation identifier"
-    echo " * Country and approximate region of server"
-    echo " * Server events such as start or game installation"
-    echo ""
-    echo "Metrics such as community information, email addresses, user activity,"
-    echo " or personally identifiable information are NOT collected."
-    echo ""
-    echo "For more information, please refer to"
-    echo " * Warlock Documentation: (@todo link to Warlock documentation here)"
-    echo " * Discord: https://discord.gg/jyFsweECPb"
-    echo " * Mastodon: https://social.bitsnbytes.dev/@sitenews"
-    echo " * Bits N Bytes: https://bitsnbytes.dev"
-    echo ""
-    echo "Press ENTER to accept these terms and continue installation, or CTRL+C to abort."
-    read -r
+	cat <<EOF
+By installing Warlock you are agreeing to the following terms:
+
+Warlock is provided 'as-is', without any express or implied warranty
+  and is published under the AGPLv3 license,
+  (which in short means that if you modify and distribute the code, you must also
+  distribute your modifications under the same license and provide attribution).
+
+Warlock is offered as free software, but a monthly licensing option is encouraged
+  to support the project and fund continued development.
+  (@todo implement licensing, but meanwhile https://ko-fi.com/bitsandbytes is our donation site.)
+
+Metrics of the server are collected to help improve the project, including:
+ * Server OS type and version
+ * Warlock version
+ * Random Warlock installation identifier
+ * Country and approximate region of server
+ * Server events such as start or game installation
+
+Metrics such as community information, email addresses, user activity,
+  or personally identifiable information are NOT collected.
+
+For more information, please refer to
+ * Warlock Documentation: (@todo link to warlock.nexus)
+ * Discord: https://discord.gg/jyFsweECPb
+ * Mastodon: https://social.bitsnbytes.dev/@sitenews
+ * Bits N Bytes: https://bitsnbytes.dev
+
+Do you agree to these terms? (y/N)
+EOF
+	read -r AGREE
+	case "$AGREE" in
+    	[yY][eE][sS]|[yY]) ;;
+    	*) echo "Aborted by user."; exit 1 ;;
+    esac
 fi
 
 DISTRO="$(lsb_release -i 2>/dev/null | sed "s#.*:\t##" | tr '[:upper:]' '[:lower:]')"
@@ -219,7 +227,7 @@ VERSION="$(node --version | sed 's:v::' | cut -d '.' -f 1)"
 if [[ "$VERSION" -lt 24 ]]; then
 	echo "Node.js version 24 or higher is required. Detected version: $VERSION" >&2
 	echo "Press ENTER to attempt auto-installation, or CTRL+C to abort."
-    read -r
+	read -r
 	install_node
 fi
 
@@ -230,11 +238,11 @@ fi
 
 if [ $CONFIGURE_NGINX -eq 1 ]; then
 	if ! which nginx; then
-    	echo "Warning: Nginx not found in PATH.  Attempting auto install" >&2
-    	install_nginx
-    fi
+		echo "Warning: Nginx not found in PATH.  Attempting auto install" >&2
+		install_nginx
+	fi
 
-    if ! which certbot; then
+	if ! which certbot; then
 		echo "Warning: certbot not found in PATH.  Attempting auto install" >&2
 		install_certbot
 	fi
@@ -254,8 +262,8 @@ if [ $CONFIGURE_NGINX -eq 1 ]; then
 
 	if [ -z "$FQDN" ]; then
 		# _ is a wildcard for nginx server_name
-    	FQDN="_"
-    fi
+		FQDN="_"
+	fi
 fi
 
 
@@ -322,8 +330,8 @@ if [ $CONFIGURE_SYSTEMD -eq 1 ]; then
 
 	echo "Enabling and starting warlock.service..."
 	if ! systemctl enable --now warlock.service; then
-	  echo "Failed to enable/start warlock.service. Check 'journalctl -u warlock.service' for details." >&2
-	  exit 1
+		echo "Failed to enable/start warlock.service. Check 'journalctl -u warlock.service' for details." >&2
+		exit 1
 	fi
 fi
 
@@ -349,7 +357,7 @@ server {
     listen 80;
     server_name $FQDN;
 
-    client_max_body_size 1G;
+    client_max_body_size 50M;
     proxy_request_buffering off;
     proxy_buffering off;
     proxy_pass_request_body on;
@@ -423,16 +431,22 @@ elif [ $ONLY_UPDATE -eq 1 ] && [ "$EUID" -eq 0 ] && [ -e /etc/systemd/system/war
 fi
 
 echo "You can access the Warlock web interface at:"
-if [ "$FQDN" == "_" ] || [ "$FQDN" == "" ]; then
-	for IP in $(hostname -I); do
-		echo "http://$IP/"
-	done
-else
-	if [ $SSL -eq 1 ]; then
-		echo "https://$FQDN/"
+if [ $CONFIGURE_NGINX -eq 1 ]; then
+	if [ "$FQDN" == "_" ] || [ "$FQDN" == "" ]; then
+		for IP in $(hostname -I); do
+			echo "http://$IP/"
+		done
 	else
-		echo "http://$FQDN/"
+		if [ $SSL -eq 1 ]; then
+			echo "https://$FQDN/"
+		else
+			echo "http://$FQDN/"
+		fi
 	fi
+else
+	IP="$(egrep '^IP' .env | sed 's:.*=::')";
+	PORT="$(egrep '^PORT' .env | sed 's:.*=::')";
+	echo "http://${IP:-127.0.0.1}:${PORT:-3077}/"
 fi
 
 echo "Installation complete. To uninstall, run: sudo ./uninstall-warlock.sh"

@@ -140,8 +140,16 @@ fi
 
 # Run the installer with --update to perform any migrations necessary.
 if [ -f "install-warlock.sh" ]; then
-	echo "Running installer to apply any necessary updates..."
-	./install-warlock.sh --update
+	if [ -f ".env" ]; then
+		# This is expected to be ran in update mode
+		echo "Running installer to apply any necessary updates..."
+		./install-warlock.sh --update
+	else
+		# but can also run as a new installation if .env is missing,
+		# ie: if called from the bootstrap script after cloning a new branch
+		echo "Running installer to complete new installation..."
+		./install-warlock.sh
+	fi
 else
 	echo "Warning: install-warlock.sh not found. Please run the installer manually to apply any necessary updates."
 fi
