@@ -236,6 +236,9 @@ echo "Using Node $(node --version) at $NODE_BIN"
 FQDN=""
 if [ -e "/etc/nginx/sites-available/warlock" ]; then
 	FQDN=$(grep -m1 'server_name' /etc/nginx/sites-available/warlock | awk '{print $2}' | tr -d ';')
+	if grep -q 'listen 443 ssl' /etc/nginx/sites-available/warlock; then
+		SSL=1
+	fi
 fi
 
 if [ $CONFIGURE_NGINX -eq 1 ]; then
