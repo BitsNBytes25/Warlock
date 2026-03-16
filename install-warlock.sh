@@ -96,16 +96,33 @@ if [ "$EUID" -ne 0 ]; then
 	CONFIGURE_SYSTEMD=0
 fi
 
-echo "This script will install Warlock Game Server Manager."
 echo ""
-echo "We will:"
+cat <<EOD
+##############################################################
+##                 WARLOCK SERVER INSTALLER                 ##
+##############################################################
+
+This script will install Warlock Game Server Manager and:
+EOD
+
+if [ ! -f "$ENV_FILE" ]; then
+	echo "  * Create $ENV_FILE with defaults"
+fi
 if [ $CONFIGURE_SYSTEMD -eq 1 ]; then
-	echo "  create /etc/systemd/system/warlock.service"
+	echo "  * Create /etc/systemd/system/warlock.service"
 fi
-echo "  create $ENV_FILE with defaults (if does not exist)"
 if [ $CONFIGURE_NGINX -eq 1 ]; then
-	echo "  create /etc/nginx/sites-available/warlock and enable it (if nginx is installed)"
+	echo "  * Create /etc/nginx/sites-available/warlock and enable it (if nginx is installed)"
 fi
+if ! which node; then
+	echo "  * Install Node.js version 24"
+else
+	VERSION="$(node --version | sed 's:v::' | cut -d '.' -f 1)"
+	if [[ "$VERSION" -lt 24 ]]; then
+		echo "  * Upgrade Node.js to version 24"
+	fi
+fi
+echo "  * Run npm install to install dependencies for Warlock"
 echo ""
 
 if [ $ONLY_UPDATE -eq 0 ]; then
@@ -113,6 +130,11 @@ if [ $ONLY_UPDATE -eq 0 ]; then
 	read -r
 
 	cat <<EOF
+
+
+
+##  TERMS AND CONDITIONS
+
 By installing Warlock you are agreeing to the following terms:
 
 Warlock is provided 'as-is', without any express or implied warranty
