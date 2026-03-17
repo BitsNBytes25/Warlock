@@ -90,7 +90,7 @@ export async function getApplicationMetrics(hostData, service = null) {
 								order: [['timestamp', 'DESC']],
 								raw: true
 							});
-							if (lastMetric && (timestamp - lastMetric.timestamp) >= 60) {
+							if (!lastMetric || (lastMetric && (timestamp - lastMetric.timestamp) >= 60)) {
 								await Metric.create({
 									timestamp: timestamp,
 									app_guid: guid,
