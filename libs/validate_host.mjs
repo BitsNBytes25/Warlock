@@ -24,7 +24,13 @@ export async function validateHost(req, res, next) {
 	}
 
 	const hostData = new HostData(host);
-	await hostData.init();
+	try {
+		await hostData.init();
+	}
+	catch (e) {
+		// A failed initialization does not mean it's a bad request; probably just means the host is not available.
+	}
+
 
 	// Attach the discovered data to the request object
 	req.hostData = hostData;

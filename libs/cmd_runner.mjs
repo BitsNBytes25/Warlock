@@ -37,7 +37,8 @@ export async function cmdRunner(target, cmd, cacheable = false, cacheTag = null)
 		// Confirm the host exists in the database first
 		Host.count({where: {ip: target}}).then(count => {
 			let sshCommand = null,
-				cmdOptions = {timeout: 30000, maxBuffer: 1024 * 1024 * 20};
+				cmdOptions = {timeout: 30000, maxBuffer: 1024 * 1024 * 20},
+				isSSH = false;
 
 			if (count === 0) {
 				const duration = Math.round(performance.now() - startTime);
@@ -55,7 +56,8 @@ export async function cmdRunner(target, cmd, cacheable = false, cacheTag = null)
 			} else {
 				// Escape single quotes in the remote command to avoid breaking the SSH command
 				sshCommand = cmd.replace(/'/g, "'\\''");
-				sshCommand = `ssh -o LogLevel=quiet -o StrictHostKeyChecking=no root@${target} '${sshCommand}'`;
+				sshCommand = `ssh -o LogLevel=quiet -o StrictHostKeyChecking=no -o PasswordAuthentication=no root@${target} '${sshCommand}'`;
+				isSSH = true;
 			}
 
 			exec(sshCommand, cmdOptions, (error, stdout, stderr) => {
@@ -64,8 +66,17 @@ export async function cmdRunner(target, cmd, cacheable = false, cacheTag = null)
 				if (error) {
 					logger.debug('cmdRunner exit code:', error.code);
 					recordMetric(target, cmd, duration, 'error');
+
+					if (isSSH && error.code === 255 && stderr === '') {
+						// This is the scenario for when SSH cannot connect to the host.
+						// Set stderr to something more meaningful.
+						stderr = 'Cannot connect to the host via SSH.';
+					}
+
 					if (stderr) {
 						logger.debug('cmdRunner stderr:', stderr);
+						// Remap the error to the actual stderr text.
+						// This is done because most errors will be something generic like "command exited with non-zero code"
 						return reject({error: new Error(stderr), stdout, stderr});
 					}
 					else {

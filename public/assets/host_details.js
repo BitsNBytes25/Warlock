@@ -10,7 +10,8 @@ const hostDetailsUptime = document.getElementById('hostDetailsUptime'),
 	hostCPUModel = document.getElementById('hostCPUModel'),
 	hostCPUCores = document.getElementById('hostCPUCores'),
 	hostMemoryTotal = document.getElementById('hostMemoryTotal'),
-	hostDetailOverview = document.getElementById('hostDetailOverview');
+	hostDetailOverview = document.getElementById('hostDetailOverview'),
+	notConnectedError = document.getElementById('notConnectedError');
 
 let hostDataCache = null,
 	pollInterval = null;
@@ -221,6 +222,10 @@ window.addEventListener('DOMContentLoaded', () => {
 			hostDetailOverview.appendChild(diskContainer);
 		});
 
+		notConnectedError.querySelector('button').addEventListener('click', () => {
+			window.location.href = `/host/add?host=${host}`;
+		});
+
 
 		// Setup button handlers
 		/*btnHostFirewall.addEventListener('click', () => {
@@ -247,3 +252,15 @@ window.addEventListener('DOMContentLoaded', () => {
 		document.querySelector('.content-body').innerHTML = '<div class="error-message">Error loading host data.</div>';
 	});
 });
+
+document.addEventListener('hostChange', e => {
+	if (e.detail.host === loadedHost) {
+		if (e.detail.hasOwnProperty('connected')) {
+			notConnectedError.style.display = e.detail.connected ? 'none' : 'flex';
+		}
+		else {
+			// General metrics retrieved, it's probably connected.
+			notConnectedError.style.display = 'none';
+		}
+	}
+})

@@ -18,7 +18,7 @@ export async function injectHosts(req, res, next) {
 		hosts.forEach(host => {
 			const hostData = new HostData(host.ip);
 			result.push(hostData);
-			promises.push(hostData.init());
+			promises.push(hostData.init().catch(() => {}));
 		});
 
 		await Promise.allSettled(promises);
