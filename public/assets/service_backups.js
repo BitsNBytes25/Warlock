@@ -143,7 +143,7 @@ async function loadAutomaticBackupConfig() {
 
 function loadBackups() {
 	// V2 of the API supports backup directories being defined per-service.
-	backupPath = loadedServiceData.bak_dir || loadedApplicationData.hosts.filter(h => h.host === loadedHost)[0].path + '/backups';
+	backupPath = loadedServiceData.bak_dir || loadedApplicationData.installs.filter(h => h.host === loadedHost)[0].path + '/backups';
 
 	loadAutomaticBackupConfig();
 	loadBackupsList();

@@ -44,7 +44,7 @@ async function pushLines(host, lines) {
 	// Write new crontab and activate it
 	const tmp = `/tmp/warlock_cron_${timestamp}`;
 	const writeCmd = `cat > ${tmp} <<${dl}\n${newCron}\n${dl}\ncrontab ${tmp} && rm -f ${tmp}`;
-	cmdRunner(host, writeCmd).then(() => {
+	return cmdRunner(host, writeCmd).then(() => {
 		clearTaggedCache(host, 'cron');
 		return true;
 	});

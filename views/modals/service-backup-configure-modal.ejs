@@ -109,7 +109,8 @@
 			guid = modal.dataset.guid,
 			service = modal.dataset.service,
 			appVersion = getAppAPIVersion(guid, host),
-			hostData = (applicationData[guid] && applicationData[guid].hosts) ? applicationData[guid].hosts.filter(h => h.host === host)[0] : null;
+			appData = applicationData.find(a => a.guid === guid),
+			hostData = appData.installs.find(h => h.host === host);
 
 		if (!hostData) {
 			showToast('error', 'Host data not found for this application.');

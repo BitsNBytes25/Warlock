@@ -8,8 +8,15 @@ const serviceDetailsStatus = document.getElementById('serviceDetailsStatus'),
 	btnServiceStop = document.getElementById('btnServiceStop'),
 	btnServiceRestart = document.getElementById('btnServiceRestart');
 
-function checkUpdates(app_guid, host) {
-	fetch(`/api/application/update/${app_guid}/${host}`)
+function checkUpdates(app_guid, host, service) {
+	service = service || null;
+
+	let url = `/api/application/update/${app_guid}/${host}`;
+	if (service) {
+		url += `/${service}`;
+	}
+
+	fetch(url)
 		.then(response => response.json())
 		.then(data => {
 			if (data.success) {
@@ -70,7 +77,7 @@ function activateServiceTab(tab, jumpTo = true) {
 	}
 	else if (tab === 'files') {
 		let defaultPath = loadedServiceData.app_dir ||
-			loadedApplicationData.hosts.filter(h => h.host === loadedHost)[0].path;
+			loadedApplicationData.installs.filter(h => h.host === loadedHost)[0].path;
 		loadDirectory(defaultPath);
 	}
 	else if (tab === 'backups') {
@@ -163,12 +170,23 @@ window.addEventListener('DOMContentLoaded', () => {
 
 			pollService(app_guid, host, service);
 
-			setTimeout(() => {
-				checkUpdates(app_guid, host);
-			}, 1000 * 15);
-			setInterval(() => {
-				checkUpdates(app_guid, host);
-			}, 1000 * 60 * 30);
+			if (loadedServiceData.multi_binary) {
+				// Service supports per-service binaries
+				setTimeout(() => {
+					checkUpdates(app_guid, host, service);
+				}, 1000 * 15);
+				setInterval(() => {
+					checkUpdates(app_guid, host, service);
+				}, 1000 * 60 * 30);
+			}
+			else {
+				setTimeout(() => {
+					checkUpdates(app_guid, host);
+				}, 1000 * 15);
+				setInterval(() => {
+					checkUpdates(app_guid, host);
+				}, 1000 * 60 * 30);
+			}
 
 			if (window.location.hash) {
 				const hashTab = window.location.hash.replace('#', '');
