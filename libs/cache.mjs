@@ -1,4 +1,5 @@
 import NodeCache from 'node-cache';
+import {logger} from "./logger.mjs";
 const cache = new NodeCache();
 
 const hostTagMap = new Map();
@@ -40,16 +41,30 @@ export const clearTaggedCache = (host, tag = null) => {
 	const tagKey = tag || null;
 	const hostEntry = hostTagMap.get(host) || {};
 
+	if (tagKey) {
+		logger.debug(`Clearing tagged cache for host ${host} with tag ${tagKey}`);
+	}
+	else {
+		logger.debug(`Clearing all cache for host ${host}`);
+	}
+
+
 	if (tagKey === null) {
 		// Clear all tagged keys for the specific host
 		for (const key in hostEntry) {
 			const keys = hostEntry[key] || [];
-			keys.forEach(k => cache.del(k));
+			keys.forEach(k => {
+				cache.del(k);
+				logger.debug(`Cleared tagged cache key ${k}`);
+			});
 			delete hostEntry[key];
 		}
 	}
 	else {
 		const keys = hostEntry[tagKey] || [];
-		keys.forEach(key => cache.del(key));
+		keys.forEach(key => {
+			cache.del(key);
+			logger.debug(`Cleared cache key ${key}`);
+		});
 	}
 }

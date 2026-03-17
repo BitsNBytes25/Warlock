@@ -69,7 +69,13 @@ router.put(
 		// Stream the command output back to the client
 		cmdStreamer(host.host, cmdData.cmd, res).then(async () => {
 			// Clear the server-side application cache
-			clearTaggedCache(req.appInstallData.host);
+			try {
+				clearTaggedCache(req.hostData.host);
+			}
+			catch(e) {
+				console.log(e);
+			}
+
 
 			// Final fix for #26 - installing a game which enables the firewall while on localhost
 			// could cause the user to lose access to Warlock!
@@ -125,7 +131,12 @@ router.delete(
 			// Stream the command output back to the client
 			cmdStreamer(req.appInstallData.host, cmd, res).then(async () => {
 				// Clear the server-side application cache
-				clearTaggedCache(req.appInstallData.host);
+				try {
+					clearTaggedCache(req.appInstallData.host);
+				}
+				catch(e) {
+					console.log(e);
+				}
 
 				// Clear any cron jobs that were attached to this service.
 				try {
