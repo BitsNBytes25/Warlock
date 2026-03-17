@@ -6,7 +6,8 @@ const fileList = document.getElementById('fileList'),
 	// Buttons used throughout this interface, they usually open a Modal.
 	createFolderBtn = document.getElementById('createFolderBtn'),
 	createFileBtn = document.getElementById('createFileBtn'),
-	uploadBtn = document.getElementById('uploadBtn');
+	uploadBtn = document.getElementById('uploadBtn'),
+	filesShowHiddenBtn = document.getElementById('filesShowHiddenBtn');
 
 let contextMenuTarget = null;
 
@@ -115,12 +116,6 @@ async function loadDirectory(path) {
 		path = currentPathEl.textContent;
 	}
 
-	// Clear search when changing directories (if search exists)
-	if (window.fileSearch) {
-		fileSearch.value = '';
-		searchResults = null;
-	}
-
 	fetch(`/api/files/${loadedHost}?path=${path}`, {
 		method: 'GET',
 		headers: {
@@ -161,7 +156,7 @@ function displayFiles(files) {
 
 	fileList.innerHTML = sortedFiles.map(file => {
 		return `
-			<div class="file-item" data-mimetype="${file.mimetype}" data-name="${file.name}" data-path="${file.path}">
+			<div class="file-item" data-mimetype="${file.mimetype}" data-name="${file.name}" data-path="${file.path}" data-hidden="${file.name.startsWith('.')?1:0}">
 				${getFileIcon(file.mimetype)}
 				<div class="file-name">${file.name}</div>
 				<div class="file-owner">${file.user}:${file.group}</div>
@@ -407,6 +402,20 @@ uploadBtn.addEventListener('click', () => {
 	openFileUploadModal(loadedHost, currentPathEl.textContent, () => {
 		loadDirectory();
 	});
+});
+
+// Show/hide hidden files
+filesShowHiddenBtn.addEventListener('click', () => {
+	if (fileList.classList.contains('show-hidden')) {
+		fileList.classList.remove('show-hidden');
+		filesShowHiddenBtn.querySelector('.hide-icon').style.display = 'none';
+		filesShowHiddenBtn.querySelector('.show-icon').style.display = 'inline-block';
+	}
+	else {
+		fileList.classList.add('show-hidden');
+		filesShowHiddenBtn.querySelector('.hide-icon').style.display = 'inline-block';
+		filesShowHiddenBtn.querySelector('.show-icon').style.display = 'none';
+	}
 });
 
 // Context menu actions

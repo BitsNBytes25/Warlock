@@ -1984,6 +1984,14 @@ host-connected-metric .critical {
 	border-color: var(--content-hover-border);
 }
 
+/* Show/hide hidden files based on if "show-hidden" is present on the parent container */
+.file-list .file-item[data-hidden="1"] {
+	display: none;
+}
+.file-list.show-hidden .file-item[data-hidden="1"] {
+	display: grid;
+}
+
 .file-item .file-icon {
 	grid-area: icon;
 }
