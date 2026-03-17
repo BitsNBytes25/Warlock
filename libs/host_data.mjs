@@ -111,6 +111,8 @@ export class HostData {
 					}
 					else if (line === 'FIREWALL:') {
 						group = 'firewall';
+						// Clear the status of the firewall on header; it'll be set on the next line or two.
+						this.firewall = 'none';
 					}
 					else if (group === 'disks' && !line.startsWith('Filesystem')) {
 						const parts = line.trim().split(/\s+/);

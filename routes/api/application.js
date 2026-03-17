@@ -11,6 +11,8 @@ const {Cron} = require("../../libs/cron.mjs");
 const {validateApplication} = require("../../libs/validate_application.mjs");
 const {validateHost} = require("../../libs/validate_host.mjs");
 const {UnprocessableEntityError} = require("../../libs/errors.mjs");
+const {clearTaggedCache} = require("../../libs/cache.mjs");
+const {firewallAutoAllow} = require("../../libs/firewall_auto_allow.mjs");
 
 const router = express.Router();
 
@@ -27,7 +29,8 @@ router.put(
 	async (req, res) => {
 		const appData = req.applicationData,
 			host = req.hostData,
-			options = req.body.options || [];
+			options = req.body.options || [],
+			isLocalhost = host.host === 'localhost' || host.host === '127.0.0.1';
 
 		// data.app should be an AppData object
 		let branch = null,
@@ -64,9 +67,21 @@ router.put(
 		push_analytics(`App Install / ${appData.title}`);
 
 		// Stream the command output back to the client
-		cmdStreamer(host.host, cmdData.cmd, res).then(() => {
+		cmdStreamer(host.host, cmdData.cmd, res).then(async () => {
 			// Clear the server-side application cache
 			clearTaggedCache(req.appInstallData.host);
+
+			// Final fix for #26 - installing a game which enables the firewall while on localhost
+			// could cause the user to lose access to Warlock!
+			// Detect if the firewall status changed between pre-install and post-install
+			// and add various rules to localhost to ensure access.
+			if (isLocalhost) {
+				const firewallPre = host.firewall;
+				await host.init();
+				if (firewallPre !== host.firewall && host.firewall !== 'none') {
+					firewallAutoAllow(req);
+				}
+			}
 		}).catch(() => { });
 	}
 );
