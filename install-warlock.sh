@@ -13,6 +13,11 @@
 # @source https://github.com/BitsNBytes25/Warlock
 #
 
+
+#############
+## Variable declaration and setup
+#############
+
 SCRIPT_NAME=$(basename "$0")
 INSTALL_DIR="$(dirname "$(readlink -f "$0")")"
 NODE_BIN=""
@@ -22,8 +27,11 @@ SERVICE_USER=root
 CONFIGURE_NGINX=1
 CONFIGURE_SYSTEMD=1
 ONLY_UPDATE=0
+CONFIGURE_FIREWALL=0
 FQDN=""
 SSL=0
+WARLOCK_LISTEN_IP="127.0.0.1"
+WARLOCK_LISTEN_PORT="3077"
 
 print_help() {
 	cat <<EOF
@@ -204,6 +212,16 @@ if [ "$EUID" -ne 0 ]; then
 	CONFIGURE_SYSTEMD=0
 fi
 
+if [ $CONFIGURE_NGINX -eq 0 ]; then
+	# If no nginx is requested, change the default listen IP to 0.0.0.0 to allow Warlock to respond on all interfaces.
+	WARLOCK_LISTEN_IP="0.0.0.0"
+fi
+
+
+#############
+## Execution plan and user confirmation
+#############
+
 echo ""
 cat <<EOD
 ##############################################################
@@ -240,7 +258,21 @@ else
 	fi
 fi
 echo "  * Run npm install to install dependencies for Warlock"
+if [ $ONLY_UPDATE -eq 0 ]; then
+	echo "  * Optionally install system firewall"
+	if [ $CONFIGURE_NGINX -eq 1 ]; then
+		echo "  * if firewall - allow HTTP/HTTPS traffic on port 80/443"
+	else
+		echo "  * if firewall - allow traffic on the port specified in $ENV_FILE (default ${WARLOCK_LISTEN_PORT})"
+	fi
+	echo "  * if firewall - add anti-lockout rule for current user's IP address"
+fi
 echo ""
+
+
+#############
+## Terms and conditions (skip if updating)
+#############
 
 if [ $ONLY_UPDATE -eq 0 ]; then
 	echo "Press ENTER to continue or CTRL+C to abort."
@@ -289,6 +321,72 @@ EOF
 fi
 
 
+#############
+## Question prompting
+#############
+
+FQDN=""
+if [ -e "/etc/nginx/sites-available/warlock" ]; then
+	FQDN=$(grep -m1 'server_name' /etc/nginx/sites-available/warlock | awk '{print $2}' | tr -d ';')
+	if grep -q 'listen 443 ssl' /etc/nginx/sites-available/warlock; then
+		SSL=1
+	fi
+fi
+
+if [ $CONFIGURE_NGINX -eq 1 ]; then
+	if [ -n "$FQDN" ]; then
+		echo "Using existing FQDN from nginx config: $FQDN"
+	else
+		cat <<EOD
+
+
+
+##  DOMAIN NAME FOR WARLOCK
+
+Warlock is accessed via a web browser by either an IP address or a domain name.
+If you have a domain name pointed to this server, please enter it here.
+
+This will enable SSL certificate generation via certbot.
+If you do not have a domain name, just press ENTER to continue.
+
+What is the fully qualified domain name (FQDN) for this server? (used in nginx config and SSL registration)
+EOD
+		read -r FQDN
+	fi
+
+	if [ -z "$FQDN" ]; then
+		# _ is a wildcard for nginx server_name
+		FQDN="_"
+	fi
+fi
+
+if [ $ONLY_UPDATE -eq 0 ]; then
+	cat <<EOD
+
+
+
+##  FIREWALL CONFIGURATION
+
+It is recommended to install a system firewall to control access to various resources.
+
+This is particularly important if you are planning on installing games on the server
+that Warlock is running on, as many games will recommend a firewall to control
+access to management ports and block bad actors.
+
+Install firewall? (Y/n):
+EOD
+	read -r Q
+	case "$Q" in
+		[yY][eE][sS]|[yY]) CONFIGURE_FIREWALL=1;;
+		'') CONFIGURE_FIREWALL=1;;
+		*) echo "Skipping firewall";;
+	esac
+fi
+
+
+#############
+## Install dependencies for this application.
+#############
 
 # Ensure curl is available, (Debian doesn't ship with it by default)
 if ! which curl >/dev/null; then
@@ -316,14 +414,6 @@ fi
 
 echo "Using Node $(node --version) at $NODE_BIN"
 
-FQDN=""
-if [ -e "/etc/nginx/sites-available/warlock" ]; then
-	FQDN=$(grep -m1 'server_name' /etc/nginx/sites-available/warlock | awk '{print $2}' | tr -d ';')
-	if grep -q 'listen 443 ssl' /etc/nginx/sites-available/warlock; then
-		SSL=1
-	fi
-fi
-
 if [ $CONFIGURE_NGINX -eq 1 ]; then
 	if [ -z "$(find_nginx)" ]; then
 		echo "Warning: Nginx not found.  Attempting auto install" >&2
@@ -334,35 +424,20 @@ if [ $CONFIGURE_NGINX -eq 1 ]; then
 		echo "Warning: certbot not found in PATH.  Attempting auto install" >&2
 		install_certbot
 	fi
+fi
 
-	if [ -n "$FQDN" ]; then
-		echo "Using existing FQDN from nginx config: $FQDN"
-	else
-		cat <<EOD
-
-
-
-##  DOMAIN NAME FOR WARLOCK
-
-Warlock is accessed via a web browser by either an IP address or a domain name.
-If you have a domain name pointed to this server, please enter it here.
-
-This will enable SSL certificate generation via certbot.
-If you do not have a domain name, just press ENTER to continue.
-
-What is the fully qualified domain name (FQDN) for this server? (used in nginx config and SSL registration)
-EOD
-		read -r FQDN
-	fi
-
-	if [ -z "$FQDN" ]; then
-		# _ is a wildcard for nginx server_name
-		FQDN="_"
+if [ $CONFIGURE_FIREWALL -eq 1 ]; then
+	echo "Installing firewall..."
+	"$INSTALL_DIR/scripts/linux_install_firewall.sh"
+	if [ $CONFIGURE_NGINX -eq 1 ]; then
+		"$INSTALL_DIR/scripts/linux_util_firewall_allow.sh" --port 80 --comment "Access Warlock (HTTP)"
+		"$INSTALL_DIR/scripts/linux_util_firewall_allow.sh" --port 443 --comment "Access Warlock (HTTPS)"
+	elif [ "$WARLOCK_LISTEN_IP" == "0.0.0.0" ]; then
+		# If listening on all interfaces, allow the port globally
+		"$INSTALL_DIR/scripts/linux_util_firewall_allow.sh" --port "$WARLOCK_LISTEN_PORT" --comment "Access Warlock"
 	fi
 fi
 
-
-# Install dependencies for this application.
 PWD="$(pwd)"
 if [ "$PWD" != "$INSTALL_DIR" ]; then
 	cd "$INSTALL_DIR"
@@ -406,8 +481,8 @@ fi
 if [ ! -e "$ENV_FILE" ]; then
 	SECRET="$(tr -dc 'A-Za-z0-9' < /dev/urandom | head -c 32)"
 	cat > "$ENV_FILE" <<ENV
-IP=127.0.0.1
-PORT=3077
+IP=$WARLOCK_LISTEN_IP
+PORT=$WARLOCK_LISTEN_PORT
 NODE_ENV=production
 SESSION_SECRET=$SECRET
 SKIP_AUTHENTICATION=false
@@ -474,7 +549,7 @@ server {
 
     # Proxy all other requests to the local Node.js app
     location / {
-        proxy_pass http://127.0.0.1:3077;
+        proxy_pass http://127.0.0.1:$WARLOCK_LISTEN_PORT;
         proxy_http_version 1.1;
         proxy_set_header Upgrade \$http_upgrade;
         proxy_set_header Connection 'upgrade';
@@ -537,7 +612,16 @@ elif [ "$FQDN" == "" ]; then
 	# An empty FQDN means nginx is not configured, so we should provide the IP and port directly from the .env file
 	IP="$(egrep '^IP' .env | sed 's:.*=::')";
 	PORT="$(egrep '^PORT' .env | sed 's:.*=::')";
-	echo "http://${IP:-127.0.0.1}:${PORT:-3077}/"
+	if [ "$IP" == "0.0.0.0" ]; then
+		for IP in $(hostname -I); do
+			# If PORT is not defined, use defaults FROM WARLOCK, not from this installer script!
+			echo "http://$IP:${PORT:-3077}/"
+		done
+	else
+		# If IP/PORT are not defined, use defaults FROM WARLOCK, not from this installer script!
+		echo "http://${IP:-127.0.0.1}:${PORT:-3077}/"
+	fi
+
 else
 	# Any other means nginx is configured with a specific FQDN.
 	if [ $SSL -eq 1 ]; then

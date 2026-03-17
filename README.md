@@ -30,7 +30,40 @@ Then you can start the development server with:
 npm run dev
 ```
 
-### Production Build
+During rapid development, the following will be useful.
+This will skip database migration checks to allow faster restarting
+of the development server.
+
+```bash
+npm run dev:quick
+```
+
+To profile commands and record a list of how long each takes
+and which commands are cached:
+
+```bash
+npm run dev:profile
+```
+
+### Production Install
+
+#### Debian
+
+Debian does not ship with `sudo` by default, so use `su` instead.
+This requires the **root** password to be entered if ran as a non-root user.
+
+```bash
+su - -c "bash <(wget -qO- https://raw.githubusercontent.com/BitsNBytes25/Warlock/main/bootstrap.sh)" root
+```
+
+#### Ubuntu
+
+```bash
+sudo su - -c "bash <(wget -qO- https://raw.githubusercontent.com/BitsNBytes25/Warlock/main/bootstrap.sh)" root
+```
+
+
+### Production Build (Manual Process)
 
 To install Warlock on a server, do the following as root:
 
