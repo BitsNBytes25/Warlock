@@ -26,7 +26,8 @@ export class HostData {
 	constructor(host) {
 		this.host = host;
 		this.public_ip = null;
-		this.hostname = null;
+		this.hostname = host;
+		this.firewall = 'none';
 		this.os = {
 			name: null,
 			title: null,
@@ -39,12 +40,19 @@ export class HostData {
 			cores: null,
 			sockets: null,
 		};
+		this.metrics = {
+			connected: false,
+		};
 		this.memory = null;
 		this.disks = [];
 		this.nics = [];
 	}
 
 	async init() {
+		const firewallChecks = [
+			'echo -n ufw:; which ufw >/dev/null && ufw status | head -n1 || echo "Status: NOT INSTALLED"; ',
+			'echo -n firewalld:; which firewall-cmd >/dev/null && firewall-cmd --state 2>/dev/null || echo "Status: NOT INSTALLED"; '
+		];
 		return cmdRunner(
 			this.host,
 			'echo "HOSTNAME: $(hostname -f)"; ' +
@@ -56,9 +64,10 @@ export class HostData {
 			'echo "CPU_MODEL: $(egrep "^model name" /proc/cpuinfo | head -n1 | sed "s#.*: ##")"; ' +
 			'echo "MEMORY_STATS: $(free | grep "^Mem:" | tr -s " " | cut -d" " -f2)"; ' +
 			'echo "OS_INFO:"; lsb_release -a; ' +
-			'echo "DISK_INFO:"; df --output=source,fstype,target -x tmpfs -x devtmpfs -x squashfs -x efivarfs;' +
-			'echo "NET_INFO:"; cat /proc/net/dev | grep -v "lo:" | grep ":" | sed "s#:.*##";',
-			86400
+			'echo "DISK_INFO:"; df --output=source,fstype,target -x tmpfs -x devtmpfs -x squashfs -x efivarfs; ' +
+			'echo "NET_INFO:"; cat /proc/net/dev | grep -v "lo:" | grep ":" | sed "s#:.*##"; ' +
+			'echo "FIREWALL:"; ' + firewallChecks.join(' '),
+			86400, 'overview'
 		)
 			.then(result => {
 				const lines = result.stdout.split('\n');
@@ -100,6 +109,9 @@ export class HostData {
 					else if (line === 'NET_INFO:') {
 						group = 'nics';
 					}
+					else if (line === 'FIREWALL:') {
+						group = 'firewall';
+					}
 					else if (group === 'disks' && !line.startsWith('Filesystem')) {
 						const parts = line.trim().split(/\s+/);
 						if (parts.length === 3) {
@@ -125,15 +137,38 @@ export class HostData {
 							this.nics.push(line.trim());
 						}
 					}
+					else if (group === 'firewall') {
+						// Example output for firewall lines:
+						// ufw:Status: active
+						// ufw:Status: inactive
+						// ufw:Status: NOT INSTALLED
+						// firewalld:running
+						// firewalld:inactive
+						// firewalld:Status: NOT INSTALLED
+						const parts = line.split(':');
+						if (parts.length >= 2) {
+							const key = parts[0].trim().toLowerCase();
+							const restOfLine = parts.slice(1).join(':').trim();
+							if (key === 'ufw' && restOfLine === 'Status: active') {
+								this.firewall = 'ufw';
+							}
+							else if (key === 'firewalld' && restOfLine === 'running') {
+								this.firewall = 'firewalld';
+							}
+						}
+					}
 				});
 
 				// Number of cores will be *per socket*, so to get the total number, multiply the two
 				if (this.cpu.sockets && this.cpu.cores) {
 					this.cpu.cores = this.cpu.sockets * this.cpu.cores;
 				}
+
+				// Received data!  This means it's connected.
+				this.metrics.connected = true;
 			})
 			.catch(error => {
-				throw new Error(`Failed to retrieve host data: ${error}`);
+				throw new Error(`Failed to retrieve host data: ${error.error.message}`);
 			});
 	}
 
@@ -319,6 +354,9 @@ export class HostData {
 				await Promise.allSettled(lookups);
 
 				return installs;
+			}).catch(e => {
+				// Failing to fetch list of apps from server usually indicates a connection error on the host.
+				return [];
 			});
 	}
 }

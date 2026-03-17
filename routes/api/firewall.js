@@ -4,6 +4,7 @@ const { cmdRunner } = require("../../libs/cmd_runner.mjs");
 const { Host } = require('../../db');
 const { logger } = require('../../libs/logger.mjs');
 const {buildRemoteExec} = require("../../libs/build_remote_exec.mjs");
+const {clearTaggedCache} = require("../../libs/cache.mjs");
 
 const router = express.Router();
 
@@ -242,6 +243,7 @@ router.post('/enable/:host', validate_session, (req, res) => {
 
 		cmdRunner(host, 'which ufw && ufw --force enable || echo "UFW is not installed, cannot enable"')
 			.then(result => {
+				clearTaggedCache(host, 'overview');
 				return res.json({ success: true, stdout: result.stdout, stderr: result.stderr });
 			}).catch(e => {
 				logger.error('Error enabling ufw:', e);
@@ -259,6 +261,7 @@ router.post('/disable/:host', validate_session, (req, res) => {
 
 		cmdRunner(host, 'which ufw && ufw --force disable || echo "UFW is not installed, cannot disable"')
 			.then(result => {
+				clearTaggedCache(host, 'overview');
 				return res.json({ success: true, stdout: result.stdout, stderr: result.stderr });
 			}).catch(e => {
 				logger.error('Error enabling ufw:', e);
