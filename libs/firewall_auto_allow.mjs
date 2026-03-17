@@ -8,7 +8,7 @@ import {execSync} from "child_process";
  *
  * @param req
  */
-export default req => {
+export function firewallAutoAllow(req) {
 	const script = path.join(process.cwd(), 'scripts', 'linux_util_firewall_allow.sh'),
 		connectionHost = req.headers.host;
 	if (connectionHost.includes(':')) {
