@@ -1,0 +1,21 @@
+meta {
+  name: Historical Metrics - Service
+  type: http
+  seq: 33
+}
+
+get {
+  url: {{host}}/api/metrics/:host/:service
+  body: none
+  auth: inherit
+}
+
+params:path {
+  host: {{lookup_host}}
+  service: {{lookup_service}}
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

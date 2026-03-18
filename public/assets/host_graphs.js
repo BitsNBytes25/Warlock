@@ -50,24 +50,24 @@ function renderCharts(metrics, timeframe) {
 
 	metrics.forEach(metric => {
 		groupedMetrics['cpu_usage'].push({
-			x: metric.timestamp * 1000, // Convert to milliseconds
-			y: metric.cpu
+			x: metric.interval_start * 1000, // Convert to milliseconds
+			y: metric.avg_cpu
 		});
 		groupedMetrics['memory_usage'].push({
-			x: metric.timestamp * 1000,
-			y: Math.round(metric.memory * 100 / (1024 * 1024 * 1024)) / 100 // Convert to GB
+			x: metric.interval_start * 1000,
+			y: Math.round(metric.avg_memory * 100 / (1024 * 1024 * 1024)) / 100 // Convert to GB
 		});
 		groupedMetrics['disk_usage'].push({
-			x: metric.timestamp * 1000,
-			y: Math.round(metric.disk * 10 / (1024 * 1024 * 1024)) / 10 // Convert to GB
+			x: metric.interval_start * 1000,
+			y: Math.round(metric.avg_disk * 10 / (1024 * 1024 * 1024)) / 10 // Convert to GB
 		});
 		groupedMetrics['network_rx'].push({
-			x: metric.timestamp * 1000,
-			y: parseInt(metric.rx * 8 / 1024)
+			x: metric.interval_start * 1000,
+			y: parseInt(metric.avg_rx * 8 / 1024)
 		});
 		groupedMetrics['network_tx'].push({
-			x: metric.timestamp * 1000,
-			y: parseInt(metric.tx * 8 / 1024)
+			x: metric.interval_start * 1000,
+			y: parseInt(metric.avg_tx * 8 / 1024)
 		});
 	});
 

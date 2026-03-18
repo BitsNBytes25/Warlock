@@ -51,24 +51,24 @@ function renderCharts(metrics, timeframe) {
 
 	metrics.forEach(metric => {
 		groupedMetrics['cpu_usage'].push({
-			timestamp: metric.timestamp * 1000, // Convert to milliseconds
-			value: metric.cpu_usage
+			timestamp: metric.interval_start * 1000, // Convert to milliseconds
+			value: metric.avg_cpu_usage
 		});
 		groupedMetrics['memory_usage'].push({
-			timestamp: metric.timestamp * 1000,
-			value: metric.memory_usage
+			timestamp: metric.interval_start * 1000,
+			value: metric.avg_memory_usage
 		});
 		groupedMetrics['player_count'].push({
-			timestamp: metric.timestamp * 1000,
-			value: metric.player_count
+			timestamp: metric.interval_start * 1000,
+			value: metric.avg_player_count
 		});
 		groupedMetrics['status'].push({
-			timestamp: metric.timestamp * 1000,
-			value: metric.status
+			timestamp: metric.interval_start * 1000,
+			value: metric.avg_status
 		});
 		groupedMetrics['response_time'].push({
-			timestamp: metric.timestamp * 1000,
-			value: metric.response_time
+			timestamp: metric.interval_start * 1000,
+			value: metric.avg_response_time
 		});
 	});
 
