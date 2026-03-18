@@ -417,13 +417,15 @@ commandInput.addEventListener('keyup', event => {
 	}
 });
 
-document.addEventListener('serviceStatusChange', e => {
-	if (e.detail.value === 'running') {
-		commandInput.dataset.running = '1';
-	}
-	else {
-		commandInput.dataset.running = '0';
-	}
+document.addEventListener('serviceChange', e => {
+	if (e.detail.hasOwnProperty('status')) {
+		if (e.detail.status === 'running') {
+			commandInput.dataset.running = '1';
+		}
+		else {
+			commandInput.dataset.running = '0';
+		}
 
-	updateCommandInputUI();
+		updateCommandInputUI();
+	}
 });

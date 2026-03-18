@@ -12,6 +12,71 @@ Server game manager that supports your fleet of servers and games.
 
 ![Warlock Dashboard](docs/media/warlock-dashboard.webp)
 
+
+### Host and Service Metrics
+
+Warlock provides historical metrics for each server host and service.
+
+Hosts track CPU, memory, total disk space, and network traffic.
+
+Services track CPU, memory consumption, player count, API response time, and service status.
+
+![Warlock Host Metrics](docs/media/warlock-host-metrics.webp)
+
+
+### Game Configuration Management
+
+Warlock provides a simple interface for managing game configurations.
+Changes are applied immediately and automtically update the necessary
+raw configuration file on the server.
+
+![Warlock Game Configuration](docs/media/warlock-service-config.webp)
+
+
+### Game Logs and Terminal
+
+Logs over the past days and weeks are available for games,
+and select games support running commands on the game server.
+
+This includes command autocomplete based off the specific game.
+
+![Warlock Game Logs](docs/media/warlock-service-terminal.webp)
+
+
+### Game and Host Files
+
+Warlock provides a simple interface for managing game and host files.
+
+* Uploading files
+* Deleting files
+* Editing text files
+* Downloading files
+* Extracting archives (zip, rar, tar, tgz, etc)
+
+![Warlock Game Files](docs/media/warlock-service-files.webp)
+
+
+### Game Backups and Restoration
+
+Backups for each game instance can be manually created or restored,
+and backup jobs can be scheduled to run automatically.
+
+_(Important note, backups are stored on the server host,
+so for long term storage it is recommended to download important backups._)
+
+![Warlock Game Backups](docs/media/warlock-service-backups.webp)
+
+
+### Game Versions, Updates, and Restarts
+
+Select games allow installing a specific version of the game.
+Additionally, some games also support installing mod loaders directly from within Warlock.
+
+Automatic updates and automatic restarts can also be scheduled
+for each game instance.
+
+![Warlock Game Updates](docs/media/warlock-service-settings.webp)
+
 ## Getting Started
 
 ### Development Build
@@ -47,6 +112,21 @@ npm run dev:profile
 
 ### Production Install
 
+The recommended method for installing on production servers
+is to use the provided bootstrap script.
+
+This script will install git, checkout the application in `/var/www/warlock`,
+and run the install script to complete the process.
+
+The default installation will use nginx as a proxy,
+install a service into systemd to manage Warlock,
+and install the appropriate version of Node.js to run the application.
+
+Before installing on a production server,
+it is recommended to have a domain name (or subdomain)
+pointed to the server's IP address via an `A` or `CNAME` record.
+This will enable an SSL certificate to be auto-generated with certbot for Warlock.
+
 #### Debian
 
 Debian does not ship with `sudo` by default, so use `su` instead.
@@ -57,6 +137,9 @@ su - -c "bash <(wget -qO- https://raw.githubusercontent.com/BitsNBytes25/Warlock
 ```
 
 #### Ubuntu
+
+Ubuntu and other derivatives ship with `sudo` by default, so you can use the following command to install Warlock.
+If prompted for a password, enter your user password.
 
 ```bash
 sudo su - -c "bash <(wget -qO- https://raw.githubusercontent.com/BitsNBytes25/Warlock/main/bootstrap.sh)" root
@@ -115,6 +198,10 @@ Since Warlock does not _need_ to be on the same server as your game hosts,
 you are free to run Warlock on an Arch server (for example)
 and have Debian / Ubuntu game hosts in the cluster.
 
+You can run Warlock on your laptop or other local device, providing
+your device has SSH access to the server you wish to manage.
+This is an excellent option as it keeps the management interface local.
+
 ## First Run
 
 When you first install Warlock, you need to set up an admin user via the web interface.
@@ -127,10 +214,14 @@ By default `localhost` is added as a server host, so you can start installing ga
 on the server on which you install Warlock.
 You are free to remove that host from the management interface if you wish to only install games on remote servers.
 
+(_Docker installs will NOT configure localhost as a server host._)
+
 ## Server Hosts
 
 Warlock is designed to manage multiple server hosts from a single interface,
 allowing you to install games on whichever system you choose.
+
+![Warlock Host Infrastructure](docs/media/warlock-host-infrastructure.png)
 
 ![Warlock Server Hosts](docs/media/warlock-hosts.webp)
 
@@ -147,7 +238,6 @@ the Warlock server to connect.
 Warlock provides a basic file management interface for uploading, downloading, and editing configuration files.
 This can be useful for various administration tasks.
 
-![Warlock File Manager](docs/media/warlock-files.webp)
 ![Warlock File Manager](docs/media/warlock-host-files.webp)
 
 ## Installing Games
@@ -188,6 +278,9 @@ To update Warlock, connect to your server via SSH and run:
 ```bash
 sudo /var/www/Warlock/update-warlock.sh
 ```
+
+Additionally, the bootstrap can be ran again which will detect an existing installation
+and call update automatically.
 
 This should prompt with available branches, continuing through will default will use the current branch.
 
@@ -244,8 +337,9 @@ To help improve Warlock, we collect some anonymous analytics data.
 This includes:
 
 * Version of Warlock installed
-* Server OS name and version
+* Server OS and version
 * Games installed
+* Approximate geolocation of server, (country and approximate area).
 
 ## AI / LLM Disclaimer
 
