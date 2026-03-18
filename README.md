@@ -2,6 +2,10 @@
 
 Server game manager that supports your fleet of servers and games.
 
+* [Jump to Quick Install](#production-install)
+* [Games Supported](#games-supported)
+* [New Game Template](https://github.com/BitsNBytes25/Warlock-Game-Template)
+
 ## Features
 
 - Simple game installer
