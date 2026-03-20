@@ -19,7 +19,8 @@ const autoUpdateModal = document.getElementById('autoUpdateModal'),
 	automatedStartDisabledMessage = document.getElementById('automatedStartDisabledMessage'),
 	automatedStartEnabledMessage = document.getElementById('automatedStartEnabledMessage'),
 	configureAutoStartEnableBtn = document.getElementById('configureAutoStartEnableBtn'),
-	configureAutoStartDisableBtn = document.getElementById('configureAutoStartDisableBtn');
+	configureAutoStartDisableBtn = document.getElementById('configureAutoStartDisableBtn'),
+	removeServiceContainer = document.getElementById('removeServiceContainer');
 
 async function loadAutomaticUpdates() {
 	if (!loadedHost) {
@@ -82,6 +83,13 @@ function loadServiceSettings() {
 	// Pull automatic update checks
 	loadAutomaticUpdates();
 	loadAutomaticRestarts();
+
+	if (checkHostAppHasOption(loadedApplication, loadedHost, 'remove-service')) {
+		removeServiceContainer.style.display = 'block';
+	}
+	else {
+		removeServiceContainer.style.display = 'none';
+	}
 
 	fetch(`/api/service/configs/${loadedApplication}/${loadedHost}/${loadedService}`, {
 		method: 'GET',
