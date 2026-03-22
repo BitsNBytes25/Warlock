@@ -17,7 +17,11 @@ import {arraysDiffer} from "./arrays_differ.mjs";
  */
 export function diffObjects(oldData, newData) {
 	if (typeof(oldData) !== 'object' || oldData === null) {
-		return newData;
+		oldData = {};
+	}
+
+	if (typeof(newData) !== 'object' || newData === null) {
+		newData = {};
 	}
 
 	const keys = new Set([...Object.keys(oldData), ...Object.keys(newData)]);
