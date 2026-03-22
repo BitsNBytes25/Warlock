@@ -170,7 +170,8 @@ export class HostData {
 				this.metrics.connected = true;
 			})
 			.catch(error => {
-				throw new Error(`Failed to retrieve host data: ${error.error.message}`);
+				logger.error(`Failed to retrieve host data for ${this.host}: ${error.message}`);
+				this.metrics.connected = false;
 			});
 	}
 
