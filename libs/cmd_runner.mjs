@@ -56,7 +56,7 @@ export async function cmdRunner(target, cmd, cacheable = false, cacheTag = null)
 			} else {
 				// Escape single quotes in the remote command to avoid breaking the SSH command
 				sshCommand = cmd.replace(/'/g, "'\\''");
-				sshCommand = `ssh -o LogLevel=quiet -o StrictHostKeyChecking=no -o PasswordAuthentication=no root@${target} '${sshCommand}'`;
+				sshCommand = `ssh -o LogLevel=quiet -o StrictHostKeyChecking=no -o PasswordAuthentication=no -o ConnectTimeout=3 root@${target} '${sshCommand}'`;
 				isSSH = true;
 			}
 
