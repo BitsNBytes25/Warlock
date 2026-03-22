@@ -1408,22 +1408,24 @@ button.link-control span {
 /** <editor-fold desc="Service/Host Status Colors"> **/
 
 #services-table .status.status-running,
-.service-details-overview .service-status.status-running,
+.service-details-overview .service-status .status-running,
+.service-details-overview .service-port .status-good,
 host-connected-metric .good {
 	color: var(--status-running);
 }
 #services-table .status.status-starting,
-.service-details-overview .service-status.status-starting{
+.service-details-overview .service-status .status-starting{
 	color: var(--status-starting);
 	animation: blinker 4s infinite;
 }
 #services-table .status.status-stopped,
-.service-details-overview .service-status.status-stopped,
+.service-details-overview .service-status .status-stopped,
+.service-details-overview .service-port .status-critical,
 host-connected-metric .critical {
 	color: var(--status-stopped);
 }
 #services-table .status.status-stopping,
-.service-details-overview .service-status.status-stopping{
+.service-details-overview .service-status .status-stopping{
 	color: var(--status-stopped);
 	animation: blinker 4s infinite;
 }
@@ -2421,51 +2423,24 @@ host-connected-metric .critical {
 /** <editor-fold desc="Service Details"> **/
 
 .service-details-overview {
-	display: grid;
-	/*grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));*/
-	gap: 1rem;
-	grid-template-areas: 'status players cpu memory port' 'status-v players-v cpu-v memory-v port-v';
+	display: flex;
+	gap: 3rem;
 	margin: 2rem 3rem;
+	flex-wrap: wrap;
 }
 
-.service-details-overview dt {
+.service-details-overview .metric-label {
 	opacity: 0.7;
 	font-variant: small-caps;
+	margin-bottom: 0.5rem;
+	min-width: 7rem;
+	text-align: center;
 }
-.service-details-overview dd {
+.service-details-overview .metric-value {
 	font-size: 1.25rem;
-}
-
-.service-details-overview dt.service-status {
-	grid-area: status;
-	opacity: 0.8;
-}
-.service-details-overview dd.service-status {
-	grid-area: status-v;
-}
-.service-details-overview dt.service-players {
-	grid-area: players;
-}
-.service-details-overview dd.service-players {
-	grid-area: players-v;
-}
-.service-details-overview dt.service-cpu {
-	grid-area: cpu;
-}
-.service-details-overview dd.service-cpu {
-	grid-area: cpu-v;
-}
-.service-details-overview dt.service-memory {
-	grid-area: memory;
-}
-.service-details-overview dd.service-memory {
-	grid-area: memory-v;
-}
-.service-details-overview dt.service-port {
-	grid-area: port;
-}
-.service-details-overview dd.service-port {
-	grid-area: port-v;
+	min-width: 7rem;
+	text-align: center;
+	display: block;
 }
 
 /** </editor-fold> **/

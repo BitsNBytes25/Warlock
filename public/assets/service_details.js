@@ -299,4 +299,47 @@ document.addEventListener('serviceChange', e => {
 	if (e.detail.hasOwnProperty('port')) {
 		serviceDetailsPort.innerText = e.detail.port;
 	}
+
+	if (e.detail.hasOwnProperty('ports')) {
+		// There are more details ports available; hide the default port display.
+		serviceDetailsPort.closest('.service-port').style.display = 'none';
+		const overview = document.querySelector('.service-details-overview');
+		for(let port of e.detail.ports) {
+			console.log(port);
+			const portTag = port.description.replace(/[^a-zA-Z]/g, '');
+			let portElement = overview.querySelector(`.service-port-${portTag}`),
+				icons = [];
+
+			if (!portElement) {
+				portElement = document.createElement('div');
+				portElement.classList.add('service-port');
+				portElement.classList.add(`service-port-${portTag}`);
+				portElement.innerHTML = `<div class="metric-label">${port.description}</div><div class="metric-value"></div>`;
+				overview.appendChild(portElement);
+			}
+
+			if (port.global && port.open) {
+				icons.push('<i class="fas fa-globe status-good" title="Globally Open"></i>');
+			}
+			else if (port.global) {
+				icons.push('<i class="fas fa-lock status-critical" title="Restricted Access / Limited at Firewall"></i>');
+			}
+			else if (port.listening) {
+				icons.push('<i class="fas fa-lock status-critical" title="Only Listening Locally"></i>');
+			}
+
+			if (port.listening) {
+				icons.push('<i class="fas fa-check status-good" title="Process Listening"></i>');
+			}
+			else {
+				icons.push('<i class="fas fa-times status-critical" title="Process Closed"></i>');
+			}
+
+			if (port.listening && !port.owned) {
+				icons.push('<i class="fas fa-exclamation-triangle status-critical" title="Port is owned by another service"></i>');
+			}
+
+			portElement.querySelector('.metric-value').innerHTML = `${port.port}/${port.protocol.toUpperCase()} ${icons.join(' ')}`;
+		}
+	}
 });
