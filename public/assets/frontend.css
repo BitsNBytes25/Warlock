@@ -649,7 +649,7 @@ table td {
 	margin-top: -0.5em;
 }
 .command-input-wrapper .command-input {
-	color: var(--terminal);
+	color: var(--terminal-in);
 	background: var(--terminal-bg);
 	border: 1px solid var(--terminal-border);
 	padding: 0.75em 8em 0.75em 5.5em;
@@ -658,7 +658,7 @@ table td {
 }
 .command-input-wrapper .command-prefix-label {
 	position: absolute;
-	color: var(--terminal);
+	color: var(--terminal-in);
 	left: 0.5em;
 	top: 0.35em;
 }
@@ -689,7 +689,7 @@ table td {
 }
 .autocomplete-list li {
 	padding: 0.5em 0.75em;
-	color: var(--terminal);
+	color: var(--terminal-in);
 	cursor: pointer;
 	transition: background-color 0.15s ease;
 	border-left: 3px solid transparent;
@@ -703,6 +703,13 @@ table td {
 }
 .autocomplete-list li.active {
 	background-color: rgba(0, 150, 255, 0.25);
+}
+
+.autocomplete-list li .command {
+	font-weight: bold;
+}
+.autocomplete-list li .help {
+	opacity: 0.8;
 }
 
 /* </editor-fold> */

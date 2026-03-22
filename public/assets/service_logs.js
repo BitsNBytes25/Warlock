@@ -103,7 +103,7 @@ function fetchAvailableCommands() {
 			.then(data => {
 				if (data.success && Array.isArray(data.commands)) {
 					// Commands should be sorted alphabetically for better UX
-					data.commands.sort((a, b) => a.localeCompare(b));
+					data.commands.sort((a, b) => typeof(a) === 'string' ? a.localeCompare(b) : a.cmd.localeCompare(b.cmd));
 					availableCommands = data.commands;
 					resolve(availableCommands);
 				}
@@ -216,9 +216,14 @@ function filterAndDisplayAutocomplete(inputValue) {
 		return;
 	}
 
-	const filtered = availableCommands.filter(cmd =>
-		cmd.toLowerCase().startsWith(inputValue.toLowerCase())
-	);
+	const filtered = availableCommands.filter(cmd => {
+		if (typeof(cmd) === 'string') {
+			return cmd.toLowerCase().startsWith(inputValue.toLowerCase());
+		}
+		else if (cmd.cmd) {
+			return cmd.cmd.toLowerCase().startsWith(inputValue.toLowerCase());
+		}
+	});
 
 	if (filtered.length === 0) {
 		hideAutocomplete();
@@ -228,9 +233,29 @@ function filterAndDisplayAutocomplete(inputValue) {
 	autocompleteSuggestions.innerHTML = '';
 	filtered.forEach(cmd => {
 		const li = document.createElement('li');
-		li.textContent = cmd;
+		let command, help;
+		if (typeof(cmd) === 'string') {
+			command = cmd;
+			help = '';
+		}
+		else if (cmd.cmd) {
+			command = cmd.cmd;
+			help = cmd.help || '';
+		}
+		else {
+			return;
+		}
+
+		li.title = help;
+		if (help) {
+			li.innerHTML = `<span class="command">${command}</span> <span class="help">${help}</span>`;
+		}
+		else {
+			li.innerHTML = `<span class="command">${command}</span>`;
+		}
+
 		li.addEventListener('click', () => {
-			commandInput.value = cmd;
+			commandInput.value = command;
 			hideAutocomplete();
 			commandInput.focus();
 		});
