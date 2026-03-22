@@ -39,8 +39,8 @@ const User = sequelize.define('User', {
 });
 
 // Add instance method to validate password
-User.prototype.validatePassword = async function(password) {
-	return await bcrypt.compare(password, this.password);
+User.prototype.validatePassword = function(password) {
+	return bcrypt.compareSync(password, this.password);
 };
 
 // Host model with ip field
