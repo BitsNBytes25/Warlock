@@ -62,3 +62,12 @@ test('diffObjects - Array of Objects', async (t) => {
 	dat2 = {'key': [{'subkey': 'value1'}]};
 	assert.deepEqual(diffObjects(dat1, dat2), {});
 });
+
+test('diffObjects - Not Objects', async (t) => {
+	let dat1, dat2;
+
+	// Test object 1 is not an object
+	dat1 = null;
+	dat2 = {'key': 'value1'};
+	assert.deepEqual(diffObjects(dat1, dat2), {'key': 'value1'});
+});
