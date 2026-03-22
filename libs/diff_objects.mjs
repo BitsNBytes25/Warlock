@@ -25,8 +25,33 @@ export function diffObjects(oldData, newData) {
 			continue;
 		}
 		if (Array.isArray(oldData[key]) && Array.isArray(newData[key])) {
-			if (arraysDiffer(oldData[key], newData[key])) {
+			const lenA = oldData[key].length, lenB = newData[key].length;
+			if (lenA !== lenB) {
+				// Array lengths differ; return the entire new array
 				diff[key] = newData[key];
+			}
+			else {
+				// Array lengths are the same, so we need to compare each element.
+				for (let i = 0; i < lenA; i++) {
+					if (typeof(oldData[key][i]) !== typeof(newData[key][i])) {
+						diff[key] = newData[key];
+					}
+					else if (typeof(oldData[key][i]) === 'object') {
+						let keyDiff = diffObjects(oldData[key][i], newData[key][i]);
+						if (Object.keys(keyDiff).length > 0) {
+							diff[key] =	newData[key];
+						}
+					}
+					else if (oldData[key][i] !== newData[key][i]) {
+						diff[key] = newData[key];
+					}
+				}
+			}
+		}
+		else if (typeof oldData[key] === 'object' && typeof newData[key] === 'object') {
+			let keyDiff = diffObjects(oldData[key], newData[key]);
+			if (Object.keys(keyDiff).length > 0) {
+				diff[key] =	keyDiff;
 			}
 		}
 		else if (oldData[key] !== newData[key]) {

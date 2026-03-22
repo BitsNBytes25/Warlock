@@ -7,6 +7,7 @@ const {cmdRunner} = require("../../libs/cmd_runner.mjs");
 const {validateHostApplication} = require("../../libs/validate_host_application.mjs");
 const {clearTaggedCache} = require("../../libs/cache.mjs");
 const {Cron} = require("../../libs/cron.mjs");
+const {diffObjects} = require("../../libs/diff_objects.mjs");
 
 const router = express.Router();
 
@@ -158,35 +159,6 @@ router.get('/stream/:guid/:host/:service', validate_session, validateHostService
 		clientGone = true;
 	};
 
-	const arraysDiffer = (a, b) => {
-		const lenA = a.length, lenB = b.length;
-		if (lenA !== lenB) return true;
-		for (let i = 0; i < lenA; i++) {
-			if (a[i] !== b[i]) return true;
-		}
-		return false;
-	};
-
-	const diffKeys = (oldData, newData) => {
-		const keys = new Set([...Object.keys(oldData), ...Object.keys(newData)]),
-			diff = {};
-
-		for (const key of keys) {
-			if (newData[key] === undefined) {
-				// Key exists in the old data, but not the new; that's fine.
-				continue;
-			}
-			if (Array.isArray(oldData[key]) && Array.isArray(newData[key])) {
-				if (arraysDiffer(oldData[key], newData[key])) {
-					diff[key] = newData[key];
-				}
-			}
-			else if (oldData[key] !== newData[key]) {
-				diff[key] = newData[key];
-			}
-		}
-		return diff;
-	};
 
 	const lookup = () => {
 		if (clientGone) return;
@@ -196,7 +168,7 @@ router.get('/stream/:guid/:host/:service', validate_session, validateHostService
 			if (clientGone) return;
 
 			const newServiceData = results.services[req.serviceData.service],
-				diffData = diffKeys(serviceData, newServiceData);
+				diffData = diffObjects(serviceData, newServiceData);
 
 			// Save the data for the next iteration
 			serviceData = Object.assign(serviceData, newServiceData);
