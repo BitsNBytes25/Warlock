@@ -38,7 +38,7 @@
 
 		modal.dataset.host = host;
 		modal.dataset.guid = application;
-		modal.dataset.service = service;
+		modal.dataset.service = service || '';
 
 		modal.querySelector('.warning-message').style.display = 'flex';
 		modal.querySelector('.terminal').style.display = 'none';
