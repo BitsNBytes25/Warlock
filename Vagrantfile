@@ -19,7 +19,7 @@ Vagrant.configure("2") do |config|
 
   config.vm.provision "shell", name: "install", inline: <<-SHELL
     set -e
-    curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+    curl -fsSL https://deb.nodesource.com/setup_24.x | bash -
     apt-get install -y nodejs
     cd /vagrant
     npm install
