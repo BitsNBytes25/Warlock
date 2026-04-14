@@ -3,6 +3,9 @@ const {validate_session} = require("../../libs/validate_session.mjs");
 const {diffObjects} = require("../../libs/diff_objects.mjs");
 const {validateHost} = require("../../libs/validate_host.mjs");
 const {setupEventStream} = require("../../libs/setup_event_stream.mjs");
+const path = require('path');
+const { cmdRunner } = require("../../libs/cmd_runner.mjs");
+const {filePushRunner} = require("../../libs/file_push_runner.mjs");
 
 const router = express.Router();
 
@@ -81,6 +84,68 @@ router.get(
 		// Since we only want to send _changes_, we need to know what we've sent previously.
 		data = {};
 		lookup(host);
+	}
+);
+
+/**
+ * API endpoint to register a given host with Warlock.Nexus
+ *
+ * API endpoint: POST /api/host/register/:host
+ */
+router.post(
+	'/register/:host',
+	validate_session,
+	validateHost,
+	async (req, res) => {
+		const script = path.join(process.cwd(), 'scripts', 'nexus_register_host.sh');
+		let {email, token} = req.body || '';
+
+		if (email === undefined) {
+			email = '';
+		}
+		if (token === undefined) {
+			token = '';
+		}
+
+		function tryJSONParse(s) {
+			// These messages generally are JSON encoded, (but not always if something goes wrong)
+			// Get the message component
+			try {
+				return JSON.parse(s).message;
+			}
+			catch(e) {
+				return s;
+			}
+		}
+
+		if (req.hostData.host === 'localhost' || req.hostData.host === '127.0.0.1') {
+			// Perform operations for localhost; they'll be slightly different than remote hosts.
+
+			// Ensure file is executable; it should be already, but just check.
+			await cmdRunner(req.hostData.host, 'chmod +x ' + script);
+
+			// Run the script to install the appropriate firewall.
+			cmdRunner(req.hostData.host, `${script} --email="${email}" --token="${token}"`).then(result => {
+				return res.json({ success: true, message: tryJSONParse(result.stdout) });
+			}).catch(e => {
+				return res.json({ success: false, error: tryJSONParse(e.stderr) });
+			});
+		}
+		else {
+			const rScript = '/opt/warlock/linux_install_firewall.sh';
+			// Ensure the target payload directory exists; we'll just use /opt/warlock to keep everything together.
+			await cmdRunner(req.hostData.host, '[ -d /opt/warlock ] || mkdir -p /opt/warlock');
+
+			// Perform the request on the remote host, but first we need to transfer the install script over there.
+			await filePushRunner(req.hostData.host, script, rScript);
+
+			// Now we can run the script
+			cmdRunner(req.hostData.host, `chmod +x ${rScript} && ${rScript} --email="${email}" --token="${token}"`).then(result => {
+				return res.json({ success: true, message: tryJSONParse(result.stdout) });
+			}).catch(e => {
+				return res.json({ success: false, error: tryJSONParse(e.stderr) });
+			});
+		}
 	}
 );
 

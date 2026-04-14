@@ -9,7 +9,7 @@ function populateHostsTable(hostData) {
 	const table = hostsTable;
 
 	let row,
-		fields = ['thumbnail', 'hostname', 'ip', 'os', 'cpu', 'memory', 'disk', 'net', 'actions'];
+		fields = ['thumbnail', 'hostname', 'ip', 'os', 'nexus', 'cpu', 'memory', 'disk', 'net', 'actions'];
 
 	// Create a field for each disk; these get displayed in the card view.
 	for(let disk of hostData.disks) {
@@ -68,6 +68,9 @@ function populateHostsTable(hostData) {
 				disk = hostData.disks.find(d => d.dev === dev);
 			cell.className = 'advanced-disk';
 			val = `<host-disk-metric host=${hostData.host} dev=${dev} bargraph=1 data-title="DISK ${disk.mount}: "></host-disk-metric>`;
+		}
+		else if (field === 'nexus') {
+			val = `<host-nexus-status token="${hostData.token}" email="${hostData.email}" data-title="Nexus: "></host-nexus-status>`;
 		}
 
 		cell.innerHTML = val;

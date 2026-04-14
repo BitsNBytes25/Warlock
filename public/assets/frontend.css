@@ -1410,6 +1410,7 @@ button.link-control span {
 #services-table .status.status-running,
 .service-details-overview .service-status .status-running,
 .service-details-overview .service-port .status-good,
+host-nexus-status .good,
 host-connected-metric .good {
 	color: var(--status-running);
 }
@@ -1421,6 +1422,7 @@ host-connected-metric .good {
 #services-table .status.status-stopped,
 .service-details-overview .service-status .status-stopped,
 .service-details-overview .service-port .status-critical,
+host-nexus-status .bad,
 host-connected-metric .critical {
 	color: var(--status-stopped);
 }
@@ -1668,6 +1670,7 @@ host-connected-metric .critical {
 .card-view .host-entry .disks,
 .card-view .host-entry .advanced-disk,
 .card-view .host-entry .status,
+.card-view .host-entry .nexus,
 .card-view .host-entry p,
 .card-view .application-entry ul {
 	order: 10;
@@ -1702,7 +1705,8 @@ host-connected-metric .critical {
 .card-view .host-entry host-network-metric::before,
 .card-view .host-entry host-disk-metric::before,
 .card-view .host-entry host-disks-metric::before,
-.card-view .host-entry host-connected-metric::before {
+.card-view .host-entry host-connected-metric::before,
+.card-view .host-entry host-nexus-status::before {
 	content: attr(data-title);
 	font-weight: bold;
 	color: var(--muted);
@@ -2503,6 +2507,14 @@ host-connected-metric .critical {
 /** </editor-fold> **/
 
 /** <editor-fold desc="Details Shared"> **/
+
+host-nexus-status .help-link {
+	color: var(--primary);
+	padding-left: 0.5em;
+}
+host-nexus-status .help-link:hover {
+	color: var(--primary-hover);
+}
 
 .tabs-header {
 	display: flex;

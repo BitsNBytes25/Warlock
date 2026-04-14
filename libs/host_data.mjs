@@ -28,6 +28,8 @@ export class HostData {
 		this.public_ip = null;
 		this.hostname = host;
 		this.firewall = 'none';
+		this.token = null;
+		this.email = null;
 		this.os = {
 			name: null,
 			title: null,
@@ -53,11 +55,16 @@ export class HostData {
 			'echo -n ufw:; which ufw >/dev/null && ufw status | head -n1 || echo "Status: NOT INSTALLED"; ',
 			'echo -n firewalld:; which firewall-cmd >/dev/null && firewall-cmd --state 2>/dev/null || echo "Status: NOT INSTALLED"; '
 		];
+		const tokenCheck = '[ -e /var/lib/warlock/.auth ] && cat /var/lib/warlock/.auth; echo ;';
+		const emailCheck = '[ -e /var/lib/warlock/.email ] && cat /var/lib/warlock/.email; echo ;';
+
 		return cmdRunner(
 			this.host,
 			'echo "HOSTNAME: $(hostname -f)"; ' +
 			'echo "KERNEL: $(uname -r)"; ' +
 			'echo "THREAD_COUNT: $(nproc)"; ' +
+			'echo -n "TOKEN: ";' + tokenCheck +
+			'echo -n "EMAIL: ";' + emailCheck +
 			'echo "PUBLIC_IPV4: $(curl -4 -s ifconfig.me 2>/dev/null || wget -qO- ifconfig.me 2>/dev/null || echo)"; ' +
 			'echo "CPU_COUNT: $(egrep "^physical id" /proc/cpuinfo | uniq | wc -l)"; ' +
 			'echo "CPU_CORES: $(egrep "^cpu cores" /proc/cpuinfo | head -n1 | sed "s#.*: ##")"; ' +
@@ -99,6 +106,12 @@ export class HostData {
 					}
 					else if (group === null && line.startsWith('KERNEL: ')) {
 						this.os.kernel = line.replace('KERNEL:', '').trim();
+					}
+					else if (group === null && line.startsWith('TOKEN: ')) {
+						this.token = line.replace('TOKEN: ', '').trim();
+					}
+					else if (group === null && line.startsWith('EMAIL: ')) {
+						this.email = line.replace('EMAIL: ', '').trim();
 					}
 					else if (line === 'DISK_INFO:') {
 						group = 'disks';
