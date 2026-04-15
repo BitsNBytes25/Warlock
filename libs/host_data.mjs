@@ -55,8 +55,8 @@ export class HostData {
 			'echo -n ufw:; which ufw >/dev/null && ufw status | head -n1 || echo "Status: NOT INSTALLED"; ',
 			'echo -n firewalld:; which firewall-cmd >/dev/null && firewall-cmd --state 2>/dev/null || echo "Status: NOT INSTALLED"; '
 		];
-		const tokenCheck = '[ -e /var/lib/warlock/.auth ] && cat /var/lib/warlock/.auth; echo ;';
-		const emailCheck = '[ -e /var/lib/warlock/.email ] && cat /var/lib/warlock/.email; echo ;';
+		const tokenCheck = '[ -e /var/lib/warlock/.auth ] && cat /var/lib/warlock/.auth && echo || echo;';
+		const emailCheck = '[ -e /var/lib/warlock/.email ] && cat /var/lib/warlock/.email && echo || echo;';
 
 		return cmdRunner(
 			this.host,
@@ -108,10 +108,10 @@ export class HostData {
 						this.os.kernel = line.replace('KERNEL:', '').trim();
 					}
 					else if (group === null && line.startsWith('TOKEN: ')) {
-						this.token = line.replace('TOKEN: ', '').trim();
+						this.token = line.replace('TOKEN:', '').trim();
 					}
 					else if (group === null && line.startsWith('EMAIL: ')) {
-						this.email = line.replace('EMAIL: ', '').trim();
+						this.email = line.replace('EMAIL:', '').trim();
 					}
 					else if (line === 'DISK_INFO:') {
 						group = 'disks';

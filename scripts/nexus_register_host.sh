@@ -391,7 +391,7 @@ if [ -z "$EMAIL" ]; then
 	exit 1
 fi
 # We don't send the email to the remote server; just the hash of the email.
-EMAIL_HASH="$(echo "$EMAIL" | sha256sum | sed 's:  -::')"
+EMAIL_HASH="$(echo -n "$EMAIL" | sha256sum | sed 's:  -::')"
 
 
 # Ensure warlock lib directory exists for supplemental data

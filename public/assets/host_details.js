@@ -11,7 +11,16 @@ const hostDetailsUptime = document.getElementById('hostDetailsUptime'),
 	hostCPUCores = document.getElementById('hostCPUCores'),
 	hostMemoryTotal = document.getElementById('hostMemoryTotal'),
 	hostDetailOverview = document.getElementById('hostDetailOverview'),
-	notConnectedError = document.getElementById('notConnectedError');
+	notConnectedError = document.getElementById('notConnectedError'),
+	hostNexusStatus = document.getElementById('hostNexusStatus'),
+	hostNexusEmail = document.getElementById('hostNexusEmail'),
+	hostNexusAuthToken = document.getElementById('hostNexusAuthToken'),
+	hostNexusRegister = document.getElementById('hostNexusRegister'),
+	rememberNexusAuthToken = document.getElementById('rememberNexusAuthToken'),
+	messageNexusRegisterResponse = document.getElementById('messageNexusRegisterResponse'),
+	nexusPreDonateMessage = document.getElementById('nexusPreDonateMessage'),
+	hostNexusAuthSettings = document.getElementById('hostNexusAuthSettings'),
+	hostNexusAuthSettingsToggle = document.getElementById('hostNexusAuthSettingsToggle');
 
 let hostDataCache = null,
 	pollInterval = null;
@@ -115,6 +124,23 @@ function loadOverview() {
 		cpuThreadInfo += ` (${loadedHostData.cpu.sockets} sockets)`;
 	}
 	hostCPUCores.innerText = cpuThreadInfo;
+
+	hostNexusStatus.email = loadedHostData.email || '';
+	hostNexusStatus.token = loadedHostData.token || '';
+
+	if (hostNexusStatus.email) {
+		hostNexusEmail.value = '(value hidden, click to reveal)';
+		hostNexusEmail.dataset.val = hostNexusStatus.email;
+		nexusPreDonateMessage.style.display = 'none';
+	}
+	else {
+		hostNexusAuthSettings.classList.add('active');
+	}
+	if (localStorage.getItem('nexusAuthToken')) {
+		hostNexusAuthToken.value = '(value hidden, click to reveal)';
+		hostNexusAuthToken.dataset.val = localStorage.getItem('nexusAuthToken');
+		rememberNexusAuthToken.checked = true;
+	}
 
 	// Render the list of applications installed on this host
 	let installedAppGUIDs = [];
@@ -243,6 +269,129 @@ window.addEventListener('DOMContentLoaded', () => {
 				const tab = tabBtn.getAttribute('href').replace('#', '');
 				activateHostTab(tab, true);
 			});
+		});
+
+		// Event listeners for nexus registration events
+		hostNexusEmail.addEventListener('focus', () => {
+			hostNexusEmail.value = hostNexusEmail.dataset.val || '';
+			hostNexusEmail.dataset.val = '';
+		});
+		hostNexusEmail.addEventListener('blur', () => {
+			hostNexusEmail.dataset.val = hostNexusEmail.value;
+			if (hostNexusEmail.value) {
+				hostNexusEmail.value = '(value hidden, click to reveal)';
+			}
+		});
+		hostNexusEmail.addEventListener('keyup', e => {
+			if (e.key === 'Enter') {
+				hostNexusRegister.click();
+			}
+		});
+		hostNexusAuthToken.addEventListener('focus', () => {
+			hostNexusAuthToken.value = hostNexusAuthToken.dataset.val || '';
+			hostNexusAuthToken.dataset.val = '';
+		});
+		hostNexusAuthToken.addEventListener('blur', () => {
+			hostNexusAuthToken.dataset.val = hostNexusAuthToken.value;
+			if (hostNexusAuthToken.value) {
+				hostNexusAuthToken.value = '(value hidden, click to reveal)';
+			}
+		});
+		hostNexusAuthToken.addEventListener('keyup', e => {
+			if (e.key === 'Enter') {
+				hostNexusAuthToken.click();
+			}
+		});
+		hostNexusRegister.addEventListener('click', () => {
+			let email = hostNexusEmail.dataset.val || hostNexusEmail.value,
+				token = hostNexusAuthToken.dataset.val || hostNexusAuthToken.value;
+
+			if (email === '(value hidden, click to reveal)') {
+				email = '';
+			}
+			if (token === '(value hidden, click to reveal)') {
+				token = '';
+			}
+
+			if (!email) {
+				alert('Please enter a valid email address.');
+				return;
+			}
+
+			if (!token) {
+				alert('Please enter a valid token.');
+				return;
+			}
+
+			showToast('info', 'Attempting to register with Warlock.Nexus...');
+			sha256(email).then(hash => {
+				const headers = {
+					'X-Email': hash,
+					'X-Auth-Token': token,
+				};
+
+				// Verify the authentication token first.
+				fetch('https://api.warlock.nexus/community/ping', {headers})
+					.then(response => response.json())
+					.then(data => {
+						if (data.success) {
+							console.log('Nexus authentication successful!');
+							localStorage.setItem('nexusAuthEmail', email);
+
+							if (rememberNexusAuthToken.checked) {
+								localStorage.setItem('nexusAuthToken', token);
+							}
+							else {
+								localStorage.removeItem('nexusAuthToken');
+							}
+
+							// Verification succeeded, now perform the actual registration.
+							fetch(
+								`/api/host/register/${host}`,
+								{
+									method: 'POST',
+									headers: {
+										'Content-Type': 'application/json'
+									},
+									body: JSON.stringify({
+										email: email,
+										token: token
+									}),
+								}
+							).then(
+								response => response.json()
+							).then(data => {
+								if (data.success) {
+									nexusPreDonateMessage.style.display = 'none';
+									messageNexusRegisterResponse.innerHTML = '';
+									showToast('success', 'Successfully registered with Warlock.Nexus!');
+									hostNexusStatus.email = email;
+								}
+								else {
+									const message = document.createElement('p');
+									message.classList.add('error-message');
+									message.innerText = data.error;
+									messageNexusRegisterResponse.innerHTML = '';
+									messageNexusRegisterResponse.appendChild(message);
+								}
+							});
+						}
+						else {
+							const message = document.createElement('p');
+							message.classList.add('error-message');
+							message.innerText = data.message;
+							messageNexusRegisterResponse.innerHTML = '';
+							messageNexusRegisterResponse.appendChild(message);
+							return;
+						}
+						console.log(data);
+					});
+			});
+		});
+
+		hostNexusAuthSettingsToggle.addEventListener('click', e => {
+			hostNexusAuthSettings.classList.toggle('active');
+			e.preventDefault();
 		});
 
 		// Activate default tab

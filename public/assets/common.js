@@ -1694,6 +1694,18 @@ function progressBarTick(barFill, percent, goodMax = 50, warningMax = 75) {
 	barFill.style.width = `${Math.max(Math.min(percent, 100), 0)}%`;
 }
 
+function sha256(str) {
+	const data = (new TextEncoder()).encode(str);
+
+	// Compute SHA-256 digest using SubtleCrypto API
+	return crypto.subtle.digest('SHA-256', data)
+		.then(hashBuffer => {
+			// Convert ArrayBuffer to a hex string representation
+			const hashArray = Array.from(new Uint8Array(hashBuffer));
+			return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+		});
+}
+
 
 document.addEventListener('DOMContentLoaded', () => {
 	// Add standard close events to Modals

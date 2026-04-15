@@ -322,6 +322,15 @@ h4 {
 	letter-spacing: -0.01em;
 }
 
+a {
+	color: var(--primary);
+	text-decoration: none;
+	transition: all 0.2s ease;
+}
+a:hover {
+	color: var(--primary-hover);
+}
+
 /* ==========================
    Header / Navigation / Logo
    ========================== */
@@ -745,6 +754,7 @@ table td {
 .form-group input[type=date],
 .form-group input[type=datetime],
 .form-group input[type=time],
+.form-group input[type=email],
 .form-group input[type=number],
 .form-group input[type=search],
 .form-group select,
@@ -2515,6 +2525,44 @@ host-nexus-status .help-link {
 host-nexus-status .help-link:hover {
 	color: var(--primary-hover);
 }
+
+#hostNexusStatusContainer host-nexus-status {
+	display: flex;
+	align-items: center;
+}
+#hostNexusStatusContainer host-nexus-status i.bad,
+#hostNexusStatusContainer host-nexus-status i.good {
+	font-size: 3rem;
+	padding-right: 1rem;
+}
+
+/* Target the inner container of the auth settings */
+#hostNexusAuthSettings .inner {
+	max-height: 0;
+	opacity: 0;
+	overflow: hidden;
+	/* Smooth transition for both height and opacity */
+	transition: max-height 0.4s ease-out, opacity 0.3s ease;
+}
+
+/* When the 'active' class is added to the parent div */
+#hostNexusAuthSettings.active .inner {
+	/* Set this to a value larger than your expected content height */
+	max-height: 1000px;
+	opacity: 1;
+}
+
+/* Prepare the chevron icon for rotation */
+#hostNexusAuthSettings i.fa-chevron-down {
+	display: inline-block; /* Required for transform to work reliably */
+	transition: transform 0.3s ease;
+}
+
+/* Rotate the icon when active */
+#hostNexusAuthSettings.active i.fa-chevron-down {
+	transform: rotate(180deg);
+}
+
 
 .tabs-header {
 	display: flex;

@@ -107,6 +107,13 @@ router.post(
 			token = '';
 		}
 
+		if (!email) {
+			return res.json({ success: false, error: 'Email is required' });
+		}
+		if (!token) {
+			return res.json({ success: false, error: 'Token is required' });
+		}
+
 		function tryJSONParse(s) {
 			// These messages generally are JSON encoded, (but not always if something goes wrong)
 			// Get the message component
