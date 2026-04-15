@@ -16,7 +16,6 @@ const hostDetailsUptime = document.getElementById('hostDetailsUptime'),
 	hostNexusEmail = document.getElementById('hostNexusEmail'),
 	hostNexusAuthToken = document.getElementById('hostNexusAuthToken'),
 	hostNexusRegister = document.getElementById('hostNexusRegister'),
-	rememberNexusAuthToken = document.getElementById('rememberNexusAuthToken'),
 	messageNexusRegisterResponse = document.getElementById('messageNexusRegisterResponse'),
 	nexusPreDonateMessage = document.getElementById('nexusPreDonateMessage'),
 	hostNexusAuthSettings = document.getElementById('hostNexusAuthSettings'),
@@ -129,17 +128,14 @@ function loadOverview() {
 	hostNexusStatus.token = loadedHostData.token || '';
 
 	if (hostNexusStatus.email) {
-		hostNexusEmail.value = '(value hidden, click to reveal)';
-		hostNexusEmail.dataset.val = hostNexusStatus.email;
+		hostNexusEmail.value = hostNexusStatus.email;
 		nexusPreDonateMessage.style.display = 'none';
 	}
 	else {
 		hostNexusAuthSettings.classList.add('active');
 	}
 	if (localStorage.getItem('nexusAuthToken')) {
-		hostNexusAuthToken.value = '(value hidden, click to reveal)';
-		hostNexusAuthToken.dataset.val = localStorage.getItem('nexusAuthToken');
-		rememberNexusAuthToken.checked = true;
+		hostNexusAuthToken.value = localStorage.getItem('nexusAuthToken');
 	}
 
 	// Render the list of applications installed on this host
@@ -272,29 +268,9 @@ window.addEventListener('DOMContentLoaded', () => {
 		});
 
 		// Event listeners for nexus registration events
-		hostNexusEmail.addEventListener('focus', () => {
-			hostNexusEmail.value = hostNexusEmail.dataset.val || '';
-			hostNexusEmail.dataset.val = '';
-		});
-		hostNexusEmail.addEventListener('blur', () => {
-			hostNexusEmail.dataset.val = hostNexusEmail.value;
-			if (hostNexusEmail.value) {
-				hostNexusEmail.value = '(value hidden, click to reveal)';
-			}
-		});
 		hostNexusEmail.addEventListener('keyup', e => {
 			if (e.key === 'Enter') {
 				hostNexusRegister.click();
-			}
-		});
-		hostNexusAuthToken.addEventListener('focus', () => {
-			hostNexusAuthToken.value = hostNexusAuthToken.dataset.val || '';
-			hostNexusAuthToken.dataset.val = '';
-		});
-		hostNexusAuthToken.addEventListener('blur', () => {
-			hostNexusAuthToken.dataset.val = hostNexusAuthToken.value;
-			if (hostNexusAuthToken.value) {
-				hostNexusAuthToken.value = '(value hidden, click to reveal)';
 			}
 		});
 		hostNexusAuthToken.addEventListener('keyup', e => {
@@ -303,15 +279,8 @@ window.addEventListener('DOMContentLoaded', () => {
 			}
 		});
 		hostNexusRegister.addEventListener('click', () => {
-			let email = hostNexusEmail.dataset.val || hostNexusEmail.value,
-				token = hostNexusAuthToken.dataset.val || hostNexusAuthToken.value;
-
-			if (email === '(value hidden, click to reveal)') {
-				email = '';
-			}
-			if (token === '(value hidden, click to reveal)') {
-				token = '';
-			}
+			let email = hostNexusEmail.value,
+				token = hostNexusAuthToken.value;
 
 			if (!email) {
 				alert('Please enter a valid email address.');
@@ -337,13 +306,7 @@ window.addEventListener('DOMContentLoaded', () => {
 						if (data.success) {
 							console.log('Nexus authentication successful!');
 							localStorage.setItem('nexusAuthEmail', email);
-
-							if (rememberNexusAuthToken.checked) {
-								localStorage.setItem('nexusAuthToken', token);
-							}
-							else {
-								localStorage.removeItem('nexusAuthToken');
-							}
+							localStorage.setItem('nexusAuthToken', token);
 
 							// Verification succeeded, now perform the actual registration.
 							fetch(
@@ -382,9 +345,7 @@ window.addEventListener('DOMContentLoaded', () => {
 							message.innerText = data.message;
 							messageNexusRegisterResponse.innerHTML = '';
 							messageNexusRegisterResponse.appendChild(message);
-							return;
 						}
-						console.log(data);
 					});
 			});
 		});

@@ -2958,6 +2958,33 @@ host-nexus-status .help-link:hover {
 	text-align: center;
 }
 
+/* Target the inner container of the auth settings */
+#settingsNexusAuthSettings .inner {
+	max-height: 0;
+	opacity: 0;
+	overflow: hidden;
+	/* Smooth transition for both height and opacity */
+	transition: max-height 0.4s ease-out, opacity 0.3s ease;
+}
+
+/* When the 'active' class is added to the parent div */
+#settingsNexusAuthSettings.active .inner {
+	/* Set this to a value larger than your expected content height */
+	max-height: 1000px;
+	opacity: 1;
+}
+
+/* Prepare the chevron icon for rotation */
+#settingsNexusAuthSettings i.fa-chevron-down {
+	display: inline-block; /* Required for transform to work reliably */
+	transition: transform 0.3s ease;
+}
+
+/* Rotate the icon when active */
+#settingsNexusAuthSettings.active i.fa-chevron-down {
+	transform: rotate(180deg);
+}
+
 /* ==========================
    Metrics Modal
    ========================== */
