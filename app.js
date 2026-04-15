@@ -142,6 +142,7 @@ app.use('/api/service/logs', require('./routes/api/service_logs'));
 app.use('/api/service/cmd', require('./routes/api/service_cmd'));
 app.use('/api/service/control', require('./routes/api/service_control'));
 app.use('/api/service/configs', require('./routes/api/service_configs'));
+app.use('/api/service/mods', require('./routes/api/service_mods'));
 app.use('/api/application', require('./routes/api/application'));
 app.use('/api/application/backup', require('./routes/api/application_backup'));
 app.use('/api/application/configs', require('./routes/api/application_configs'));

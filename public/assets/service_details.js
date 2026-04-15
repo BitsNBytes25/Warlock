@@ -75,6 +75,9 @@ function activateServiceTab(tab, jumpTo = true) {
 	else if (tab === 'logs') {
 		fetchLogs();
 	}
+	else if (tab === 'mods') {
+		loadServiceMods();
+	}
 	else if (tab === 'files') {
 		let defaultPath = loadedServiceData.app_dir ||
 			loadedApplicationData.installs.filter(h => h.host === loadedHost)[0].path;
@@ -305,7 +308,6 @@ document.addEventListener('serviceChange', e => {
 		serviceDetailsPort.closest('.service-port').style.display = 'none';
 		const overview = document.querySelector('.service-details-overview');
 		for(let port of e.detail.ports) {
-			console.log(port);
 			const portTag = port.description.replace(/[^a-zA-Z]/g, '');
 			let portElement = overview.querySelector(`.service-port-${portTag}`),
 				icons = [];

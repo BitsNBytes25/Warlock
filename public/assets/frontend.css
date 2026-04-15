@@ -1533,6 +1533,15 @@ host-connected-metric .critical {
 
 /** <editor-fold desc="Cards"> **/
 
+/* ==========================
+   Application/Host/Service/Mod cards
+
+   .card-view .service-entry - Service cards listed on /dashboard when on card view
+   .card-view .host-entry    - Host cards listed on /hosts when on card view
+                             - Also used on /application/install when selecting the host
+   .card-view .mod-entry     - Mods installed in services and for searching new mods
+   ========================== */
+
 #backupsList {
 	display: flex;
 	flex-direction: column;
@@ -1577,23 +1586,11 @@ host-connected-metric .critical {
 	flex: 3;
 }
 
-
-
-/** </editor-fold> **/
-
-/* ==========================
-   Application/Host/Service cards
-
-   .card-view .service-entry - Service cards listed on /dashboard when on card view
-   .card-view .host-entry    - Host cards listed on /hosts when on card view
-                             - Also used on /application/install when selecting the host
-   ========================== */
-/** <editor-fold desc="Cards"> **/
-
 /* Card container */
 .card-view .service-entry,
 .card-view .host-entry,
-.card-view .application-entry {
+.card-view .application-entry,
+.card-view .mod-entry {
 	display: flex;
 	flex-wrap: wrap;
 	border-radius: 12px;
@@ -1612,7 +1609,8 @@ host-connected-metric .critical {
 }
 .card-view .host-entry:hover,
 .card-view .service-entry:hover,
-.card-view .application-entry:hover {
+.card-view .application-entry:hover,
+.card-view .mod-entry:hover {
 	border-color: var(--content-hover-border);
 	transform: translateY(-2px);
 	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(99, 102, 241, 0.1);
@@ -1643,7 +1641,8 @@ host-connected-metric .critical {
 /* Card primary name, displayed at the top over the thumbnail */
 .card-view .service-entry .name,
 .card-view .host-entry .hostname,
-.card-view .application-entry .name {
+.card-view .application-entry .name,
+.card-view .mod-entry .mod-header {
 	order: 1;
 	z-index: 2;
 	flex: 4 100%;
@@ -1651,14 +1650,27 @@ host-connected-metric .critical {
 	font-weight: bold;
 	font-size: 1.25rem;
 	text-align: center;
-	padding-top: 0.5rem;
+	/* Use flexbox for alignment */
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding-top: 0;
 	overflow: hidden;
 }
+
 
 /* Some cards have a small image in their primary name */
 .card-view .host-entry .hostname img {
 	width: 1.5rem;
 	height: 1.5rem;
+	margin-right: 0.5rem;
+}
+
+/* Some cards have a medium image in their primary name */
+.card-view .mod-entry .mod-header img {
+	width: 3rem;
+	height: 3rem;
+	margin-right: 0.5rem;
 }
 
 /* Card descriptor, displayed over the thumbnail below the title in smaller text */
@@ -1734,10 +1746,30 @@ host-connected-metric .critical {
 	padding-left: 0.5em;
 }
 
+.card-view .mod-entry .mod-meta {
+	order: 3;
+	z-index: 2;
+	flex: 4 100%;
+	text-align: center;
+}
+.card-view .mod-entry .mod-description {
+	order: 4;
+	z-index: 2;
+	flex: 4 100%;
+	padding: 0.5rem 0;
+}
+.card-view .mod-entry .mod-author {
+	order: 5;
+	z-index: 2;
+	flex: 4 100%;
+	opacity: 0.8;
+}
+
 /* Action buttons at the bottom of the card */
 .card-view .host-entry .actions,
 .card-view .service-entry .actions,
-.card-view .application-entry .actions {
+.card-view .application-entry .actions,
+.card-view .mod-entry .actions {
 	order: 99;
 	z-index: 2;
 	margin-left: auto;
@@ -1747,7 +1779,8 @@ host-connected-metric .critical {
 }
 .card-view .host-entry .actions button,
 .card-view .service-entry .actions button,
-.card-view .application-entry .actions button {
+.card-view .application-entry .actions button,
+.card-view .mod-entry .actions button {
 	margin: 0.25rem;
 }
 
@@ -2457,6 +2490,13 @@ host-connected-metric .critical {
 	display: block;
 }
 
+#serviceModsCurrentMods .card-view,
+#serviceModsSearchResults {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(20rem, 1fr));
+	gap: 2rem;
+}
+
 /** </editor-fold> **/
 
 /** <editor-fold desc="Host Details"> **/
@@ -2575,7 +2615,7 @@ host-nexus-status .help-link:hover {
 
 .tabs-header a {
 	color: var(--nav);
-	padding: 1rem 1.5rem;
+	padding: 1rem 1rem;
 	border-bottom: 3px solid transparent;
 	display: flex;
 	align-items: center;

@@ -92,6 +92,9 @@ export class AppInstallData {
 			if (typeof (arg) == 'number') {
 				return arg.toString();
 			}
+			if (arg === null || arg === undefined) {
+				return '';
+			}
 			if (arg.startsWith('"') && arg.endsWith('"')) {
 				return arg; // Already quoted, assume properly escaped
 			}
@@ -131,6 +134,22 @@ export class AppInstallData {
 
 	/**
 	 * Generate the command string to execute manage.py with the given option and arguments.
+	 *
+	 * Usage:
+	 *
+	 * ```js
+	 * const appInstallData = new AppInstallData('hostname', '/path/to/app');
+	 * await appInstallData.init();
+	 * console.log(appInstallData.getServiceCommandString('start', 'myservice'));
+	 * ```
+	 *
+	 * Parameters can be passed as additional arguments.
+	 *
+	 * ```js
+	 * const appInstallData = new AppInstallData('hostname', '/path/to/app');
+	 * await appInstallData.init();
+	 * console.log(appInstallData.getServiceCommandString('start', 'myservice', '--port', 8080));
+	 * ```
 	 *
 	 * @param {string} option - The command option to execute (e.g., 'start', 'restart').
 	 * @param {string} service - The service name to target with the command (e.g., 'myservice').

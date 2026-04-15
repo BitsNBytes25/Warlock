@@ -1,0 +1,44 @@
+<div id="serviceModsNotAvailable" class="error-message">
+    <p>
+        Game API is not available, unable to determine mod status.
+    </p>
+</div>
+
+<div id="serviceModsNotSupported" class="error-message">
+    <p>
+        Automatic mod management is not supported by this game.
+    </p>
+</div>
+
+<div id="serviceModsNotAuthenticated" class="warning-message">
+    <p>
+        Host is not authenticated with Warlock.Nexus; mod management is not supported.
+    </p>
+</div>
+
+<div id="serviceModsSearch">
+    <h3>Mod Search</h3>
+    <div class="form-group">
+        <label for="serviceModsSearchInput">Mod Search / Lookup</label>
+        <input type="search" class="form-control" id="serviceModsSearchInput" placeholder="Search for a mod, press ENTER to search">
+    </div>
+
+    <div id="serviceModsSearchResults" class="card-view"></div>
+</div>
+
+<div id="serviceModsLoading" class="info-message">
+    <p>
+        <i class="fas fa-spinner fa-spin"></i> Load mod data...
+    </p>
+</div>
+
+<!-- Add a search option here -->
+
+<div id="serviceModsCurrentMods">
+
+</div>
+
+
+
+
+<script src="<%= assetUrl('/assets/service_mods.js') %>"></script>
