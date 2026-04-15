@@ -6,6 +6,7 @@ const {setupEventStream} = require("../../libs/setup_event_stream.mjs");
 const path = require('path');
 const { cmdRunner } = require("../../libs/cmd_runner.mjs");
 const {filePushRunner} = require("../../libs/file_push_runner.mjs");
+const {clearTaggedCache} = require("../../libs/cache.mjs");
 
 const router = express.Router();
 
@@ -133,6 +134,8 @@ router.post(
 
 			// Run the script to install the appropriate firewall.
 			cmdRunner(req.hostData.host, `${script} --email="${email}" --token="${token}"`).then(result => {
+				// Clear the cache so the changed parameters are visible immediately.
+				clearTaggedCache(req.hostData.host);
 				return res.json({ success: true, message: tryJSONParse(result.stdout) });
 			}).catch(e => {
 				return res.json({ success: false, error: tryJSONParse(e.stderr) });
@@ -148,6 +151,8 @@ router.post(
 
 			// Now we can run the script
 			cmdRunner(req.hostData.host, `chmod +x ${rScript} && ${rScript} --email="${email}" --token="${token}"`).then(result => {
+				// Clear the cache so the changed parameters are visible immediately.
+				clearTaggedCache(req.hostData.host);
 				return res.json({ success: true, message: tryJSONParse(result.stdout) });
 			}).catch(e => {
 				return res.json({ success: false, error: tryJSONParse(e.stderr) });
