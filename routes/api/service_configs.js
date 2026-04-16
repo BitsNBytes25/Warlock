@@ -53,17 +53,31 @@ router.post('/:guid/:host/:service', validate_session, validateHostService, asyn
 	const configUpdates = req.body;
 
 	// Multiple updates can be sent in a single request, but run them one-at-a-time.
+	let errors = '';
 	for (let option in configUpdates) {
 		const value = configUpdates[option];
-		await cmdRunner(req.appInstallData.host, req.appInstallData.getServiceCommandString('set-config', req.serviceData.service, option, value));
+		try {
+			await cmdRunner(req.appInstallData.host, req.appInstallData.getServiceCommandString('set-config', req.serviceData.service, option, value));
+		}
+		catch (e) {
+			errors += e.error.message + '\n';
+		}
 	}
 
 	// Clear the cache data for this service, useful for keys like name or port.
 	clearTaggedCache(req.appInstallData.host, req.appInstallData.guid);
 
-	return res.json({
-		success: true,
-	});
+	if (errors) {
+		return res.json({
+			success: false,
+			error: errors
+		});
+	}
+	else {
+		return res.json({
+			success: true,
+		});
+	}
 });
 
 module.exports = router;

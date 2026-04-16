@@ -286,12 +286,12 @@ function buildOptionsForm(
 					if (result.success) {
 						showToast('success', `Configuration option ${option.option} updated successfully.`);
 					} else {
-						showToast('error', `Failed to update configuration option ${option.option}: ${result.error}`);
+						showToast('error', result.error, false, `Failed to update ${option.option}`);
 					}
 				})
 				.catch(error => {
 					group.classList.remove('saving');
-					showToast('error', `Failed to update configuration option ${option.option}: ${error}`);
+					showToast('error', error, false, `Failed to update ${option.option}`);
 					console.error(`Error updating configuration option ${option.option}:`, error);
 				});
 		});

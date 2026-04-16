@@ -7,6 +7,7 @@ async function loadServiceMods() {
 		service = loadedService || null,
 		hostToken = loadedHostData?.token || null,
 		hostEmail = loadedHostData?.email || null,
+		multiBinary = loadedServiceData?.multi_binary,
 		serviceModsNotAvailable = document.getElementById('serviceModsNotAvailable'),
 		serviceModsNotSupported = document.getElementById('serviceModsNotSupported'),
 		serviceModsLoading = document.getElementById('serviceModsLoading'),
@@ -14,7 +15,8 @@ async function loadServiceMods() {
 		serviceModsCurrentMods = document.getElementById('serviceModsCurrentMods'),
 		serviceModsSearch = document.getElementById('serviceModsSearch'),
 		serviceModsSearchInput = document.getElementById('serviceModsSearchInput'),
-		serviceModsSearchResults = document.getElementById('serviceModsSearchResults');
+		serviceModsSearchResults = document.getElementById('serviceModsSearchResults'),
+		serviceModsSharedBinary = document.getElementById('serviceModsSharedBinary');
 
 	// Reset application state
 	serviceModsNotAvailable.style.display = 'block';
@@ -22,6 +24,7 @@ async function loadServiceMods() {
 	serviceModsNotAuthenticated.style.display = 'none';
 	serviceModsLoading.style.display = 'none';
 	serviceModsSearch.style.display = 'none';
+	serviceModsSharedBinary.style.display = 'none';
 	serviceModsCurrentMods.innerHTML = '';
 	serviceModsSearchInput.value = '';
 	serviceModsSearchResults.innerHTML = '';
@@ -36,6 +39,11 @@ async function loadServiceMods() {
 		serviceModsNotAvailable.style.display = 'none';
 		serviceModsNotSupported.style.display = 'block';
 		return;
+	}
+
+	if (multiBinary === false) {
+		// Non multi-binary services need caution when editing mods, display a notice to the user.
+		serviceModsSharedBinary.style.display = 'block';
 	}
 
 	serviceModsNotAvailable.style.display = 'none';
