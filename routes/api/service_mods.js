@@ -109,8 +109,17 @@ router.delete(
 		const appInstallData = req.appInstallData,
 			host = req.appInstallData.host,
 			service = req.serviceData.service,
-			{ id, provider } = req.body || null,
+			{ id, provider } = req.body || null;
+
+		let cmd;
+
+		// Provider is optional for removal, as manually-installed mods won't have one set.
+		if (provider) {
 			cmd = appInstallData.getServiceCommandString('remove-mod', service, '--id', id, '--provider', provider)
+		}
+		else {
+			cmd = appInstallData.getServiceCommandString('remove-mod', service, '--id', id)
+		}
 
 		cmdRunner(host, cmd)
 			.then(result => {

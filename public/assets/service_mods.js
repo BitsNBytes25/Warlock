@@ -195,7 +195,7 @@ async function installServiceMod(modId, provider) {
 		showToast('success', 'Mod installed successfully!');
 	}
 	else {
-		showToast('error', `Failed to install mod: ${installModResult.error}`);
+		showToast('error', `Failed to install mod: ${installModResult.error}`, false);
 	}
 }
 
@@ -224,7 +224,7 @@ async function removeServiceMod(modId, provider) {
 		loadServiceEnabledMods();
 	}
 	else {
-		showToast('error', `Failed to remove mod: ${installModResult.error}`);
+		showToast('error', installModResult.error, false, 'Failed to remove mod');
 	}
 }
 
@@ -236,7 +236,8 @@ async function removeServiceMod(modId, provider) {
  * @param modData.version {string} Version string of this mod
  * @param modData.description {string} Short description of the mod
  * @param modData.author {string} Author name
- * @param modData.url {string|null} URL to the mod homepage or info page
+ * @param modData.info_url {string|null} URL to the mod info page
+ * @param modData.url {string|null} URL to the mod provider page
  * @param modData.icon {string|null} Full URL to the icon image for this mod
  * @param modData.id {string|int} Provider-specific ID for this mod
  * @param modData.provider {string|null} Provider name of where this mod came from
@@ -295,7 +296,26 @@ function renderServiceMod(modData, allowableActions = []) {
 		link.href = modData.url;
 		link.target = '_blank';
 		link.rel = 'noopener noreferrer';
-		link.textContent = 'View Mod';
+
+		if (modData.provider) {
+			link.title = `View mod on ${modData.provider}`;
+		}
+		else {
+			link.title = 'View mod';
+		}
+
+		link.textContent = 'View';
+		actionsContainer.appendChild(link);
+	}
+
+	if (modData.info_url) {
+		const link = document.createElement('a');
+		link.className = 'button';
+		link.href = modData.info_url;
+		link.target = '_blank';
+		link.rel = 'noopener noreferrer';
+		link.title = 'View mod site or community';
+		link.textContent = 'Info';
 		actionsContainer.appendChild(link);
 	}
 

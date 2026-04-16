@@ -363,7 +363,7 @@ async function performExtract() {
 				loadDirectory(); // Refresh current directory
 			}
 			else {
-				showToast('error', `Error extracting archive: ${result.error}`);
+				showToast('error', result.error, false, 'Error extracting archive');
 			}
 		});
 }
