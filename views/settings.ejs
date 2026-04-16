@@ -6,10 +6,14 @@
     <title>Warlock - Settings</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/assets/frontend.css">
-    <link rel="stylesheet" href="/assets/themes.css">
-    <script src="/assets/common.js"></script>
-    <script src="/assets/qrcode.min.js" type="text/javascript" charset="utf-8"></script>
+    <link rel="stylesheet" href="<%= assetUrl('/assets/frontend.css') %>">
+    <link rel="stylesheet" href="<%= assetUrl('/assets/themes.css') %>">
+    <script src="<%= assetUrl('/assets/common.js') %>"></script>
+    <script src="<%= assetUrl('/assets/qrcode.min.js') %>" type="text/javascript" charset="utf-8"></script>
+    <link rel="icon" type="image/webp" sizes="64x64" href="<%= assetUrl('/assets/media/logos/warlock/warlock-lopoly-logo-64x64.webp') %>">
+    <link rel="icon" type="image/webp" sizes="128x128" href="<%= assetUrl('/assets/media/logos/warlock/warlock-lopoly-logo-128x128.webp') %>">
+    <link rel="icon" type="image/webp" sizes="256x256" href="<%= assetUrl('/assets/media/logos/warlock/warlock-lopoly-logo-256x256.webp') %>">
+    <link rel="icon" type="image/webp" sizes="512x512" href="<%= assetUrl('/assets/media/logos/warlock/warlock-lopoly-logo-512x512.webp') %>">
 </head>
 <body>
 
@@ -34,6 +38,11 @@
 
         <div class="content-body">
             <h3>Users</h3>
+            <% if (!authentication) { %>
+                <div class="warning-message">
+                    <p>User authentication is disabled and Warlock is open to anyone.</p>
+                </div>
+            <% } %>
             <div id="usersContainer">
                 <table class="table users-table">
                     <thead>
@@ -50,6 +59,143 @@
                 </table>
             </div>
 
+            <!-- Warlock.Nexus integration -->
+            <div class="settings-meta" style="margin-top:2rem;">
+                <h3>Warlock.Nexus Profile</h3>
+
+                <div class="info-message">
+                    <p>
+                        <a href="https://ko-fi.com/bitsandbytes" target="_blank" rel="noopener noreferrer">Donating to Bits and Bytes</a>
+                        helps support development efforts for Warlock and unlocks some nice features within this interface
+                        such as easy mod management (for applicable games) and a public profile for your community.
+                    </p>
+                </div>
+                <p id="nexusPreDonateMessage">
+                    <a href="https://ko-fi.com/bitsandbytes" target="_blank" rel="noopener noreferrer" class="button">
+                        Donate and unlock Warlock.Nexus features
+                    </a><br/>
+                    <br/>
+                    Once donated as a Supporter or higher tier, enter your email address and the auth token you should
+                    have received in an email in the form below to manage your public community profile.
+                </p>
+                <br/>
+
+                <div id="settingsNexusAuthSettings">
+                    <h4>
+                        <a href="#" id="settingsNexusAuthSettingsToggle" title="Show/hide authentication settings">
+                            Warlock Nexus Authentication Settings
+                            <i class="fas fa-chevron-down"></i>
+                        </a>
+                    </h4>
+                    <div class="inner">
+                        <br/>
+                        <div class="form-group">
+                            <label for="settingsNexusEmail">Registered Email</label>
+                            <input type="email" id="settingsNexusEmail" class="form-control" placeholder="Enter your email address">
+                            <p class="form-description">
+                                Enter the email address you used when donating on <a href="https://ko-fi.com/bitsandbytes" target="_blank" rel="noopener noreferrer">Ko-fi.com/bitsandbytes</a>.
+                            </p>
+                        </div>
+                        <div class="form-group">
+                            <label for="settingsNexusAuthToken">Authentication Token</label>
+                            <input type="text" id="settingsNexusAuthToken" class="form-control" placeholder="Enter your auth token">
+                            <p class="form-description">
+                                Enter the authentication token you received via email when donating to this project.
+                            </p>
+                        </div>
+                        <div id="messageNexusRegisterResponse"></div>
+                        <button id="settingsNexusRegister" class="btn btn-primary">Authorize on Warlock.Nexus</button>
+                    </div>
+                </div>
+
+                <br/>
+
+                <div id="settingsNexusCommunityProfile" style="display:none;">
+                    <h4>Community Profile Settings</h4>
+                    <br/>
+
+                    <div class="info-message">
+                        <p>
+                            Enter your community information below and save changes when satisfied.
+                            Please keep this posting mostly PG-rated, as it will be visible to the general public.
+                            <br/><br/>
+                            Do not include any information which you do not want to be <strong>public</strong>.
+                            <br/><br/>
+                            Obscene, illegal, or hateful content is subject for being administratively disabled on Warlock.Nexus.
+                        </p>
+                    </div>
+
+                    <!-- Community Name -->
+                    <div class="form-group">
+                        <label for="profileName">Community Name</label>
+                        <input type="text" id="profileName" class="form-control" placeholder="e.g., My Awesome Community" maxlength="48">
+                        <p class="form-description">
+                            Primary name of your community, listed on the top of your card.
+                        </p>
+                    </div>
+
+                    <!-- Tagline -->
+                    <div class="form-group">
+                        <label for="profileTagline">Tagline</label>
+                        <input type="text" id="profileTagline" class="form-control" placeholder="e.g., The best community on the internet!" maxlength="255">
+                        <p class="form-description">
+                            Short, catchy tagline for your community, listed under the name.
+                        </p>
+                    </div>
+
+                    <!-- Description -->
+                    <div class="form-group">
+                        <label for="profileDescription">Description (Markdown supported)</label>
+                        <textarea id="profileDescription" class="form-control" rows="6" placeholder="Enter your community description..."></textarea>
+                        <p class="form-description">
+                            A description of your community, can be lengthy and supports Markdown for formatting.
+                        </p>
+                    </div>
+
+                    <!-- Social Links -->
+                    <div class="form-group">
+                        <label for="profileSocials">Social Media Links (one per line)</label>
+                        <textarea id="profileSocials" class="form-control" rows="3" placeholder="https://twitter.com/your_handle"></textarea>
+                        <p class="form-description">
+                            Links to your social media profiles or notable websites, one per line.
+                            Listed in the order entered.
+                        </p>
+                    </div>
+
+                    <!-- Theme Color -->
+                    <div class="form-group">
+                        <label for="profileColor">Theme Color</label>
+                        <input type="color" id="profileColor" class="form-control" style="height: 40px; padding: 2px;">
+                        <p class="form-description">
+                            The accent color of your community card.
+                        </p>
+                    </div>
+
+                    <!-- Country Code -->
+                    <div class="form-group">
+                        <label for="profileCountry">Country Code (ISO 3166-1 alpha-2)</label>
+                        <input type="text" id="profileCountry" class="form-control" placeholder="e.g., US" maxlength="2">
+                        <p class="form-description">
+                            The country code of your community, used for flag icons.
+                        </p>
+                    </div>
+
+                    <!-- Enabled Toggle -->
+                    <div class="form-group form-check">
+                        <input type="checkbox" class="form-check-input" id="profileEnabled">
+                        <label class="form-check-label" for="profileEnabled">Community Enabled</label>
+                        <p class="form-description">
+                            Whether your community is publicly visible and accepting new members.
+                            Disabling this will hide your profile listing.
+                        </p>
+                    </div>
+
+                    <div class="form-group" style="margin-top: 1.5rem;">
+                        <button id="btnSaveCommunityProfile" class="btn btn-primary">Save Profile</button>
+                    </div>
+                </div>
+            </div>
+
             <!-- App version and useful links -->
             <div class="settings-meta" style="margin-top:2rem;">
                 <h3>Warlock Version</h3>
@@ -59,7 +205,7 @@
                     </span>
                     <span>
                         <a href="https://ko-fi.com/bitsandbytes" target="_blank" rel="noopener" class="button action-donate">
-                            <i class="fas fa-star"></i>
+                            <i class="fas fa-heart"></i>
                             Donate
                         </a>
                     </span>
@@ -70,6 +216,74 @@
                         </a>
                     </span>
                 </div>
+            </div>
+
+            <div class="settings-meta" style="margin-top:2rem;">
+                <h3>Debugging and Testing</h3>
+                <p>
+                    <a href="/test/terminal" class="button action-donate">
+                        <i class="fas fa-terminal"></i>
+                        Terminal UI Tester
+                    </a>
+                </p>
+            </div>
+
+            <div class="settings-meta" style="margin-top:2rem;">
+                <h3>Licensing and Credits</h3>
+                <p>
+                    Warlock is licensed under the AGPLv3 license.
+
+                    <br/><br/>
+
+                    The <strong>GNU Affero General Public License v3 (AGPLv3)</strong>
+                    is a strong copyleft license specifically designed to close the "SaaS loophole."
+                    It ensures that even if software is run as a service over a network (like a web application),
+                    users interacting with that service have the right to access the source code.
+                </p>
+
+                <br/>
+                <h4>Key Features and User Rights</h4>
+                <ul>
+                    <li>
+                        <strong>Modify & Distribute:</strong> You are free to modify the software and distribute your modified versions.
+                    </li>
+                    <li>
+                        <strong>Network Disclosure:</strong> If you run a modified version of the software on a server and allow users to interact with it over a network,
+                        you <strong>must</strong> make the source code and all modifications available to those users.
+                    </li>
+                    <li>
+                        <strong>Copyleft Requirement:</strong> Any derivative works or modifications you create must also be licensed under the AGPLv3,
+                        ensuring the software remains free and open.
+                    </li>
+                    <li>
+                        <strong>No Warranty:</strong> The software is provided "as-is," protecting the original authors from liability,
+                        aka - use Warlock at your own risk.
+                    </li>
+                </ul>
+
+                <br/>
+                <h4>Included Software</h4>
+
+                <ul>
+                    <li><a href="https://codemirror.net/" target="_blank" rel="noopener noreferrer">Code Mirror</a> - MIT</li>
+                    <li><a href="https://www.kde.org" target="_blank" rel="noopener noreferrer">KDE Oxygen Icons</a> - LGPLv3</li>
+                    <li><a href="https://www.npmjs.com/package/@dr.pogodin/csurf" target="_blank" rel="noopener noreferrer">@dr.pogodin/csurf</a> - MIT</li>
+                    <li><a href="https://www.npmjs.com/package/bcrypt" target="_blank" rel="noopener noreferrer">bcrypt</a> - MIT</li>
+                    <li><a href="https://www.npmjs.com/package/body-parser" target="_blank" rel="noopener noreferrer">body-parser</a> - MIT</li>
+                    <li><a href="https://www.npmjs.com/package/connect-sqlite3" target="_blank" rel="noopener noreferrer">connect-sqlite3</a> - MIT</li>
+                    <li><a href="https://www.npmjs.com/package/cookie-parser" target="_blank" rel="noopener noreferrer">cookie-parser</a> - MIT</li>
+                    <li><a href="https://www.npmjs.com/package/dotenv" target="_blank" rel="noopener noreferrer">dotenv</a> - BSD-2-Clause</li>
+                    <li><a href="https://www.npmjs.com/package/ejs" target="_blank" rel="noopener noreferrer">ejs</a> - Apache-2.0</li>
+                    <li><a href="https://www.npmjs.com/package/express" target="_blank" rel="noopener noreferrer">express</a> - MIT</li>
+                    <li><a href="https://www.npmjs.com/package/express-session" target="_blank" rel="noopener noreferrer">express-session</a> - MIT</li>
+                    <li><a href="https://www.npmjs.com/package/js-yaml" target="_blank" rel="noopener noreferrer">js-yaml</a> - MIT</li>
+                    <li><a href="https://www.npmjs.com/package/node-2fa" target="_blank" rel="noopener noreferrer">node-2fa</a> - MIT</li>
+                    <li><a href="https://www.npmjs.com/package/node-cache" target="_blank" rel="noopener noreferrer">node-cache</a> - MIT</li>
+                    <li><a href="https://www.npmjs.com/package/sequelize" target="_blank" rel="noopener noreferrer">sequelize</a> - MIT</li>
+                    <li><a href="https://www.npmjs.com/package/sqlite3" target="_blank" rel="noopener noreferrer">sqlite3</a> - MIT</li>
+                    <li><a href="https://www.npmjs.com/package/nodemon" target="_blank" rel="noopener noreferrer">nodemon</a> - MIT</li>
+                    <li><a href="https://fontawesome.com/" target="_blank" rel="noopener noreferrer">Fontawesome</a> - SIL OFL 1.1</li>
+                </ul>
             </div>
         </div>
     </main>
@@ -177,6 +391,6 @@
 <script>
     const twofactor = <%= twofactor ? 'true' : 'false' %>;
 </script>
-<script src="/assets/settings.js"></script>
+<script src="<%= assetUrl('/assets/settings.js') %>"></script>
 </body>
 </html>

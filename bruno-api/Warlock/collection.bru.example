@@ -1,0 +1,5 @@
+vars:pre-request {
+  lookup_host: 1.2.3.4
+  lookup_service: your-service
+  lookup_app: your-app-guid-to-test
+}

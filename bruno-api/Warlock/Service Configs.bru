@@ -1,0 +1,22 @@
+meta {
+  name: Service Configs
+  type: http
+  seq: 12
+}
+
+get {
+  url: {{host}}/api/service/configs/:guid/:host/:service
+  body: none
+  auth: inherit
+}
+
+params:path {
+  guid: {{lookup_app}}
+  service: {{lookup_service}}
+  host: {{lookup_host}}
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

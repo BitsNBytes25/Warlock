@@ -14,6 +14,15 @@ JavaScript frontends that communicate with remote Linux servers.
 Since this system is designed for package installing and system management,
 all operations are performed with root privileges via SSH commands.
 
+## Documentation Operations
+
+All documentation is to be stored in the `docs/` directory, organized by feature or module.
+Documentation should include:
+- **API Reference**: Detailed descriptions of each API endpoint, including request/response formats and example usage.
+- **Architecture Diagrams**: Visual representations of the system architecture, data flow, and component interactions.
+- **Development Guides**: Step-by-step instructions for setting up the development environment, running the application, and adding new features.
+- **User Manuals**: Guides for end-users on how to use the application, including screenshots and troubleshooting tips.
+
 ## Key Components
 
 ### Backend Structure (`app.js`)

@@ -3,6 +3,7 @@ const {validate_session} = require("../../libs/validate_session.mjs");
 const {cmdRunner} = require("../../libs/cmd_runner.mjs");
 const {Host} = require('../../db');
 const {logger} = require('../../libs/logger.mjs');
+const {correctMimetype} = require('../../libs/correct_mimetype.mjs');
 
 const router = express.Router();
 
@@ -32,7 +33,7 @@ router.get('/:host', validate_session, (req, res) => {
 		// -la shows all details including symlinks
 		//let cmd = `ls -la "${requestedPath}" | tail -n +2`;
 		let cmd = `P="${requestedPath}"; ` +
-			'ls -1 "$P" | while read F; do ' +
+			'ls -1a "$P" | while read F; do ' +
 			'P="${P%/}"; ' +
 			'[ -h "$P/$F" ] && FP="$(readlink -f "$P/$F")" || FP="$P/$F";' +
 			'[ -h "$P/$F" ] && SL="true" || SL="false";' +
@@ -44,12 +45,21 @@ router.get('/:host', validate_session, (req, res) => {
 			'[ -r "$FP" ] && MTIME="$(stat -c%Y "$FP")" || MTIME="null";' +
 			`echo "{\\"name\\":\\"$F\\",\\"mimetype\\":\\"$M\\",\\"path\\":\\"$FP\\",\\"size\\":$S,\\"symlink\\":$SL,\\"permissions\\":$PERMS,\\"user\\":\\"$U\\",\\"group\\":\\"$G\\",\\"modified\\":$MTIME},";` +
 			'done;';
-		cmdRunner(host, cmd).then(result => {
+		cmdRunner(host, cmd, 15, 'files').then(result => {
 			// Resulting code will be _almost_ JSON compatible, just strip the trailing comma and wrap in []
 			let jsonOutput = `[${result.stdout.trim().replace(/,$/, '')}]`;
 			let files = [];
 			try {
 				files = JSON.parse(jsonOutput);
+
+				// Skip '.' and '..'
+				files = files.filter(f => f.name !== '.' && f.name !== '..');
+
+				// Ensure the mimetypes are actually accurate; useful for things like .json files being reported as text/plain
+				files = files.map(f => {
+					f.mimetype = correctMimetype(f.name, f.mimetype);
+					return f;
+				});
 			} catch (e) {
 				return res.json({
 					success: false,

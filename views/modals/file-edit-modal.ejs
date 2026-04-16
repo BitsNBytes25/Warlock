@@ -1,0 +1,341 @@
+<div id="fileEditorModal" class="modal wide">
+	<div class="modal-overlay"></div>
+	<div class="modal-content">
+		<div class="modal-header">
+			<h3><i class="fas fa-edit"></i> Edit File</h3>
+			<button class="modal-close">
+				<i class="fas fa-times"></i>
+			</button>
+		</div>
+		<div class="modal-body">
+			<!-- Search Bar (shown when viewing/editing) -->
+			<div id="viewerSearchBar" class="search-bar" style="display: none; align-items: center; gap: 0.5rem;">
+				<input type="text" id="viewerSearch" class="search-input" placeholder="Search in file..." style="width: 200px; padding: 0.4rem 0.8rem; font-size: 0.85rem;">
+				<div class="button-group">
+					<button id="viewerSearchPrev" class="btn-editor" style="padding: 0.4rem 0.8rem;">
+						<i class="fas fa-chevron-up"></i>
+					</button>
+					<button id="viewerSearchNext" class="btn-editor" style="padding: 0.4rem 0.8rem;">
+						<i class="fas fa-chevron-down"></i>
+					</button>
+				</div>
+				<span id="viewerSearchCount" style="font-size: 0.85rem; color: #94a3b8;"></span>
+			</div>
+
+			<div id="fileEditorContainer"></div>
+			<textarea id="fileEditorTextarea" style="display: none;" placeholder="File content will appear here..."></textarea>
+		</div>
+		<div class="modal-footer">
+			<div id="fileEditorStatus"></div>
+
+			<button class="action-download" id="fileEditorDownloadBtn">
+				<i class="fas fa-download"></i>
+				Download File
+			</button>
+			<button class="action-save" id="fileEditorSaveBtn">
+				<i class="fas fa-save"></i>
+				Save Changes
+			</button>
+			<button class="action-cancel modal-close">
+				<i class="fas fa-times"></i>
+				Close
+			</button>
+		</div>
+	</div>
+</div>
+
+<script>
+	let codeMirrorEditor, openFileEditResolve;
+
+	/**
+	 * Initialize CodeMirror editor
+	 */
+	function initializeCodeMirror() {
+		const fileEditorTextarea = document.getElementById('fileEditorTextarea');
+
+		if (!fileEditorTextarea) return;
+
+		codeMirrorEditor = CodeMirror.fromTextArea(fileEditorTextarea, {
+			lineNumbers: true,
+			mode: 'null',
+			theme: 'material-darker',
+			indentUnit: 4,
+			tabSize: 4,
+			indentWithTabs: false,
+			lineWrapping: true,
+			styleActiveLine: true,
+			matchBrackets: true,
+			autoCloseBrackets: true,
+			showCursorWhenSelecting: true,
+			viewportMargin: 10,
+			extraKeys: {
+				'Ctrl-S': function() {
+					saveFile();
+				},
+				'Cmd-S': function() {
+					saveFile();
+				}
+			}
+		});
+
+		// Update stats when editor content changes
+		codeMirrorEditor.on('change', updateEditorStats);
+	}
+
+	/**
+	 * Detect file syntax mode based on file mimetype and ensure the proper mode is loaded
+	 *
+	 * @param {string} mimetype - The mimetype of the file
+	 * @returns {string|null} - CodeMirror mode string
+	 */
+	async function detectSyntaxMode(mimetype) {
+		return new Promise((resolve, reject) => {
+			const modeMap = {
+				'text/x-script.python': 'python',
+				'application/json': 'json',
+				'application/yaml': 'yaml',
+				'text/x-shellscript': 'shell',
+			};
+
+			let mode = modeMap[mimetype] || null,
+				modeSource = mode;
+
+			if (mode) {
+				if (mode === 'json') {
+					modeSource = 'javascript';
+					mode = 'application/json';
+				}
+
+				// Ensure the mode is loaded
+				if (!document.head.querySelector('script[data-codemirror-mode="' + modeSource + '"]')) {
+					const modeScript = document.createElement('script');
+					modeScript.src = `/assets/codemirror/mode/${modeSource}/${modeSource}.js`;
+					modeScript.dataset.codemirrorMode = modeSource;
+					modeScript.onload = () => {
+						resolve(mode);
+					}
+					document.head.appendChild(modeScript);
+				}
+				else {
+					resolve(mode);
+				}
+			}
+			else {
+				resolve(mode);
+			}
+		});
+	}
+
+	async function openFileEditModal(host, path, callback) {
+		const modal = document.getElementById('fileEditorModal'),
+			fileEditorContainer = document.getElementById('fileEditorContainer'),
+			fileEditorTextarea = document.getElementById('fileEditorTextarea'),
+			fileEditorDownloadBtn = document.getElementById('fileEditorDownloadBtn'),
+			fileEditorSaveBtn = document.getElementById('fileEditorSaveBtn'),
+			fileEditorStatus = document.getElementById('fileEditorStatus');
+
+		openFileEditResolve = callback;
+		modal.dataset.host = host;
+		modal.dataset.path = path;
+
+		fileEditorContainer.innerHTML = '<div class="loading-spinner"></div> Loading file...';
+		modal.querySelector('h3').innerHTML = '<i class="fas fa-spinner fa-spin"></i> Opening File';
+
+		// Clear editor content and reset state
+		fileEditorTextarea.value = '';
+		if (codeMirrorEditor) {
+			codeMirrorEditor.setValue('');
+		}
+
+		fileEditorSaveBtn.style.display = 'none';
+		fileEditorDownloadBtn.style.display = 'none';
+		fileEditorStatus.style.display = 'none';
+
+		openModal(modal);
+
+		fetch(`/api/file/${host}?path=${path}`, {
+			method: 'GET',
+			headers: {
+				'Content-Type': 'application/json'
+			}
+		})
+			.then(response => response.json())
+			.then(result => {
+				if (result.success) {
+					if (result.encoding === 'raw') {
+						editFile(result);
+					}
+					else if (result.mimetype === 'inode/directory') {
+						loadDirectory(filePath);
+					}
+					else {
+						previewFile(result);
+					}
+				}
+			});
+	}
+
+	/**
+	 * Display a file preview
+	 * @param {FileData} fileData
+	 */
+	function previewFile(fileData) {
+		const modal = document.getElementById('fileEditorModal'),
+			fileEditorContainer = document.getElementById('fileEditorContainer'),
+			fileEditorTextarea = document.getElementById('fileEditorTextarea'),
+			fileEditorDownloadBtn = document.getElementById('fileEditorDownloadBtn'),
+			fileEditorSaveBtn = document.getElementById('fileEditorSaveBtn'),
+			fileEditorStatus = document.getElementById('fileEditorStatus');
+
+		// Clear previous content
+		fileEditorContainer.innerText = '';
+		modal.querySelector('h3').innerHTML = '<i class="fas fa-eye"></i> Viewing ' + fileData.name;
+		fileEditorDownloadBtn.style.display = 'inline-flex';
+
+		let cm = fileEditorModal.querySelector('.CodeMirror');
+		if (cm) {
+			cm.style.display = 'none';
+		}
+
+		let html = '';
+
+		if (fileData.encoding === 'base64' && fileData.mimetype.startsWith('image/')) {
+			const imgSrc = `data:${fileData.mimetype};base64,${fileData.content}`;
+			html = `<div class="file-content"><img src="${imgSrc}" alt="${fileData.name}"/></div>`;
+		}
+		else if (fileData.encoding === 'base64' && fileData.mimetype.startsWith('video/')) {
+			const videoSrc = `data:${fileData.mimetype};base64,${fileData.content}`;
+			html = `<div class="file-content"><video controls><source src="${videoSrc}" type="${fileData.mimetype}"></video></div>`;
+		}
+		else {
+			html = `<div class="file-content">${getFileIcon(fileData.mimetype)}</div>`;
+		}
+
+		// All files will have some basic information displayed.
+		html += `<div class="file-info"><ul>
+	<li>File name: ${fileData.name}</li>
+	<li>File size: ${formatFileSize(fileData.size)}</li>
+	<li>Mimetype: ${fileData.mimetype}</li>
+</ul></div>`;
+
+		fileEditorContainer.innerHTML = html;
+	}
+
+	/**
+	 * Open a file for editing
+	 *
+	 * @param {FileData} fileData
+	 */
+	function editFile(fileData) {
+		detectSyntaxMode(fileData.mimetype).then(syntaxMode => {
+			const modal = document.getElementById('fileEditorModal'),
+				fileEditorContainer = document.getElementById('fileEditorContainer'),
+				fileEditorTextarea = document.getElementById('fileEditorTextarea'),
+				fileEditorSaveBtn = document.getElementById('fileEditorSaveBtn'),
+				fileEditorStatus = document.getElementById('fileEditorStatus');
+
+			// Clear previous content
+			fileEditorContainer.innerText = '';
+			// Populate editor
+			fileEditorTextarea.value = fileData.content;
+			modal.querySelector('h3').innerHTML = '<i class="fas fa-edit"></i> Editing ' + fileData.name;
+			fileEditorSaveBtn.dataset.path = fileData.path;
+			fileEditorSaveBtn.style.display = 'inline-flex';
+			fileEditorStatus.style.display = 'block';
+
+			let cm = modal.querySelector('.CodeMirror');
+			if (cm) {
+				cm.style.display = 'block';
+			}
+
+			// Initialize CodeMirror if not already initialized
+			if (!codeMirrorEditor) {
+				initializeCodeMirror();
+			}
+
+			// Detect and set syntax mode based on file extension
+			codeMirrorEditor.setOption('mode', syntaxMode);
+			codeMirrorEditor.setValue(fileData.content);
+			codeMirrorEditor.clearHistory();
+		});
+	}
+
+	function updateEditorStats() {
+		const fileEditorTextarea = document.getElementById('fileEditorTextarea'),
+			fileEditorStatus = document.getElementById('fileEditorStatus');
+
+		let content, lines, chars, words;
+
+		// Use CodeMirror if available, otherwise fall back to textarea
+		if (codeMirrorEditor) {
+			content = codeMirrorEditor.getValue();
+			lines = codeMirrorEditor.lineCount();
+		} else {
+			content = fileEditorTextarea.value;
+			lines = content.split('\n').length;
+		}
+
+		chars = content.length;
+		words = content.trim() ? content.trim().split(/\s+/).length : 0;
+
+		fileEditorStatus.textContent = `${lines} lines, ${words} words, ${chars} characters`;
+	}
+
+	async function saveFile() {
+		const modal = document.getElementById('fileEditorModal'),
+			fileEditorTextarea = document.getElementById('fileEditorTextarea'),
+			fileEditorSaveBtn = document.getElementById('fileEditorSaveBtn');
+
+		if (fileEditorSaveBtn.disabled) {
+			return;
+		}
+
+		fileEditorSaveBtn.disabled = true;
+		fileEditorSaveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+
+		// Get content from CodeMirror if available, otherwise from textarea
+		let content;
+		if (codeMirrorEditor) {
+			content = codeMirrorEditor.getValue();
+		} else {
+			content = fileEditorTextarea.value;
+		}
+
+		fetch(`/api/file/${modal.dataset.host}?path=${modal.dataset.path}`, {
+			method: 'PUT',
+			headers: {
+				'Content-Type': 'text/plain',
+			},
+			body: content
+		})
+			.then(response => response.json())
+			.then(result => {
+				if (result.success) {
+					showToast('success', 'File saved successfully!');
+					if (openFileEditResolve) {
+						openFileEditResolve();
+					}
+				}
+				else {
+					showToast('error', `Save failed: ${result.error}`);
+				}
+			})
+			.catch(error => {
+				showToast('error', `Save failed: ${error}`);
+			})
+			.finally(() => {
+				fileEditorSaveBtn.disabled = false;
+				fileEditorSaveBtn.innerHTML = '<i class="fas fa-save"></i> Save Changes';
+			});
+	}
+
+	window.addEventListener('DOMContentLoaded', () => {
+		document.getElementById('fileEditorSaveBtn').addEventListener('click', saveFile);
+		document.getElementById('fileEditorDownloadBtn').addEventListener('click', () => {
+			const modal = document.getElementById('fileEditorModal');
+			const host = modal.dataset.host;
+			const path = modal.dataset.path;
+			window.open(`/api/file/${host}?path=${path}&download=true`, '_blank');
+		});
+	});
+</script>

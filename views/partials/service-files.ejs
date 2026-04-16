@@ -1,0 +1,64 @@
+<div class="path-controls">
+    <button id="upBtn" class="btn-nav" title="Go Up">
+        <i class="fas fa-level-up-alt"></i>
+    </button>
+    <div class="current-path" id="currentPath">/home/steam</div>
+    <div class="action-buttons">
+        <button id="createFolderBtn" class="btn-nav btn-action" title="Create Folder">
+            <i class="fas fa-folder-plus"></i>
+            Folder
+        </button>
+        <button id="createFileBtn" class="btn-nav btn-action" title="Create File">
+            <i class="fas fa-plus"></i>
+            File
+        </button>
+        <button id="uploadBtn" class="btn-nav btn-upload" title="Upload Files">
+            <i class="fas fa-cloud-upload-alt"></i>
+            Upload
+        </button>
+        <button id="refreshBtn" class="btn-nav" title="Refresh">
+            <i class="fas fa-sync-alt"></i>
+        </button>
+        <button id="filesShowHiddenBtn" class="btn-nav" title="Toggle Hidden Files">
+            <i class="fas fa-eye-slash show-icon"></i>
+            <i class="fas fa-eye hide-icon" style="display:none"></i>
+        </button>
+    </div>
+</div>
+
+<div id="fileList" class="file-list">
+    Loading Files...
+</div>
+
+<!-- Context Menu -->
+<div id="contextMenu" class="context-menu">
+    <button data-action="edit" class="action-edit context-menu-item">
+        <i class="fas fa-pencil"></i>
+        <span>View/Edit</span>
+    </button>
+    <button data-action="open" class="action-edit context-menu-item">
+        <i class="fas fa-pencil"></i>
+        <span>Open</span>
+    </button>
+    <button data-action="download" class="action-download context-menu-item">
+        <i class="fas fa-download"></i>
+        <span>Download</span>
+    </button>
+    <button data-action="extract" class="action-extract context-menu-item">
+        <i class="fas fa-file-zipper"></i>
+        <span>Extract Archive</span>
+    </button>
+    <button data-action="compress" class="action-compress context-menu-item">
+        <i class="fas fa-file-zipper"></i>
+        <span>Compress</span>
+    </button>
+    <button data-action="rename" class="action-rename context-menu-item">
+        <i class="fas fa-edit"></i>
+        <span>Rename</span>
+    </button>
+    <button data-action="delete" class="action-remove context-menu-item">
+        <i class="fas fa-trash"></i>
+        <span>Delete</span>
+    </button>
+</div>
+

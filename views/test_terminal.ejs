@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Warlock - Terminal Test</title>
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+	<link rel="stylesheet" href="<%= assetUrl('/assets/frontend.css') %>">
+	<link rel="stylesheet" href="<%= assetUrl('/assets/themes.css') %>">
+	<script src="<%= assetUrl('/assets/common.js') %>"></script>
+	<script src="<%= assetUrl('/assets/qrcode.min.js') %>" type="text/javascript" charset="utf-8"></script>
+	<link rel="icon" type="image/webp" sizes="64x64" href="<%= assetUrl('/assets/media/logos/warlock/warlock-lopoly-logo-64x64.webp') %>">
+	<link rel="icon" type="image/webp" sizes="128x128" href="<%= assetUrl('/assets/media/logos/warlock/warlock-lopoly-logo-128x128.webp') %>">
+	<link rel="icon" type="image/webp" sizes="256x256" href="<%= assetUrl('/assets/media/logos/warlock/warlock-lopoly-logo-256x256.webp') %>">
+	<link rel="icon" type="image/webp" sizes="512x512" href="<%= assetUrl('/assets/media/logos/warlock/warlock-lopoly-logo-512x512.webp') %>">
+</head>
+<body>
+
+<%- include('partials/nav.ejs') %>
+
+<div class="main-container" style="grid-template-columns: 1fr; max-width: 1600px;">
+	<main class="content-area">
+		<div class="content-header">
+			<div class="content-header-inner">
+				<h2>
+					<i class="fas fa-terminal"></i>
+					Terminal Test
+				</h2>
+				<div class="content-header-buttons">
+
+				</div>
+				<p>Test terminal colors and rendering functionality</p>
+			</div>
+		</div>
+
+		<div class="content-body">
+			<pre class="terminal" id="output"></pre>
+
+			<button onclick="runColorTest()">Run Color Test</button>
+			<button onclick="runBasicValues()">Run Basic Test</button>
+			<button onclick="runNeofetchTest()">Run Neofetch</button>
+		</div>
+	</main>
+</div>
+
+<%- include('partials/theme-selector.ejs') %>
+
+<script>
+	const output = document.getElementById('output');
+	const clear = '\x1b[2J\x1b[H';
+	const reset = '\x1b[0m';
+	const now = Date.now();
+	const colors1 = [
+		{name: ' BLK ', fg: '\x1b[30m', bg: '\x1b[40m'},
+		{name: '+BLK ', fg: '\x1b[90m', bg: '\x1b[100m'},
+		{name: ' RED ', fg: '\x1b[31m', bg: '\x1b[41m'},
+		{name: '+RED ', fg: '\x1b[91m', bg: '\x1b[101m'},
+		{name: ' GRN ', fg: '\x1b[32m', bg: '\x1b[42m'},
+		{name: '+GRN ', fg: '\x1b[92m', bg: '\x1b[102m'},
+		{name: ' YEL ', fg: '\x1b[33m', bg: '\x1b[43m'},
+		{name: '+YEL ', fg: '\x1b[93m', bg: '\x1b[103m'},
+		{name: ' BLU ', fg: '\x1b[34m', bg: '\x1b[44m'},
+		{name: '+BLU ', fg: '\x1b[94m', bg: '\x1b[104m'},
+		{name: ' MAG ', fg: '\x1b[35m', bg: '\x1b[45m'},
+		{name: '+MAG ', fg: '\x1b[95m', bg: '\x1b[105m'},
+		{name: ' CYN ', fg: '\x1b[36m', bg: '\x1b[46m'},
+		{name: '+CYN ', fg: '\x1b[96m', bg: '\x1b[106m'},
+		{name: ' WHT ', fg: '\x1b[37m', bg: '\x1b[47m'},
+		{name: '+WHT ', fg: '\x1b[97m', bg: '\x1b[107m'},
+	];
+
+	function runTest(application, lines) {
+		terminalOutputHelper(output, 'stdin', 'Run ' + application);
+
+		setTimeout(() => {
+			terminalOutputHelper(output, 'stdout', 'Starting test...');
+			setTimeout(() => {
+				terminalOutputHelper(output, 'stderr', clear);
+
+				let counter = 0,
+					interval = setInterval(() => {
+						const line = lines[counter];
+						if (line) {
+							const [type, text] = line;
+							terminalOutputHelper(output, type, text);
+							counter++;
+							if (counter >= lines.length) {
+								clearInterval(interval);
+							}
+						}
+					}, 50);
+			}, 2000);
+		}, 1000);
+	}
+
+	function runColorTest() {
+		let lines = [];
+
+		let colorWeights = [
+			{name: '   ', code: ''},
+			{name: 'BO ', code: '\x1b[1m'},
+			{name: 'DM ', code: '\x1b[2m'},
+			{name: 'IT ', code: '\x1b[3m'},
+			{name: 'UN ', code: '\x1b[4m'},
+			{name: 'BL ', code: '\x1b[5m'},
+			//{name: 'reverse ', code: '\x1b[7m'},
+			{name: 'ST ', code: '\x1b[9m'},
+		];
+
+
+		// Generate each color, with the different backgrounds
+
+		for(let w = 0; w < colorWeights.length; w++) {
+			let weight = colorWeights[w];
+
+			for(let i = 0; i < colors1.length; i++) {
+				let color = colors1[i];
+				let line;
+				line = weight.code + weight.name + color.fg + color.name + reset + reset;
+				for(let x = 0; x < colors1.length; x++) {
+					let color2 = colors1[x];
+					line += weight.code + color.fg + color2.bg + color2.name + reset + reset + reset;
+				}
+				lines.push(['stdout', line]);
+			}
+		}
+
+		runTest('Color Test', lines);
+	}
+
+	function runBasicValues() {
+		let lines = [
+			['stdin', 'Start Test'],
+			['stdout', 'Starting test...'],
+			['stderr', '[DEBUG] Loading dependencies...'],
+			['stderr', 'Missing dependency: example-package'],
+			['stdout', 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua'],
+			['stdout', ''],
+			['stderr', '[INFO] Test application ready!']
+		];
+
+		runTest('Basic Test', lines);
+	}
+
+	function generateNeofetchAscii() {
+		const warlockHat = [
+			'    /\\    ',
+			'   /  \\   ',
+			'  /    \\  ',
+			' /______\\ '
+		];
+
+		let colorBars1 = [
+			colors1.find(c => c.name === ' BLK ').bg + '   ' + reset,
+			colors1.find(c => c.name === ' RED ').bg + '   ' + reset,
+			colors1.find(c => c.name === ' GRN ').bg + '   ' + reset,
+			colors1.find(c => c.name === ' YEL ').bg + '   ' + reset,
+			colors1.find(c => c.name === ' BLU ').bg + '   ' + reset,
+			colors1.find(c => c.name === ' MAG ').bg + '   ' + reset,
+			colors1.find(c => c.name === ' CYN ').bg + '   ' + reset,
+			colors1.find(c => c.name === ' WHT ').bg + '   ' + reset,
+		].join('');
+
+		let colorBars2 = [
+			colors1.find(c => c.name === '+BLK ').bg + '   ' + reset,
+			colors1.find(c => c.name === '+RED ').bg + '   ' + reset,
+			colors1.find(c => c.name === '+GRN ').bg + '   ' + reset,
+			colors1.find(c => c.name === '+YEL ').bg + '   ' + reset,
+			colors1.find(c => c.name === '+BLU ').bg + '   ' + reset,
+			colors1.find(c => c.name === '+MAG ').bg + '   ' + reset,
+			colors1.find(c => c.name === '+CYN ').bg + '   ' + reset,
+			colors1.find(c => c.name === '+WHT ').bg + '   ' + reset,
+		].join('');
+
+		let theme = localStorage.getItem('theme') || 'default';
+		let uptime = Math.floor((Date.now() - now) / 1000);
+		let uptimeString = '';
+		if (uptime >= 86400) {
+			let days = Math.floor(uptime / 86400);
+			uptimeString += days + ' day' + (days > 1 ? 's' : '') + ', ';
+			uptime %= 86400;
+		}
+		if (uptime >= 3600) {
+			let hours = Math.floor(uptime / 3600);
+			uptimeString += hours + ' hour' + (hours > 1 ? 's' : '') + ', ';
+			uptime %= 3600;
+		}
+		if (uptime >= 60) {
+			let minutes = Math.floor(uptime / 60);
+			uptimeString += minutes + ' minute' + (minutes > 1 ? 's' : '') + ', ';
+			uptime %= 60;
+		}
+		uptimeString += uptime + ' second' + (uptime !== 1 ? 's' : '');
+
+		const neofetchLines = [
+			['stdout', warlockHat[0] + '              ╔══════════════════════════════════════╗'],
+			['stdout', warlockHat[1] + '              ║        WARLOCK SYSTEM INFO     ║'],
+			['stdout', warlockHat[2] + '              ╚══════════════════════════════════════╝'],
+			['stdout', warlockHat[3]],
+			['stdout', ''],
+			['stdout', '                OS: ' + navigator.userAgent],
+			['stdout', '            Kernel: 5.15.0-86-generic'],
+			['stdout', '          Hostname: warlock-server-01'],
+			['stdout', '               CPU: Intel Core i7-12700K'],
+			['stdout', '               RAM: 32 GiB / 64 GiB'],
+			['stdout', '              Disk: 450 GiB / 1 TiB'],
+			['stdout', '            Uptime: ' + uptimeString],
+			['stdout', '              Arch: x86_64'],
+			['stdout', '             Shell: /bin/bash'],
+			['stdout', '          Terminal: warlock-16color'],
+			['stdout', '             Theme: ' + theme],
+			['stdout', '              '],
+			['stdout', '            ' + colorBars1],
+			['stdout', '            ' + colorBars2],
+			['stdout', '           '],
+			['stdout', '   ███░░░░░░░░░░░░░░░░░░░░░░ 15%']
+		];
+
+		return neofetchLines;
+	}
+	function runNeofetchTest() {
+		let lines = generateNeofetchAscii();
+		runTest('Neofetch Test', lines);
+	}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Warlock - Remove Service</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="<%= assetUrl('/assets/frontend.css') %>">
+    <link rel="stylesheet" href="<%= assetUrl('/assets/themes.css') %>">
+    <script src="<%= assetUrl('/assets/common.js') %>"></script>
+    <link rel="icon" type="image/webp" sizes="64x64" href="<%= assetUrl('/assets/media/logos/warlock/warlock-lopoly-logo-64x64.webp') %>">
+    <link rel="icon" type="image/webp" sizes="128x128" href="<%= assetUrl('/assets/media/logos/warlock/warlock-lopoly-logo-128x128.webp') %>">
+    <link rel="icon" type="image/webp" sizes="256x256" href="<%= assetUrl('/assets/media/logos/warlock/warlock-lopoly-logo-256x256.webp') %>">
+    <link rel="icon" type="image/webp" sizes="512x512" href="<%= assetUrl('/assets/media/logos/warlock/warlock-lopoly-logo-512x512.webp') %>">
+    <script>
+        applicationData = [<%- JSON.stringify(applicationData) %>];
+        hostData = [<%- JSON.stringify(hostData) %>];
+    </script>
+</head>
+<body data-use-app-background="1">
+
+<%- include('partials/nav.ejs') %>
+
+<div class="main-container" style="grid-template-columns: 1fr; max-width: 800px;">
+    <main class="content-area">
+        <div class="content-header">
+            <div class="content-header-inner">
+                <h2>
+                    <i class="fas fa-trash"></i>
+                    Remove Service Instance
+                </h2>
+                <p>Remove service instance for <span class="app-name-placeholder">an application</span> from <span class="host-name-placeholder">a given host</span></p>
+            </div>
+        </div>
+
+        <div class="content-body">
+            <div class="info-message">
+                <p>
+                    Removing a service instance from the host may wipe configuration and player data
+                    for that instance.  Please ensure you have a backup if necessary.
+                </p>
+            </div>
+
+            <button id="btnUninstall" class="action-remove">
+                <i class="fas fa-spinner fa-spin" style="display:none;" id="uninstallSpinner"></i>
+                <i class="fas fa-trash" id="uninstallIcon"></i>
+                Remove Service Instance
+            </button>
+
+            <br/><br/>
+            <pre class="terminal" id="output" style="display:none;"><code></code></pre>
+        </div>
+    </main>
+</div>
+
+<%- include('partials/theme-selector.ejs') %>
+
+<script src="<%= assetUrl('/assets/service_uninstall.js') %>"></script>
+</body>
+</html>

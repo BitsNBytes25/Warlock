@@ -1,0 +1,78 @@
+<!-- Delete Confirmation Modal -->
+<div id="deleteConfirmModal" class="modal">
+    <div class="modal-overlay"></div>
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-exclamation-triangle"></i> Confirm Deletion</h3>
+            <button class="modal-close">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div class="warning-message">
+                <i class="fas fa-exclamation-triangle"></i>
+                <div>
+                    <p>This will permanently delete the item and all its contents!</p>
+                    <p class="filename"></p>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="action-remove" id="deleteConfirmModalConfirm">
+                <i class="fas fa-trash"></i>
+                Delete Permanently
+            </button>
+            <button class="action-cancel modal-close">
+                <i class="fas fa-times"></i>
+                Cancel
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let deleteFileResolve;
+
+    async function openDeleteFileModal(host, path, callback) {
+        const modal = document.getElementById('deleteConfirmModal');
+
+        modal.dataset.host = host;
+        modal.dataset.path = path;
+        modal.querySelector('.filename').innerHTML = path;
+        openModal(modal);
+
+        // Store resolve to call after compression is done
+        deleteFileResolve = callback;
+    }
+
+	async function performFileDelete() {
+        const modal = document.getElementById('deleteConfirmModal'),
+            host = modal.dataset.host,
+            path = modal.dataset.path;
+		closeModal(modal);
+
+		fetch(`/api/file/${host}?path=${path}`, {
+			method: 'DELETE',
+			headers: {
+				'Content-Type': 'application/json'
+			}
+		})
+			.then(response => response.json())
+			.then(result => {
+				if (result.success) {
+					showToast('success', 'Item deleted successfully');
+					if (deleteFileResolve) {
+                        deleteFileResolve();
+                        deleteFileResolve = null;
+                    }
+				}
+				else {
+					showToast('error', `Error deleting item: ${result.error}`);
+				}
+			});
+	}
+
+    window.addEventListener('DOMContentLoaded', () => {
+        document.getElementById('deleteConfirmModalConfirm').addEventListener('click', performFileDelete);
+    });
+</script>

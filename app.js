@@ -9,18 +9,9 @@
  * @property {string} installer Installer URL fragment of the application.
  * @property {string} source Source handler for the application installer.
  * @property {string} thumbnail Thumbnail URL of the application.
- * @property {HostAppData[]} hosts List of hosts where the application is installed.
+ * @property {AppInstallData[]} installs List of hosts where the application is installed.
  * @property {string} image Full size image URL of the application.
  * @property {string} header Header image URL of the application.
- */
-
-/**
- * Represents the details of a host specifically regarding an installed application.
- *
- * @typedef {Object} HostAppData
- * @property {string} host Hostname or IP of host.
- * @property {string} path Path where the application is installed on the host.
- *
  */
 
 /**
@@ -55,6 +46,8 @@
 const express = require('express');
 const path = require('path');
 const dotenv = require('dotenv');
+const packageJson = require('./package.json');
+const fs = require('fs');
 
 const app = express();
 const cookieParser = require('cookie-parser');
@@ -64,12 +57,30 @@ const {push_analytics} = require("./libs/push_analytics.mjs");
 const {sequelize} = require("./db.js");
 const {MetricsPollTask} = require("./tasks/metrics_poll.mjs");
 const {MetricsMergeTask} = require("./tasks/metrics_merge.mjs");
+const {HostMetricsMergeTask} = require("./tasks/host_metrics_merge.mjs");
+const {HostMetricsPollTask} = require("./tasks/host_metrics_poll.mjs");
+const {initializeProfiler, isEnabled: isProfilerEnabled} = require("./libs/cmd_profiler.mjs");
+const {errorHandler} = require("./libs/error_handler.mjs");
 
 // Load environment variables
 dotenv.config();
 
+// Initialize profiler if enabled
+initializeProfiler();
+if (isProfilerEnabled()) {
+	logger.info('Command profiler enabled - metrics will be written to warlock-profile.csv');
+}
+
 
 app.set('view engine', 'ejs')
+
+// Expose app version for cache busting
+app.locals.appVersion = packageJson.version;
+
+// Helper function for versioned asset URLs (cache busting)
+app.locals.assetUrl = function(assetPath) {
+	return `${assetPath}?v=${packageJson.version}`;
+}
 
 app.use(cookieParser());
 
@@ -102,14 +113,18 @@ app.use('/hosts', require('./routes/hosts'));
 app.use('/host/add', require('./routes/host_add'));
 app.use('/host/delete', require('./routes/host_delete'));
 app.use('/host/firewall', require('./routes/host_firewall'));
+app.use('/host/details', require('./routes/host_details'));
 app.use('/service/logs', require('./routes/service_logs'));
 app.use('/service/configure', require('./routes/service_configure'));
+app.use('/service/uninstall', require('./routes/service_uninstall'));
+app.use('/service/details', require('./routes/service_details'));
 app.use('/application/uninstall', require('./routes/application_uninstall'));
 app.use('/application/install', require('./routes/application_install'));
 app.use('/application/backups', require('./routes/application_backups'));
 app.use('/application/configure', require('./routes/application_configure'));
 app.use('/settings', require('./routes/settings'));
 app.use('/2fa-setup', require('./routes/2fa-setup'));
+app.use('/test', require('./routes/test'));
 
 
 /***************************************************************
@@ -119,12 +134,15 @@ app.use('/2fa-setup', require('./routes/2fa-setup'));
 app.use('/api/applications', require('./routes/api/applications'));
 app.use('/api/file', require('./routes/api/file'));
 app.use('/api/files', require('./routes/api/files'));
+app.use('/api/host', require('./routes/api/host'));
 app.use('/api/hosts', require('./routes/api/hosts'));
 app.use('/api/services', require('./routes/api/services'));
 app.use('/api/service', require('./routes/api/service'));
 app.use('/api/service/logs', require('./routes/api/service_logs'));
+app.use('/api/service/cmd', require('./routes/api/service_cmd'));
 app.use('/api/service/control', require('./routes/api/service_control'));
 app.use('/api/service/configs', require('./routes/api/service_configs'));
+app.use('/api/service/mods', require('./routes/api/service_mods'));
 app.use('/api/application', require('./routes/api/application'));
 app.use('/api/application/backup', require('./routes/api/application_backup'));
 app.use('/api/application/configs', require('./routes/api/application_configs'));
@@ -137,24 +155,64 @@ app.use('/api/ports', require('./routes/api/ports'));
 app.use('/api/metrics', require('./routes/api/metrics'));
 
 
+// Register a generic error handler to use inside this application
+app.use(errorHandler);
+
+
 const PORT = process.env.PORT || 3077;
 const HOST = process.env.IP || '127.0.0.1';
+const SKIP_AUTOMATIONS = process.env.SKIP_AUTOMATIONS === '1';
 
 // Start the server
 app.listen(PORT, HOST, () => {
-	logger.info(`Listening on ${PORT}`);
+	if (fs.existsSync('/.dockerenv')) {
+		// If running in Docker, check to make sure we're not listening on 127.0.0.1/localhost.
+		// Doing so inside a container is pointless, as it won't be accessible from outside.
+		if (HOST === '127.0.0.1' || HOST === 'localhost') {
+			logger.warn(`Warlock is listening on ${HOST}:${PORT} ONLY - this will probably not work how you think it will.`);
+			logger.warn('Recommended setting IP=0.0.0.0 instead.');
+		}
+		else {
+			logger.info(`Running in Docker and listening on ${HOST} port ${PORT}`);
+		}
+	}
+	else {
+		logger.info(`Listening on ${HOST} port ${PORT}`);
+	}
 
-	// Ensure the sqlite database is up to date with the schema.
-	sequelize.sync({ alter: true }).then(() => {
-		logger.info('Initialized database connection and synchronized schema.');
+	if (!SKIP_AUTOMATIONS) {
+		// Sequelize doesn't handle cleaning up _backup tables all the time, so manually check if there are any.
+		sequelize.showAllSchemas().then(res => {
+			let dropPromises = [];
+			res.forEach(schema => {
+				if (schema.name && schema.name.endsWith('_backup')) {
+					const tableName = schema.name;
+					logger.info(`Dropping leftover backup table: ${tableName}`);
+					dropPromises.push(sequelize.getQueryInterface().dropTable(tableName));
+				}
+			});
 
-		// Send a tracking snippet to our analytics server so we can monitor basic usage.
-		push_analytics('Start');
+			Promise.allSettled(dropPromises).then(() => {
+				// Ensure the sqlite database is up to date with the schema.
+				sequelize.sync({ alter: true }).then(() => {
+					logger.info('Initialized database connection and synchronized schema.');
 
-		MetricsPollTask();
-		setInterval(MetricsPollTask, 60000); // Run every 60 seconds
+					// Send a tracking snippet to our analytics server so we can monitor basic usage.
+					push_analytics('Start');
 
-		MetricsMergeTask();
-		setInterval(MetricsMergeTask, 3600000); // Run every hour
-	});
+					MetricsPollTask();
+					setInterval(MetricsPollTask, 60000); // Run every 60 seconds
+
+					HostMetricsPollTask();
+					setInterval(HostMetricsPollTask, 60000); // Run every 60 seconds
+
+					MetricsMergeTask();
+					setInterval(MetricsMergeTask, 3600000); // Run every hour
+
+					HostMetricsMergeTask();
+					setInterval(HostMetricsMergeTask, 3600000); // Run every hour
+				});
+			});
+		});
+	}
 });

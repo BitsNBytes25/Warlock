@@ -1,0 +1,26 @@
+meta {
+  name: Service Config Update
+  type: http
+  seq: 13
+}
+
+post {
+  url: {{host}}/api/service/configs/:guid/:host/:service
+  body: json
+  auth: inherit
+}
+
+params:path {
+  guid: {{lookup_app}}
+  service: {{lookup_service}}
+  host: {{lookup_host}}
+}
+
+body:json {
+  {"key1": "value1"}
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

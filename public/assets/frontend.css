@@ -41,80 +41,115 @@
 	--content-hover: #f1f5f9;
 	--content-bg: rgba(15, 17, 25, 0.75);
 	--content-hover-bg: rgba(30, 33, 46, 0.85);
-	--content-border: rgba(99, 102, 241, 0.2);
+	--content-border: rgba(121, 123, 243, 0.4);
 	--content-hover-border: rgba(99, 102, 241, 0.4);
-	--content-shadow: rgba(0, 0, 0, 0.3);
-	--card-bg: rgba(20, 23, 35, 0.6);
+	--content-shadow: rgba(155, 155, 155, 0.6);
+	--card-bg: rgba(30, 41, 59, 0.6);
 	
 	/* Terminal */
-	--terminal: #10b981;
-	--terminal-error: #ef4444;
+	--terminal: #51cf66; /* green */
+	--terminal-debug: #0096ff; /* blue */
+	--terminal-in: #4defff; /* bright cyan */
+	--terminal-warning: #ffd93d; /* yellow */
+	--terminal-error: #ff6b6b; /* red */
 	--terminal-bg: rgba(0, 0, 0, 0.95);
 	--terminal-border: rgba(99, 102, 241, 0.2);
+
+	/* Standard colors (0-7) */
+	--term-black: #0a0e27;
+	--term-red: #ff6b6b;
+	--term-green: #51cf66;
+	--term-yellow: #ffd93d;
+	--term-blue: #0096ff;
+	--term-magenta: #da70d6;
+	--term-cyan: #00d9ff;
+	--term-white: #e8e8e8;
+
+	/* Bright colors (8-15) */
+	--term-bright-black: #3a4555;
+	--term-bright-red: #ff8787;
+	--term-bright-green: #69e896;
+	--term-bright-yellow: #ffe066;
+	--term-bright-blue: #4db8ff;
+	--term-bright-magenta: #f087f0;
+	--term-bright-cyan: #4defff;
+	--term-bright-white: #ffffff;
 	
 	/* Buttons - Modern Flat Design */
 	--button-active-shadow: rgba(99, 102, 241, 0.3);
 	--button: #ffffff;
-	--button-bg-1: #6366f1;
-	--button-bg-2: #4f46e5;
+	--button-bg-1: #181d42; /* muted, darker */
+	--button-bg-2: #41469a; /* muted, slightly lighter for hover */
 	--button-shadow: rgba(0, 0, 0, 0.1);
-	
+	--button-border: #4f46e5; /* vibrant indigo border */
+
 	/* Action Buttons */
 	--button-config: #ffffff;
-	--button-config-bg-1: #3b82f6;
-	--button-config-bg-2: #2563eb;
+	--button-config-bg-1: #07263f; /* muted blue */
+	--button-config-bg-2: #103a5a;
 	--button-config-shadow: rgba(59, 130, 246, 0.3);
-	
+	--button-config-border: #3b82f6; /* vibrant blue border */
+
 	--button-create: #ffffff;
-	--button-create-bg-1: #10b981;
-	--button-create-bg-2: #059669;
+	--button-create-bg-1: #062b20; /* muted green */
+	--button-create-bg-2: #0b4b39;
 	--button-create-shadow: rgba(16, 185, 129, 0.3);
-	
+	--button-create-border: #10b981; /* vibrant green border */
+
 	--button-start: #ffffff;
-	--button-start-bg-1: #10b981;
-	--button-start-bg-2: #059669;
+	--button-start-bg-1: #062b20; /* same muted green as create */
+	--button-start-bg-2: #0b4b39;
 	--button-start-shadow: rgba(16, 185, 129, 0.3);
-	
+	--button-start-border: #10b981; /* vibrant green border */
+
 	--button-stop: #ffffff;
-	--button-stop-bg-1: #ef4444;
-	--button-stop-bg-2: #dc2626;
+	--button-stop-bg-1: #3a1515; /* muted red */
+	--button-stop-bg-2: #5a1a1a;
 	--button-stop-shadow: rgba(239, 68, 68, 0.3);
-	
+	--button-stop-border: #ef4444; /* vibrant red border */
+
 	--button-browse: #ffffff;
-	--button-browse-bg-1: #8b5cf6;
-	--button-browse-bg-2: #7c3aed;
+	--button-browse-bg-1: #2f2548; /* muted purple */
+	--button-browse-bg-2: #3f2f69;
 	--button-browse-shadow: rgba(139, 92, 246, 0.3);
-	
+	--button-browse-border: #8b5cf6; /* vibrant purple border */
+
 	--button-remove: #ffffff;
-	--button-remove-bg-1: #f87171;
-	--button-remove-bg-2: #dc2626;
+	--button-remove-bg-1: #3a1515; /* same muted red as stop */
+	--button-remove-bg-2: #5a1a1a;
 	--button-remove-shadow: rgba(239, 68, 68, 0.3);
-	
+	--button-remove-border: #ef4444; /* vibrant red border */
+
 	--button-save: #ffffff;
-	--button-save-bg-1: #10b981;
-	--button-save-bg-2: #059669;
+	--button-save-bg-1: #062b20; /* same muted green as create/start */
+	--button-save-bg-2: #0b4b39;
 	--button-save-shadow: rgba(16, 185, 129, 0.3);
-	
+	--button-save-border: #10b981; /* vibrant green border */
+
 	--button-cancel: #ffffff;
-	--button-cancel-bg-1: #64748b;
-	--button-cancel-bg-2: #475569;
+	--button-cancel-bg-1: #20252b; /* muted gray */
+	--button-cancel-bg-2: #2f353b;
 	--button-cancel-shadow: rgba(100, 116, 139, 0.3);
-	
+	--button-cancel-border: #64748b; /* vibrant gray border */
+
 	--button-update: #ffffff;
-	--button-update-bg-1: #f59e0b;
-	--button-update-bg-2: #d97706;
+	--button-update-bg-1: #3b2b09; /* muted orange */
+	--button-update-bg-2: #6a4a07;
 	--button-update-shadow: rgba(245, 158, 11, 0.3);
-	
+	--button-update-border: #f59e0b; /* vibrant orange border */
+
 	--button-backup: #ffffff;
-	--button-backup-bg-1: #06b6d4;
-	--button-backup-bg-2: #0891b2;
+	--button-backup-bg-1: #06343a; /* muted teal */
+	--button-backup-bg-2: #0b5a66;
 	--button-backup-shadow: rgba(6, 182, 212, 0.3);
-	
+	--button-backup-border: #06b6d4; /* vibrant teal border */
+
 	--button-edit: #ffffff;
-	--button-edit-bg-1: #6366f1;
-	--button-edit-bg-2: #4f46e5;
+	--button-edit-bg-1: #0f1228; /* same as primary muted */
+	--button-edit-bg-2: #262842;
 	--button-edit-shadow: rgba(99, 102, 241, 0.3);
-	
+	--button-edit-border: #4f46e5; /* vibrant indigo border */
+
 	/* Tables - Modern Design */
 	--table-header: #f8fafc;
 	--table-header-bg-1: rgba(99, 102, 241, 0.8);
@@ -123,7 +158,8 @@
 	--table-row-bg-1: rgba(30, 41, 59, 0.4);
 	--table-row-bg-2: rgba(15, 23, 42, 0.4);
 	--table-border: rgba(99, 102, 241, 0.3);
-	
+	--table-row-hover: rgba(14, 28, 62, 0.6);
+
 	/* Input Fields */
 	--input: #cbd5e1;
 	--input-placeholder: #64748b;
@@ -137,7 +173,7 @@
 	/* Status Colors */
 	--status-running: #10b981;
 	--status-starting: #f59e0b;
-	--status-stopped: #94a3b8;
+	--status-stopped: #bc9498;
 	--status-stopping: #f97316;
 	
 	--status-neutral: #60a5fa;
@@ -202,6 +238,22 @@
 	100% {
 		transform: scale(1);
 	}
+}
+
+@keyframes modalSlideIn {
+	from {
+		opacity: 0;
+		transform: translateY(-20px) scale(0.95);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0) scale(1);
+	}
+}
+
+@keyframes blink {
+	0%, 100% { opacity: 1; }
+	50% { opacity: 0; }
 }
 
 
@@ -270,6 +322,15 @@ h4 {
 	letter-spacing: -0.01em;
 }
 
+a {
+	color: var(--primary);
+	text-decoration: none;
+	transition: all 0.2s ease;
+}
+a:hover {
+	color: var(--primary-hover);
+}
+
 /* ==========================
    Header / Navigation / Logo
    ========================== */
@@ -285,10 +346,16 @@ h4 {
 	text-shadow: none;
 	text-decoration: none;
 	transition: all 0.3s ease;
+	line-height: 1.2rem;
 }
 
 .logo:hover {
 	color: var(--primary-hover);
+}
+.logo .sub-title {
+	font-size: 0.75rem;
+	letter-spacing: -0.01em;
+	opacity: 0.8;
 }
 
 .logo i {
@@ -373,6 +440,11 @@ h4 {
 	gap: 2rem;
 	position: relative;
 	z-index: 2;
+}
+
+.main-container.wide {
+	grid-template-columns: 1fr;
+	max-width: 1600px;
 }
 
 .content-area {
@@ -496,14 +568,15 @@ table tbody tr:nth-child(even) {
 	background-color: var(--table-row-bg-2);
 }
 table tbody tr:hover {
-	background-color: rgba(99, 102, 241, 0.15);
-	transform: scale(1.002);
+	background-color: var(--table-row-hover);
 }
 table td {
 	padding: 0.875rem 1rem;
 	color: var(--table);
 	font-size: 0.9375rem;
 }
+
+/* <editor-fold desc="Terminal and Console"> */
 
 .terminal {
 	color: var(--terminal);
@@ -516,12 +589,139 @@ table td {
 	font-family: 'JetBrains Mono', 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
 	font-size: 0.875rem;
 	line-height: 1.6;
-	white-space: pre-line;
+	white-space: pre-wrap;
 	box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
 }
-.terminal .line-stderr {
+.terminal .line-stdin {
+	color: var(--terminal-in);
+}
+.terminal .line-debug {
+	color: var(--terminal-debug);
+}
+.terminal .line-warning {
+	color: var(--terminal-warning);
+}
+.terminal .line-stderr,
+.terminal .line-error {
 	color: var(--terminal-error);
 }
+
+/* Foreground color classes */
+.term-fg-black { color: var(--term-black); }
+.term-fg-red { color: var(--term-red); }
+.term-fg-green { color: var(--term-green); }
+.term-fg-yellow { color: var(--term-yellow); }
+.term-fg-blue { color: var(--term-blue); }
+.term-fg-magenta { color: var(--term-magenta); }
+.term-fg-cyan { color: var(--term-cyan); }
+.term-fg-white { color: var(--term-white); }
+
+.term-fg-bright-black { color: var(--term-bright-black); }
+.term-fg-bright-red { color: var(--term-bright-red); }
+.term-fg-bright-green { color: var(--term-bright-green); }
+.term-fg-bright-yellow { color: var(--term-bright-yellow); }
+.term-fg-bright-blue { color: var(--term-bright-blue); }
+.term-fg-bright-magenta { color: var(--term-bright-magenta); }
+.term-fg-bright-cyan { color: var(--term-bright-cyan); }
+.term-fg-bright-white { color: var(--term-bright-white); }
+
+/* Background color classes */
+.term-bg-black { background-color: var(--term-black); }
+.term-bg-red { background-color: var(--term-red); }
+.term-bg-green { background-color: var(--term-green); }
+.term-bg-yellow { background-color: var(--term-yellow); }
+.term-bg-blue { background-color: var(--term-blue); }
+.term-bg-magenta { background-color: var(--term-magenta); }
+.term-bg-cyan { background-color: var(--term-cyan); }
+.term-bg-white { background-color: var(--term-white); }
+
+.term-bg-bright-black { background-color: var(--term-bright-black); }
+.term-bg-bright-red { background-color: var(--term-bright-red); }
+.term-bg-bright-green { background-color: var(--term-bright-green); }
+.term-bg-bright-yellow { background-color: var(--term-bright-yellow); }
+.term-bg-bright-blue { background-color: var(--term-bright-blue); }
+.term-bg-bright-magenta { background-color: var(--term-bright-magenta); }
+.term-bg-bright-cyan { background-color: var(--term-bright-cyan); }
+.term-bg-bright-white { background-color: var(--term-bright-white); }
+
+/* Terminal styles */
+.term-bold { font-weight: bold; }
+.term-dim { opacity: 0.7; }
+.term-italic { font-style: italic; }
+.term-underline { text-decoration: underline; }
+.term-blink { animation: blink 1s step-start infinite; }
+.term-hidden { visibility: hidden; }
+.term-strike { text-decoration: line-through; }
+
+.command-input-wrapper {
+	position: relative;
+	margin-top: -0.5em;
+}
+.command-input-wrapper .command-input {
+	color: var(--terminal-in);
+	background: var(--terminal-bg);
+	border: 1px solid var(--terminal-border);
+	padding: 0.75em 8em 0.75em 5.5em;
+	width: 100%;
+	border-radius: 0 0 8px 8px;
+}
+.command-input-wrapper .command-prefix-label {
+	position: absolute;
+	color: var(--terminal-in);
+	left: 0.5em;
+	top: 0.35em;
+}
+.command-input-wrapper .command-send-btn {
+	position: absolute;
+	right: 0;
+	top: 0;
+}
+.autocomplete-dropdown {
+	position: absolute;
+	bottom: 100%;
+	left: 0;
+	right: 0;
+	background: var(--terminal-bg);
+	border: 1px solid var(--terminal-border);
+	border-top: none;
+	border-radius: 0 0 8px 8px;
+	max-height: 200px;
+	overflow-y: auto;
+	z-index: 1000;
+	box-shadow: 0 -8px 8px rgba(0, 0, 0, 0.6);
+	font-size: 0.75rem;
+}
+.autocomplete-list {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+.autocomplete-list li {
+	padding: 0.5em 0.75em;
+	color: var(--terminal-in);
+	cursor: pointer;
+	transition: background-color 0.15s ease;
+	border-left: 3px solid transparent;
+	margin-left: 5.5em;
+	padding-left: calc(0.75em - 3px);
+}
+.autocomplete-list li:hover,
+.autocomplete-list li.active {
+	background-color: rgba(0, 150, 255, 0.15);
+	border-left-color: #0096ff;
+}
+.autocomplete-list li.active {
+	background-color: rgba(0, 150, 255, 0.25);
+}
+
+.autocomplete-list li .command {
+	font-weight: bold;
+}
+.autocomplete-list li .help {
+	opacity: 0.8;
+}
+
+/* </editor-fold> */
 
 
 
@@ -554,6 +754,7 @@ table td {
 .form-group input[type=date],
 .form-group input[type=datetime],
 .form-group input[type=time],
+.form-group input[type=email],
 .form-group input[type=number],
 .form-group input[type=search],
 .form-group select,
@@ -653,7 +854,7 @@ table td {
 
 
 button, a.button {
-	border: none;
+	border: 1px solid var(--button-border);
 	padding: 0.5rem 0.875rem;
 	border-radius: 6px;
 	cursor: pointer;
@@ -661,7 +862,7 @@ button, a.button {
 	font-size: 0.875rem;
 	transition: all 0.2s ease;
 	color: var(--button);
-	background: linear-gradient(135deg, var(--button-bg-1) 0%, var(--button-bg-2) 100%);
+	background: var(--button-bg-1);
 	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 	display: inline-flex;
 	align-items: center;
@@ -671,8 +872,9 @@ a.button {
 	text-decoration: none;
 }
 button:hover, a.button:hover {
-	transform: translateY(-1px);
+	transform: translateY(-2px);
 	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+	background: var(--button-bg-2);
 }
 button:active, a.button:active {
 	transform: translateY(0);
@@ -683,10 +885,10 @@ button.disabled, a.button.disabled {
 	cursor: not-allowed;
 	transform: none;
 	box-shadow: none;
-	pointer-events: none;
 }
 button.active, a.button.active {
 	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+	background: var(--button-bg-2);
 }
 
 
@@ -697,26 +899,28 @@ button.active, a.button.active {
 	margin: 0;
 	border-radius: 0;
 	flex: 1;
-	border-right: 1px solid var(--input-border);
+	border-width: 1px 0;
 }
 .button-group button:first-of-type {
 	border-radius: 5px 0 0 5px;
+	border-width: 1px 0 1px 1px;
 }
 .button-group button:last-of-type {
 	border-radius: 0 5px 5px 0;
-	border-right: 0 none;
+	border-width: 1px 1px 1px 0;
 }
 
 button.action-configure, a.button.action-configure,
 button.action-edit, a.button.action-edit {
 	background: var(--button-config-bg-1);
 	color: var(--button-config);
-	border-radius: 0;
+	border-color: var(--button-config-border);
 }
 button.action-configure:hover, a.button.action-configure:hover,
 button.action-edit:hover, a.button.action-edit:hover {
 	background: var(--button-config-bg-2);
 	box-shadow: 0 2px 8px var(--button-config-shadow);
+	border-color: var(--button-config-border);
 }
 
 button.action-configure i, button.action-configure span,
@@ -727,10 +931,12 @@ button.action-edit i, button.action-edit span {
 button.action-create, a.button.action-create {
 	background: var(--button-create-bg-1);
 	color: var(--button-create);
+	border-color: var(--button-create-border);
 }
 button.action-create:hover, a.button.action-create:hover {
 	background: var(--button-create-bg-2);
 	box-shadow: 0 2px 8px var(--button-create-shadow);
+	border-color: var(--button-create-border);
 }
 
 button.action-create i, button.action-create span {
@@ -740,10 +946,12 @@ button.action-create i, button.action-create span {
 button.action-start, a.button.action-start {
 	background: var(--button-start-bg-1);
 	color: var(--button-start);
+	border-color: var(--button-start-border);
 }
 button.action-start:hover, a.button.action-start:hover {
 	background: var(--button-start-bg-2);
 	box-shadow: 0 2px 8px var(--button-start-shadow);
+	border-color: var(--button-start-border);
 }
 
 button.action-start i, button.action-start span {
@@ -753,10 +961,12 @@ button.action-start i, button.action-start span {
 button.action-stop, a.button.action-stop {
 	background: var(--button-stop-bg-1);
 	color: var(--button-stop);
+	border-color: var(--button-stop-border);
 }
 button.action-stop:hover, a.button.action-stop:hover {
 	background: var(--button-stop-bg-2);
 	box-shadow: 0 2px 8px var(--button-stop-shadow);
+	border-color: var(--button-stop-border);
 }
 
 button.action-stop i, button.action-stop span {
@@ -766,10 +976,12 @@ button.action-stop i, button.action-stop span {
 button.action-browse, a.button.action-browse {
 	background: var(--button-browse-bg-1);
 	color: var(--button-browse);
+	border-color: var(--button-browse-border);
 }
 button.action-browse:hover, a.button.action-browse:hover {
 	background: var(--button-browse-bg-2);
 	box-shadow: 0 2px 8px var(--button-browse-shadow);
+	border-color: var(--button-browse-border);
 }
 
 button.action-browse i, button.action-browse span {
@@ -779,10 +991,12 @@ button.action-browse i, button.action-browse span {
 button.action-remove, a.button.action-remove {
 	background: var(--button-remove-bg-1);
 	color: var(--button-remove);
+	border-color: var(--button-remove-border);
 }
 button.action-remove:hover, a.button.action-remove:hover {
 	background: var(--button-remove-bg-2);
 	box-shadow: 0 2px 8px var(--button-remove-shadow);
+	border-color: var(--button-remove-border);
 }
 
 button.action-remove i, button.action-remove span {
@@ -792,10 +1006,12 @@ button.action-remove i, button.action-remove span {
 button.action-save, a.button.action-save {
 	background: var(--button-save-bg-1);
 	color: var(--button-save);
+	border-color: var(--button-save-border);
 }
 button.action-save:hover, a.button.action-save:hover {
 	background: var(--button-save-bg-2);
 	box-shadow: 0 2px 8px var(--button-save-shadow);
+	border-color: var(--button-save-border);
 }
 
 button.action-save i, button.action-save span {
@@ -805,10 +1021,12 @@ button.action-save i, button.action-save span {
 button.action-cancel, a.button.action-cancel {
 	background: var(--button-cancel-bg-1);
 	color: var(--button-cancel);
+	border-color: var(--button-cancel-border);
 }
 button.action-cancel:hover, a.button.action-cancel:hover {
 	background: var(--button-cancel-bg-2);
 	box-shadow: 0 2px 8px var(--button-cancel-shadow);
+	border-color: var(--button-cancel-border);
 }
 
 button.action-cancel i, button.action-cancel span {
@@ -818,10 +1036,12 @@ button.action-cancel i, button.action-cancel span {
 button.action-update, a.button.action-update {
 	background: var(--button-update-bg-1);
 	color: var(--button-update);
+	border-color: var(--button-update-border);
 }
 button.action-update:hover, a.button.action-update:hover {
 	background: var(--button-update-bg-2);
 	box-shadow: 0 2px 8px var(--button-update-shadow);
+	border-color: var(--button-update-border);
 }
 
 button.action-update i, button.action-update span {
@@ -831,10 +1051,23 @@ button.action-update i, button.action-update span {
 button.action-backup, a.button.action-backup {
 	background: var(--button-backup-bg-1);
 	color: var(--button-backup);
+	border-color: var(--button-backup-border);
 }
 button.action-backup:hover, a.button.action-backup:hover {
 	background: var(--button-backup-bg-2);
 	box-shadow: 0 2px 8px var(--button-backup-shadow);
+	border-color: var(--button-backup-border);
+}
+
+button.action-restore, a.button.action-restore {
+	background: var(--button-backup-bg-1);
+	color: var(--button-backup);
+	border-color: var(--button-backup-border);
+}
+button.action-restore:hover, a.button.action-restore:hover {
+	background: var(--button-backup-bg-2);
+	box-shadow: 0 2px 8px var(--button-backup-shadow);
+	border-color: var(--button-backup-border);
 }
 
 /* Ensure icon visibility in link-control buttons */
@@ -843,36 +1076,34 @@ button.link-control span {
 	color: inherit;
 }
 
-/* Hologram loader */
-.hologram-loader {
-	display: inline-block;
-	position: relative;
-	width: 20px;
-	height: 20px;
+/** <editor-fold desc="Option / Configuration Forms"> **/
+.options-group {
+	padding-bottom: 0.5rem;
+	margin-bottom: 0.5rem;
+	border-bottom: 1px solid var(--border-color);
 }
+.options-group .info-message {
+	flex-wrap: wrap;
+}
+.options-group .info-message p {
+	flex:1 100%;
+}
+.options-group .form-group {
+	flex:1 100%;
+}
+.options-group .save-indicator {
+	margin-left: 1rem;
+	opacity: 0;
+	transition: opacity 0.3s;
+}
+.options-group .saving .save-indicator {
+	opacity: 1;
+}
+.options-group .saving .form-label {
+	animation: blinker 1.5s infinite;
+}
+/** </editor-fold> **/
 
-.hologram-loader::before {
-	content: '';
-	position: absolute;
-	inset: 0;
-	border: 2px solid transparent;
-	border-top: 2px solid var(--primary-strong);
-	border-radius: 50%;
-	animation: spin 1s linear infinite;
-}
-
-.hologram-loader::after {
-	content: '';
-	position: absolute;
-	top: 2px;
-	left: 2px;
-	right: 2px;
-	bottom: 2px;
-	border: 1px solid transparent;
-	border-bottom: 1px solid var(--accent);
-	border-radius: 50%;
-	animation: spin 0.8s linear infinite reverse;
-}
 
 /* Loading spinner (general) */
 .loading-spinner {
@@ -897,7 +1128,7 @@ button.link-control span {
    Services and ports table
    ========================== */
 
-#services-table tbody tr.updating {
+#services-table .service.updating {
 	animation: blinker 4s infinite;
 }
 
@@ -943,11 +1174,281 @@ button.link-control span {
 	margin-right: 1rem;
 }
 
+/** <editor-fold desc="Services Table - Modern Design"> **/
+
+/* Table view */
+#services-table .header {
+	background: linear-gradient(135deg, var(--table-header-bg-1) 0%, var(--table-header-bg-2) 100%);
+	border-bottom: 1px solid var(--table-border);
+	color: var(--table-header);
+	border-radius: 1rem 1rem 0 0;
+}
+#services-table.table-view .header,
+#services-table.table-view .service-entry {
+	display: grid;
+	align-items: center;
+	grid-template-areas: 'host icon name enabled status port players memory cpu actions';
+	grid-template-columns: 12rem 3rem 1fr 4rem 9rem 5rem 5rem 5rem 3rem 13rem;
+	gap: 2rem;
+	padding: 0.5rem 0;
+	border-bottom: 1px solid var(--table-border);
+}
+#services-table.table-view .service-entry {
+	background-color: var(--table-row-bg-1);
+}
+#services-table.table-view .service-entry:nth-child(even) {
+	background-color: var(--table-row-bg-2);
+}
+#services-table.table-view .service-entry:hover {
+	background-color: var(--table-row-hover);
+}
+#services-table.table-view .no-services-available {
+	display: flex;
+}
+#services-table.table-view .no-services-available .warning-message {
+	flex: 1 100%;
+}
+#services-table.table-view .thumbnail {
+	display: none;
+}
+#services-table.table-view .host {
+	grid-area: host;
+	padding-left: 1rem;
+	overflow: hidden;
+}
+#services-table.table-view .icon {
+	grid-area: icon;
+	text-align: center;
+}
+#services-table.table-view .name {
+	grid-area: name;
+	overflow: hidden;
+}
+#services-table.table-view .enabled {
+	grid-area: enabled;
+	text-align: center;
+}
+#services-table.table-view .status {
+	grid-area: status;
+	text-align: center;
+}
+#services-table.table-view .port {
+	grid-area: port;
+	text-align: center;
+}
+#services-table.table-view .players {
+	grid-area: players;
+	text-align: center;
+}
+#services-table.table-view .memory {
+	grid-area: memory;
+	text-align: right;
+}
+#services-table.table-view .cpu {
+	grid-area: cpu;
+	text-align: right;
+}
+#services-table.table-view .actions {
+	grid-area: actions;
+	text-align: center;
+	padding-right: 1rem;
+}
+
+/* Card view */
+#services-table.card-view .header {
+	display: none;
+}
+#services-table.card-view .body {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(22rem, 1fr));
+	gap: 2rem;
+}
+#services-table.card-view .no-services-available .warning-message {
+	flex: 1 100%;
+}
+#services-table.card-view .icon {
+	display: none;
+}
+#services-table.card-view .enabled {
+	display: none;
+}
+#services-table.card-view .status:before {
+	content: 'STATUS';
+	opacity: 0.5;
+	display: block;
+	color: var(--content);
+}
+#services-table.card-view .port:before {
+	content: 'PORT';
+	opacity: 0.5;
+	display: block;
+}
+#services-table.card-view .players:before {
+	content: 'PLAYERS';
+	display: block;
+	opacity: 0.5;
+}
+#services-table.card-view .memory:before {
+	content: 'MEM';
+	opacity: 0.5;
+	display: block;
+}
+#services-table.card-view .cpu:before {
+	content: 'CPU';
+	opacity: 0.5;
+	display: block;
+}
+
+/** </editor-fold> **/
+
+/** <editor-fold desc="Hosts Table - Modern Design"> **/
+
+/* Table View */
+#hosts-table .header {
+	background: linear-gradient(135deg, var(--table-header-bg-1) 0%, var(--table-header-bg-2) 100%);
+	border-bottom: 1px solid var(--table-border);
+	color: var(--table-header);
+	border-radius: 1rem 1rem 0 0;
+}
+#hosts-table.table-view .header,
+#hosts-table.table-view .host-entry {
+	display: grid;
+	align-items: center;
+	grid-template-areas: 'hostname ip os cpu memory disk net actions';
+	grid-template-columns: 1fr 8rem 19rem 8rem 8rem 8rem 8rem 7rem;
+	gap: 1rem;
+	padding: 0.75rem 1rem;
+	border-bottom: 1px solid var(--table-border);
+}
+#hosts-table.table-view .host-entry {
+	background-color: var(--table-row-bg-1);
+}
+#hosts-table.table-view .host-entry:nth-child(even) {
+	background-color: var(--table-row-bg-2);
+}
+#hosts-table.table-view .host-entry:hover {
+	background-color: rgba(99, 102, 241, 0.15);
+}
+#hosts-table.table-view .no-hosts-available {
+	display: flex;
+}
+#hosts-table.table-view .no-hosts-available .warning-message {
+	flex: 1 100%;
+}
+#hosts-table.table-view .thumbnail {
+	display: none;
+}
+#hosts-table.table-view .header .hostname {
+	padding-left: 2.2rem;
+}
+#hosts-table.table-view .hostname {
+	grid-area: hostname;
+	font-weight: 600;
+}
+#hosts-table.table-view .hostname img {
+	width: 1.5rem;
+	height: 1.5rem;
+	margin-right: 0.5rem;
+	vertical-align: middle;
+}
+#hosts-table.table-view .ip {
+	grid-area: ip;
+}
+#hosts-table.table-view .os {
+	grid-area: os;
+	font-size: 0.9rem;
+}
+#hosts-table.table-view .cpu {
+	grid-area: cpu;
+	text-align: center;
+}
+#hosts-table.table-view .cpu .cpu-details {
+	display: none;
+}
+#hosts-table.table-view .memory {
+	grid-area: memory;
+	text-align: center;
+}
+#hosts-table.table-view .memory .mem-bar {
+	display: none;
+}
+#hosts-table.table-view .disk {
+	grid-area: disk;
+	text-align: center;
+}
+#hosts-table.table-view host-disks-metric .percentage {
+	display: none;
+}
+#hosts-table.table-view .net {
+	grid-area: net;
+	text-align: center;
+}
+#hosts-table.table-view host-network-metric .net-tx {
+	display: block;
+}
+#hosts-table.table-view .actions {
+	grid-area: actions;
+	text-align: center;
+}
+#hosts-table.table-view .advanced-disk {
+	display: none;
+}
+
+/* Card View */
+#hosts-table.card-view .header {
+	display: none;
+}
+#hosts-table.card-view .body {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(22rem, 1fr));
+	gap: 1.5rem;
+}
+#hosts-table.card-view .no-hosts-available {
+	grid-column: 1 / -1;
+}
+#hosts-table.card-view .no-hosts-available .warning-message {
+	flex: 1 100%;
+}
+#hosts-table.card-view .disk {
+	display: none;
+}
+
+/** </editor-fold> **/
+
+/** <editor-fold desc="Service/Host Status Colors"> **/
+
+#services-table .status.status-running,
+.service-details-overview .service-status .status-running,
+.service-details-overview .service-port .status-good,
+host-nexus-status .good,
+host-connected-metric .good {
+	color: var(--status-running);
+}
+#services-table .status.status-starting,
+.service-details-overview .service-status .status-starting{
+	color: var(--status-starting);
+	animation: blinker 4s infinite;
+}
+#services-table .status.status-stopped,
+.service-details-overview .service-status .status-stopped,
+.service-details-overview .service-port .status-critical,
+host-nexus-status .bad,
+host-connected-metric .critical {
+	color: var(--status-stopped);
+}
+#services-table .status.status-stopping,
+.service-details-overview .service-status .status-stopping{
+	color: var(--status-stopped);
+	animation: blinker 4s infinite;
+}
+
+/** </editor-fold> **/
+
 #services-table td.icon,
 .ports-table td.icon {
 	padding: 0.15rem 0.75rem;
 }
-#services-table td.icon img,
+#services-table .icon img,
 .ports-table td.icon img {
 	max-width: 2.5rem;
 	max-height: 2.5rem;
@@ -988,10 +1489,6 @@ button.link-control span {
 	opacity: 1;
 }
 
-#services-table .status {
-	text-align: center;
-}
-
 #services-table td.status.status-running,
 #rulesContainer td.status-allow,
 .ports-table .status-allowed,
@@ -1024,421 +1521,55 @@ button.link-control span {
 	color: var(--status-critical);
 }
 
-/* ==========================
-   Application/Host cards
-   ========================== */
-
-#applicationsContainer {
-	margin-bottom: 3rem;
-}
-
-#applicationsList,
-#hostsList {
-	display: grid;
-	grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-	gap: 1.25rem;
-}
-
 #installAppHostList {
 	display: grid;
 	grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
 	gap: 1rem;
 	margin-top: 1rem;
 }
-#installAppHostList .host-card.compatible-host {
+#installAppHostList .host-entry.compatible-host {
 	cursor: pointer;
 }
+
+/** <editor-fold desc="Cards"> **/
+
+/* ==========================
+   Application/Host/Service/Mod cards
+
+   .card-view .service-entry - Service cards listed on /dashboard when on card view
+   .card-view .host-entry    - Host cards listed on /hosts when on card view
+                             - Also used on /application/install when selecting the host
+   .card-view .mod-entry     - Mods installed in services and for searching new mods
+   ========================== */
+
 #backupsList {
 	display: flex;
 	flex-direction: column;
 	gap: 1rem;
-}
-
-.application-card,
-.host-card,
-.backup-file-item {
 	border-radius: 12px;
-	padding: 1.25rem;
-	transition: all 0.25s ease;
-	position: relative;
-	overflow: hidden;
-	color: var(--content);
 	background: var(--card-bg);
-	backdrop-filter: blur(12px);
-	-webkit-backdrop-filter: blur(12px);
 	border: 1px solid var(--content-border);
 	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
-.application-card:hover,
-.host-card:hover,
+.backup-file-item {
+	border-radius: 12px;
+	display: flex;
+	flex-wrap: wrap;
+	padding: 0.5rem 1.5rem;
+}
+.backup-file-item .action-rename {
+	opacity: 0;
+	transition: opacity 0.3s ease;
+	cursor: pointer;
+}
 .backup-file-item:hover {
 	border-color: var(--content-hover-border);
-	transform: translateY(-2px);
 	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(99, 102, 241, 0.1);
 	background: var(--content-hover-bg);
 }
-
-.application-card .app-thumbnail,
-.host-card .os-thumbnail {
-	width: calc(100% + 2.5rem);
-	height: 10rem;
-	margin: -1.25rem -1.25rem 1rem;
-	object-fit: cover;
-	border-radius: 12px 12px 0 0;
-}
-
-.application-card .app-install,
-.host-card .host-title {
-	display: flex;
-	align-content: space-between;
-	align-items: center;
-	margin: 0 0 1.25rem;
-	flex-wrap: wrap;
-	gap: 0.75rem;
-	border: 1px solid transparent;
-	border-radius: 0.5rem;
-	padding: 0.5rem;
-}
-.application-card .app-install:hover {
-	background: var(--content-hover-bg);
-	border: 1px solid var(--content-hover-border);
-	color: var(--content-hover);
-	text-shadow: 0 0 8px rgba(0, 150, 255, 0.3);
-}
-.host-card .filesystem-row-header,
-.host-card .app-install {
-	display: flex;
-	align-content: space-between;
-	align-items: center;
-	margin: 0 0 1.25rem;
-}
-.host-card .filesystem-row-header {
-	display: flex;
-	align-content: space-between;
-	align-items: center;
-	margin: 0 0 0.5rem;
-}
-.application-card .app-install .host-name,
-.host-card .host-name {
-	flex: 3 100%;
-	display: flex;
-	align-items: center;
-	gap: 0.25rem;
-}
-.host-card .filesystem-row-header .filesystem-path,
-.host-card .app-install .app-name {
-	flex: 2;
-	display: flex;
-	align-items: center;
-	gap: 0.25rem;
-}
-.application-card .app-install .host-name img,
-.host-card .app-install .app-name img,
-.host-card .host-name img {
-	width: 1.25em;
-}
-.application-card .app-install .host-actions,
-.host-card .host-title .host-actions {
-	flex: 3 100%;
-	display: flex;
-	gap: 0.35rem;
-}
-.host-card .filesystem-row-header .filesystem-actions,
-.host-card .app-install .app-actions {
-	flex: 1;
-	text-align: right;
-}
-
-.application-card .app-install .host-actions .update-available i {
-	animation: pulse 4s infinite;
-}
-
-.application-card .app-title {
-	display: grid;
-	align-items: center;
-	gap: 1rem;
-	margin-bottom: 1rem;
-	grid-template-areas: 'logo name actions' 'logo desc desc';
-}
-
-.application-card .app-icon,
-.host-card .host-icon {
-	width: 48px;
-	height: 48px;
-	border-radius: 10px;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	grid-area: logo;
-}
-.application-card .app-icon {
-	background-color: var(--table-header-bg-2);
-	box-shadow: 0 4px 12px var(--table-header-bg-1);
-}
-
-.application-card .app-icon img,
-.host-card .host-icon img {
-	max-width: 100%;
-	max-height: 100%;
-	border-radius: 8px;
-}
-
-.application-card .app-icon i,
-.host-card .host-icon i {
-	color: var(--table-header);
-}
-
-.application-card .app-name {
-	grid-area: name;
-}
-
-.application-card .app-desc {
-	grid-area: desc;
-}
-
-.application-card .app-actions {
-	grid-area: actions;
-}
-
-.application-card .host-actions button,
-.host-card .host-actions button {
-	padding: 0.25rem 0.5rem;
-	border: none;
-	border-radius: 5px;
-	cursor: pointer;
-	font-weight: 500;
-	font-size: 0.85rem;
-	transition: all 0.3s;
-	flex: 1;
-}
-
-.host-card .filesystem,
-.host-card .app-install {
-	border-radius: 8px;
-	transition: all 0.3s ease;
-	border: 1px solid transparent;
-	margin: 0.5em -0.5em;
-	padding: 0.5em;
-	cursor: pointer;
-}
-
-.host-card .filesystem:hover,
-.host-card .app-install:hover {
-	background: var(--content-hover-bg);
-	border: 1px solid var(--content-hover-border);
-	color: var(--content-hover);
-	text-shadow: 0 0 8px rgba(0, 150, 255, 0.3);
-}
-
-.host-card .filesystem-usage-bar {
-	width: 100%;
-	height: 1.4rem;
-	background: rgba(189, 189, 189, 0.4);
-	border-radius: 6px;
-	overflow: hidden;
-	position: relative;
-}
-.host-card .filesystem-usage-bar .usage-fill {
-	height: 100%;
-	transition: width 0.5s ease;
-	position: absolute;
-	top: 0;
-	left: -4px;
-	transform: skewX(-30deg);
-}
-.host-card .filesystem-usage-bar .usage-fill.usage-status-normal {
-	background: linear-gradient(90deg, var(--status-good-bg-1), var(--status-good-bg-2));
-}
-.host-card .filesystem-usage-bar .usage-fill.usage-status-warning {
-	background: linear-gradient(90deg, var(--status-warning-bg-1), var(--status-warning-bg-2));
-}
-.host-card .filesystem-usage-bar .usage-fill.usage-status-critical {
-	background: linear-gradient(90deg, var(--status-critical-bg-1), var(--status-critical-bg-2));
-}
-
-.host-card .filesystem-usage-text {
-	color: var(--content);
-	text-shadow: 0 0 1px var(--content-bg);
-	position: relative;
-	z-index: 2;
-	text-align: center;
-}
-
-.host-card .host-metrics {
-	display: flex;
-	gap: 1rem;
-	align-items: center;
-}
-.host-card .host-metrics .metric-item {
-	flex: 1;
-	min-width: 90px;
-	display:flex;
-	flex-direction:column;
-	align-items:center;
-	gap:0.5rem;
-}
-.host-card .host-metrics .metric-label {
-	text-align: center;
-	font-size: 0.85rem;
-	opacity: 0.95;
-}
-/* CPU meta and percent */
-.host-card .metric-cpu .metric-meta {
-	display:flex;
-	flex-direction:column;
-	align-items:center;
-	gap:0.25rem;
-}
-.host-card .cpu-percent {
-	font-weight:700;
-	font-family: Rajdhani, sans-serif;
-	font-size: 1.05rem;
-	color: var(--content);
-}
-/* Memory summary */
-.host-card .metric-memory .mem-summary {
-	font-size: 0.85rem;
-}
-/* Disk summary */
-.host-card .metric-disk-summary {
-	display:flex;
-	flex-direction:column;
-	align-items:center;
-	justify-content:center;
-}
-.host-card .metric-disk-summary .metric-value {
-	font-weight:600;
-	font-size:0.9rem;
-}
-/* Host details area */
-.host-card .host-details {
-	display: grid;
-	grid-template-columns: repeat(2, 1fr);
-	gap: 0.5rem 1rem;
-	margin-top: 1rem;
-	border-top: 1px dashed rgba(255,255,255,0.03);
-	padding-top: 0.75rem;
-}
-.host-card .host-details .detail-item {
-	display:flex;
-	align-items:center;
-	gap:0.5rem;
-	font-size:0.875rem;
-	color: var(--muted-color, #9aa);
-}
-.host-card .host-details .detail-item i {
-	width:18px;
-	text-align:center;
-	color: var(--table-header);
-	opacity:0.95;
-}
-.host-card .host-details .detail-label {
-	flex:1;
-	opacity:0.9;
-}
-.host-card .host-details .detail-value {
-	font-weight:600;
-	text-align:right;
-	min-width:56px;
-}
-/* Inline CPU cores in compact host listings */
-.cpu-cores-inline {
-	display:block;
-	font-size:0.82rem;
-	color:var(--muted-color, #9aa);
-	margin-top:0.25rem;
-}
-/* Loopback IP styling */
-.host-card .detail-ip .ip-value.loopback {
-	opacity:0.85;
-	font-style:italic;
-	color: var(--muted-color, #9aa);
-	font-weight:600;
-}
-.host-card .detail-ip .ip-value.public {
-	color: var(--status-good);
-	font-weight:700;
-}
-.host-card .detail-ip .ip-value { font-weight:600; }
-/* Disk list (small) */
-.host-card .disk-list {
-	grid-column: 1 / -1;
-	display:flex;
-	gap:0.5rem;
-	flex-wrap:wrap;
-	margin-top:0.25rem;
-}
-.host-card .disk-item {
-	display:flex;
-	gap:0.5rem;
-	align-items:center;
-	font-size:0.80rem;
-	color:var(--muted-color, #9aa);
-}
-.host-card .disk-item .disk-pct {
-	font-weight:700;
-	margin-left:0.5rem;
-}
-
-.host-card .mem-graph {
-	width: 100%;
-	height: 80px;
-	border-radius: 8px;
-	background: repeating-linear-gradient(
-		0deg,
-		var(--graph-bg) 0,
-		var(--graph-bg) 5px,
-		transparent 5px,
-		transparent 6px
-	);
-	border: 1px solid rgba(0, 150, 255, 0.1);
-	overflow: hidden;
-	position: relative;
-}
-.host-card .mem-graph .mem-used {
-	position: absolute;
-	bottom: 0;
-	left: 0;
-	width: 100%;
-	transition: height 0.5s ease;
-}
-.host-card .mem-graph.usage-status-normal .mem-used {
-	background: linear-gradient(0deg, var(--status-good), var(--status-good-bg-2));
-	box-shadow: inset 0 0 6px rgba(0,0,0,0.4);
-}
-.host-card .mem-graph.usage-status-warning .mem-used {
-	background: linear-gradient(0deg, var(--status-warning), var(--status-warning-bg-2));
-	box-shadow: inset 0 0 6px rgba(0,0,0,0.4);
-}
-.host-card .mem-graph.usage-status-critical .mem-used {
-	background: linear-gradient(0deg, var(--status-critical), var(--status-critical-bg-2));
-	box-shadow: inset 0 0 6px rgba(0,0,0,0.4);
-}
-
-.cpu-speedometer .gauge-bg {
-	stroke: var(--graph-bg);
-}
-.cpu-speedometer .gauge-arc {
-	transition: all 0.5s ease;
-	filter: drop-shadow(0 2px 6px rgba(0,0,0,0.6));
-}
-.cpu-speedometer .gauge-needle {
-	transition: all 0.5s ease;
-}
-.cpu-speedometer .bg-start {
-	stop-color: var(--status-good);
-}
-.cpu-speedometer .bg-mid {
-	stop-color: var(--status-warning);
-}
-.cpu-speedometer .bg-stop {
-	stop-color: var(--status-critical);
-}
-
-.backup-file-item {
-	display: flex;
-	flex-wrap: wrap;
+.backup-file-item:hover .action-rename {
+	opacity: 1;
 }
 
 .backup-file-item .file-name {
@@ -1452,9 +1583,210 @@ button.link-control span {
 	flex: 1;
 }
 .backup-file-item .file-actions {
-	flex: 6 100%;
-	margin-top: 0.5rem;
+	flex: 3;
 }
+
+/* Card container */
+.card-view .service-entry,
+.card-view .host-entry,
+.card-view .application-entry,
+.card-view .mod-entry {
+	display: flex;
+	flex-wrap: wrap;
+	border-radius: 12px;
+	padding: 0 1.5rem 1rem;
+	transition: all 0.25s ease;
+	position: relative;
+	overflow: hidden;
+	color: var(--content);
+	background: var(--card-bg);
+	backdrop-filter: blur(12px);
+	-webkit-backdrop-filter: blur(12px);
+	border: 1px solid var(--content-border);
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+	margin-bottom: 1rem;
+	min-width: 0;
+}
+.card-view .host-entry:hover,
+.card-view .service-entry:hover,
+.card-view .application-entry:hover,
+.card-view .mod-entry:hover {
+	border-color: var(--content-hover-border);
+	transform: translateY(-2px);
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(99, 102, 241, 0.1);
+	background: var(--content-hover-bg);
+}
+
+/* Thumbnail container, fixed to the top of the container and full width */
+.card-view .host-entry .thumbnail,
+.card-view .service-entry .thumbnail,
+.card-view .application-entry .thumbnail {
+	position: absolute;
+	width: 100%;
+	height: 7rem;
+	margin: 0 -1.5rem;
+	overflow: hidden;
+	z-index: 1;
+	border-radius: 12px 12px 0 0;
+}
+.card-view .host-entry .thumbnail img,
+.card-view .service-entry .thumbnail img,
+.card-view .application-entry .thumbnail img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	filter: brightness(0.4);
+}
+
+/* Card primary name, displayed at the top over the thumbnail */
+.card-view .service-entry .name,
+.card-view .host-entry .hostname,
+.card-view .application-entry .name,
+.card-view .mod-entry .mod-header {
+	order: 1;
+	z-index: 2;
+	flex: 4 100%;
+	height: 4.5rem;
+	font-weight: bold;
+	font-size: 1.25rem;
+	text-align: center;
+	/* Use flexbox for alignment */
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding-top: 0;
+	overflow: hidden;
+}
+
+
+/* Some cards have a small image in their primary name */
+.card-view .host-entry .hostname img {
+	width: 1.5rem;
+	height: 1.5rem;
+	margin-right: 0.5rem;
+}
+
+/* Some cards have a medium image in their primary name */
+.card-view .mod-entry .mod-header img {
+	width: 3rem;
+	height: 3rem;
+	margin-right: 0.5rem;
+}
+
+/* Card descriptor, displayed over the thumbnail below the title in smaller text */
+.card-view .host-entry .ip,
+.card-view .service-entry .host,
+.card-view .application-entry .description {
+	order: 2;
+	z-index: 2;
+	flex: 4 100%;
+	height: 4rem;
+	text-align: center;
+}
+
+/* Body elements that are 4-columns wide */
+.card-view .host-entry .os,
+.card-view .host-entry .cpu,
+.card-view .host-entry .memory,
+.card-view .host-entry .net,
+.card-view .host-entry .disks,
+.card-view .host-entry .advanced-disk,
+.card-view .host-entry .status,
+.card-view .host-entry .nexus,
+.card-view .host-entry p,
+.card-view .application-entry ul {
+	order: 10;
+	z-index: 2;
+	flex: 1 100%;
+	margin-bottom: 1.25rem;
+}
+
+
+/* Body elements that are 2-columns wide */
+.card-view .service-entry .status,
+.card-view .service-entry .port,
+.card-view .service-entry .players {
+	order: 10;
+	z-index: 2;
+	flex: 2 40%;
+	margin-bottom: 1.25rem;
+}
+
+/* Body elements that are 1-column wide */
+.card-view .service-entry .memory,
+.card-view .service-entry .cpu {
+	order: 10;
+	z-index: 2;
+	flex: 1 20%;
+	margin-bottom: 1rem;
+}
+
+/* Content-specific styles for common elements */
+.card-view .host-entry host-memory-metric::before,
+.card-view .host-entry host-cpu-metric::before,
+.card-view .host-entry host-network-metric::before,
+.card-view .host-entry host-disk-metric::before,
+.card-view .host-entry host-disks-metric::before,
+.card-view .host-entry host-connected-metric::before,
+.card-view .host-entry host-nexus-status::before {
+	content: attr(data-title);
+	font-weight: bold;
+	color: var(--muted);
+}
+.card-view .host-entry host-cpu-metric .cpu-details {
+	font-size: 0.85rem;
+	color: var(--muted);
+	margin-top: 0.25rem;
+}
+#hosts-table.card-view host-network-metric {
+	display: inline-block;
+}
+.card-view .host-entry host-disk-metric .percentage,
+.card-view .host-entry host-disks-metric .percentage {
+	padding-left: 0.5em;
+}
+
+.card-view .mod-entry .mod-meta {
+	order: 3;
+	z-index: 2;
+	flex: 4 100%;
+	text-align: center;
+}
+.card-view .mod-entry .mod-description {
+	order: 4;
+	z-index: 2;
+	flex: 4 100%;
+	padding: 0.5rem 0;
+}
+.card-view .mod-entry .mod-author {
+	order: 5;
+	z-index: 2;
+	flex: 4 100%;
+	opacity: 0.8;
+}
+
+/* Action buttons at the bottom of the card */
+.card-view .host-entry .actions,
+.card-view .service-entry .actions,
+.card-view .application-entry .actions,
+.card-view .mod-entry .actions {
+	order: 99;
+	z-index: 2;
+	margin-left: auto;
+	border-top: 1px solid var(--table-border);
+	flex: 2 100%;
+	padding: 1rem;
+}
+.card-view .host-entry .actions button,
+.card-view .service-entry .actions button,
+.card-view .application-entry .actions button,
+.card-view .mod-entry .actions button {
+	margin: 0.25rem;
+}
+
+/** </editor-fold> **/
+
+
 
 /* ==========================
    File browser / viewer / editor
@@ -1489,6 +1821,9 @@ button.link-control span {
 	align-items: center;
 	gap: 1rem;
 	justify-content: space-between;
+	margin-bottom: 1rem;
+	border-bottom: 1px solid var(--content-border);
+	padding-bottom: 1rem;
 }
 .path-controls .current-path {
 	flex: 1;
@@ -1503,34 +1838,6 @@ button.link-control span {
 	flex: 1;
 	text-align: right;
 	margin-right: 1rem;
-}
-
-.resizer {
-	width: 5px;
-	background: var(--content-border);
-	cursor: col-resize;
-	flex-shrink: 0;
-	position: relative;
-	transition: background 0.3s ease;
-}
-.resizer:hover {
-	background: var(--content-hover-border);
-}
-
-.resizer::before {
-	content: '';
-	position: absolute;
-	top: 50%;
-	left: 50%;
-	transform: translate(-50%, -50%);
-	width: 3px;
-	height: 40px;
-	background: rgba(0, 150, 255, 0.6);
-	border-radius: 2px;
-}
-
-.resizer.resizing {
-	background: rgba(0, 150, 255, 0.8);
 }
 
 .file-viewer-card {
@@ -1695,16 +2002,29 @@ button.link-control span {
 	height: calc(100vh - (117px + 2rem));
 }
 
+#service-details-files {
+	position: relative;
+}
+
 .file-list {
 	display: grid;
 	gap: 0.5rem;
+	position: relative;
+	min-height: 15rem;
+}
+
+.file-list .loading-spinner {
+	margin: 0 auto;
+	width: 6rem;
+	height: 6rem;
+	border-width: 1rem;
 }
 
 .file-item {
 	display: grid;
 	grid-template-areas: 'icon name owner permissions size modified actions'
 		'symlink symlink symlink symlink symlink symlink symlink';
-	grid-template-columns: 20px 1fr 7rem 4rem 3rem 5rem 1rem;
+	grid-template-columns: 20px 1fr 10rem 4rem 6rem 11rem 1rem;
 	gap: 0.5rem;
 	padding: 0.15rem 0.75rem;
 	border-radius: 8px;
@@ -1714,9 +2034,18 @@ button.link-control span {
 	border: 1px solid transparent;
 	color: var(--content);
 }
-.file-item:hover {
+.file-item:hover,
+.file-item.active {
 	background: var(--content-hover-bg);
 	border-color: var(--content-hover-border);
+}
+
+/* Show/hide hidden files based on if "show-hidden" is present on the parent container */
+.file-list .file-item[data-hidden="1"] {
+	display: none;
+}
+.file-list.show-hidden .file-item[data-hidden="1"] {
+	display: grid;
 }
 
 .file-item .file-icon {
@@ -1733,6 +2062,7 @@ button.link-control span {
 	grid-area: size;
 	text-align: right;
 	font-size: 0.85rem;
+	margin-right: 0.5rem;
 }
 .file-item .file-owner {
 	grid-area: owner;
@@ -1849,13 +2179,13 @@ button.link-control span {
    Context menu / three-dot menu / action buttons
    ========================== */
 .context-menu {
-	position: fixed;
+	position: absolute;
 	background: var(--content-bg);
 	backdrop-filter: blur(20px);
 	border: 1px solid var(--content-border);
-	border-radius: 8px;
+	border-radius: 0;
 	padding: 0;
-	box-shadow: 0 10px 30px var(--content-shadow);
+	box-shadow: 2px 2px 6px var(--content-shadow);
 	z-index: 10000;
 	display: none;
 	min-width: 200px;
@@ -1871,12 +2201,6 @@ button.link-control span {
 	border-radius: 0;
 	display: flex;
 	padding: 0.75rem;
-}
-.context-menu button:first-of-type {
-	border-radius: 8px 8px 0 0;
-}
-.context-menu button:last-of-type {
-	border-radius: 0 0 8px 8px;
 }
 .context-menu button:hover {
 	transform: scale(1.05);
@@ -2018,20 +2342,6 @@ button.link-control span {
 	justify-content: center;
 }
 
-button.link-control {
-	padding: 0.5rem 0.875rem;
-/* 	border-radius: 6px; */
-	border: none;
-	cursor: pointer;
-	font-weight: 500;
-	font-size: 0.875rem;
-	transition: all 0.2s ease;
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	gap: 0.375rem;
-}
-
 .upload-progress {
 	text-align: center;
 }
@@ -2073,6 +2383,18 @@ button.link-control {
 	background: rgba(0, 0, 0, 0.2);
 	border-radius: 6px;
 	border-left: 3px solid rgba(0, 150, 255, 0.3);
+	position: relative;
+}
+
+.upload-file-item .upload-file-progress {
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	height: 4px;
+	background: linear-gradient(90deg, var(--primary), var(--primary-strong));
+	width: 0;
+	transition: width 0.3s ease;
+	border-radius: 0 0 6px 6px;
 }
 
 .upload-file-name {
@@ -2145,10 +2467,219 @@ button.link-control {
 	z-index: 2;
 }
 
+/** <editor-fold desc="Service Details"> **/
 
-/* ==========================
-   Modals
-   ========================== */
+.service-details-overview {
+	display: flex;
+	gap: 3rem;
+	margin: 2rem 3rem;
+	flex-wrap: wrap;
+}
+
+.service-details-overview .metric-label {
+	opacity: 0.7;
+	font-variant: small-caps;
+	margin-bottom: 0.5rem;
+	min-width: 7rem;
+	text-align: center;
+}
+.service-details-overview .metric-value {
+	font-size: 1.25rem;
+	min-width: 7rem;
+	text-align: center;
+	display: block;
+}
+
+#serviceModsCurrentMods .card-view,
+#serviceModsSearchResults {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(20rem, 1fr));
+	gap: 2rem;
+}
+
+/** </editor-fold> **/
+
+/** <editor-fold desc="Host Details"> **/
+
+.host-details-overview {
+	display: flex;
+	gap: 3rem;
+	margin: 2rem 3rem;
+	flex-wrap: wrap;
+}
+
+.host-details-overview .metric-label {
+	opacity: 0.7;
+	font-variant: small-caps;
+	margin-bottom: 0.5rem;
+	min-width: 7rem;
+	text-align: center;
+}
+
+.host-details-overview .metric-value {
+	font-size: 1.25rem;
+	min-width: 7rem;
+	text-align: center;
+	display: block;
+}
+.host-details-overview host-disk-metric .percentage {
+	padding-left: 0.5em;
+	font-size: 1rem;
+}
+
+.host-details-info-grid {
+	display: flex;
+	gap: 3rem;
+	margin: 2rem 3rem;
+	flex-wrap: wrap;
+}
+.host-details-info-grid .label {
+	opacity: 0.7;
+	font-variant: small-caps;
+	margin-bottom: 0.5rem;
+}
+
+.host-details-info-grid .value {
+	font-size: 1.25rem;
+}
+
+#applicationsContainer {
+	margin-bottom: 3rem;
+}
+
+#hostApplicationsList {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(22rem, 1fr));
+	gap: 1rem;
+	margin: 2rem 3rem;
+}
+
+/** </editor-fold> **/
+
+/** <editor-fold desc="Details Shared"> **/
+
+host-nexus-status .help-link {
+	color: var(--primary);
+	padding-left: 0.5em;
+}
+host-nexus-status .help-link:hover {
+	color: var(--primary-hover);
+}
+
+#hostNexusStatusContainer host-nexus-status {
+	display: flex;
+	align-items: center;
+}
+#hostNexusStatusContainer host-nexus-status i.bad,
+#hostNexusStatusContainer host-nexus-status i.good {
+	font-size: 3rem;
+	padding-right: 1rem;
+}
+
+/* Target the inner container of the auth settings */
+#hostNexusAuthSettings .inner {
+	max-height: 0;
+	opacity: 0;
+	overflow: hidden;
+	/* Smooth transition for both height and opacity */
+	transition: max-height 0.4s ease-out, opacity 0.3s ease;
+}
+
+/* When the 'active' class is added to the parent div */
+#hostNexusAuthSettings.active .inner {
+	/* Set this to a value larger than your expected content height */
+	max-height: 1000px;
+	opacity: 1;
+}
+
+/* Prepare the chevron icon for rotation */
+#hostNexusAuthSettings i.fa-chevron-down {
+	display: inline-block; /* Required for transform to work reliably */
+	transition: transform 0.3s ease;
+}
+
+/* Rotate the icon when active */
+#hostNexusAuthSettings.active i.fa-chevron-down {
+	transform: rotate(180deg);
+}
+
+
+.tabs-header {
+	display: flex;
+	border-bottom: 1px solid var(--border-color);
+	gap: 1rem;
+	background-color: var(--navbar-bg);
+	margin-bottom: 2rem;
+	opacity: 0.7;
+}
+
+.tabs-header a {
+	color: var(--nav);
+	padding: 1rem 1rem;
+	border-bottom: 3px solid transparent;
+	display: flex;
+	align-items: center;
+	text-decoration: none;
+}
+
+.tabs-header a.active,
+.tabs-header a:hover {
+	border-bottom: 3px solid var(--nav-hover);
+	color: var(--nav-hover);
+}
+
+.tabs-header a i {
+	padding-right: 0.5rem;
+}
+
+.tab-target {
+	min-height: 10rem;
+}
+
+.modal-body .CodeMirror {
+	height: 100%;
+}
+
+#fileEditorStatus {
+	flex: 1;
+	opacity: 0.7;
+	font-size: 0.875rem;
+}
+
+#firewallTableBody .icon img {
+	width: 2rem;
+	height: 2rem;
+}
+#firewallTableBody .port .configurable-port {
+	cursor: pointer;
+}
+#firewallTableBody .configurable-port .edit-icon {
+	margin-left: 1rem;
+	opacity: 0;
+}
+#firewallTableBody .configurable-port:hover .edit-icon {
+	opacity: 1;
+}
+#firewallTableBody .port .port-input {
+	display: none;
+}
+#firewallTableBody .port.edit .configurable-port {
+	display: none;
+}
+#firewallTableBody .port.edit .port-input {
+	display: block;
+}
+#firewallTableBody .actions .status-allowed {
+	color: var(--status-good);
+	margin-right: 1rem;
+}
+
+/** </editor-fold> **/
+
+
+
+
+/** <editor-fold desc="Modals"> **/
 
 .modal {
 	position: fixed;
@@ -2198,17 +2729,6 @@ button.link-control {
 	max-width: 80vw;
 }
 
-@keyframes modalSlideIn {
-	from {
-		opacity: 0;
-		transform: translateY(-20px) scale(0.95);
-	}
-	to {
-		opacity: 1;
-		transform: translateY(0) scale(1);
-	}
-}
-
 .modal-header {
 	padding: 1.25rem 1.5rem;
 	border-bottom: 1px solid var(--content-border);
@@ -2217,6 +2737,7 @@ button.link-control {
 	justify-content: space-between;
 	align-items: center;
 	border-radius: 16px 16px 0 0;
+	max-height: 5rem;
 }
 
 .modal-header h3 {
@@ -2254,6 +2775,8 @@ button.link-control {
 .modal-body {
 	padding: 1.5rem;
 	color: var(--content);
+	max-height: calc(80vh - 13rem);
+	overflow: scroll;
 }
 
 .modal-footer {
@@ -2264,7 +2787,36 @@ button.link-control {
 	gap: 0.75rem;
 	justify-content: flex-end;
 	border-radius: 0 0 16px 16px;
+	max-height: 5rem;
 }
+
+/* </editor-fold> */
+
+/** <editor-fold desc="Simple Graphs"> **/
+
+.bargraph-h {
+	width: 100%;
+	height: 0.5rem;
+	background: var(--graph-bg);
+	border-radius: 0.25rem;
+	overflow: hidden;
+	position: relative;
+}
+.bargraph-h .fill {
+	height: 100%;
+	transition: width 4s linear;
+}
+.bargraph-h .fill.good {
+	background: linear-gradient(90deg, var(--status-good), var(--status-good-bg-2));
+}
+.bargraph-h .fill.warning {
+	background: linear-gradient(90deg, var(--status-warning), var(--status-warning-bg-2));
+}
+.bargraph-h .fill.critical {
+	background: linear-gradient(90deg, var(--status-critical), var(--status-critical-bg-2));
+}
+
+/** </editor-fold> **/
 
 /* ==========================
    Theme selector (bottom-left floating)
@@ -2381,7 +2933,7 @@ button.link-control {
 .toast {
 	pointer-events: auto;
 	min-width: 280px;
-	max-width: 720px;
+	max-width: 768px;
 	width: auto;
 	color: #ffffff;
 	background: rgba(15, 17, 25, 0.95);
@@ -2397,12 +2949,19 @@ button.link-control {
 	transform: translateY(20px);
 	opacity: 0;
 	transition: transform 250ms cubic-bezier(0.4, 0, 0.2, 1), opacity 250ms ease;
-	display: flex;
 	align-items: center;
 	gap: 0.875rem;
 	font-size: 0.9375rem;
 	line-height: 1.5;
 	cursor: pointer;
+}
+
+.toast .toast-title {
+	font-weight: bold;
+	text-align: center;
+}
+.toast .toast-message {
+	white-space: pre-wrap;
 }
 
 .toast.show {
@@ -2414,24 +2973,28 @@ button.link-control {
 	background: rgba(16, 185, 129, 0.15);
 	border-color: var(--status-good);
 	color: var(--status-good);
+	box-shadow: 0 4px 20px 0 var(--status-good);
 }
 
 .toast--error {
 	background: rgba(239, 68, 68, 0.15);
 	border-color: var(--status-critical);
 	color: var(--status-critical);
+	box-shadow: 0 4px 20px 0 var(--status-critical);
 }
 
 .toast--warning {
 	background: rgba(245, 158, 11, 0.15);
 	border-color: var(--status-warning);
 	color: var(--status-warning);
+	box-shadow: 0 4px 20px 0 var(--status-warning);
 }
 
 .toast--info {
 	background: rgba(59, 130, 246, 0.15);
 	border-color: var(--status-neutral);
 	color: var(--status-neutral);
+	box-shadow: 0 4px 20px 0 var(--status-neutral);
 }
 
 
@@ -2446,284 +3009,36 @@ button.link-control {
 	text-align: center;
 }
 
-
-/* ==========================
-   Responsive Design
-   ========================== */
-
-@media (max-width: 1400px) {
-	#services-table .host {
-		display: none;
-	}
+/* Target the inner container of the auth settings */
+#settingsNexusAuthSettings .inner {
+	max-height: 0;
+	opacity: 0;
+	overflow: hidden;
+	/* Smooth transition for both height and opacity */
+	transition: max-height 0.4s ease-out, opacity 0.3s ease;
 }
 
-@media (max-width: 1200px) {
-	.main-container {
-		grid-template-columns: 300px 1fr;
-		gap: 2rem;
-	}
-
-	.nav-links a {
-		font-size: 0.95rem;
-		padding: 0.4rem 0.8rem;
-	}
-
-	.logo {
-		font-size: 1.5rem;
-	}
-
-	#applicationsList, #hostsList {
-		grid-template-columns: repeat(3, minmax(250px, 1fr));
-	}
-
-	#services-table .age {
-		display: none;
-	}
-	#services-table .port {
-		display: none;
-	}
+/* When the 'active' class is added to the parent div */
+#settingsNexusAuthSettings.active .inner {
+	/* Set this to a value larger than your expected content height */
+	max-height: 1000px;
+	opacity: 1;
 }
 
-@media (max-width: 1060px) {
-	#services-table .memory {
-		display: none;
-	}
-	#services-table .cpu {
-		display: none;
-	}
+/* Prepare the chevron icon for rotation */
+#settingsNexusAuthSettings i.fa-chevron-down {
+	display: inline-block; /* Required for transform to work reliably */
+	transition: transform 0.3s ease;
 }
 
-@media (max-width: 968px) {
-	.main-container {
-		grid-template-columns: 1fr;
-		gap: 2rem;
-		padding: 0 1rem;
-	}
-
-	.sidebar {
-		position: static;
-		order: 2;
-	}
-
-	.content-area {
-		order: 1;
-	}
-
-	.navbar-content {
-		flex-direction: column;
-		gap: 1rem;
-		padding: 1rem;
-	}
-
-	.nav-links {
-		gap: 1rem;
-		flex-wrap: wrap;
-		justify-content: center;
-	}
-
-	.nav-links a {
-		font-size: 0.95rem;
-		padding: 0.4rem 0.8rem;
-	}
-
-	#applicationsList, #hostsList {
-		grid-template-columns: repeat(2, minmax(250px, 1fr));
-	}
-}
-
-/* Hide mobile actions rows by default */
-#services-table tbody tr.service-actions {
-	display: none;
-}
-
-@media (max-width: 900px) {
-	#services-table .actions {
-		display: none;
-	}
-	
-	#services-table tbody tr.service {
-		cursor: pointer;
-		position: relative;
-	}
-	
-	#services-table tbody tr.service::after {
-		content: '\f0d7';
-		font-family: 'Font Awesome 6 Free';
-		font-weight: 900;
-		position: absolute;
-		right: 10px;
-		top: 50%;
-		transform: translateY(-50%);
-		color: var(--text-secondary);
-		font-size: 1rem;
-		transition: transform 0.3s;
-	}
-	
-	#services-table tbody tr.service.expanded::after {
-		transform: translateY(-50%) rotate(180deg);
-	}
-	
-	#services-table tbody tr.service-actions {
-		display: none;
-	}
-	
-	#services-table tbody tr.service.expanded + tr.service-actions {
-		display: table-row;
-	}
-	
-	#services-table tbody tr.service-actions td {
-		padding: 10px;
-		background: var(--card-bg);
-		border-top: 1px solid var(--content-border);
-	}
-	
-	#services-table tbody tr.service-actions .mobile-actions {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 8px;
-	}
-	
-	#services-table tbody tr.service-actions .mobile-actions button {
-		flex: 1 1 calc(50% - 4px);
-		min-width: 0;
-		padding: 10px 12px;
-		font-size: 0.9rem;
-		white-space: nowrap;
-		overflow: hidden;
-		text-overflow: ellipsis;
-	}
-}
-
-@media (max-width: 445px) {
-	/* Auto-expand actions on very small screens */
-	#services-table tbody tr.service::after {
-		display: none;
-	}
-	
-	#services-table tbody tr.service-actions {
-		display: table-row !important;
-	}
-	
-	#services-table tbody tr.service {
-		cursor: default;
-	}
-}
-
-@media (max-width: 768px) {
-	.header-content {
-		padding: 0 1rem;
-		flex-direction: column;
-		gap: 1rem;
-	}
-
-	.nav-menu {
-		gap: 1.5rem;
-		font-size: 1rem;
-	}
-
-	.nav-menu a {
-		padding: 0.4rem 0.8rem;
-	}
-
-	.logo {
-		font-size: 1.8rem;
-	}
-
-	.container {
-		padding: 15px;
-	}
-
-	.file-browser {
-		grid-template-columns: 1fr;
-		height: auto;
-	}
-
-	.sidebar-browser {
-		border-right: none;
-		border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-	}
-}
-
-@media (max-width: 640px) {
-	#applicationsList, #hostsList {
-		grid-template-columns: 1fr;
-	}
+/* Rotate the icon when active */
+#settingsNexusAuthSettings.active i.fa-chevron-down {
+	transform: rotate(180deg);
 }
 
 /* ==========================
    Metrics Modal
    ========================== */
-
-#metricsModal {
-	background: rgba(0, 0, 0, 0.7);
-	backdrop-filter: blur(5px);
-}
-
-#metricsModal .modal-content {
-	background: var(--content-bg);
-	border: 1px solid var(--content-border);
-	border-radius: 12px;
-	box-shadow: 0 20px 60px var(--content-shadow);
-	backdrop-filter: blur(20px);
-	display: flex;
-	flex-direction: column;
-	max-height: 90vh;
-	height: auto;
-}
-
-#metricsModal .modal-header {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	padding: 1rem 1.5rem;
-	border-bottom: 1px solid var(--content-border);
-	background: var(--header-bg-1);
-}
-
-#metricsModal .modal-header h3 {
-	margin: 0;
-	color: var(--header);
-	font-weight: 600;
-	text-transform: uppercase;
-	letter-spacing: 1px;
-	font-family: 'Orbitron', sans-serif;
-	display: flex;
-	align-items: center;
-	gap: 0.75rem;
-}
-
-#metricsModal .modal-close {
-	background: none;
-	border: none;
-	color: var(--nav);
-	font-size: 1.2rem;
-	cursor: pointer;
-	padding: 0.5rem;
-	border-radius: 6px;
-	transition: all 0.3s ease;
-}
-
-#metricsModal .modal-close:hover {
-	color: var(--nav-hover);
-	background: var(--nav-hover-bg);
-}
-
-#metricsModal .modal-body {
-	padding: 20px;
-	flex: 1;
-	overflow: hidden;
-	display: flex;
-	flex-direction: column;
-}
-
-#metricsTimeframeSelector {
-	display: flex;
-	gap: 10px;
-	flex-wrap: wrap;
-	justify-content: center;
-	flex-shrink: 0;
-	margin-bottom: 20px;
-}
 
 #metricsCharts {
 	display: grid;
@@ -2733,50 +3048,6 @@ button.link-control {
 	min-height: 0;
 	overflow-y: auto;
 	align-content: start;
-}
-
-.timeframe-btn {
-	padding: 8px 16px;
-	background: var(--card-bg);
-	border: 2px solid var(--border-color);
-	color: var(--text-color);
-	border-radius: 4px;
-	cursor: pointer;
-	font-family: 'Rajdhani', sans-serif;
-	font-weight: 600;
-	font-size: 1rem;
-	transition: all 0.3s;
-}
-
-.timeframe-btn:hover {
-	border-color: var(--accent-color);
-	background: var(--accent-color);
-	color: #fff;
-}
-
-.timeframe-btn.active {
-	background: var(--accent-color);
-	border-color: var(--accent-color);
-	color: #fff;
-}
-
-.fullscreen-btn {
-	padding: 8px 16px;
-	background: var(--card-bg);
-	border: 2px solid var(--border-color);
-	color: var(--text-color);
-	border-radius: 4px;
-	cursor: pointer;
-	font-family: 'Rajdhani', sans-serif;
-	font-weight: 600;
-	font-size: 1rem;
-	transition: all 0.3s;
-	margin-left: auto;
-}
-
-.fullscreen-btn:hover {
-	border-color: var(--success-color);
-	color: var(--success-color);
 }
 
 .chart-container {
@@ -2816,131 +3087,251 @@ button.link-control {
 	height: 100% !important;
 }
 
-/* Metrics Modal Responsive */
+
+
+/** <editor-fold desc="Responsive Design"> **/
+
+@media (max-height: 500px) {
+	.navbar {
+		position: inherit;
+	}
+}
+
+@media (max-width: 1550px) {
+	#services-table.table-view .header,
+	#services-table.table-view .service-entry {
+		grid-template-areas: 'host icon name enabled status players memory cpu actions';
+		grid-template-columns: 12rem 3rem 1fr 4rem 9rem 5rem 5rem 3rem 13rem;
+	}
+	#services-table.table-view .port {
+		display: none;
+	}
+
+	#hosts-table.table-view .host,
+	#hosts-table.table-view .header {
+		grid-template-areas: 'hostname ip cpu memory disk net actions';
+		grid-template-columns: 1fr 8rem 8rem 8rem 8rem 8rem 7rem;
+	}
+
+	#hosts-table.table-view .os {
+		display: none;
+	}
+}
+
+@media (max-width: 1400px) {
+	#services-table.table-view .header,
+	#services-table.table-view .service-entry {
+		grid-template-areas: 'icon name enabled status players memory cpu actions';
+		grid-template-columns: 3rem 1fr 4rem 9rem 5rem 5rem 3rem 13rem;
+	}
+	#services-table.table-view .host {
+		display: none;
+	}
+	#services-table.table-view .icon {
+		padding-left: 1rem;
+	}
+	.backup-file-item .file-modified {
+		display: none;
+	}
+}
+
 @media (max-width: 1200px) {
-	#metricsModal .modal-content {
-		width: 95%;
-		max-width: 95%;
+	.main-container {
+		grid-template-columns: 300px 1fr;
+		gap: 2rem;
 	}
-	
+
+	.nav-links a {
+		font-size: 0.95rem;
+		padding: 0.4rem 0.8rem;
+	}
+
+	.logo {
+		font-size: 1.5rem;
+	}
+
+	/* Hide the view-changer buttons on smaller screens */
+	.view-changer {
+		display: none;
+	}
+}
+
+@media (max-width: 968px) {
+	.main-container {
+		grid-template-columns: 1fr;
+		gap: 2rem;
+		padding: 0 1rem;
+	}
+
+	.sidebar {
+		position: static;
+		order: 2;
+	}
+
+	.content-area {
+		order: 1;
+	}
+
+	.navbar-content {
+		flex-direction: column;
+		gap: 1rem;
+		padding: 1rem;
+	}
+
+	.nav-links {
+		gap: 1rem;
+		flex-wrap: wrap;
+		justify-content: center;
+	}
+
+	.nav-links a {
+		font-size: 0.95rem;
+		padding: 0.4rem 0.8rem;
+	}
+
 	#metricsCharts {
-		grid-template-columns: 1fr !important;
-		gap: 15px !important;
+		grid-template-columns: 1fr;
 	}
-	
-	.chart-container {
-		grid-column: 1 !important;
-		height: 300px;
+
+	.tabs-header {
+		flex-direction: column;
+	}
+
+	.file-item {
+		grid-template-areas:
+			'icon    name    permissions size    modified actions'
+			'symlink symlink symlink     symlink symlink  symlink';
+		grid-template-columns: 20px 1fr 4rem 6rem 11rem 1rem;
+	}
+	.file-item .file-owner {
+		display: none;
+	}
+}
+
+@media (max-width: 900px) {
+	/* Switch dashboard cards to single column */
+	#services-table.card-view .service-entry {
+		flex: 1 100%;
+	}
+
+	.path-controls {
+		flex-wrap: wrap;
+	}
+	.path-controls .btn-nav {
+		order: 2;
+		flex: 1 2rem;
+		text-align: center;
+		display: inline-block;
+	}
+	.path-controls .current-path {
+		order: 3;
+		flex: 6 80%;
+	}
+	.path-controls .action-buttons {
+		order: 1;
+		flex: 7 100%;
+	}
+
+	#firewallRulesContainer .comment {
+		display: none;
+	}
+	#firewallOtherRulesContainer .comment {
+		display: none;
 	}
 }
 
 @media (max-width: 768px) {
-	#metricsModal .modal-content {
-		max-height: 90vh;
-		height: 90vh;
+	.header-content {
+		padding: 0 1rem;
+		flex-direction: column;
+		gap: 1rem;
 	}
-	
-	#metricsModal .modal-body {
-		padding: 12px;
+
+	.nav-menu {
+		gap: 1.5rem;
+		font-size: 1rem;
 	}
-	
-	#metricsCharts {
-		gap: 10px !important;
+
+	.nav-menu a {
+		padding: 0.4rem 0.8rem;
 	}
-	
-	#metricsTimeframeSelector {
-		gap: 5px;
-		margin-bottom: 12px;
+
+	.logo {
+		font-size: 1.8rem;
 	}
-	
-	.timeframe-btn,
-	.fullscreen-btn {
-		padding: 6px 10px;
-		font-size: 0.85rem;
+
+	.container {
+		padding: 15px;
 	}
-	
-	.chart-container {
-		padding: 8px;
-		height: 200px;
+
+	.file-browser {
+		grid-template-columns: 1fr;
+		height: auto;
 	}
-	
-	.chart-container h4 {
-		font-size: 0.85rem;
-		margin-bottom: 8px;
+
+	.sidebar-browser {
+		border-right: none;
+		border-bottom: 1px solid rgba(0, 0, 0, 0.1);
 	}
 }
 
-@media (max-width: 480px) {
-	#metricsModal .modal-content {
-		max-height: 95vh;
-		height: 95vh;
-		border-radius: 0;
-		width: 100%;
-		max-width: 100%;
+@media (max-width: 700px) {
+	/* General content header to kick buttons down to new line */
+	.content-header-inner h2 {
+		flex: 3 100%;
+		order: 1;
 	}
-	
-	#metricsModal .modal-header {
-		padding: 0.75rem 1rem;
+	.content-header-inner p {
+		order: 2;
+		margin-bottom: 1rem;
 	}
-	
-	#metricsModal .modal-header h3 {
-		font-size: 0.85rem;
+	.content-header-inner .content-header-buttons {
+		flex: 3 100%;
+		order: 3;
 	}
-	
-	#metricsModal .modal-body {
-		padding: 10px;
+
+	/* Reorder service details to fit better */
+	.service-details-overview {
+		grid-template-areas: 'status status cpu cpu memory memory' 'status-v status-v cpu-v cpu-v memory-v memory-v' 'players players players port port port' 'players-v players-v players-v port-v port-v port-v';
 	}
-	
-	#metricsCharts {
-		gap: 8px !important;
+	.service-details-overview dt {
+		text-align: center;
 	}
-	
-	#metricsTimeframeSelector {
-		gap: 4px;
-		margin-bottom: 10px;
+	.service-details-overview dd {
+		text-align: center;
 	}
-	
-	.timeframe-btn,
-	.fullscreen-btn {
-		padding: 6px 8px;
-		font-size: 0.75rem;
-		flex: 1;
-		min-width: 0;
+
+	/* Switch host details to single column */
+	.host-details-overview {
+		flex-direction: column;
+		text-align: center;
 	}
-	
-	.fullscreen-btn {
-		flex: 0 0 auto;
-		width: 100%;
-		margin-left: 0 !important;
-		margin-top: 4px;
+
+	.file-item {
+		grid-template-areas:
+			'icon    name    size    modified actions'
+			'symlink symlink     symlink symlink  symlink';
+		grid-template-columns: 20px 1fr 6rem 11rem 1rem;
 	}
-	
-	.chart-container {
-		height: 180px;
-		padding: 8px;
-	}
-	
-	.chart-container h4 {
-		font-size: 0.8rem;
-		margin-bottom: 6px;
+	.file-item .file-permissions {
+		display: none;
 	}
 }
 
-/* Fullscreen mode adjustments */
-#metricsModal .modal-content:fullscreen {
-	max-width: 100%;
-	max-height: 100%;
-	width: 100%;
-	height: 100%;
-	border-radius: 0;
-}
+@media (max-width: 640px) {
+	#applicationsList, #hostsList {
+		grid-template-columns: 1fr;
+	}
 
-#metricsModal .modal-content:fullscreen .modal-body {
-	padding: 30px;
-}
-
-#metricsModal .modal-content:fullscreen #metricsCharts {
-	gap: 30px;
+	.file-item {
+		grid-template-areas:
+			'icon    name    size    actions'
+			'symlink symlink     symlink  symlink';
+		grid-template-columns: 20px 1fr 6rem 1rem;
+	}
+	.file-item .file-modified {
+		display: none;
+	}
 }
 
 /* Small responsive tweaks */
@@ -2949,61 +3340,21 @@ button.link-control {
 	.toast { min-width: 180px; font-size: 0.9rem; }
 }
 
-/* CodeMirror Editor Styling */
-#editorContainer {
-	height: 100%;
-	font-size: 0.9rem;
+@media (max-width: 500px) {
+	/* Display service details in single column */
+	.service-details-overview {
+		display: flex;
+		flex-wrap: wrap;
+	}
+	.service-details-overview dt {
+		flex: 1 40%;
+		text-align: right;
+	}
+	.service-details-overview dd {
+		flex: 1 40%;
+		text-align: left;
+	}
 }
-
-#editorContainer .CodeMirror {
-	height: 100% !important;
-	font-family: 'JetBrains Mono', 'Monaco', 'Menlo', monospace !important;
-	font-size: 0.9rem !important;
-	line-height: 1.6 !important;
-	background: rgba(0, 0, 0, 0.5) !important;
-	color: #e2e8f0 !important;
-	border: none !important;
-}
-
-#editorContainer .CodeMirror-linenumber {
-	color: #64748b;
-	background: rgba(0, 0, 0, 0.3);
-}
-
-#editorContainer .CodeMirror-gutter {
-	background: rgba(0, 0, 0, 0.2);
-	border-right: 1px solid rgba(0, 150, 255, 0.1);
-}
-
-#editorContainer .CodeMirror-cursor {
-	border-left: 2px solid var(--primary);
-}
-
-#editorContainer .CodeMirror-selected {
-	background: rgba(0, 150, 255, 0.3);
-}
-
-#editorContainer .CodeMirror-line::selection,
-#editorContainer .CodeMirror-line > span::selection,
-#editorContainer .CodeMirror-line > span > span::selection {
-	background: rgba(0, 150, 255, 0.5);
-}
-
-#editorContainer .CodeMirror-activeline-background {
-	background: rgba(99, 102, 241, 0.1);
-}
-
-/* Syntax highlighting colors */
-#editorContainer .cm-string { color: #84e1bc !important; }
-#editorContainer .cm-number { color: #f59e0b !important; }
-#editorContainer .cm-atom { color: #f59e0b !important; }
-#editorContainer .cm-keyword { color: #6366f1 !important; }
-#editorContainer .cm-variable { color: #cbd5e1 !important; }
-#editorContainer .cm-property { color: #cbd5e1 !important; }
-#editorContainer .cm-comment { color: #64748b !important; }
-#editorContainer .cm-tag { color: #6366f1 !important; }
-#editorContainer .cm-attribute { color: #f59e0b !important; }
-
 
 @media (max-width: 480px) {
 	.header h1 {
@@ -3027,6 +3378,31 @@ button.link-control {
 	}
 }
 
+@media (max-width: 445px) {
+	/* Auto-expand actions on very small screens */
+	#services-table tbody tr.service::after {
+		display: none;
+	}
+
+	#services-table tbody tr.service-actions {
+		display: table-row !important;
+	}
+
+	#services-table tbody tr.service {
+		cursor: default;
+	}
+
+	.path-controls .action-buttons {
+		justify-content: center;
+		display: flex;
+		flex-wrap: wrap;
+		gap: 1rem;
+	}
+	.path-controls .action-buttons button {
+		flex: 1 100%;
+	}
+}
+
 @media (max-width: 420px) {
 	.theme-selector {
 		left: 0.5rem;
@@ -3036,3 +3412,5 @@ button.link-control {
 		min-width: 100px;
 	}
 }
+
+/** </editor-fold> **/

@@ -3,71 +3,81 @@ const {validate_session} = require("../../libs/validate_session.mjs");
 const {cmdRunner} = require("../../libs/cmd_runner.mjs");
 const {validateHostService} = require("../../libs/validate_host_service.mjs");
 const cache = require("../../libs/cache.mjs");
+const {clearTaggedCache} = require("../../libs/cache.mjs");
 
 const router = express.Router();
 
 /**
  * Get the configuration values and settings for a given service
+ *
+ * API endpoint: GET /api/service/configs/:guid/:host/:service
+ *
+ * Returns JSON data with success (True/False) and configs [{Object}]
+ * Each config contains:
+ * - option: The name of the config
+ * - value: The value of the config
+ * - default: The default value of the config
+ * - type: The type of the config (string, int, bool, etc.)
+ * - help: A description of the config
+ * - options: List of values available for this config (if applicable)
+ * - group: Display group for this config (if applicable)
+ *
+ * @property {AppInstallData} req.appInstallData
+ * @property {ServiceData} req.serviceData
  */
-router.get('/:guid/:host/:service', validate_session, (req, res) => {
-	validateHostService(req.params.host, req.params.guid, req.params.service)
-		.then(dat => {
-			cmdRunner(dat.host.host, `${dat.host.path}/manage.py --service ${dat.service.service} --get-configs`)
-				.then(result => {
-					return res.json({
-						success: true,
-						configs: JSON.parse(result.stdout)
-					});
-				})
-				.catch(e => {
-					return res.json({
-						success: false,
-						error: e.error.message,
-						service: []
-					});
-				});
+router.get('/:guid/:host/:service', validate_session, validateHostService, (req, res) => {
+	cmdRunner(req.appInstallData.host, req.appInstallData.getServiceCommandString('get-configs', req.serviceData.service))
+		.then(result => {
+			return res.json({
+				success: true,
+				configs: JSON.parse(result.stdout)
+			});
 		})
 		.catch(e => {
 			return res.json({
 				success: false,
-				error: e.message,
-				service: []
+				error: e.error.message
 			});
 		});
 });
 
-router.post('/:guid/:host/:service', async (req, res) => {
-	const host = req.params.host,
-		guid = req.params.guid,
-		service = req.params.service;
+/**
+ * Update the configuration values for a given service
+ *
+ * API endpoint: POST /api/service/configs/:guid/:host/:service
+ *
+ * @property {AppInstallData} req.appInstallData
+ * @property {ServiceData} req.serviceData
+ */
+router.post('/:guid/:host/:service', validate_session, validateHostService, async (req, res) => {
+	const configUpdates = req.body;
 
-	validateHostService(host, guid, service)
-		.then(dat => {
-			const configUpdates = req.body;
-			const updatePromises = [];
-			for (let option in configUpdates) {
-				const value = configUpdates[option];
-				updatePromises.push(
-					cmdRunner(dat.host.host, `${dat.host.path}/manage.py --service ${dat.service.service} --set-config "${option}" "${value}"`)
-				);
-			}
-			Promise.all(updatePromises)
-				.then(result => {
+	// Multiple updates can be sent in a single request, but run them one-at-a-time.
+	let errors = '';
+	for (let option in configUpdates) {
+		const value = configUpdates[option];
+		try {
+			await cmdRunner(req.appInstallData.host, req.appInstallData.getServiceCommandString('set-config', req.serviceData.service, option, value));
+		}
+		catch (e) {
+			errors += e.error.message + '\n';
+		}
+	}
 
-					// Clear the cache data for this service, useful for keys like name or port.
-					cache.default.set(`services_${guid}_${host}`, null, 1); // Invalidate cache
+	// Clear the cache data for this service, useful for keys like name or port.
+	clearTaggedCache(req.appInstallData.host, req.appInstallData.guid);
 
-					return res.json({
-						success: true,
-					});
-				})
-				.catch(e => {
-					return res.json({
-						success: false,
-						error: e.error.message
-					});
-				});
+	if (errors) {
+		return res.json({
+			success: false,
+			error: errors
 		});
+	}
+	else {
+		return res.json({
+			success: true,
+		});
+	}
 });
 
 module.exports = router;

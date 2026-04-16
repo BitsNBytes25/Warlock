@@ -1,0 +1,16 @@
+meta {
+  name: Services (Stream)
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{host}}/api/services/stream
+  body: none
+  auth: inherit
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

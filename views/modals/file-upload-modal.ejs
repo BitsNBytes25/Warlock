@@ -1,0 +1,179 @@
+<!-- Upload Progress Modal -->
+<input type="file" id="uploadFileModalInput" multiple style="display: none;" />
+
+<div id="uploadFileModal" class="modal">
+	<div class="modal-overlay"></div>
+	<div class="modal-content">
+		<div class="modal-header">
+			<h3><i class="fas fa-cloud-upload-alt"></i> Upload Files</h3>
+			<button class="modal-close">
+				<i class="fas fa-times"></i>
+			</button>
+		</div>
+		<div class="modal-body">
+			<div id="uploadProgress" class="upload-progress">
+				<div id="uploadFileList" class="upload-file-list"></div>
+			</div>
+		</div>
+		<div class="modal-footer">
+			<button class="btn-nav btn-upload" id="uploadFileModalConfirm">
+				<i class="fas fa-cloud-upload-alt"></i>
+				Start Upload
+			</button>
+			<button class="action-cancel modal-close">
+				<i class="fas fa-times"></i>
+				Cancel
+			</button>
+		</div>
+	</div>
+</div>
+
+<script>
+	let uploadFileResolve;
+
+	async function openFileUploadModal(host, path, callback, options = {}) {
+		const modal = document.getElementById('uploadFileModal'),
+			input = document.getElementById('uploadFileModalInput');
+
+		options = {
+			multiple: true,
+			accept: '*',
+			...options
+		}
+
+		modal.dataset.host = host;
+		modal.dataset.path = path;
+		modal.dataset.uploadIndex = 0; // Reset upload index
+		modal.dataset.chunkSize = 1024 * 1024 * 5; // 5MB chunk size
+		uploadFileResolve = callback;
+
+		input.accept = options.accept;
+		input.multiple = options.multiple;
+
+		input.click();
+	}
+
+	function showFileUploadModal(files) {
+		const fileList = document.getElementById('uploadFileList'),
+			modal = document.getElementById('uploadFileModal');
+
+		fileList.innerHTML = '';
+
+		let idx = 0;
+		Array.from(files).forEach(file => {
+			const fileItem = document.createElement('div');
+			let prettyFileSize = file.size;
+			if (prettyFileSize < 1024) {
+				prettyFileSize = `${prettyFileSize} B`;
+			}
+			else if (prettyFileSize < 1024 * 1024) {
+				prettyFileSize = `${(prettyFileSize / 1024).toFixed(2)} KB`;
+			}
+			else if (prettyFileSize < 1024 * 1024 * 1024) {
+				prettyFileSize = `${(prettyFileSize / (1024 * 1024)).toFixed(2)} MB`;
+			}
+			else {
+				prettyFileSize = `${(prettyFileSize / (1024 * 1024 * 1024)).toFixed(2)} GB`;
+			}
+
+			fileItem.className = 'upload-file-item';
+			fileItem.dataset.index = idx; // Store index for progress tracking
+			fileItem.innerHTML = `
+                    <span class="upload-file-name">${file.name}</span>
+                    <span class="upload-file-size">${prettyFileSize}</span>
+                    <div class="upload-file-progress"></div>
+                `;
+			fileList.appendChild(fileItem);
+			idx++;
+		});
+
+		openModal(modal);
+	}
+
+	async function performFileUploadModal() {
+		const fileInput = document.getElementById('uploadFileModalInput'),
+			files = fileInput.files,
+			modal = document.getElementById('uploadFileModal');
+
+		if (!files.length) return;
+
+		for (let i = 0; i < files.length; i++) {
+			modal.dataset.uploadIndex = i;
+			await startFileUploadModal();
+		}
+
+		closeModal(modal);
+		fileInput.value = ''; // Reset file input
+		if (uploadFileResolve) {
+			uploadFileResolve();
+			uploadFileResolve = null;
+		}
+	}
+
+	async function startFileUploadModal() {
+		const fileInput = document.getElementById('uploadFileModalInput'),
+			modal = document.getElementById('uploadFileModal'),
+			files = fileInput.files,
+			host = modal.dataset.host,
+			path = modal.dataset.path,
+			uploadIndex = parseInt(modal.dataset.uploadIndex, 10) || 0,
+			chunkSize = parseInt(modal.dataset.chunkSize, 10) || (1024 * 1024 * 5), // Default to 5MB
+			file = files[uploadIndex],
+			totalChunks = Math.ceil(file.size / chunkSize),
+			fileItem = document.querySelector(`.upload-file-item[data-index="${uploadIndex}"]`),
+			progressBar = fileItem.querySelector('.upload-file-progress');
+
+		let currentChunk = 0,
+			currentProgress = 5;
+
+		progressBar.style.width = currentProgress + '%';
+
+		while (currentChunk < totalChunks) {
+			const start = currentChunk * chunkSize,
+				end = Math.min(start + chunkSize, file.size),
+				chunk = file.slice(start, end);
+
+			try {
+				const response = await fetch(`/api/file/${host}?path=${path}/${file.name}&chunk=${currentChunk}&totalChunks=${totalChunks}&size=${file.size}`, {
+					method: 'PUT',
+					headers: {
+						'Content-Type': 'application/octet-stream'
+					},
+					body: chunk
+				});
+
+				const result = await response.json();
+
+				if (!result.success) {
+					alert(`Error uploading ${file.name} (chunk ${currentChunk + 1}/${totalChunks}): ${result.error}`);
+					return;
+				}
+			} catch (error) {
+				alert(`Network error uploading ${file.name} (chunk ${currentChunk + 1}/${totalChunks}): ${error.message}`);
+				return;
+			}
+
+			currentChunk++;
+			// Calculate progress based on chunks uploaded
+			currentProgress = Math.min(100, Math.round((currentChunk / totalChunks) * 100));
+			progressBar.style.width = currentProgress + '%';
+			console.debug(`Uploaded chunk ${currentChunk}/${totalChunks} of ${file.name} (${currentProgress}%)`);
+		}
+	}
+
+	window.addEventListener('DOMContentLoaded', () => {
+		// Ensure modal close buttons work
+		document.getElementById('uploadFileModalInput').addEventListener('change', (e) => {
+			if (e.target.files.length > 0) {
+				showFileUploadModal(e.target.files);
+			}
+			else {
+				uploadFileResolve = null;
+			}
+		});
+
+		document.getElementById('uploadFileModalConfirm').addEventListener('click', () => {
+			performFileUploadModal();
+		});
+	});
+</script>

@@ -7,58 +7,46 @@ const router = express.Router();
 
 /**
  * Get the configuration values and settings for a given application
+ *
+ * API endpoint: GET /api/application/configs/:guid/:host
+ *
+ * @property {AppInstallData} req.appInstallData
  */
-router.get('/:guid/:host', validate_session, (req, res) => {
-	validateHostApplication(req.params.host, req.params.guid)
-		.then(dat => {
-			cmdRunner(dat.host.host, `${dat.host.path}/manage.py --get-configs`)
-				.then(result => {
-					return res.json({
-						success: true,
-						configs: JSON.parse(result.stdout)
-					});
-				})
-				.catch(e => {
-					return res.json({
-						success: false,
-						error: e.error.message,
-						service: []
-					});
-				});
+router.get('/:guid/:host', validate_session, validateHostApplication, (req, res) => {
+
+	cmdRunner(req.appInstallData.host, req.appInstallData.getCommandString('get-configs'))
+		.then(result => {
+			return res.json({
+				success: true,
+				configs: JSON.parse(result.stdout)
+			});
 		})
 		.catch(e => {
 			return res.json({
 				success: false,
-				error: e.message,
-				service: []
+				error: e.error.message,
 			});
 		});
 });
 
-router.post('/:guid/:host', async (req, res) => {
-	validateHostApplication(req.params.host, req.params.guid)
-		.then(dat => {
-			const configUpdates = req.body;
-			const updatePromises = [];
-			for (let option in configUpdates) {
-				const value = configUpdates[option];
-				updatePromises.push(
-					cmdRunner(dat.host.host, `${dat.host.path}/manage.py --set-config "${option}" "${value}"`)
-				);
-			}
-			Promise.all(updatePromises)
-				.then(result => {
-					return res.json({
-						success: true,
-					});
-				})
-				.catch(e => {
-					return res.json({
-						success: false,
-						error: e.error.message
-					});
-				});
-		});
+/**
+ * Update the configuration values and settings for a given application
+ *
+ * API endpoint: POST /api/application/configs/:guid/:host
+ *
+ * @property {AppInstallData} req.appInstallData
+ */
+router.post('/:guid/:host', validate_session, validateHostApplication, async (req, res) => {
+
+	const configUpdates = req.body;
+	for (let option in configUpdates) {
+		const value = configUpdates[option];
+		await cmdRunner(req.appInstallData.host, req.appInstallData.getCommandString('set-config', option, value));
+	}
+
+	return res.json({
+		success: true,
+	});
 });
 
 module.exports = router;

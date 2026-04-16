@@ -1,0 +1,26 @@
+meta {
+  name: Service Stop
+  type: http
+  seq: 9
+}
+
+post {
+  url: {{host}}/api/service/control/:guid/:host/:service
+  body: json
+  auth: inherit
+}
+
+params:path {
+  service: {{lookup_service}}
+  host: {{lookup_host}}
+  guid: {{lookup_app}}
+}
+
+body:json {
+  {"action": "stop"}
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

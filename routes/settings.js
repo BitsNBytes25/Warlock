@@ -16,6 +16,7 @@ router.get('/', validate_session, (req, res) => {
 		'settings', {
 			version,
 			twofactor: (!(process.env.SKIP_2FA === 'true' || process.env.SKIP_2FA === '1')),
+			authentication: (!(process.env.SKIP_AUTHENTICATION === 'true' || process.env.SKIP_AUTHENTICATION === '1')),
 		}
 	);
 });

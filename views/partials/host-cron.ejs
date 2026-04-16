@@ -1,0 +1,27 @@
+<h3>Cron Jobs</h3>
+<p>Manage scheduled tasks on this server (root user only).</p>
+
+<div style="margin-top: 1rem;">
+    <button id="btnAddCronJob" class="action-create">
+        <i class="fas fa-plus"></i> Add Cron Job
+    </button>
+</div>
+
+<br/><br/>
+
+<div id="cronJobsContainer">
+    <table class="table cron-table">
+        <thead>
+            <tr>
+                <th>Schedule</th>
+                <th>Command</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody id="cronTableBody">
+            <tr><td colspan="3">Loading...</td></tr>
+        </tbody>
+    </table>
+</div>
+
+

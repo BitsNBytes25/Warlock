@@ -1,245 +1,137 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Warlock - Server Management</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/assets/frontend.css">
-    <link rel="stylesheet" href="/assets/themes.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
-    <script src="/assets/common.js"></script>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Warlock - Server Management</title>
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+	<link rel="stylesheet" href="<%= assetUrl('/assets/frontend.css') %>">
+	<link rel="stylesheet" href="<%= assetUrl('/assets/themes.css') %>">
+	<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+	<script src="<%= assetUrl('/assets/common.js') %>"></script>
+	<link rel="icon" type="image/webp" sizes="64x64" href="<%= assetUrl('/assets/media/logos/warlock/warlock-lopoly-logo-64x64.webp') %>">
+	<link rel="icon" type="image/webp" sizes="128x128" href="<%= assetUrl('/assets/media/logos/warlock/warlock-lopoly-logo-128x128.webp') %>">
+	<link rel="icon" type="image/webp" sizes="256x256" href="<%= assetUrl('/assets/media/logos/warlock/warlock-lopoly-logo-256x256.webp') %>">
+	<link rel="icon" type="image/webp" sizes="512x512" href="<%= assetUrl('/assets/media/logos/warlock/warlock-lopoly-logo-512x512.webp') %>">
+	<script>
+		hostData = <%- JSON.stringify(hosts) %>;
+		applicationData = <%- JSON.stringify(apps) %>;
+	</script>
 </head>
 <body>
-    <%- include('partials/nav.ejs') %>
+	<%- include('partials/nav.ejs') %>
 
-    <div class="main-container" style="grid-template-columns: 1fr; max-width: 1600px;">
-        <main class="content-area">
-            <div class="content-header">
-                <div class="content-header-inner">
-                    <h2>
-                        <i class="fas fa-server"></i>
-                        Fleet Services
-                    </h2>
-                    <div class="content-header-buttons">
-                        <button class="link-control action-create" data-href="/application/install">
-                            <i class="fas fa-plus"></i>
-                            Install Game
-                        </button>
-                    </div>
-                    <p>View all available game server services</p>
-                </div>
-            </div>
-            
-            <div class="content-body">
+	<div class="main-container" style="grid-template-columns: 1fr; max-width: 1600px;">
+		<main class="content-area">
+			<div class="content-header">
+				<div class="content-header-inner">
+					<h2>
+						<i class="fas fa-server"></i>
+						Fleet Services
+					</h2>
+					<div class="content-header-buttons">
+						<button data-view="card-view" class="action-view view-changer" title="Card View">
+							<i class="fas fa-th-large"></i>
+						</button>
+						<button data-view="table-view" class="action-view view-changer" title="List View">
+							<i class="fas fa-list"></i>
+						</button>
+						<button class="link-control action-create" data-href="/application/install">
+							<i class="fas fa-plus"></i>
+							Install Game
+						</button>
+						<button class="create-instance action-create" style="display:none">
+							<i class="fas fa-plus"></i>
+							New Instance
+						</button>
+					</div>
+					<p>View all available game server services</p>
+				</div>
+			</div>
+			
+			<div class="content-body">
+				<div id="servicesContainer" style="margin-bottom: 2rem;">
+					<div id="services-table">
+						<div class="header">
+							<div class="host">Host</div>
+							<div class="icon">Game</div>
+							<div class="name">Server Name</div>
+							<div class="enabled">On-Boot</div>
+							<div class="status">Status</div>
+							<div class="port">Port</div>
+							<div class="players">Players</div>
+							<div class="memory">Memory</div>
+							<div class="cpu">CPU</div>
+							<div class="actions">Actions</div>
+						</div>
+						<div class="body">
+							<div class="service-entry service-loading" data-updated="0">
+								<div class="thumbnail"></div>
+								<div class="host">Loading</div>
+								<div class="icon"><img src="/assets/media/generic/controller.webp" alt="Loading Icon" title="Loading"></div>
+								<div class="name">Game Name</div>
+								<div class="enabled"></div>
+								<div class="status status-starting"><i class="fas fa-spin fa-spinner"></i> Starting</div>
+								<div class="port">1234</div>
+								<div class="players">N/A</div>
+								<div class="memory">N/A</div>
+								<div class="cpu">N/A</div>
+								<div class="actions"></div>
+							</div>
+							<div class="service-entry service-loading" data-updated="0">
+								<div class="thumbnail"></div>
+								<div class="host">Loading</div>
+								<div class="icon"><img src="/assets/media/generic/controller.webp" alt="Loading Icon" title="Loading"></div>
+								<div class="name">Game Name</div>
+								<div class="enabled"></div>
+								<div class="status status-starting"><i class="fas fa-spin fa-spinner"></i> Starting</div>
+								<div class="port">1234</div>
+								<div class="players">N/A</div>
+								<div class="memory">N/A</div>
+								<div class="cpu">N/A</div>
+								<div class="actions"></div>
+							</div>
+							<div class="service-entry service-loading" data-updated="0">
+								<div class="thumbnail"></div>
+								<div class="host">Loading</div>
+								<div class="icon"><img src="/assets/media/generic/controller.webp" alt="Loading Icon" title="Loading"></div>
+								<div class="name">Game Name</div>
+								<div class="enabled"></div>
+								<div class="status status-starting"><i class="fas fa-spin fa-spinner"></i> Starting</div>
+								<div class="port">1234</div>
+								<div class="players">N/A</div>
+								<div class="memory">N/A</div>
+								<div class="cpu">N/A</div>
+								<div class="actions"></div>
+							</div>
+							<div class="service-entry service-loading" data-updated="0">
+								<div class="thumbnail"></div>
+								<div class="host">Loading</div>
+								<div class="icon"><img src="/assets/media/generic/controller.webp" alt="Loading Icon" title="Loading"></div>
+								<div class="name">Game Name</div>
+								<div class="enabled"></div>
+								<div class="status status-starting"><i class="fas fa-spin fa-spinner"></i> Starting</div>
+								<div class="port">1234</div>
+								<div class="players">N/A</div>
+								<div class="memory">N/A</div>
+								<div class="cpu">N/A</div>
+								<div class="actions"></div>
+							</div>
+						</div>
+					</div>
+					<!-- Services table will be inserted here -->
+				</div>
+			</div>
+		</main>
+	</div>
 
-                <!-- Applications List -->
-                <div id="applicationsContainer">
-                    <h3>
-                        <i class="fas fa-th-large"></i>
-                        Installed Games
-                    </h3>
-                    <div id="applicationsList" style="">
-                        <!-- Applications will be inserted here -->
-                        <div class="application-card">
-                            <img class="app-thumbnail" title="Loading..." src="/assets/media/generic/controller.webp" alt="Loading...">
-                            <div class="app-installs">
-                                <div class="app-install">
-                                    <span class="host-name">Loading...</span>
-                                    <span class="host-actions">
-                                        <button class="action-create"><i class="fas fa-undo"></i></button>
-                                        <button class="action-backup"><i class="fas fa-floppy-disk"></i></button>
-                                        <button class="action-configure"><i class="fas fa-cog"></i></button>
-                                        <button class="action-browse"><i class="fas fa-folder"></i></button>
-                                        <button class="action-remove"><i class="fas fa-trash-alt"></i></button>
-					                </span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="application-card">
-                            <img class="app-thumbnail" title="Loading..." src="/assets/media/generic/controller.webp" alt="Loading...">
-                            <div class="app-installs">
-                                <div class="app-install">
-                                    <span class="host-name">Loading...</span>
-                                    <span class="host-actions">
-                                        <button class="action-create"><i class="fas fa-undo"></i></button>
-                                        <button class="action-backup"><i class="fas fa-floppy-disk"></i></button>
-                                        <button class="action-configure"><i class="fas fa-cog"></i></button>
-                                        <button class="action-browse"><i class="fas fa-folder"></i></button>
-                                        <button class="action-remove"><i class="fas fa-trash-alt"></i></button>
-					                </span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
 
-                <div id="servicesContainer" style="margin-bottom: 2rem;">
-                    <table id="services-table">
-                        <thead>
-                        <tr class="header">
-                            <th class="host">Host</th>
-                            <th class="icon">Game</th>
-                            <th class="name">Server Name</th>
-                            <th class="enabled">On-Boot</th>
-                            <th class="status">Status</th>
-                            <th class="port">Port</th>
-                            <th class="players">Players</th>
-                            <th class="memory">Memory</th>
-                            <th class="cpu">CPU</th>
-                            <th class="actions">Actions</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        <tr class="service service-loading" data-updated="0">
-                            <td class="host">Loading</td>
-                            <td class="icon"><img src="/assets/media/generic/controller.webp" alt="loading" title="Loading Icon"></td>
-                            <td class="name">Please wait</td>
-                            <td class="enabled"></td>
-                            <td class="status status-stopped"><i class="fas fa-spin fa-spinner"></i> LOADING...</td>
-                            <td class="port">1234</td>
-                            <td class="players">0 / 69</td>
-                            <td class="memory">N/A</td>
-                            <td class="cpu">N/A</td>
-                            <td class="actions"></td>
-                        </tr>
-                        <tr class="service service-loading" data-updated="0">
-                            <td class="host">Loading</td>
-                            <td class="icon"><img src="/assets/media/generic/controller.webp" alt="loading" title="Loading Icon"></td>
-                            <td class="name">Please wait</td>
-                            <td class="enabled"></td>
-                            <td class="status status-stopped"><i class="fas fa-spin fa-spinner"></i> LOADING...</td>
-                            <td class="port">1234</td>
-                            <td class="players">0 / 69</td>
-                            <td class="memory">N/A</td>
-                            <td class="cpu">N/A</td>
-                            <td class="actions"></td>
-                        </tr>
-                        <tr class="service service-loading" data-updated="0">
-                            <td class="host">Loading</td>
-                            <td class="icon"><img src="/assets/media/generic/controller.webp" alt="loading" title="Loading Icon"></td>
-                            <td class="name">Please wait</td>
-                            <td class="enabled"></td>
-                            <td class="status status-stopped"><i class="fas fa-spin fa-spinner"></i> LOADING...</td>
-                            <td class="port">1234</td>
-                            <td class="players">0 / 69</td>
-                            <td class="memory">N/A</td>
-                            <td class="cpu">N/A</td>
-                            <td class="actions"></td>
-                        </tr>
-                        <tr class="service service-loading" data-updated="0">
-                            <td class="host">Loading</td>
-                            <td class="icon"><img src="/assets/media/generic/controller.webp" alt="loading" title="Loading Icon"></td>
-                            <td class="name">Please wait</td>
-                            <td class="enabled"></td>
-                            <td class="status status-stopped"><i class="fas fa-spin fa-spinner"></i> LOADING...</td>
-                            <td class="port">1234</td>
-                            <td class="players">0 / 69</td>
-                            <td class="memory">N/A</td>
-                            <td class="cpu">N/A</td>
-                            <td class="actions"></td>
-                        </tr>
-                        </tbody>
-                    </table>
-                    <!-- Services table will be inserted here -->
-                </div>
-            </div>
-        </main>
-    </div>
 
-    <!-- Metrics Modal -->
-    <div id="metricsModal" class="modal" style="display: none;">
-        <div class="modal-content" style="max-width: 90%; max-height: 90vh; width: 1400px;">
-            <div class="modal-header">
-                <h3><i class="fas fa-chart-line"></i> Service Metrics</h3>
-                <button class="modal-close" onclick="closeMetricsModal()">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="modal-body">
-                <div id="metricsTimeframeSelector" style="margin-bottom: 20px; text-align: center;">
-                    <button class="timeframe-btn" data-timeframe="hour">Hour</button>
-                    <button class="timeframe-btn active" data-timeframe="day">Day</button>
-                    <button class="timeframe-btn" data-timeframe="week">Week</button>
-                    <button class="timeframe-btn" data-timeframe="month">Month</button>
-                    <button class="timeframe-btn" data-timeframe="3month">3 Months</button>
-                    <button class="timeframe-btn" data-timeframe="6month">6 Months</button>
-                    <button class="timeframe-btn" data-timeframe="year">Year</button>
-                    <button class="fullscreen-btn" onclick="toggleFullscreen()">
-                        <i class="fas fa-expand"></i> Fullscreen
-                    </button>
-                </div>
-                <div id="metricsCharts" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                    <div class="chart-container">
-                        <h4>CPU Usage (%)</h4>
-                        <div><canvas id="cpuChart"></canvas></div>
-                    </div>
-                    <div class="chart-container">
-                        <h4>Memory Usage (MB)</h4>
-                        <div><canvas id="memoryChart"></canvas></div>
-                    </div>
-                    <div class="chart-container">
-                        <h4>Player Count</h4>
-                        <div><canvas id="playersChart"></canvas></div>
-                    </div>
-                    <div class="chart-container">
-                        <h4>Server Status</h4>
-                        <div><canvas id="statusChart"></canvas></div>
-                    </div>
-                    <div class="chart-container" style="grid-column: 1 / -1;">
-                        <h4>Response Time (ms)</h4>
-                        <div><canvas id="responseTimeChart"></canvas></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Stop/Restart Modal -->
-    <div id="stopModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3><i class="fas fa-stop"></i> Stop/Restart Service</h3>
-                <button class="modal-close">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="modal-body">
-
-                <div class="info-message">
-                    <p>
-                        Choose whether to stop or restart this service.<br/><br/>
-                        Additionally, (if supported), you may delay the action for up to 1 hour to allow players to finish their sessions.
-                        Delayed stops/restarts will notify players in-game at regular intervals before the action is performed.
-                    </p>
-                </div>
-
-                <div class="button-group">
-
-                    <button title="Stop Game" data-action="stop" class="service-control action-stop">
-                        <i class="fas fa-stop"></i><br/><span>Stop Now</span>
-                    </button>
-
-                    <button title="Send 1-hour timer to stop" data-action="delayed-stop" class="service-control action-stop">
-                        <i class="fas fa-clock"></i><br/><span>Delayed Stop</span>
-                    </button>
-
-                    <button title="Restart Game" data-action="restart" class="service-control action-restart">
-                        <i class="fas fa-undo"></i><br/><span>Restart Now</span>
-                    </button>
-
-                    <button title="Send 1-hour timer to restart" data-action="delayed-restart" class="service-control action-restart">
-                        <i class="fas fa-clock"></i><br/><span>Delayed Restart</span>
-                    </button>
-                </div>
-
-            </div>
-        </div>
-    </div>
-
+	<%- include('partials/modal-service-stop.ejs') %>
 	<%- include('partials/theme-selector.ejs') %>
-    <script src="/assets/dashboard.js"></script>
+	<%- include('partials/modal-service-create.ejs') %>
+	<script src="<%= assetUrl('/assets/dashboard.js') %>"></script>
 </body>
 </html>

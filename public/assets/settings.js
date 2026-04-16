@@ -5,6 +5,13 @@ const changePasswordModal = document.getElementById('changePasswordModal');
 const userDeleteModal = document.getElementById('userDeleteModal');
 const user2faModal = document.getElementById('user2faModal');
 const confirmUserReset2faBtn = document.getElementById('confirmUserReset2faBtn');
+const settingsNexusAuthSettings = document.getElementById('settingsNexusAuthSettings');
+const settingsNexusAuthSettingsToggle = document.getElementById('settingsNexusAuthSettingsToggle');
+const settingsNexusEmail = document.getElementById('settingsNexusEmail');
+const settingsNexusAuthToken = document.getElementById('settingsNexusAuthToken');
+const nexusPreDonateMessage = document.getElementById('nexusPreDonateMessage');
+const settingsNexusRegister = document.getElementById('settingsNexusRegister');
+const settingsNexusCommunityProfile = document.getElementById('settingsNexusCommunityProfile');
 
 function closeModal(el) { if (!el) return; el.classList.remove('show'); }
 function openModal(el) { if (!el) return; el.classList.add('show'); }
@@ -99,6 +106,135 @@ function on2faUser(e) {
 	openModal(user2faModal);
 }
 
+function loadNexusProfile() {
+	// settingsNexusCommunityProfile
+	let email = localStorage.getItem('nexusAuthEmail');
+	if (!email) {
+		return;
+	}
+
+	sha256(email).then(hash => {
+		const headers = {
+			'X-Email': hash,
+		};
+
+		// Verify the authentication token first.
+		fetch('https://api.warlock.nexus/community/full', {headers})
+			.then(response => response.json())
+			.then(data => {
+				if (data.success) {
+					settingsNexusCommunityProfile.style.display = 'block';
+					const profileData = data.data;
+
+					// 1. Map simple text/textarea fields
+					// We use a mapping object to link the incoming keys to our HTML element IDs
+					const fieldMap = {
+						"name": "profileName",
+						"tagline": "profileTagline",
+						"description": "profileDescription",
+						"color": "profileColor",
+						"country": "profileCountry"
+					};
+
+					// Iterate through the map and update values if the key exists in data
+					for (const [dataKey, elementId] of Object.entries(fieldMap)) {
+						const element = document.getElementById(elementId);
+						if (element && profileData[dataKey] !== undefined) {
+							element.value = profileData[dataKey];
+						}
+					}
+
+					// 2. Handle the 'socials' array
+					// We need to convert the array ["url1", "url2"] into a single string with newlines
+					const socialsElement = document.getElementById('profileSocials');
+					if (socialsElement && Array.isArray(profileData.socials)) {
+						socialsElement.value = profileData.socials.join('\n');
+					}
+
+					// 3. Handle the 'enabled' boolean (checkbox)
+					// For checkboxes, we modify the '.checked' property instead of '.value'
+					const enabledCheckbox = document.getElementById('profileEnabled');
+					if (enabledCheckbox && typeof profileData.enabled === 'boolean') {
+						enabledCheckbox.checked = profileData.enabled;
+					}
+				}
+				else {
+					settingsNexusAuthSettings.classList.add('active');
+					const message = document.createElement('p');
+					message.classList.add('error-message');
+					message.innerText = data.message;
+					messageNexusRegisterResponse.innerHTML = '';
+					messageNexusRegisterResponse.appendChild(message);
+				}
+			});
+	});
+}
+
+/**
+ * Collects form data and sends it to the server via POST.
+ */
+async function saveCommunityProfile() {
+	const saveButton = document.getElementById('btnSaveCommunityProfile');
+
+	// 1. Prepare the payload object
+	// We use the same keys as your incoming data for consistency
+	const payload = {
+		name: document.getElementById('profileName').value,
+		tagline: document.getElementById('profileTagline').value,
+		description: document.getElementById('profileDescription').value,
+		color: document.getElementById('profileColor').value,
+		country: document.getElementById('profileCountry').value,
+		enabled: document.getElementById('profileEnabled').checked
+	};
+
+	// 2. Handle the 'socials' transformation
+	// Convert the newline-separated string back into a clean array of strings
+	const socialsText = document.getElementById('profileSocials').value;
+	payload.socials = socialsText
+		.split('\n')
+		.map(line => line.trim())
+		.filter(line => line !== ""); // Remove empty lines
+
+	// 3. UI Feedback: Disable button to prevent double-submission
+	saveButton.disabled = true;
+	const originalText = saveButton.innerText;
+	saveButton.innerText = "Saving...";
+
+	try {
+		const email = await sha256(localStorage.getItem('nexusAuthEmail'));
+
+		const headers = {
+			'X-Email': email,
+			'X-Auth-Token': localStorage.getItem('nexusAuthToken') || '',
+			'Content-Type': 'application/json'
+		};
+
+		// 4. Perform the POST request
+		const response = await fetch('https://api.warlock.nexus/community/details', { // Replace with your actual endpoint
+			method: 'POST',
+			headers,
+			body: JSON.stringify(payload)
+		});
+
+		if (!response.ok) {
+			const errorData = await response.json();
+			throw new Error(errorData.message || 'Failed to save profile');
+		}
+
+		// Success!
+		alert("Community profile saved successfully!");
+		console.log("Saved payload:", payload);
+
+	} catch (error) {
+		console.error("Error saving profile:", error);
+		alert(`Error: ${error.message}`);
+	} finally {
+		// 5. Restore button state
+		saveButton.disabled = false;
+		saveButton.innerText = originalText;
+	}
+}
+
 // Create user button
 if (btnCreateUser) {
 	btnCreateUser.addEventListener('click', () => {
@@ -186,5 +322,84 @@ confirmUserReset2faBtn.addEventListener('click', async () => {
 	}
 });
 
+const saveBtn = document.getElementById('btnSaveCommunityProfile');
+if (saveBtn) {
+	saveBtn.addEventListener('click', saveCommunityProfile);
+}
+
+if (localStorage.getItem('nexusAuthEmail')) {
+	settingsNexusEmail.value = localStorage.getItem('nexusAuthEmail');
+	nexusPreDonateMessage.style.display = 'none';
+}
+else {
+	settingsNexusAuthSettings.classList.add('active');
+}
+if (localStorage.getItem('nexusAuthToken')) {
+	settingsNexusAuthToken.value = localStorage.getItem('nexusAuthToken');
+}
+
+settingsNexusAuthSettingsToggle.addEventListener('click', e => {
+	settingsNexusAuthSettings.classList.toggle('active');
+	e.preventDefault();
+});
+
+// Event listeners for nexus registration events
+settingsNexusEmail.addEventListener('keyup', e => {
+	if (e.key === 'Enter') {
+		settingsNexusRegister.click();
+	}
+});
+settingsNexusAuthToken.addEventListener('keyup', e => {
+	if (e.key === 'Enter') {
+		settingsNexusRegister.click();
+	}
+});
+settingsNexusRegister.addEventListener('click', () => {
+	let email = settingsNexusEmail.value,
+		token = settingsNexusAuthToken.value;
+
+	if (!email) {
+		alert('Please enter a valid email address.');
+		return;
+	}
+
+	if (!token) {
+		alert('Please enter a valid token.');
+		return;
+	}
+
+	showToast('info', 'Attempting to register with Warlock.Nexus...');
+	sha256(email).then(hash => {
+		const headers = {
+			'X-Email': hash,
+			'X-Auth-Token': token,
+		};
+
+		// Verify the authentication token first.
+		fetch('https://api.warlock.nexus/community/ping', {headers})
+			.then(response => response.json())
+			.then(data => {
+				if (data.success) {
+					showToast('success', 'Successfully authenticated with Warlock.Nexus!');
+					settingsNexusAuthSettings.classList.remove('active');
+					messageNexusRegisterResponse.innerHTML = '';
+					nexusPreDonateMessage.style.display = 'none';
+					localStorage.setItem('nexusAuthEmail', email);
+					localStorage.setItem('nexusAuthToken', token);
+
+					loadNexusProfile();
+				}
+				else {
+					const message = document.createElement('p');
+					message.classList.add('error-message');
+					message.innerText = data.message;
+					messageNexusRegisterResponse.innerHTML = '';
+					messageNexusRegisterResponse.appendChild(message);
+				}
+			});
+	});
+});
+
 // initial load
 loadUsers();
+loadNexusProfile();

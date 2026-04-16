@@ -1,88 +1,118 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Warlock - Add Host</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/assets/frontend.css">
-    <link rel="stylesheet" href="/assets/themes.css">
-    <script src="/assets/common.js"></script>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Warlock - Add Host</title>
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+	<link rel="stylesheet" href="<%= assetUrl('/assets/frontend.css') %>">
+	<link rel="stylesheet" href="<%= assetUrl('/assets/themes.css') %>">
+	<script src="<%= assetUrl('/assets/common.js') %>"></script>
+	<link rel="icon" type="image/webp" sizes="64x64" href="<%= assetUrl('/assets/media/logos/warlock/warlock-lopoly-logo-64x64.webp') %>">
+	<link rel="icon" type="image/webp" sizes="128x128" href="<%= assetUrl('/assets/media/logos/warlock/warlock-lopoly-logo-128x128.webp') %>">
+	<link rel="icon" type="image/webp" sizes="256x256" href="<%= assetUrl('/assets/media/logos/warlock/warlock-lopoly-logo-256x256.webp') %>">
+	<link rel="icon" type="image/webp" sizes="512x512" href="<%= assetUrl('/assets/media/logos/warlock/warlock-lopoly-logo-512x512.webp') %>">
 </head>
 <body>
 
 <%- include('partials/nav.ejs') %>
 
 <div class="main-container" style="grid-template-columns: 1fr; max-width: 800px;">
-    <main class="content-area">
-        <div class="content-header">
-            <div class="content-header-inner">
-                <h2>
-                    <i class="fas fa-server"></i>
-                    Add Host
-                </h2>
-                <p>Add a server host to be managed</p>
-            </div>
-        </div>
+	<main class="content-area">
+		<div class="content-header">
+			<div class="content-header-inner">
+				<h2>
+					<i class="fas fa-server"></i>
+					Add Host
+				</h2>
+				<p>Add a server host to be managed</p>
+			</div>
+		</div>
 
-        <div class="content-body">
-            <div class="info-message">
-            <p>
-                In order for Warlock to install game servers, you first must define what server IP addresses or hostnames
-                it should manage.
-            </p>
-            </div>
+		<div class="content-body">
+			<% if (typeof(localKey) === 'undefined') { %>
+				<div class="info-message">
+					<p>
+						In order for Warlock to install game servers, you first must define what server IP addresses or hostnames
+						it should manage.
+					</p>
+				</div>
+			<% } %>
 
 
-            <% if (typeof(error) !== 'undefined') { %>
-                <% if (typeof(localKey) !== 'undefined') { %>
-                    <% if (typeof(showError) !== 'undefined' && showError) { %>
-                        <!-- Show errors on retries, for debugging things like firewall issues -->
-                        <div class="error-message">
-                            <i class="fas fa-exclamation-triangle"></i>
-                            <strong>Error:</strong> <%= error %>
-                        </div>
-                    <% } %>
+			<% if (typeof(error) !== 'undefined') { %>
+				<% if (typeof(localKey) !== 'undefined') { %>
+					<% if (typeof(showError) !== 'undefined' && showError) { %>
+						<!-- Show errors on retries, for debugging things like firewall issues -->
+						<div class="error-message">
+							<i class="fas fa-exclamation-triangle"></i>
+							<strong>Error:</strong> <%= error %>
+						</div>
+					<% } %>
 
-                    <!-- An error occurred but we have a local key to show -->
-                    <pre class="terminal"><code># Please connect to the host as ROOT and run the following command:
-# If you need to, switch to root with 'sudo su -' first.
-#
-# Once ran, try to re-add this host.
+					<div class="info-message">
+						<p>
+							Please connect to the host and run the following command.<br/><br/>
+							When complete, click on 'Add Host' again to reattempt the connection.
+						</p>
+					</div>
 
-[ -d /root/.ssh ] || mkdir /root/.ssh; echo "" >> /root/.ssh/authorized_keys; echo "<%= localKey %>" >> /root/.ssh/authorized_keys; chmod og-rwx /root/.ssh -R
+					<!-- An error occurred, but we have a local key to show -->
+					<pre class="terminal"><code id="host-add-key-block">if which sudo; then echo "If prompted, please enter your user password."; sudo mkdir -p /root/.ssh && echo "<%= localKey %>" | sudo tee -a /root/.ssh/authorized_keys > /dev/null && sudo chmod og-rwx /root/.ssh -R; else echo "Please enter the ROOT password when prompted."; su - root -c 'mkdir -p /root/.ssh && echo "<%= localKey %>" >> /root/.ssh/authorized_keys && chmod og-rwx /root/.ssh -R'; fi</code></pre>
+					<button type="button" class="copy-code-btn" onclick="copyHostAddKey()">
+						<i class="fas fa-copy"></i> Copy Command
+					</button>
+				<% } else { %>
+					<div class="error-message">
+						<i class="fas fa-exclamation-triangle"></i>
+						<strong>Error:</strong> <%= error %>
+					</div>
+				<% } %>
+			<% } %>
 
-                    </code></pre>
-                <% } else { %>
-                    <div class="error-message">
-                        <i class="fas fa-exclamation-triangle"></i>
-                        <strong>Error:</strong> <%= error %>
-                    </div>
-                <% } %>
-            <% } %>
+			<form action="/host/add" method="POST">
+				<input type="hidden" name="_csrf" value="<%= csrfToken %>">
+				<% if (typeof(localKey) !== 'undefined') { %>
+					<input type="hidden" name="retry" value="1">
+				<% } %>
 
-            <form action="/host/add" method="POST">
-                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                <% if (typeof(localKey) !== 'undefined') { %>
-                    <input type="hidden" name="retry" value="1">
-                <% } %>
+				<div class="form-group">
+					<label for="host-ip">Hostname or IP Address</label>
+					<% if (typeof(ip) !== 'undefined') { %>
+						<input name="ip" type="text" id="host-ip" value="<%= ip %>" placeholder="localhost or 1.2.3.4">
+					<% } else { %>
+						<input name="ip" type="text" id="host-ip" placeholder="localhost or 1.2.3.4">
+					<% } %>
+				</div>
 
-                <div class="form-group">
-                    <label for="host-ip">Hostname or IP Address</label>
-                    <% if (typeof(ip) !== 'undefined') { %>
-                        <input name="ip" type="text" id="host-ip" value="<%= ip %>" placeholder="localhost or 1.2.3.4">
-                    <% } else { %>
-                        <input name="ip" type="text" id="host-ip" placeholder="localhost or 1.2.3.4">
-                    <% } %>
-                </div>
-
-                <button type="submit" class="action-save">Add Host</button>
-            </form>
-        </div>
-    </main>
+				<button type="submit" class="action-save">Add Host</button>
+			</form>
+		</div>
+	</main>
 </div>
 
 <%- include('partials/theme-selector.ejs') %>
+
+<script>
+	function copyHostAddKey() {
+		const codeBlock = document.getElementById('host-add-key-block');
+		const text = codeBlock.innerText || codeBlock.textContent;
+		navigator.clipboard.writeText(text.trim()).then(function() {
+			showToast('success', 'Command copied to clipboard, please paste in your target server.');
+		});
+	}
+
+	// Add support for reestablishing the SSH key on an existing host.
+	// If present, this should auto-fill the IP address field and attempt the connection immediately.
+	const params = new URLSearchParams(window.location.search);
+	if (params.has('host')) {
+		const hostValue = params.get('host'),
+			input = document.getElementById('host-ip');
+		input.value = hostValue;
+		input.closest('form').submit();
+	}
+</script>
+
 </body>
 </html>

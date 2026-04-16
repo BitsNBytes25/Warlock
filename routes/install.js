@@ -3,6 +3,7 @@ const {User, Host} = require("../db");
 const router = express.Router();
 const csrf = require('@dr.pogodin/csurf');
 const bodyParser = require('body-parser');
+const fs = require('fs');
 
 let csrfProtection = csrf({ cookie: true });
 let parseForm = bodyParser.urlencoded({ extended: false });
@@ -22,7 +23,9 @@ router.get('/', csrfProtection, (req, res) => {
 });
 
 router.post('/', parseForm, csrfProtection, (req, res) => {
-	const {username, password, confirm} = req.body;
+	const {username, password, confirm} = req.body,
+		isRoot = process.getuid() === 0,
+		isDocker = fs.existsSync('/.dockerenv');
 
 	res.locals.csrfToken = req.csrfToken();
 
@@ -45,8 +48,8 @@ router.post('/', parseForm, csrfProtection, (req, res) => {
 			// Set session user
 			req.session.user = user.id;
 
-			if (process.getuid() === 0) {
-				// If the service is running as root, we can add localhost to the list of management servers.
+			if (isRoot && !isDocker) {
+				// If the service is running as root and not in Docker, we can add localhost to the list of management servers.
 				Host.create({ ip: '127.0.0.1' }).then(() => {
 					res.redirect('/');
 				});

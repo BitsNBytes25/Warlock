@@ -1,8 +1,11 @@
 <nav class="navbar">
     <div class="navbar-content">
         <a href="/" class="logo">
-            <i class="fas fa-hat-wizard"></i>
-            <span>Warlock</span>
+            <img src="<%= assetUrl('/assets/media/logos/warlock/warlock-lopoly-logo-64x48.webp') %>" alt="Warlock Logo" class="logo-img">
+            <span>
+                Warlock
+                <span class="sub-title"><br/>Game Server Manager</span>
+            </span>
         </a>
         <ul class="nav-links">
             <li><a href="/dashboard" class="nav-link" data-page="dashboard">
@@ -10,9 +13,6 @@
             </a></li>
             <li><a href="/hosts" class="nav-link" data-page="hosts">
                 <i class="fas fa-desktop"></i> Hosts
-            </a></li>
-            <li><a href="/files" class="nav-link" data-page="files">
-                <i class="fas fa-folder"></i> Files
             </a></li>
             <li><a href="/settings" class="nav-link" data-page="settings">
                 <i class="fas fa-cog"></i> Settings

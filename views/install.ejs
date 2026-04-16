@@ -6,9 +6,13 @@
 	<title>Warlock - First Setup</title>
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-	<link rel="stylesheet" href="/assets/frontend.css">
-	<link rel="stylesheet" href="/assets/themes.css">
-	<script src="/assets/common.js"></script>
+	<link rel="stylesheet" href="<%= assetUrl('/assets/frontend.css') %>">
+	<link rel="stylesheet" href="<%= assetUrl('/assets/themes.css') %>">
+	<script src="<%= assetUrl('/assets/common.js') %>"></script>
+	<link rel="icon" type="image/webp" sizes="64x64" href="<%= assetUrl('/assets/media/logos/warlock/warlock-lopoly-logo-64x64.webp') %>">
+	<link rel="icon" type="image/webp" sizes="128x128" href="<%= assetUrl('/assets/media/logos/warlock/warlock-lopoly-logo-128x128.webp') %>">
+	<link rel="icon" type="image/webp" sizes="256x256" href="<%= assetUrl('/assets/media/logos/warlock/warlock-lopoly-logo-256x256.webp') %>">
+	<link rel="icon" type="image/webp" sizes="512x512" href="<%= assetUrl('/assets/media/logos/warlock/warlock-lopoly-logo-512x512.webp') %>">
 </head>
 <body>
 
@@ -58,6 +62,6 @@
 
 <%- include('partials/theme-selector.ejs') %>
 
-<script src="/assets/install.js"></script>
+<script src="<%= assetUrl('/assets/install.js') %>"></script>
 </body>
 </html>

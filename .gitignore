@@ -4,3 +4,6 @@ DEV/
 .idea/copilot*
 warlock.sqlite
 .vagrant/
+/ssh/
+/data/
+/warlock-profile.csv

@@ -1,0 +1,26 @@
+meta {
+  name: Service Delete
+  type: http
+  seq: 11
+}
+
+delete {
+  url: {{host}}/api/service/:guid/:host/:service
+  body: json
+  auth: inherit
+}
+
+params:path {
+  service: {{lookup_service}}
+  host: {{lookup_host}}
+  guid: {{lookup_app}}
+}
+
+body:json {
+  {"action": "stop"}
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

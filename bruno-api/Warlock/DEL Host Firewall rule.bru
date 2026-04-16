@@ -1,7 +1,7 @@
 meta {
   name: DEL Host Firewall rule
   type: http
-  seq: 11
+  seq: 31
 }
 
 delete {
@@ -11,7 +11,7 @@ delete {
 }
 
 params:path {
-  host: 45.26.230.248
+  host: {{lookup_host}}
 }
 
 body:json {
@@ -25,4 +25,5 @@ body:json {
 
 settings {
   encodeUrl: true
+  timeout: 0
 }

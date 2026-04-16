@@ -4,6 +4,11 @@ const { cmdRunner } = require("../../libs/cmd_runner.mjs");
 const { Host } = require('../../db');
 const { logger } = require('../../libs/logger.mjs');
 const {buildRemoteExec} = require("../../libs/build_remote_exec.mjs");
+const {clearTaggedCache} = require("../../libs/cache.mjs");
+const {validateHost} = require("../../libs/validate_host.mjs");
+const path = require('path');
+const {firewallAutoAllow} = require("../../libs/firewall_auto_allow.mjs");
+const {filePushRunner} = require("../../libs/file_push_runner.mjs");
 
 const router = express.Router();
 
@@ -151,7 +156,13 @@ router.get('/:host', validate_session, (req, res) => {
 // POST add rule
 router.post('/:host', validate_session, (req, res) => {
 	const host = req.params.host;
-	const {to, from, proto, action, comment} = req.body;
+	let {to, from, proto, action, comment} = req.body;
+
+	if (!action) {
+		return res.json({ success: false, error: 'Action is required to add a rule' });
+	}
+
+	action = action.toUpperCase();
 
 	Host.count({ where: { ip: host } }).then(count => {
 		if (count === 0) {
@@ -195,7 +206,13 @@ router.post('/:host', validate_session, (req, res) => {
 // DELETE remove rule by spec
 router.delete('/:host', validate_session, (req, res) => {
 	const host = req.params.host;
-	const {to, from, proto, action} = req.body;
+	let {to, from, proto, action} = req.body;
+
+	if (!action) {
+		return res.json({ success: false, error: 'Action is required to add a rule' });
+	}
+
+	action = action.toUpperCase();
 
 	Host.count({ where: { ip: host } }).then(count => {
 		if (count === 0) {
@@ -230,6 +247,7 @@ router.post('/enable/:host', validate_session, (req, res) => {
 
 		cmdRunner(host, 'which ufw && ufw --force enable || echo "UFW is not installed, cannot enable"')
 			.then(result => {
+				clearTaggedCache(host, 'overview');
 				return res.json({ success: true, stdout: result.stdout, stderr: result.stderr });
 			}).catch(e => {
 				logger.error('Error enabling ufw:', e);
@@ -247,6 +265,7 @@ router.post('/disable/:host', validate_session, (req, res) => {
 
 		cmdRunner(host, 'which ufw && ufw --force disable || echo "UFW is not installed, cannot disable"')
 			.then(result => {
+				clearTaggedCache(host, 'overview');
 				return res.json({ success: true, stdout: result.stdout, stderr: result.stderr });
 			}).catch(e => {
 				logger.error('Error enabling ufw:', e);
@@ -255,23 +274,48 @@ router.post('/disable/:host', validate_session, (req, res) => {
 	});
 });
 
-router.post('/install/:host', validate_session, (req, res) => {
-	const host = req.params.host;
-	Host.count({ where: { ip: host } }).then(count => {
-		if (count === 0) {
-			return res.json({ success: false, error: 'Requested host is not in the configured HOSTS list' });
-		}
+router.post(
+	'/install/:host',
+	validate_session,
+	validateHost,
+	async (req, res) => {
+		const script = path.join(process.cwd(), 'scripts', 'linux_install_firewall.sh');
 
-		let cmdData = buildRemoteExec('https://raw.githubusercontent.com/eVAL-Agency/ScriptsCollection/refs/heads/main/dist/ufw/linux_install_ufw.sh');
+		if (req.hostData.host === 'localhost' || req.hostData.host === '127.0.0.1') {
+			// Perform operations for localhost; they'll be slightly different than remote hosts.
 
-		cmdRunner(host, cmdData.cmd)
-			.then(result => {
+			// Ensure file is executable; it should be already, but just check.
+			await cmdRunner(req.hostData.host, 'chmod +x ' + script);
+
+			// Run the script to install the appropriate firewall.
+			cmdRunner(req.hostData.host, script).then(result => {
+				// Since we're performing this operation on the host where Warlock resides,
+				// we want to ensure the user still has access to Warlock once the firewall is enabled.
+				firewallAutoAllow(req);
 				return res.json({ success: true, stdout: result.stdout, stderr: result.stderr });
 			}).catch(e => {
-			logger.error('Error installing ufw:', e);
-			return res.json({ success: false, error: 'Failed to installing UFW' });
-		});
-	});
-});
+				logger.error('Error installing firewall:', e);
+				return res.json({ success: false, error: 'Failed to install firewall' });
+			});
+		}
+		else {
+			// Ensure the target payload directory exists; we'll just use /opt/warlock to keep everything together.
+			await cmdRunner(req.hostData.host, '[ -d /opt/warlock ] || mkdir -p /opt/warlock');
+
+			// Perform the request on the remote host, but first we need to transfer the install script over there.
+			await filePushRunner(req.hostData.host, script, '/opt/warlock/linux_install_firewall.sh');
+
+			// Now we can run the script
+			cmdRunner(req.hostData.host, 'chmod +x /opt/warlock/linux_install_firewall.sh && /opt/warlock/linux_install_firewall.sh').then(result => {
+				// The script already handles ensuring access from Warlock,
+				// and the user will be able to add addition rules if necessary.
+				return res.json({ success: true, stdout: result.stdout, stderr: result.stderr });
+			}).catch(e => {
+				logger.error('Error installing firewall:', e);
+				return res.json({ success: false, error: 'Failed to install firewall' });
+			});
+		}
+	}
+);
 
 module.exports = router;

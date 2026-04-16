@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Warlock - Host Details</title>
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+	<link rel="stylesheet" href="<%= assetUrl('/assets/frontend.css') %>">
+	<link rel="stylesheet" href="<%= assetUrl('/assets/themes.css') %>">
+	<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+	<script src="<%= assetUrl('/assets/common.js') %>"></script>
+	<script src="<%= assetUrl('/assets/elements/host-cpu.js') %>"></script>
+	<script src="<%= assetUrl('/assets/elements/host-memory.js') %>"></script>
+	<script src="<%= assetUrl('/assets/elements/host-network.js') %>"></script>
+	<script src="<%= assetUrl('/assets/elements/host-disks.js') %>"></script>
+	<script src="<%= assetUrl('/assets/elements/host-disk.js') %>"></script>
+	<script src="<%= assetUrl('/assets/elements/host-nexus.js') %>"></script>
+	<link rel="icon" type="image/webp" sizes="64x64" href="<%= assetUrl('/assets/media/logos/warlock/warlock-lopoly-logo-64x64.webp') %>">
+	<link rel="icon" type="image/webp" sizes="128x128" href="<%= assetUrl('/assets/media/logos/warlock/warlock-lopoly-logo-128x128.webp') %>">
+	<link rel="icon" type="image/webp" sizes="256x256" href="<%= assetUrl('/assets/media/logos/warlock/warlock-lopoly-logo-256x256.webp') %>">
+	<link rel="icon" type="image/webp" sizes="512x512" href="<%= assetUrl('/assets/media/logos/warlock/warlock-lopoly-logo-512x512.webp') %>">
+	<script>
+		hostData = [<%- JSON.stringify(hostData) %>];
+		applicationData = <%- JSON.stringify(apps) %>;
+	</script>
+</head>
+<body data-use-app-background="1">
+<%- include('partials/nav.ejs') %>
+
+<div class="main-container wide">
+	<main class="content-area">
+		<div class="content-header" data-use-app-header="1">
+			<div class="content-header-inner">
+				<h2>
+					<i class="fas fa-server"></i>
+					<span class="host-name-placeholder">
+						Host Details
+					</span>
+				</h2>
+			</div>
+		</div>
+
+		<div class="content-subheader">
+			<div id="hostDetailOverview" class="host-details-overview">
+				<div class="host-cpu">
+					<div class="metric-label">CPU</div>
+					<host-cpu-metric class="metric-value" model="0" id="hostDetailsCpu" bargraph="1"></host-cpu-metric>
+				</div>
+				<div class="host-memory">
+					<div class="metric-label">Memory</div>
+					<host-memory-metric class="metric-value" model="0" id="hostDetailsMemory" bargraph="1"></host-memory-metric>
+				</div>
+				<div class="host-network">
+					<div class="metric-label">Network</div>
+					<host-network-metric class="metric-value" model="0" id="hostDetailsNetwork"></host-network-metric>
+				</div>
+			</div>
+		</div>
+
+		<div class="content-body">
+			<div class="error-message" id="notConnectedError">
+				<p>
+				Host is not reachable via SSH, please ensure the host is online and SSH keys are installed.
+				<button class="link-control action-edit" data-href="">
+					<i class="fas fa-key"></i>
+					Reestablish SSH Key
+				</button>
+				</p>
+			</div>
+
+			<nav class="tabs-header">
+				<a href="#overview">
+					<i class="fas fa-home"></i> Overview
+				</a>
+				<a href="#metrics">
+					<i class="fas fa-chart-line"></i> Metrics
+				</a>
+				<a href="#files">
+					<i class="fas fa-folder"></i> Files
+				</a>
+				<a href="#firewall">
+					<i class="fas fa-shield"></i> Firewall
+				</a>
+				<a href="#cron">
+					<i class="fas fa-clock"></i> Cron Jobs
+				</a>
+				<a href="#settings">
+					<i class="fas fa-cogs"></i> Settings
+				</a>
+			</nav>
+
+			<div class="tab-target" id="host-details-overview">
+				<%- include('partials/host-overview.ejs') %>
+			</div>
+			<div class="tab-target" id="host-details-metrics">
+				<%- include('partials/host-metrics.ejs') %>
+			</div>
+			<div class="tab-target" id="host-details-files">
+				<%- include('partials/host-files.ejs') %>
+			</div>
+			<div class="tab-target" id="host-details-firewall">
+				<%- include('partials/host-firewall.ejs') %>
+			</div>
+			<div class="tab-target" id="host-details-cron">
+				<%- include('partials/host-cron.ejs') %>
+			</div>
+			<div class="tab-target" id="host-details-settings">
+				<%- include('partials/host-settings.ejs') %>
+			</div>
+		</div>
+	</main>
+</div>
+
+<%- include('partials/host-firewall-modals.ejs') %>
+<%- include('partials/host-cron-modals.ejs') %>
+<%- include('modals/file-create-folder-modal.ejs') %>
+<%- include('modals/file-create-file-modal.ejs') %>
+<%- include('modals/file-upload-modal.ejs') %>
+<%- include('modals/file-compress-folder-modal.ejs') %>
+<%- include('modals/file-rename-modal.ejs') %>
+<%- include('modals/file-delete-file-modal.ejs') %>
+<%- include('modals/file-edit-modal.ejs') %>
+
+<%- include('partials/theme-selector.ejs') %>
+<script src="<%= assetUrl('/assets/host_details.js') %>"></script>
+<script src="<%= assetUrl('/assets/files.js') %>"></script>
+<link rel="stylesheet" href="<%= assetUrl('/assets/codemirror/codemirror.css') %>">
+<link rel="stylesheet" href="<%= assetUrl('/assets/codemirror/theme/material-darker.css') %>">
+<script src="<%= assetUrl('/assets/codemirror/codemirror.js') %>"></script>
+</body>
+</html>
+

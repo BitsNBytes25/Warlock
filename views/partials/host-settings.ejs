@@ -1,0 +1,28 @@
+<div class="settings-section">
+    <h4>Remove Host</h4>
+    <div class="warning-message">
+        <p>
+            This will remove the host from Warlock's management system. It will not affect the actual server or any installed applications.
+            <br/><br/>
+            Hosts can be re-added later and all compatible applications will be detected.
+        </p>
+    </div>
+
+    <button class="action-remove" id="btnDeleteHost">
+        <i class="fas fa-trash"></i>
+        Remove Host from Warlock
+    </button>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const btnDeleteHost = document.getElementById('btnDeleteHost');
+
+    if (btnDeleteHost) {
+        btnDeleteHost.addEventListener('click', () => {
+			window.location.href = `/host/delete/${loadedHost}`;
+        });
+    }
+});
+</script>
+

@@ -2,227 +2,226 @@
  * Primary handler to load the application on page load
  */
 
-function renderHost(hostData, isCompatible, compatibleNotice) {
-	const hostContainer = document.createElement('div'),
-		hostnameContainer = document.createElement('div'),
-		metricsContainer = document.createElement('div');
+function renderHost(hostData) {
+	const hostContainer = document.createElement('div');
 
-	hostContainer.className = 'host-card';
+	hostContainer.className = 'host-entry';
+	hostContainer.dataset.host = hostData.host;
 	if (hostData.os.name) {
-		hostContainer.appendChild(renderHostOSThumbnail(hostData.ip));
+		let thumbnail = document.createElement('div');
+		thumbnail.className = 'thumbnail';
+		thumbnail.appendChild(renderHostOSThumbnail(hostData.host));
+		hostContainer.appendChild(thumbnail);
 	}
-
-	if (isCompatible) {
-		hostContainer.classList.add('compatible-host');
-		hostContainer.dataset.host = hostData.ip;
-	}
-	metricsContainer.className = 'host-metrics-list';
 
 	// Hostname
-	hostnameContainer.className = 'host-title';
+	const hostnameContainer = document.createElement('div')
+	hostnameContainer.className = 'hostname';
 	if (hostData.os.title) {
-		const icon = renderHostIcon(hostData.ip);
-		hostnameContainer.innerHTML = `<h4 class="host-name">${icon} ${hostData.hostname}</h4>`;
+		const icon = renderHostIcon(hostData.host);
+		hostnameContainer.innerHTML = `${icon} ${hostData.hostname}`;
 	}
 	else {
-		hostnameContainer.innerHTML = `<h4 class="host-name">${hostData.hostname}</h4>`;
+		hostnameContainer.innerHTML = hostData.hostname;
 	}
+	hostContainer.appendChild(hostnameContainer);
 
 	// IP
-	/*const ip = document.createElement('div');
-	ip.className = 'host-desc';
-	ip.textContent = hostData.ip || '';
-	hostnameContainer.appendChild(ip);*/
+	const ipContainer = document.createElement('div');
+	ipContainer.className = 'ip';
+	ipContainer.innerHTML = hostData.host;
+	hostContainer.appendChild(ipContainer);
+
+
+	// Connected/Disconnected Status
+	const status = document.createElement('div');
+	status.className = 'metric-item metric-status status';
+	status.innerHTML = `<host-connected-metric host="${hostData.host}" data-title="ON: "></host-connected-metric>`;
+	hostContainer.appendChild(status);
 
 	// CPU
 	const cpu = document.createElement('div');
-	cpu.className = 'metric-item metric-cpu';
-	const threads = hostData.cpu.threads || 0;
-	const physical = hostData.cpu.physical_cores || (hostData.cpu.cores_per_socket && hostData.cpu.count ? (hostData.cpu.cores_per_socket * hostData.cpu.count) : 0);
-	cpu.innerHTML = `CPU: ${hostData.cpu.usage}%<div class="cpu-cores-inline">${physical && physical>0 ? `${physical} cores / ${threads} threads` : `${threads} threads`}</div>`;
-	metricsContainer.appendChild(cpu);
+	cpu.className = 'metric-item metric-cpu cpu';
+	cpu.innerHTML = `<host-cpu-metric host="${hostData.host}" model="1" bargraph="1" data-title="CPU: "></host-cpu-metric>`;
+	hostContainer.appendChild(cpu);
 
 	// Memory
 	const memory = document.createElement('div');
-	memory.className = 'metric-item metric-memory';
-	// Memory values
-	const used = Number(hostData.memory.used || 0);
-	const total = Number(hostData.memory.total || 0) || 1;
-	memory.innerHTML = `Memory: ${formatFileSize(total - used)} free`;
-	metricsContainer.appendChild(memory);
+	memory.className = 'metric-item metric-memory memory';
+	memory.innerHTML = `<host-memory-metric host="${hostData.host}" bargraph="1" data-title="MEM: "></host-memory-metric>`;
+	hostContainer.appendChild(memory);
 
 	// Disks
-	hostData.disks.forEach(disk => {
-		const diskDiv = document.createElement('div');
-		diskDiv.className = 'metric-item metric-disk';
-		diskDiv.innerHTML = `Disk (${disk.mountpoint}): ${formatFileSize(disk.avail)} free`;
-		metricsContainer.appendChild(diskDiv);
-	});
-
-	hostContainer.appendChild(hostnameContainer);
-	hostContainer.appendChild(metricsContainer);
+	const disks = document.createElement('div');
+	disks.className = 'metric-item metric-disks disks';
+	disks.innerHTML = `<host-disks-metric host="${hostData.host}" bargraph="1" data-title="DISKS: "></host-disks-metric>`;
+	hostContainer.appendChild(disks);
 
 	const msg = document.createElement('p');
-	if (!isCompatible) {
-		msg.className = 'error-message';
-		if (compatibleNotice) {
-			msg.textContent = compatibleNotice;
-		} else {
-			msg.textContent = 'Incompatible host';
-		}
-	}
-	else {
-		if (compatibleNotice) {
-			msg.className = 'warning-message';
-			msg.textContent = compatibleNotice;
-		} else {
-			msg.className = 'success-message';
-			msg.textContent = 'Compatible host';
-		}
-	}
-
+	msg.className = 'compatible-message';
 	hostContainer.appendChild(msg);
 
-	return hostContainer.outerHTML;
+	return hostContainer;
 }
 
 window.addEventListener('DOMContentLoaded', () => {
 
-	fetchApplications().then(applications => {
-		const applicationSelect = document.getElementById('selectApplication'),
-			selectedApplicationDetails = document.getElementById('selectedApplicationDetails');
+	const applicationSelect = document.getElementById('selectApplication'),
+		selectedApplicationDetails = document.getElementById('selectedApplicationDetails');
 
-		Object.keys(applications).forEach((key) => {
-			const option = document.createElement('option');
-			option.value = key;
-			option.text = applications[key].title;
-			applicationSelect.appendChild(option);
-		});
+	// Clear on first load
+	applicationSelect.value = '';
 
-		applicationSelect.addEventListener('change', () => {
-			const selectedApp = applicationSelect.value;
-			loadApplication(selectedApp).then(app => {
-				console.log(app);
+	applicationData.forEach(app => {
+		const option = document.createElement('option');
+		option.value = app.guid;
+		option.text = app.title;
+		applicationSelect.appendChild(option);
+	});
 
-				let appUrl = null, appUrlLabel = null, html = '',
-					supportedPlatforms = {};
+	let hostsTarget = document.getElementById('installAppHostList');
+	hostData.forEach(host => {
+		// Render each host on page load so they're available for metrics polling.
+		hostsTarget.appendChild(renderHost(host));
+	});
 
-				if (app.source === 'github' && app.repo) {
-					appUrl = `https://github.com/${app.repo}`;
-					appUrlLabel = `${app.repo} on GitHub`;
+	applicationSelect.addEventListener('change', () => {
+		const selectedApp = applicationSelect.value;
+		loadApplication(selectedApp).then(app => {
+			let appUrl = null, appUrlLabel = null, html = '',
+				supportedPlatforms = {};
+
+			if (app.source === 'github' && app.repo) {
+				appUrl = `https://github.com/${app.repo}`;
+				appUrlLabel = `${app.repo} on GitHub`;
+			}
+
+			if (appUrl) {
+				html += `<p><strong>Source:</strong> <a href="${appUrl}" target="_blank" rel="noopener">${appUrlLabel}</a></p>`;
+			}
+			if (app.author) {
+				if (app.author.includes('@') && app.author.includes('<')) {
+					const authorMatch = app.author.match(/(.*)<(.*)>/);
+					if (authorMatch) {
+						const authorName = authorMatch[1].trim();
+						const authorEmail = authorMatch[2].trim();
+						html += `<p><strong>Author:</strong> ${authorName} <a href="mailto:${authorEmail}"><i class="fas fa-envelope"></i></a></p>`;
+					 } else {
+						html += `<p><strong>Author:</strong> ${app.author}</p>`;
+					 }
 				}
+			}
+			if (app.supports) {
+				html += `<p><strong>Supports:</strong></p><ul>`;
+				app.supports.forEach(support => {
+					html += `<li>${support}</li>`;
+					// Support is a general format, usually something like "Debian 12, 13" or "Ubuntu 20.04, 22.04"
+					// We can parse this to populate supportedPlatforms
+					const parts = support.split(' ');
+					if (parts.length >= 2) {
+						const platform = parts[0].toLowerCase();
+						const versions = parts.slice(1).join(' ').split(',').map(v => v.trim());
+						if (!supportedPlatforms[platform]) {
+							supportedPlatforms[platform] = new Set();
+						}
+						versions.forEach(version => supportedPlatforms[platform].add(version));
+					}
+					else {
+						// At least add the platform with no versions
+						const platform = support.toLowerCase();
+						if (!supportedPlatforms[platform]) {
+							supportedPlatforms[platform] = new Set();
+						}
+					}
+				});
+				html += `</ul>`;
+			}
 
-				if (appUrl) {
-					html += `<p><strong>Source:</strong> <a href="${appUrl}" target="_blank" rel="noopener">${appUrlLabel}</a></p>`;
+			selectedApplicationDetails.style.display = 'block';
+			selectedApplicationDetails.innerHTML = html;
+
+			// Skip any host already set as having the selected application installed
+			// and any hosts which are not in the supportedPlatforms list
+			// We just need to check the platform.  If the version mismatches simply provide a warning.
+			let hostsHTML = '';
+			hostData.forEach(host => {
+				const hostCard = document.querySelector('.host-entry[data-host="' + host.host + '"]');
+				if (!hostCard) {
+					return;
 				}
-				if (app.branch) {
-					html += `<p><strong>Branch:</strong> ${app.branch}</p>`;
-				}
-				if (app.author) {
-					if (app.author.includes('@') && app.author.includes('<')) {
-						const authorMatch = app.author.match(/(.*)<(.*)>/);
-						if (authorMatch) {
-							const authorName = authorMatch[1].trim();
-							const authorEmail = authorMatch[2].trim();
-							html += `<p><strong>Author:</strong> ${authorName} <a href="mailto:${authorEmail}"><i class="fas fa-envelope"></i></a></p>`;
-						 } else {
-							html += `<p><strong>Author:</strong> ${app.author}</p>`;
-						 }
+				const msg = hostCard.querySelector('.compatible-message');
+
+				let compatibleNotice = null, isCompatible = true;
+
+				// Check if host platform is supported
+				if (host.os.name) {
+					const hostOsName = host.os.name.toLowerCase();
+
+					if (Object.keys(supportedPlatforms).length > 0) {
+						if (supportedPlatforms[hostOsName]) {
+							// Platform is supported, now check version
+							if (host.os.version) {
+								const supportedVersions = Array.from(supportedPlatforms[hostOsName]);
+								if (supportedVersions.length > 0 && !supportedVersions.includes(host.os.version)) {
+									compatibleNotice = 'Server host may not be compatible with installer';
+								}
+							}
+						} else {
+							compatibleNotice = `Unsupported Platform`;
+							isCompatible = false;
+						}
+					} else {
+						compatibleNotice = 'Unknown compatibility';
 					}
 				}
-				if (app.supports) {
-					html += `<p><strong>Supports:</strong></p><ul>`;
-					app.supports.forEach(support => {
-						html += `<li>${support}</li>`;
-						// Support is a general format, usually something like "Debian 12, 13" or "Ubuntu 20.04, 22.04"
-						// We can parse this to populate supportedPlatforms
-						const parts = support.split(' ');
-						if (parts.length >= 2) {
-							const platform = parts[0].toLowerCase();
-							const versions = parts.slice(1).join(' ').split(',').map(v => v.trim());
-							if (!supportedPlatforms[platform]) {
-								supportedPlatforms[platform] = new Set();
-							}
-							versions.forEach(version => supportedPlatforms[platform].add(version));
-						}
-						else {
-							// At least add the platform with no versions
-							const platform = support.toLowerCase();
-							if (!supportedPlatforms[platform]) {
-								supportedPlatforms[platform] = new Set();
-							}
-						}
-					});
-					html += `</ul>`;
+
+				if (app.installs) {
+					if (app.installs.map(h => h.host).includes(host.host)) {
+						compatibleNotice = 'Already Installed';
+					}
 				}
 
-				selectedApplicationDetails.style.display = 'block';
-				selectedApplicationDetails.innerHTML = html;
+				if (isCompatible) {
+					hostCard.classList.add('compatible-host');
+					if (compatibleNotice) {
+						msg.classList.add('warning-message');
+						msg.classList.remove('error-message', 'success-message');
+						msg.textContent = compatibleNotice;
+					} else {
+						msg.classList.add('success-message');
+						msg.classList.remove('error-message', 'warning-message');
+						msg.textContent = 'Compatible host';
+					}
+				}
+				else {
+					msg.classList.add('error-message');
+					msg.classList.remove('success-message', 'warning-message');
+					msg.textContent = compatibleNotice || 'Incompatible host';
+				}
 
-				console.log(supportedPlatforms);
-				fetchHosts().then(hosts => {
-					// Skip any host already set as having the selected application installed
-					// and any hosts which are not in the supportedPlatforms list
-					// We just need to check the platform.  If the version mismatches simply provide a warning.
-					let hostsHTML = '';
-					Object.values(hosts).forEach(host => {
-						let compatibleNotice = null, isCompatible = true;
-
-						// Check if host platform is supported
-						if (host.os.name) {
-							const hostOsName = host.os.name.toLowerCase();
-
-							if (Object.keys(supportedPlatforms).length > 0) {
-								if (supportedPlatforms[hostOsName]) {
-									// Platform is supported, now check version
-									if (host.os.version) {
-										const supportedVersions = Array.from(supportedPlatforms[hostOsName]);
-										if (supportedVersions.length > 0 && !supportedVersions.includes(host.os.version)) {
-											compatibleNotice = 'Server host may not be compatible with installer';
-										}
-									}
-								} else {
-									compatibleNotice = `Unsupported Platform`;
-									isCompatible = false;
-								}
-							} else {
-								compatibleNotice = 'Unknown compatibility';
-							}
-						}
-
-						if (app.hosts) {
-							if (app.hosts.map(h => h.host).includes(host.ip)) {
-								compatibleNotice = 'Already Installed';
-								isCompatible = false;
-							}
-						}
-
-						// Render the host record regardless about compatiblity.
-						// This provides UX feedback that they can see the host but it is not compatible.
-						hostsHTML += renderHost(host, isCompatible, compatibleNotice);
-					});
-
-					document.getElementById('installAppHostList').innerHTML = hostsHTML;
-					document.getElementById('targetHostsContainer').style.display = 'block';
-					console.log(hosts);
-				});
+				// Render the host record regardless of compatability.
+				// This provides UX feedback that they can see the host, but it is not compatible.
+				hostsHTML += renderHost(host, isCompatible, compatibleNotice);
 			});
+
+			//document.getElementById('installAppHostList').innerHTML = hostsHTML;
+			document.getElementById('targetHostsContainer').style.display = 'block';
 		});
-	}).catch(e => {
-		console.error(e);
-		//document.querySelector('.content-body').innerHTML = '<div class="alert alert-danger" role="alert">Error loading applications.</div>';
 	});
+
+	// Start the watcher for metric changes in hosts.
+	pollHostsMetrics();
 });
 
 
 document.getElementById('targetHostsContainer').addEventListener('click', (e) => {
 	let hostCard = null;
 
-	if (e.target && e.target.classList.contains('host-card')) {
+	if (e.target && e.target.classList.contains('host-entry')) {
 		hostCard = e.target;
 	}
-	else if (e.target && e.target.closest('.host-card')) {
-		hostCard = e.target.closest('.host-card');
+	else if (e.target && e.target.closest('.host-entry')) {
+		hostCard = e.target.closest('.host-entry');
 	}
 
 	if (hostCard && hostCard.classList.contains('compatible-host')) {

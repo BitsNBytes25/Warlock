@@ -12,253 +12,40 @@ const autoUpdateModal = document.getElementById('autoUpdateModal'),
 	updateModal = document.getElementById('updateModal'),
 	confirmUpdateBtn = document.getElementById('confirmUpdateBtn'),
 	reinstallBtn = document.getElementById('reinstallBtn'),
+	uninstallBtn = document.getElementById('uninstallBtn'),
 	delayedUpdate = document.getElementById('delayedUpdate'),
-	autoUpdateSchedule = document.getElementById('autoUpdateSchedule');
+	autoUpdateSchedule = document.getElementById('autoUpdateSchedule'),
+	automatedStartDisabledMessage = document.getElementById('automatedStartDisabledMessage'),
+	automatedStartEnabledMessage = document.getElementById('automatedStartEnabledMessage'),
+	configureAutoStartEnableBtn = document.getElementById('configureAutoStartEnableBtn'),
+	configureAutoStartDisableBtn = document.getElementById('configureAutoStartDisableBtn');
 
-let applicationOptions = [];
 
 
-async function loadAutomaticUpdates() {
-	if (!loadedHost) {
-		return;
-	}
-	const identifier = `${loadedApplication}_update`;
 
-	loadCronJob(loadedHost, identifier, autoUpdateModal).then(job => {
-		if (job) {
-			automatedUpdatesDisabledMessage.style.display = 'none';
-			automatedUpdatesEnabledMessage.style.display = 'flex';
-		}
-		else {
-			automatedUpdatesDisabledMessage.style.display = 'flex';
-			automatedUpdatesEnabledMessage.style.display = 'none';
-		}
 
-		if (!applicationOptions.includes('delayed-update')) {
-			delayedUpdate.closest('.form-group').querySelector('p').textContent = 'Note: this game does not support delayed updates.';
-			delayedUpdate.disabled = true;
-			delayedUpdate.checked = false;
-		}
-	}).catch(e => {
-		console.error('Error loading cron job:', e);
-		showToast('error', 'Error loading automatic update configuration.');
-	})
-}
 
-async function loadAutomaticRestarts() {
-	if (!loadedHost) {
-		return;
-	}
-	const identifier = `${loadedApplication}_restart`;
 
-	loadCronJob(loadedHost, identifier, autoRestartModal).then(job => {
-		if (job) {
-			automatedRestartsDisabledMessage.style.display = 'none';
-			automatedRestartsEnabledMessage.style.display = 'flex';
-		}
-		else {
-			automatedRestartsDisabledMessage.style.display = 'flex';
-			automatedRestartsEnabledMessage.style.display = 'none';
-		}
-	}).catch(e => {
-		console.error('Error loading cron job:', e);
-		showToast('error', 'Error loading automatic restart configuration.');
-	})
-}
 
-async function saveAutomaticUpdates() {
-	const guid = loadedApplication;
-	const identifier = `${loadedApplication}_update`;
-	const gameDir = (applicationData[guid] && applicationData[guid].hosts && applicationData[guid].hosts.filter(h => h.host === loadedHost)[0]) ? applicationData[guid].hosts.filter(h => h.host === loadedHost)[0].path : null;
-	let command;
 
-	if (!gameDir) {
-		showToast('error', 'Cannot determine game directory for this host.');
-		return;
-	}
 
-	const schedule = parseCronSchedule(autoUpdateModal);
 
-	if (schedule === 'DISABLED') {
-		// Delete existing identifier
-		fetch(`/api/cron/${loadedHost}`, {
-			method: 'DELETE',
-			headers: {'Content-Type': 'application/json'},
-			body: JSON.stringify({identifier})
-		})
-			.then(r => r.json())
-			.then(response => {
-				if (response.success) {
-					showToast('success', 'Automatic updates disabled.');
-					autoUpdateModal.classList.remove('show');
-					loadAutomaticUpdates();
-				} else {
-					showToast('error', `Failed to disable automatic updates: ${response.error}`);
-				}
-			})
-			.catch(() => showToast('error', 'Error disabling automatic updates'));
-		return;
-	}
+// Events
+reinstallBtn.addEventListener('click', () => {
+	window.location.href = `/application/install/${loadedApplication}/${loadedHost}`;
+});
 
-	if (applicationOptions.includes('delayed-update') && delayedUpdate.checked) {
-		// Build command for delayed updates
-		command = `${gameDir}/manage.py --check-update && ${gameDir}/manage.py --delayed-update`;
-	}
-	else {
-		command = `! ${gameDir}/manage.py --has-players && ${gameDir}/manage.py --check-update && ${gameDir}/manage.py --update`;
-	}
+uninstallBtn.addEventListener('click', () => {
+	window.location.href = `/application/uninstall/${loadedApplication}/${loadedHost}`;
+});
 
-	fetch(`/api/cron/${loadedHost}`, {
-		method: 'POST',
-		headers: {'Content-Type': 'application/json'},
-		body: JSON.stringify({schedule, command, identifier})
-	})
-		.then(r => r.json())
-		.then(response => {
-			if (response.success) {
-				showToast('success', 'Automatic updates scheduled.');
-				autoUpdateModal.classList.remove('show');
-				loadAutomaticUpdates();
-			} else {
-				showToast('error', `Failed to save schedule: ${response.error}`);
-			}
-		})
-		.catch(() => showToast('error', 'Error saving schedule'));
-}
+configureAutoUpdateBtn.addEventListener('click', () => {
+	openModal(autoUpdateModal);
+});
+saveAutoUpdateBtn.addEventListener('click', () => {
+	saveAutomaticUpdates();
+});
 
-async function saveAutomaticRestarts() {
-	const guid = loadedApplication;
-	const identifier = `${loadedApplication}_restart`;
-	const gameDir = (applicationData[guid] && applicationData[guid].hosts && applicationData[guid].hosts.filter(h => h.host === loadedHost)[0]) ? applicationData[guid].hosts.filter(h => h.host === loadedHost)[0].path : null;
-
-	if (!gameDir) {
-		showToast('error', 'Cannot determine game directory for this host.');
-		return;
-	}
-
-	const schedule = parseCronSchedule(autoRestartModal);
-
-	if (schedule === 'DISABLED') {
-		// Delete existing identifier
-		fetch(`/api/cron/${loadedHost}`, {
-			method: 'DELETE',
-			headers: {'Content-Type': 'application/json'},
-			body: JSON.stringify({identifier})
-		})
-			.then(r => r.json())
-			.then(response => {
-				if (response.success) {
-					showToast('success', 'Automatic restarts disabled.');
-					autoRestartModal.classList.remove('show');
-					loadAutomaticRestarts();
-				} else {
-					showToast('error', `Failed to disable automatic restarts: ${response.error}`);
-				}
-			})
-			.catch(() => showToast('error', 'Error disabling automatic restarts'));
-		return;
-	}
-
-	// Build command
-	// if this service supports delayed-restart, use that instead
-	let command;
-	if (applicationOptions.includes('delayed-restart')) {
-		command = `${gameDir}/manage.py --delayed-restart`;
-	} else {
-		command = `${gameDir}/manage.py --restart`;
-	}
-
-	fetch(`/api/cron/${loadedHost}`, {
-		method: 'POST',
-		headers: {'Content-Type': 'application/json'},
-		body: JSON.stringify({schedule, command, identifier})
-	})
-		.then(r => r.json())
-		.then(response => {
-			if (response.success) {
-				showToast('success', 'Automatic restarts scheduled.');
-				autoRestartModal.classList.remove('show');
-				loadAutomaticRestarts();
-			} else {
-				showToast('error', `Failed to save schedule: ${response.error}`);
-			}
-		})
-		.catch(() => showToast('error', 'Error saving schedule'));
-}
-
-/**
- * Primary handler to load the application on page load
- */
-window.addEventListener('DOMContentLoaded', () => {
-
-	const {guid, host} = getPathParams('/application/configure/:guid/:host');
-
-	Promise.all([
-		loadApplication(guid).then(appData => {
-			let hostData = appData.hosts.filter(h => h.host === host)[0];
-			if (hostData) {
-				applicationOptions = hostData.options || [];
-			}
-		}),
-		loadHost(host)
-	])
-		.then(() => {
-			// Pull automatic update checks
-			loadAutomaticUpdates();
-			loadAutomaticRestarts();
-
-			reinstallBtn.classList.remove('disabled');
-			reinstallBtn.addEventListener('click', () => {
-				window.location.href = `/application/install/${guid}/${host}`;
-			});
-
-			configureAutoUpdateBtn.addEventListener('click', () => {
-				autoUpdateModal.classList.add('show');
-			});
-			saveAutoUpdateBtn.addEventListener('click', () => {
-				saveAutomaticUpdates();
-			});
-
-			configureAutoRestartBtn.addEventListener('click', () => {
-				autoRestartModal.classList.add('show');
-			});
-			saveAutoRestartBtn.addEventListener('click', () => {
-				saveAutomaticRestarts();
-			});
-
-			openUpdateBtn.addEventListener('click', () => {
-				updateModal.classList.add('show');
-			});
-			autoUpdateSchedule.addEventListener('change', () => {
-				if (autoUpdateSchedule.value === 'disabled') {
-					delayedUpdate.closest('.form-group').style.display = 'none';
-				}
-				else {
-					delayedUpdate.closest('.form-group').style.display = 'flex';
-				}
-			});
-			confirmUpdateBtn.addEventListener('click', () => {
-				confirmUpdateBtn.classList.add('disabled');
-				const icon = confirmUpdateBtn.querySelector('i'),
-					classes = icon.className;
-				icon.className = 'fas fa-spinner fa-spin';
-
-				stream(
-					`/api/application/update/${guid}/${host}`,
-					'POST',
-					{},
-					'',
-					(event, data) => {
-						terminalOutputHelper(updateModal.querySelector('.terminal'), event, data);
-					}).then(() => {
-					// Stream ended
-					showToast('success', 'Update process completed.');
-				}).catch(err => {
-					showToast('error', 'Update process encountered an error. See terminal output for details.');
-				}).finally(() => {
-					icon.className = classes;
-					confirmUpdateBtn.classList.remove('disabled');
-				});
-			});
-		});
+saveAutoRestartBtn.addEventListener('click', () => {
+	saveAutomaticRestarts();
 });

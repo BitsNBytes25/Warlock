@@ -1,0 +1,86 @@
+<!-- Create Folder Modal -->
+<div id="createFolderModal" class="modal">
+	<div class="modal-overlay"></div>
+	<div class="modal-content">
+		<div class="modal-header">
+			<h3><i class="fas fa-folder-plus"></i> Create New Folder</h3>
+			<button class="modal-close">
+				<i class="fas fa-times"></i>
+			</button>
+		</div>
+		<div class="modal-body">
+			<div class="form-group">
+				<label for="folderName">Folder Name:</label>
+				<input type="text" id="createFolderModalInput" placeholder="Enter folder name..." />
+			</div>
+		</div>
+		<div class="modal-footer">
+			<button class="action-create" id="createFolderModalConfirm">
+				<i class="fas fa-folder-plus"></i>
+				Create Folder
+			</button>
+			<button class="action-cancel modal-close">
+				<i class="fas fa-times"></i>
+				Cancel
+			</button>
+		</div>
+	</div>
+</div>
+
+<script>
+	// New functionality functions
+	let createFolderResolve;
+
+	async function openCreateFolderModal(host, path, callback) {
+		const modal = document.getElementById('createFolderModal'),
+			input = document.getElementById('createFolderModalInput');
+
+		modal.dataset.host = host;
+		modal.dataset.path = path;
+		input.value = '';
+		openModal(modal);
+
+		createFolderResolve = callback;
+	}
+
+	async function createFolderConfirm() {
+		const modal = document.getElementById('createFolderModal'),
+			input = document.getElementById('createFolderModalInput');
+
+		const folderName = input.value.trim(),
+			host = modal.dataset.host,
+			path = modal.dataset.path;
+
+		if (!folderName) {
+			alert('Please enter a folder name');
+			return;
+		}
+
+		closeModal(modal);
+		showToast('info', 'Creating folder, please wait...');
+
+		fetch(`/api/file/${host}?path=${path}&name=${folderName}&isdir=1`, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' }
+		}).then(response => response.json())
+			.then(result => {
+				if (result.success) {
+					if (createFolderResolve) {
+						createFolderResolve();
+						createFolderResolve = null;
+					}
+				} else {
+					alert(`Error creating folder: ${result.error}`);
+				}
+			})
+			.catch(error => {
+				alert(`Network error: ${error.message}`);
+			});
+	}
+
+	window.addEventListener('DOMContentLoaded', () => {
+		document.getElementById('createFolderModalConfirm').addEventListener('click', () => {
+			createFolderConfirm();
+		});
+	})
+</script>

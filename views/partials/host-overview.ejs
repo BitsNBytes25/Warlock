@@ -1,0 +1,88 @@
+<h3>System Information</h3>
+<div class="host-details-info-grid">
+    <div class="info-item">
+        <div class="label">Hostname</div>
+        <div class="value host-name-placeholder">Loading...</div>
+    </div>
+    <div class="info-item">
+        <div class="label">Public IP</div>
+        <div class="value" id="hostPublicIP">Loading...</div>
+    </div>
+    <div class="info-item">
+        <div class="label">Operating System</div>
+        <div class="value" id="hostOSInfo">Loading...</div>
+    </div>
+    <div class="info-item">
+        <div class="label">Kernel</div>
+        <div class="value" id="hostKernel">Loading...</div>
+    </div>
+    <div class="info-item">
+        <div class="label">CPU Model</div>
+        <div class="value" id="hostCPUModel">Loading...</div>
+    </div>
+    <div class="info-item">
+        <div class="label">CPU Cores</div>
+        <div class="value" id="hostCPUCores">Loading...</div>
+    </div>
+</div>
+
+<br/><br/>
+
+<h3>Warlock Nexus Integration</h3>
+
+<div id="hostNexusStatusContainer">
+    <p>
+        <a href="https://ko-fi.com/bitsandbytes" target="_blank" rel="noopener noreferrer">Donating to Bits and Bytes</a>
+        helps support development efforts for Warlock and unlocks some nice features within this interface
+        such as easy mod management (for applicable games) and a public profile for your community.
+    </p>
+    <br/>
+    <p id="nexusPreDonateMessage">
+        <a href="https://ko-fi.com/bitsandbytes" target="_blank" rel="noopener noreferrer" class="button">
+            Donate and unlock Warlock.Nexus features
+        </a><br/>
+        <br/>
+        Once donated as a Supporter or higher tier, enter your email address and the auth token you should
+        have received in an email in the form below to authorize your server host to these features.
+    </p>
+
+    <p class="info-message">
+        <host-nexus-status id="hostNexusStatus"></host-nexus-status>
+    </p>
+
+    <div id="hostNexusAuthSettings">
+        <h4>
+            <a href="#" id="hostNexusAuthSettingsToggle" title="Show/hide authentication settings">
+                Warlock Nexus Authentication Settings
+                <i class="fas fa-chevron-down"></i>
+            </a>
+        </h4>
+        <div class="inner">
+            <br/>
+            <div class="form-group">
+                <label for="hostNexusEmail">Registered Email</label>
+                <input type="email" id="hostNexusEmail" class="form-control" placeholder="Enter your email address">
+                <p class="form-description">
+                    Enter the email address you used when donating on <a href="https://ko-fi.com/bitsandbytes" target="_blank" rel="noopener noreferrer">Ko-fi.com/bitsandbytes</a>.
+                </p>
+            </div>
+            <div class="form-group">
+                <label for="hostNexusAuthToken">Authentication Token</label>
+                <input type="text" id="hostNexusAuthToken" class="form-control" placeholder="Enter your auth token">
+                <p class="form-description">
+                    Enter the authentication token you received via email when donating to this project.
+                </p>
+            </div>
+            <div id="messageNexusRegisterResponse"></div>
+            <button id="hostNexusRegister" class="btn btn-primary">Register Host on Warlock.Nexus</button>
+        </div>
+    </div>
+</div>
+
+
+<br/><br/>
+
+<h3>Installed Applications</h3>
+<div id="hostApplicationsList" class="card-view">
+    <div><i class="fas fa-spinner fa-spin"></i> Loading applications...</div>
+</div>

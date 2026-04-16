@@ -111,8 +111,6 @@ window.addEventListener('DOMContentLoaded', () => {
 
 	loadApplication(guid).then(appData => {
 		loadHost(host).then(hostData => {
-			console.log('LOADED', appData, hostData);
-
 			// appData.syntax may be an array of strings,
 			// each string in the format of "--cli-argument Description of argument"
 			// Options which support values will be in the format of "--cli-argument=<name> Description of argument"
@@ -153,6 +151,12 @@ window.addEventListener('DOMContentLoaded', () => {
 					}).catch(err => {
 						console.error('Error fetching branches:', err);
 					});
+				}
+				else if(parsed.option === '--skip-firewall') {
+					// If this host does not have a firewall enabled, default this option to ticked.
+					if (hostData.firewall === 'none') {
+						el.querySelector('input').checked = true;
+					}
 				}
 			}
 

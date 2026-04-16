@@ -1,0 +1,29 @@
+services:
+  warlock:
+    image: bitsnbytes25/warlock:latest
+    container_name: warlock
+    ports:
+      - "3077:3077"
+    environment:
+      - SKIP_AUTHENTICATION=false
+      - SKIP_2FA=false
+      - IP=0.0.0.0
+      - NODE_ENV=production
+      - WARLOCK_PROFILE=false
+    volumes:
+      - "data:/app/data"
+      - "ssh:/home/warlock/.ssh"
+    restart: unless-stopped
+volumes:
+  data:
+  ssh:
+# Uncomment and configure the following if you want to add nginx as a reverse proxy in another service
+#  nginx:
+#    image: nginx:alpine
+#    ports:
+#      - "80:80"
+#    volumes:
+#      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+#    depends_on:
+#      - warlock
+

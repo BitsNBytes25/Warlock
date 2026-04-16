@@ -1,0 +1,26 @@
+<div class="logs-controls">
+    <div class="button-group pager-buttons">
+        <button id="logs-pager-previous" class="disabled"><i class="fas fa-angles-left"></i> Previous</button>
+        <button id="logs-pager-next" class="disabled">Next <i class="fas fa-angles-right"></i></button>
+    </div>
+    <div class="button-group range-buttons">
+        <button id="logs-mode-hour"><i class="fas fa-hourglass"></i> Hourly</button>
+        <button id="logs-mode-day"><i class="fas fa-calendar"></i> Daily</button>
+        <button id="logs-mode-live"><i class="fas fa-circle-play"></i> LIVE</button>
+    </div>
+</div>
+<div id="logsContainer" class="terminal"></div>
+<div id="commandInputSection" class="command-input-section" style="display: none;">
+    <div class="command-input-wrapper">
+        <input type="text" id="commandInput" class="command-input" placeholder="Enter command..." disabled data-running="0">
+        <div class="command-prefix-label">CMD:&gt;</div>
+        <button id="commandSendBtn" class="command-send-btn" disabled>
+            <i class="fas fa-paper-plane"></i> Send
+        </button>
+        <div id="autocompleteDropdown" class="autocomplete-dropdown" style="display: none;">
+            <ul id="autocompleteSuggestions" class="autocomplete-list"></ul>
+        </div>
+    </div>
+</div>
+
+<script src="<%= assetUrl('/assets/service_logs.js') %>"></script>

@@ -1,0 +1,102 @@
+<!-- Update Modal -->
+<div id="updateModal" class="modal wide">
+	<div class="modal-overlay"></div>
+	<div class="modal-content">
+		<div class="modal-header">
+			<h3><i class="fas fa-circle-up"></i> Update Game</h3>
+			<button class="modal-close">
+				<i class="fas fa-times"></i>
+			</button>
+		</div>
+		<div class="modal-body">
+			<div class="warning-message">
+				<i class="fas fa-exclamation-triangle"></i>
+				<p>
+					Warning: Updating a game will pause the game during the procedure.
+				</p>
+			</div>
+			<div class="terminal"></div>
+		</div>
+		<div class="modal-footer">
+			<button class="action-update" id="confirmUpdateBtn">
+				<i class="fas fa-circle-up"></i>
+				Confirm Update
+			</button>
+			<button class="action-cancel modal-close">
+				<i class="fas fa-times"></i>
+				Cancel
+			</button>
+		</div>
+	</div>
+</div>
+
+<script>
+	let openUpdateModalCallback;
+
+	function openUpdateModal(host, application, service, callback) {
+		const modal = document.getElementById('updateModal');
+
+		modal.dataset.host = host;
+		modal.dataset.guid = application;
+		modal.dataset.service = service || '';
+
+		modal.querySelector('.warning-message').style.display = 'flex';
+		modal.querySelector('.terminal').style.display = 'none';
+		openModal(modal);
+
+		openUpdateModalCallback = callback;
+	}
+
+	function performUpdateModal() {
+		const confirmUpdateBtn = document.getElementById('confirmUpdateBtn'),
+			modal = document.getElementById('updateModal'),
+			host = modal.dataset.host,
+			application = modal.dataset.guid,
+			service = modal.dataset.service,
+			icon = confirmUpdateBtn.querySelector('i'),
+			classes = icon.className;
+
+		let cmd;
+
+		confirmUpdateBtn.classList.add('disabled');
+		icon.className = 'fas fa-spinner fa-spin';
+
+		modal.querySelector('.warning-message').style.display = 'none';
+		modal.querySelector('.terminal').style.display = 'block';
+
+		if (service) {
+			cmd = `/api/application/update/${application}/${host}/${service}`;
+		}
+		else {
+			cmd = `/api/application/update/${application}/${host}`
+		}
+
+		stream(
+			cmd,
+			'POST',
+			{},
+			'',
+			(event, data) => {
+				terminalOutputHelper(modal.querySelector('.terminal'), event, data);
+			}).then(() => {
+				// Stream ended
+				showToast('success', 'Update process completed.');
+				closeModal(modal);
+				if (openUpdateModalCallback) {
+					openUpdateModalCallback();
+					openUpdateModalCallback = null;
+				}
+			}).catch(err => {
+				showToast('error', 'Update process encountered an error. See terminal output for details.');
+			}).finally(() => {
+				icon.className = classes;
+				confirmUpdateBtn.classList.remove('disabled');
+			});
+	}
+
+	window.addEventListener('DOMContentLoaded', () => {
+		document.getElementById('confirmUpdateBtn').addEventListener('click', () => {
+			performUpdateModal();
+		});
+	});
+</script>

@@ -1,16 +1,23 @@
 const { Sequelize, DataTypes} = require('sequelize');
 const bcrypt = require('bcrypt');
-const { stat } = require('fs');
+const {logger} = require("./libs/logger.mjs");
+
+// Custom logging function for Sequelize: only log SQL queries
+function sequelizeLog(sql) {
+    logger.debug(sql);
+}
 
 const sequelize = new Sequelize({
 	dialect: 'sqlite',
-	storage: 'warlock.sqlite'
+	storage: process.env.DB_PATH || 'warlock.sqlite',
+	logging: sequelizeLog
 });
 
 // User model with username and password fields
 const User = sequelize.define('User', {
 	username: {
-		type: DataTypes.STRING
+		type: DataTypes.STRING,
+		unique: true
 	},
 	password: {
 		type: DataTypes.STRING
@@ -39,14 +46,15 @@ const User = sequelize.define('User', {
 });
 
 // Add instance method to validate password
-User.prototype.validatePassword = async function(password) {
-	return await bcrypt.compare(password, this.password);
+User.prototype.validatePassword = function(password) {
+	return bcrypt.compareSync(password, this.password);
 };
 
 // Host model with ip field
 const Host = sequelize.define('Host', {
 	ip: {
-		type: DataTypes.STRING
+		type: DataTypes.STRING,
+		unique: true
 	}
 });
 
@@ -107,10 +115,55 @@ const Metric = sequelize.define('Metric', {
 	timestamps: false
 });
 
+const HostMetric = sequelize.define('HostMetric', {
+	ip: {
+		type: DataTypes.STRING,
+		allowNull: false
+	},
+	timestamp: {
+		type: DataTypes.INTEGER,
+		allowNull: false
+	},
+	cpu: {
+		type: DataTypes.INTEGER,
+		allowNull: true
+	},
+	memory: {
+		type: DataTypes.INTEGER,
+		allowNull: true
+	},
+	disk: {
+		type: DataTypes.INTEGER,
+		allowNull: true
+	},
+	rx_last: {
+		type: DataTypes.BIGINT,
+		allowNull: true
+	},
+	rx: {
+		type: DataTypes.INTEGER,
+		allowNull: true
+	},
+	tx_last: {
+		type: DataTypes.BIGINT,
+		allowNull: true
+	},
+	tx: {
+		type: DataTypes.INTEGER,
+		allowNull: true
+	}
+}, {
+	indexes: [
+		{ fields: ['ip', 'timestamp'] }
+	],
+	timestamps: false
+});
+
 module.exports = {
 	sequelize,
 	User,
 	Host,
 	Meta,
-	Metric
+	Metric,
+	HostMetric
 };

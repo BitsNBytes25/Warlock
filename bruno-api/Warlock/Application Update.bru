@@ -1,0 +1,21 @@
+meta {
+  name: Application Update
+  type: http
+  seq: 19
+}
+
+get {
+  url: {{host}}/api/application/update/:guid/:host
+  body: none
+  auth: inherit
+}
+
+params:path {
+  host: {{lookup_host}}
+  guid: {{lookup_app}}
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

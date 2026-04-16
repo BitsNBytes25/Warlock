@@ -15,8 +15,8 @@ export async function getLatestServiceMetrics(app_guid, host, service) {
 		response_time: 'N/A',
 		player_count: 0,
 		status: 'Unknown',
-		memory_usage: 'N/A',
-		cpu_usage: 'N/A'
+		memory_usage: 0,
+		cpu_usage: 0
 	};
 
 		let res = await Metric.findOne({
@@ -31,16 +31,11 @@ export async function getLatestServiceMetrics(app_guid, host, service) {
 
 		if (res) {
 			if (res.cpu_usage !== null) {
-				metrics.cpu_usage = res.cpu_usage + '%';
+				metrics.cpu_usage = res.cpu_usage;
 			}
 
 			if (res.memory_usage !== null) {
-				if (res.memory_usage > 1024) {
-					metrics.memory_usage = (res.memory_usage / 1024).toFixed(2) + ' GB';
-				}
-				else {
-					metrics.memory_usage = res.memory_usage + ' MB';
-				}
+				metrics.memory_usage = res.memory_usage;
 			}
 
 			metrics.status = res.status === 1 ? 'running' : 'stopped';

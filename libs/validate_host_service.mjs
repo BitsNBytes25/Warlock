@@ -1,54 +1,65 @@
 import { getAllApplications } from './get_all_applications.mjs';
-import { getServicesStatus } from './get_services_status.mjs';
-import {getApplicationServices} from "./get_application_services.mjs";
+import {logger} from "./logger.mjs";
+import { HostData } from './host_data.mjs';
+import {BadRequestError, NotFoundError} from "./errors.mjs";
 
 /**
+ * Validate that a given host, application GUID, and service name exist and are properly associated.
  *
- * @param host
- * @param guid
- * @param service
- * @returns {Promise<Object.<app: AppData, host: HostAppData, service: ServiceData>>}
+ * @param {Object} req Express request object
+ * @param {Object} res Express response object
+ * @param {Function} next Express next function
+ *
+ * @returns {Promise<Object.<host: AppInstallData, service: ServiceData>>}
  */
-export async function validateHostService(host, guid, service) {
-	return new Promise((resolve, reject) => {
-		getAllApplications()
-			.then(applications => {
-				const app = applications[guid] || null;
-				let found = false;
+export async function validateHostService(req, res, next) {
+	const { host, guid, service } = req.params;
 
-				if (!app) {
-					return reject(new Error(`Application with GUID '${guid}' not found`));
-				}
+	if (!guid) {
+		throw new BadRequestError('Missing guid parameter');
+	}
+	if (!host) {
+		throw new BadRequestError('Missing host parameter');
+	}
+	if (!service) {
+		throw new BadRequestError('Missing service parameter');
+	}
 
-				app.hosts.forEach(hostData => {
-					if (hostData.host === host) {
-						found = true;
+	return getAllApplications()
+		.then(async applications => {
+			const apps = applications.filter(a => a.guid === guid);
+			const app = apps.length > 0 ? apps[0] : null;
 
-						// Check if the service exists on the target host for this application
-						getApplicationServices(app, hostData)
-							.then(serviceResults => {
-								const svc = serviceResults.services[service] || null;
+			if (!app) {
+				throw new NotFoundError(`Application with GUID '${guid}' not found`);
+			}
 
-								if (!svc) {
-									reject(new Error(`Service '${service}' not found in application '${guid}' on host '${host}'`));
-								}
+			// Load the host data for this lookup, used by many endpoints
+			const hostData = new HostData(host);
+			await hostData.init();
 
-								return resolve({
-									app: app,
-									host: hostData,
-									service: svc
-								});
-							})
-							.catch(error => {
-								return reject(new Error(`Error retrieving services for application '${guid}' on host '${host}': ${error.message}`));
-							});
-					}
-				});
+			const appInstallData = app.installs.find(h => h.host === host);
+			if (!appInstallData) {
+				throw new NotFoundError(`Application '${guid}' not installed on host '${host}'`);
+			}
 
-				if (!found) {
-					// If the host is not found, we can immediately reject the lookup.
-					return reject(new Error(`Host '${host}' does not have application installed with GUID '${guid}'`));
-				}
-			});
-	});
+			const svc = await appInstallData.getService(service);
+			if (!svc) {
+				throw new NotFoundError(`Service '${service}' not found in application '${guid}' on host '${host}'`);
+			}
+
+			// Attach the discovered data to the request object
+			req.applicationData = app;
+			req.appInstallData = appInstallData;
+			req.serviceData = svc;
+			req.hostData = hostData;
+
+			// Attach the discovered data to the locals object of res so it's available in templates
+			res.locals.applicationData = app;
+			res.locals.appInstallData = appInstallData;
+			res.locals.serviceData = svc;
+			res.locals.hostData = hostData;
+			// Run next middleware function
+			next();
+		});
 }

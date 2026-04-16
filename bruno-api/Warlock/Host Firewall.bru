@@ -1,0 +1,20 @@
+meta {
+  name: Host Firewall
+  type: http
+  seq: 27
+}
+
+get {
+  url: {{host}}/api/firewall/:host
+  body: none
+  auth: inherit
+}
+
+params:path {
+  host: {{lookup_host}}
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

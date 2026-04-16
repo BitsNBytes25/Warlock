@@ -8,8 +8,9 @@ import {logger} from "./logger.mjs";
  * @param {string} target
  * @param {string} cmd
  * @param {Response} res
+ * @param {boolean} ignoreClose Set to true to ignore client disconnects (default: false)
  */
-export async function cmdStreamer(target, cmd, res) {
+export async function cmdStreamer(target, cmd, res, ignoreClose = false) {
 	return new Promise(async (resolve, reject) => {
 		// Set headers for streaming plain text (can be consumed as EventSource or plain text chunks)
 		res.writeHead(200, {
@@ -57,6 +58,7 @@ export async function cmdStreamer(target, cmd, res) {
 			const lines = String(chunk).split(/\r?\n/);
 			for (const line of lines) {
 				if (line.length === 0) continue;
+				if (clientGone) return;
 				res.write(`${pipe}: ${line}\n\n`);
 			}
 		};
@@ -64,6 +66,11 @@ export async function cmdStreamer(target, cmd, res) {
 		const onClientClose = () => {
 			if (clientGone) return;
 			clientGone = true;
+
+			if (ignoreClose) {
+				logger.debug('Client disconnected, but ignoring as per flag');
+				return;
+			}
 
 			logger.debug('Client disconnected, killing process');
 			try {
@@ -89,14 +96,13 @@ export async function cmdStreamer(target, cmd, res) {
 			cleanupListeners();
 			if (clientGone) return;
 
+			res.write(`event: done\ncode: ${code}\n\n`);
+			res.end();
+
 			if (code !== 0) {
-				res.write(`event: error\ndata: Exit code of ${code} indicated an error\n\n`);
-				res.end();
 				reject();
 			}
 			else {
-				res.write(`event: done\ndata: exit ${code}${signal ? ' signal ' + signal : ''}\n\n`);
-				res.end();
 				resolve();
 			}
 		});

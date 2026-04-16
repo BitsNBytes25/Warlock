@@ -2,25 +2,28 @@
  * Represents the details of an application.
  *
  * @typedef {Object} AppData
- * @property {string} title Name of the application.
- * @property {string} guid Globally unique identifier of the application.
- * @property {string} icon Icon URL of the application.
- * @property {string} repo Repository URL fragment of the application.
- * @property {string} branch Branch name of the application repository, or RELEASE for latest tag released.
- * @property {string} installer Installer URL fragment of the application.
- * @property {string} source Source handler for the application installer.
- * @property {string} thumbnail Thumbnail URL of the application.
- * @property {string} image Full size image URL of the application.
- * @property {string} header Header image URL of the application.
+ * @property {string}        title     Name of the application.
+ * @property {string}        guid      Globally unique identifier of the application.
+ * @property {string}        icon      Icon URL of the application.
+ * @property {string}        repo      Repository URL fragment of the application.
+ * @property {string}        installer Installer URL fragment of the application.
+ * @property {string}        source    Source handler for the application installer.
+ * @property {string}        thumbnail Thumbnail URL of the application.
+ * @property {string}        image     Full size image URL of the application.
+ * @property {string}        header    Header image URL of the application.
+ * @property {string}        author    Author information of the app, usually contains name and email.
+ * @property {string[]}      supports  List of OS support, usually "[Distro Name] [Version List]",...
+ * @property {HostAppData[]} installs  List of host installations for the application.
  */
 
 /**
  * Represents the details of a host specifically regarding an installed application.
  *
  * @typedef {Object} HostAppData
- * @property {string} host Hostname or IP of host.
- * @property {string} path Path where the application is installed on the host.
- * @property {Array<string>} options List of available options supported by the application installation on this host.
+ * @property {string}   host    Hostname or IP of host.
+ * @property {string}   path    Path where the application is installed on the host.
+ * @property {[string]} options List of available options supported by the application installation on this host.
+ * @property {number}   version Version of the API for the game manager
  *
  */
 
@@ -42,11 +45,18 @@
  * Represents the details of a service.
  *
  * @typedef {Object} ServiceData
- * @property {string} name Name of the service, usually operator set for the instance/map name.
- * @property {string} service Service identifier registered in systemd.
- * @property {bool} enabled Whether the service is enabled to start on boot.
- * @property {string} ip IP address the service is bound to.
- * @property {number} port Port number the service is using.
+ * @property {string} name          Name of the service, usually operator set for the instance/map name.
+ * @property {string} service       Service identifier registered in systemd.
+ * @property {bool}   enabled       Whether the service is enabled to start on boot.
+ * @property {string} ip            WAN IP address detected for the service
+ * @property {number} port          Port number the service is using.
+ * @property {string} app_dir       Full directory path this game files are installed into
+ * @property {string} bak_dir       Full directory path that contains backup files
+ * @property {boolean} multi_binary Set to true if each game instance uses a different binary
+ * @property {string} cpu_usage     Current CPU usage of the service as a percentage or 'N/A'.
+ * @property {number} max_players   Maximum number of players allowed on the service.
+ * @property {string} memory_usage  Current memory usage of the service in MB/GB or 'N/A'.
+ * @property {string} response_time Time in ms the service took to respond via the API
  */
 
 /**
@@ -77,6 +87,7 @@
  * @property {string|number|bool} default Default value of the configuration option.
  * @property {string} type Data type of the configuration option (str, int, bool, float, text).
  * @property {string} help Help text or description for the configuration option.
+ * @property {string} group Optional group name for categorizing configuration options in the UI.
  */
 
 /**
@@ -103,15 +114,23 @@
 
 /**
  * Cache of application data received from the backend.
- * @type {Object<string, AppData>}
+ * @type {AppData[]|null}
  */
 let applicationData = null;
 
 /**
  * Cache of host data received from the backend.
- * @type {Object<string, HostData>}
+ * @type {HostData[]|null}
  */
 let hostData = null;
+
+/**
+ * Cache of service data received from the backend.
+ *
+ * Each
+ * @type {[{app:string, host:HostAppData, service:ServiceData}]}
+ */
+let serviceData = null;
 
 /**
  * Application GUID of the currently loaded application.
@@ -126,6 +145,34 @@ let loadedApplication = null;
  * @type {string|null}
  */
 let loadedHost = null;
+
+/**
+ * Service identifier of the currently loaded service.
+ *
+ * @type {string|null}
+ */
+let loadedService = null;
+
+/**
+ * Loaded application data for the currently loaded application.
+ *
+ * @type {AppData|null}
+ */
+let loadedApplicationData = null;
+
+/**
+ * Loaded host data for the currently loaded host.
+ *
+ * @type {HostData|null}
+ */
+let loadedHostData = null;
+
+/**
+ * Loaded service data for the currently loaded service.
+ *
+ * @type {ServiceData|null}
+ */
+let loadedServiceData = null;
 
 /**
  * Fetches the list of services from the backend API.
@@ -172,64 +219,48 @@ async function fetchService(app_guid, host, service) {
 }
 
 /**
- * Fetches the list of applications from the backend API or localStorage.
+ * Fetches the list of applications from the backend API.
  *
- * @returns {Promise<Object.<string, AppData>>} A promise that resolves to an object mapping GUIDs to AppData objects.
+ * @returns {Promise<AppData[]>}
  */
 async function fetchApplications() {
-	// Try to use localStorage for faster results, defaulting back to the manual fetch
-	return new Promise((resolve, reject) => {
-		if (applicationData) {
-			return resolve(applicationData);
+	return fetch('/api/applications', {
+		method: 'GET',
+		headers: {
+			'Content-Type': 'application/json'
 		}
-
-		fetch('/api/applications', {
-			method: 'GET',
-			headers: {
-				'Content-Type': 'application/json'
-			}
+	})
+		.then(response => {
+			return response.json()
 		})
-			.then(response => {
-				return response.json()
-			})
-			.then(result => {
-				if (result.success && result.applications) {
-					applicationData = result.applications;
-					resolve(result.applications);
-				} else {
-					reject(result.error);
-				}
-			})
-			.catch(error => {
-				console.error('Error fetching applications:', error);
-				reject(error);
-			});
-	});
+		.then(result => {
+			if (result.success && result.applications) {
+				applicationData = result.applications;
+				return result.applications;
+			}
+			else {
+				throw new Error(result.error);
+			}
+		});
 }
 
 async function fetchHosts() {
-	return new Promise((resolve, reject) => {
-		fetch('/api/hosts', {
-			method: 'GET',
-			headers: {
-				'Content-Type': 'application/json'
+	return fetch('/api/hosts', {
+		method: 'GET',
+		headers: {
+			'Content-Type': 'application/json'
+		}
+	})
+		.then(response => response.json())
+		.then(response => {
+			if (response.success) {
+				hostData = response.hosts;
+				return response.hosts;
 			}
-		})
-			.then(response => response.json())
-			.then(response => {
-				if (response.success) {
-					hostData = response.hosts;
-					return resolve(response.hosts);
-				}
-				else {
-					reject(response.error);
-				}
-			})
-			.catch(error => {
-				console.error('Error fetching hosts:', error);
-				reject(error);
-			});
-	});
+			else {
+				throw new Error(response.error);
+			}
+		});
 }
 
 /**
@@ -239,7 +270,7 @@ async function fetchHosts() {
  * @returns {string|null}
  */
 function getRepoURL(guid) {
-	let appData = applicationData && applicationData[guid] || null;
+	let appData = getApplicationData(guid);
 
 	if (!appData) {
 		return null;
@@ -336,13 +367,46 @@ async function getRepoBranches(source, repo) {
 }
 
 /**
+ * Get the application data for a given GUID.
+ *
+ * Expects fetchApplications() to have been called beforehand!
+ *
+ * @param {string} guid
+ * @returns {AppData|null}
+ */
+function getApplicationData(guid) {
+	if (applicationData === null) {
+		// Apps not loaded.
+		return null;
+	}
+
+	return applicationData.find(app => app.guid === guid) || null;
+}
+
+/**
+ * Get the host installation data for a given application
+ *
+ * @param {string} guid
+ * @param {string} host
+ * @returns {HostAppData|null}
+ */
+function getHostInstallData(guid, host) {
+	const appData = getApplicationData(guid);
+	if (!appData) {
+		return null;
+	}
+
+	return appData.installs.find(h => h.host === host) || null;
+}
+
+/**
  * Get the rendered HTML for an application icon.
  *
  * @param {string} guid
  * @returns {string}
  */
 function renderAppIcon(guid) {
-	let appData = applicationData && applicationData[guid] || null,
+	let appData = getApplicationData(guid),
 		url;
 
 	if (appData && appData.icon) {
@@ -371,7 +435,7 @@ function renderAppIcon(guid) {
  * @returns {string|null}
  */
 function getAppThumbnail(guid) {
-	let appData = applicationData && applicationData[guid] || null,
+	let appData = getApplicationData(guid),
 		url;
 
 	if (appData && appData.thumbnail) {
@@ -399,7 +463,7 @@ function getAppThumbnail(guid) {
  * @returns {string|null}
  */
 function getAppImage(guid) {
-	let appData = applicationData && applicationData[guid] || null,
+	let appData = getApplicationData(guid),
 		url;
 
 	if (appData && appData.image) {
@@ -421,16 +485,46 @@ function getAppImage(guid) {
 }
 
 /**
+ * Get the API version for a given application on the target host.
+ *
+ * @param {string} guid
+ * @param {string} host
+ */
+function getAppAPIVersion(guid, host) {
+	let appData = getApplicationData(guid),
+		hostData;
+
+	if (!appData) {
+		// Applications not loaded or the requested app doesn't exist.
+		return null;
+	}
+
+	hostData = appData.installs.find(h => h.host === host) || null;
+	if (!hostData) {
+		// Host not found for this application.
+		return null;
+	}
+
+	return hostData.version || 1;
+}
+
+/**
  * Get the rendered hostname for a given host identifier.
  *
  * @param {string} host
+ * @param {boolean} asHTML Whether to return the hostname as HTML with a tooltip of the full host, or as plain text with the host in parentheses.
  * @returns {string}
  */
-function renderHostName(host) {
-	let hostInfo = hostData && hostData[host] || null;
+function renderHostName(host, asHTML = true) {
+	let hostInfo = hostData.find( h => h.host === host ) || null;
 
 	if (hostInfo && hostInfo.hostname) {
-		return '<span title="' + host + '">' + hostInfo.hostname + '</span>';
+		if (asHTML) {
+			return '<span title="' + host + '">' + hostInfo.hostname + '</span>';
+		}
+		else {
+			return hostInfo.hostname + ' (' + host + ')';
+		}
 	}
 	else {
 		return host;
@@ -444,7 +538,7 @@ function renderHostName(host) {
  * @returns {HTMLImageElement}
  */
 function renderHostOSThumbnail(host) {
-	let hostInfo = hostData && hostData[host] || null;
+	let hostInfo = hostData.find( h => h.host === host ) || null;
 
 	const thumbnail = document.createElement('img');
 	thumbnail.className = 'os-thumbnail';
@@ -455,10 +549,7 @@ function renderHostOSThumbnail(host) {
 		return thumbnail;
 	}
 
-	if (!hostInfo.connected) {
-		thumbnail.src = '/assets/media/wallpapers/servers/disconnected.webp';
-	}
-	else if (hostInfo.os.name && hostInfo.os.version) {
+	if (hostInfo.os.name && hostInfo.os.version) {
 		thumbnail.src = `/assets/media/wallpapers/servers/${hostInfo.os.name.toLowerCase()}_${hostInfo.os.version.toLowerCase()}.webp`;
 		thumbnail.dataset.fallback = '/assets/media/wallpapers/servers/generic.webp';
 		thumbnail.alt = hostInfo.os.name;
@@ -478,9 +569,9 @@ function renderHostOSThumbnail(host) {
  * @returns {string}
  */
 function renderHostIcon(host) {
-	let hostInfo = hostData && hostData[host] || null;
+	let hostInfo = hostData.find( h => h.host === host ) || null;
 
-	if (hostInfo && hostInfo.connected && hostInfo.os.name) {
+	if (hostInfo && hostInfo.os.name) {
 		return '<img src="/assets/media/logos/servers/' + hostInfo.os.name.toLowerCase() + '.svg" alt="' + hostInfo.os.title + ' Icon" title="' + hostInfo.os.title + '">';
 	}
 	else {
@@ -492,16 +583,48 @@ function renderHostIcon(host) {
  * Format bytes as human-readable text.
  *
  * @param {number} bytes
+ * @param {number|null} precision
  * @returns {string}
  */
-function formatFileSize(bytes) {
-	if (bytes === 0) return '0 B';
+function formatFileSize(bytes, precision) {
+	precision = (precision === undefined || precision === null) ? 1 : precision;
+
+	if (bytes < 1 || bytes === null || bytes === undefined) return '0 B';
+
 	const k = 1024;
 	const sizes = ['B', 'KB', 'MB', 'GB', 'TB', 'PB'];
 	const i = Math.floor(Math.log(bytes) / Math.log(k));
-	return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+	return parseFloat(bytes / Math.pow(k, i)).toFixed(precision) + ' ' + sizes[i];
 }
 
+/**
+ * Format bits per second as human-readable text.
+ *
+ * @param {number} bits
+ * @param {number|null} precision
+ * @returns {string}
+ */
+function formatBitSpeed(bits, precision) {
+	precision = (precision === undefined || precision === null) ? 1 : precision;
+
+	if (bits < 1 || bits === null || bits === undefined) return '0 bps';
+
+	if (bits === 0) return '0 bps';
+	const k = 1024;
+	const sizes = ['bps', 'Kbps', 'Mbps', 'Gbps', 'Tbps', 'Pbps'];
+	const i = Math.floor(Math.log(bits) / Math.log(k));
+	return parseFloat(bits / Math.pow(k, i)).toFixed(precision) + ' ' + sizes[i];
+}
+
+/**
+ * Perform a service action (start, stop, restart, etc) via the backend API.
+ *
+ * @param guid
+ * @param host
+ * @param service
+ * @param action
+ * @returns {Promise<unknown>}
+ */
 async function serviceAction(guid, host, service, action) {
 	return new Promise((resolve, reject) => {
 		fetch(`/api/service/control/${guid}/${host}/${service}`, {
@@ -563,54 +686,128 @@ function replaceHostPlaceholders(host) {
 }
 
 /**
+ * Replace all placeholders in the document with service-specific data.
+ *
+ * @param service
+ */
+function replaceServicePlaceholders(service) {
+	document.querySelectorAll('.service-service-placeholder').forEach(el => {
+		el.innerHTML = service.service;
+	});
+
+	document.querySelectorAll('.service-name-placeholder').forEach(el => {
+		el.innerHTML = service.name;
+	});
+}
+
+/**
  * Load application data for the given GUID.
  *
  * @param {string} guid
- * @returns {Promise<void>}
+ * @returns {Promise<AppData>}
  */
 async function loadApplication(guid) {
-	return new Promise((resolve, reject) => {
-		fetchApplications()
-			.then(applications => {
-				const app = applications[guid] || null;
+	if (applicationData && applicationData.length > 0) {
+		// Try to find the application that's in the cache.
+		let cachedApp = applicationData.find(app => app.guid === guid) || null;
+		if (cachedApp) {
+			loadedApplication = guid;
+			loadedApplicationData = cachedApp;
 
-				if (!app) {
-					return reject('Application not found.');
-				}
+			// Replace content from application
+			replaceAppPlaceholders(cachedApp);
 
-				loadedApplication = guid;
+			return loadedApplicationData;
+		}
+	}
 
-				// Replace content from application
-				replaceAppPlaceholders(app);
-				resolve(app);
-			})
-			.catch(error => {
-				reject(error);
-			});
-	});
+	return fetchApplications()
+		.then(applications => {
+			const app = applications.find(app => app.guid === guid) || null;
+
+			if (!app) {
+				throw new Error(`Application '${guid}' not found.`);
+			}
+
+			loadedApplication = guid;
+			loadedApplicationData = app;
+
+			// Replace content from application
+			replaceAppPlaceholders(app);
+
+			return app;
+		});
+}
+
+/**
+ * Retrieve host data for the given host identifier.
+ *
+ * @param {string} host
+ * @returns {Promise<HostData>}
+ */
+async function getHost(host) {
+	if (hostData && hostData.length > 0) {
+		// Try to find the application that's in the cache.
+		let cachedHost = hostData.find(h => h.host === host) || null;
+		if (cachedHost) {
+			return cachedHost;
+		}
+	}
+
+	return fetchHosts()
+		.then(hosts => {
+			const hostInfo = hosts.find(h => h.host === host) || null;
+
+			if (!hostInfo) {
+				throw new Error(`Host '${host}' not found.`);
+			}
+			return hostInfo;
+		});
 }
 
 /**
  * Load host data for the given host identifier.
  *
+ * Will register this host as the "loaded" host for the page
+ *
  * @param {string} host
  * @returns {Promise<unknown>}
  */
 async function loadHost(host) {
+	return getHost(host).then(hostInfo => {
+		loadedHost = host;
+		loadedHostData = hostInfo;
+
+		// Replace content from application
+		replaceHostPlaceholders(hostInfo);
+
+		return hostInfo;
+	});
+}
+
+/**
+ * Load service data for the given application GUID, host, and service identifier.
+ *
+ * @param app_guid
+ * @param host
+ * @param service
+ * @returns {Promise<ServiceData>}
+ */
+async function loadService(app_guid, host, service) {
 	return new Promise((resolve, reject) => {
-		fetchHosts()
-			.then(hosts => {
-				const hostInfo = hosts[host] || null;
+		fetchService(app_guid, host, service)
+			.then(serviceData => {
+				// Set the new data, (this is done prior to dispatching events in case a caller expects the object to be ready)
+				loadedService = serviceData.service;
+				loadedServiceData = serviceData;
 
-				if (!hostInfo) {
-					return reject('Host not found.');
-				}
+				// Dispatch event notifiers that things changed
+				document.dispatchEvent(new CustomEvent('serviceChange', {detail: loadedServiceData}));
 
-				loadedHost = host;
+				// Replace content from service
+				replaceServicePlaceholders(serviceData);
 
-				// Replace content from application
-				replaceHostPlaceholders(hostInfo);
-				resolve(hostInfo);
+				resolve(serviceData);
 			})
 			.catch(error => {
 				reject(error);
@@ -648,22 +845,54 @@ function stream(
 	const parseSSEBlock = (block) => {
 		// Parse SSE-style block (lines like "data: ..." and optionally "event: ...")
 		const lines = block.split(/\r?\n/);
-		let event = 'message';
+		let event = 'message',
+			data = null;
 		const dataLines = [];
 		for (const line of lines) {
 			if (line.startsWith('event:')) {
 				event = line.slice(6).trim();
-			} else if (line.startsWith('data:')) {
+			}
+			else if (event === 'done' && line.startsWith('code:')) {
+				let code = parseInt(line.slice(5).trim());
+				if (code === 0) {
+					// Successful execution
+					return;
+				}
+				else {
+					// Failed execution
+					throw new Error(`Execution failed with code ${code}`);
+				}
+			}
+			else if (line.startsWith('json:')) {
+				let json = line.slice(5).trim();
+				if (json.startsWith('{') && json.endsWith('}')) {
+					event = 'data';
+					data = JSON.parse(json);
+				}
+				else {
+					dataLines.push(json);
+				}
+			}
+			else if (line.startsWith('data:')) {
 				dataLines.push(line.slice(5).trim());
-			} else if (line.startsWith('stdout:')) {
+			}
+			else if (line.startsWith('stdout:')) {
 				event = 'stdout';
 				dataLines.push(line.slice(7).trim());
-			} else if (line.startsWith('stderr:')) {
+			}
+			else if (line.startsWith('stderr:')) {
 				event = 'stderr';
 				dataLines.push(line.slice(7).trim());
 			}
+			else if (line.startsWith(':')) {
+				event = 'comment';
+				dataLines.push(line.slice(1).trim());
+			}
 		}
-		const data = dataLines.join('\n');
+
+		if (data === null) {
+			data = dataLines.join('\n');
+		}
 
 		if (event === 'error') {
 			console.error(data);
@@ -745,7 +974,7 @@ function stream(
 				return resolve();
 			} else {
 				if (messageHandler) messageHandler('error', err && err.message ? err.message : String(err));
-				return resolve();
+				return reject();
 			}
 		} finally {
 			// Cleanup reader
@@ -818,43 +1047,45 @@ function parseTerminalCodes(data) {
 	const ESC = '\u001b[';
 	const RESET = ESC + '0m';
 
-	const styleMap = {
-		'30': 'color: black;',
-		'31': 'color: red;',
-		'32': 'color: green;',
-		'33': 'color: yellow;',
-		'34': 'color: blue;',
-		'35': 'color: magenta;',
-		'36': 'color: cyan;',
-		'37': 'color: white;',
-		'40': 'background-color: black;',
-		'41': 'background-color: red;',
-		'42': 'background-color: green;',
-		'43': 'background-color: yellow;',
-		'44': 'background-color: blue;',
-		'45': 'background-color: magenta;',
-		'46': 'background-color: cyan;',
-		'47': 'background-color: white;',
-		'90': 'color: gray;',
-		'91': 'color: lightred;',
-		'92': 'color: lightgreen;',
-		'93': 'color: lightyellow;',
-		'94': 'color: lightblue;',
-		'95': 'color: lightmagenta;',
-		'96': 'color: lightcyan;',
-		'97': 'color: lightwhite;',
-		'100': 'background-color: gray;',
-		'101': 'background-color: lightred;',
-		'102': 'background-color: lightgreen;',
-		'103': 'background-color: lightyellow;',
-		'104': 'background-color: lightblue;',
-		'105': 'background-color: lightmagenta;',
-		'106': 'background-color: lightcyan;',
-		'107': 'background-color: lightwhite;',
-		'1': 'font-weight: bold;',
-		'2': 'opacity: 0.8;',
-		'3': 'font-style: italic;',
-		'4': 'text-decoration: underline;',
+	const classMap = {
+		'30': 'term-fg-black',
+		'31': 'term-fg-red',
+		'32': 'term-fg-green',
+		'33': 'term-fg-yellow',
+		'34': 'term-fg-blue',
+		'35': 'term-fg-magenta',
+		'36': 'term-fg-cyan',
+		'37': 'term-fg-white',
+		'40': 'term-bg-black',
+		'41': 'term-bg-red',
+		'42': 'term-bg-green',
+		'43': 'term-bg-yellow',
+		'44': 'term-bg-blue',
+		'45': 'term-bg-magenta',
+		'46': 'term-bg-cyan',
+		'47': 'term-bg-white',
+		'90': 'term-fg-bright-black',
+		'91': 'term-fg-bright-red',
+		'92': 'term-fg-bright-green',
+		'93': 'term-fg-bright-yellow',
+		'94': 'term-fg-bright-blue',
+		'95': 'term-fg-bright-magenta',
+		'96': 'term-fg-bright-cyan',
+		'97': 'term-fg-bright-white',
+		'100': 'term-bg-bright-black',
+		'101': 'term-bg-bright-red',
+		'102': 'term-bg-bright-green',
+		'103': 'term-bg-bright-yellow',
+		'104': 'term-bg-bright-blue',
+		'105': 'term-bg-bright-magenta',
+		'106': 'term-bg-bright-cyan',
+		'107': 'term-bg-bright-white',
+		'1': 'term-bold',
+		'2': 'term-dim',
+		'3': 'term-italic',
+		'4': 'term-underline',
+		'5': 'term-blink',
+		'9': 'term-strike',
 	};
 
 	let result = '';
@@ -874,9 +1105,9 @@ function parseTerminalCodes(data) {
 				// Reset code
 				result += '</span>' + text;
 				depth = Math.max(0, depth - 1);
-			} else if (styleMap[code]) {
+			} else if (classMap[code]) {
 				// Known style code
-				result += `<span style="${styleMap[code]}">` + text;
+				result += `<span class="${classMap[code]}">` + text;
 				depth += 1;
 			} else {
 				// Unknown code
@@ -898,8 +1129,15 @@ function parseTerminalCodes(data) {
 	return result;
 }
 
-// UI Toast helper: creates bottom-center toasts, newest on top, auto-dismiss and click-to-dismiss
-function showToast(type, message, duration = 4000) {
+/**
+ * Show a notification pop-over in the bottom of the screen
+ *
+ * @param type     {string} { success, error, warning, info}
+ * @param message  {string} Message to display
+ * @param duration {number|false} Number of milliseconds to show, or False to stay open until dismissed
+ * @param title    {string|null} Optional title to display
+ */
+function showToast(type, message, duration = 4000, title = null) {
 	try {
 		const allowed = ['success', 'error', 'warning', 'info'];
 		const t = allowed.includes(type) ? type : 'info';
@@ -915,7 +1153,18 @@ function showToast(type, message, duration = 4000) {
 		toast.className = 'toast toast--' + t;
 		toast.setAttribute('role', 'status');
 		toast.setAttribute('aria-live', 'polite');
-		toast.textContent = message;
+
+		if (title) {
+			const titleEl = document.createElement('div');
+			titleEl.className = 'toast-title';
+			titleEl.textContent = title;
+			toast.appendChild(titleEl);
+		}
+
+		const msg = document.createElement('div');
+		msg.className = 'toast-message';
+		msg.textContent = message;
+		toast.appendChild(msg);
 
 		// Prepend so newest appears on top
 		if (container.firstChild) container.insertBefore(toast, container.firstChild);
@@ -948,11 +1197,16 @@ function showToast(type, message, duration = 4000) {
 			setTimeout(cleanup, 600);
 		};
 
-		const timer = setTimeout(removeToast, duration);
+		let timer = null;
+		if (duration !== false && duration > 0) {
+			timer = setTimeout(removeToast, duration);
+		}
 
 		// Click to dismiss immediately
 		toast.addEventListener('click', () => {
-			clearTimeout(timer);
+			if (timer) {
+				clearTimeout(timer);
+			}
 			removeToast();
 		});
 	} catch (err) {
@@ -974,11 +1228,34 @@ function terminalOutputHelper(terminalOutput, event, data) {
 	// Swap any < ... > to prevent HTML issues
 	data = data.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
+	// Is this a clear command?
+	if (data === '\x1b[2J\x1b[H') {
+		terminalOutput.innerHTML = '';
+		return;
+	}
+
 	// Put pretty colors in place
 	data = parseTerminalCodes(data);
 
+	if (event === 'stderr') {
+		// Check if logs should be reclassified.
+		// They are sent on stderr, but they're not necessarily errors.
+		if (data.substring(0, 50).includes('[DEBUG]')) {
+			event = 'debug';
+		}
+		else if (data.substring(0, 50).includes('[INFO]')) {
+			event = 'stdout';
+		}
+		else if (data.substring(0, 50).includes('[WARN]')) {
+			event = 'warning';
+		}
+	}
+
 	// Append output
-	terminalOutput.innerHTML += `<div class="line-${event}">${data}</div>`;
+	let line = document.createElement('div');
+	line.classList.add('line-' + event);
+	line.innerHTML = data;
+	terminalOutput.appendChild(line);
 
 	// Scroll to bottom
 	if (scrolledToBottom) {
@@ -999,34 +1276,6 @@ function convertTimestampToDateTimeString(unixTime) {
 
 async function loadCronJob(host, identifier, target) {
 	return new Promise((resolve, reject) => {
-		if (target && !target.dataset.autoEventsAdded) {
-			// Add change event to schedule selector to show/hide relevant fields
-			let schedule, time, day;
-			schedule = target.querySelector('[name="schedule"]');
-			time = target.querySelector('[name="time"]');
-			day = target.querySelector('[name="weekly_day"]');
-			target.dataset.autoEventsAdded = '1';
-
-			schedule.addEventListener('change', () => {
-				if (schedule.value === 'weekly') {
-					time.closest('.form-group').style.display = 'flex';
-					day.closest('.form-group').style.display = 'flex';
-				}
-				else if (schedule.value === 'daily') {
-					time.closest('.form-group').style.display = 'flex';
-					day.closest('.form-group').style.display = 'none';
-				}
-				else if (schedule.value === 'hourly') {
-					time.closest('.form-group').style.display = 'none';
-					day.closest('.form-group').style.display = 'none';
-				}
-				else {
-					time.closest('.form-group').style.display = 'none';
-					day.closest('.form-group').style.display = 'none';
-				}
-			});
-		}
-
 		fetch(`/api/cron/${host}`, { method: 'GET' })
 			.then(r => r.json())
 			.then(data => {
@@ -1034,82 +1283,123 @@ async function loadCronJob(host, identifier, target) {
 					return reject(data);
 				}
 
-				let schedule, time, day;
-				if (target) {
-					// Load the form elements for the target UI, (optionally)
-					schedule = target.querySelector('[name="schedule"]');
-					time = target.querySelector('[name="time"]');
-					day = target.querySelector('[name="weekly_day"]');
-				}
-
 				const jobs = data.jobs || [];
 				const job = jobs.find(j => j.identifier === identifier);
-				if (!job) {
-					if (schedule) {
-						schedule.value = 'disabled';
-						schedule.dispatchEvent(new CustomEvent('change'));
-					}
 
-					return resolve(null);
+				if (target) {
+					populateCronJob(job, target);
 				}
-				else {
-					// parse schedule
-					const parts = job.schedule.split(/\s+/);
-					if (parts.length >= 5) {
-						const minute = parts[0].padStart(2, '0');
-						const hour = parts[1].padStart(2, '0');
-
-						if (parts[1] === '*') {
-							// 0 * * * *
-							if (schedule) {
-								schedule.value = 'hourly';
-								schedule.dispatchEvent(new CustomEvent('change'));
-							}
-						}
-						else if (parts[2] === '*' && parts[3] === '*' && parts[4] === '*') {
-							// X X * * *
-							if (time) {
-								time.value = `${hour}:${minute}`;
-							}
-							if (schedule) {
-								schedule.value = 'daily';
-								schedule.dispatchEvent(new CustomEvent('change'));
-							}
-						}
-						else if (parts[2] === '*' && parts[3] === '*') {
-							// X X * * DOW
-							if (time) {
-								time.value = `${hour}:${minute}`;
-							}
-							if (day) {
-								// map day number to option
-								const dowNum = parts[4];
-								const dowMap = {
-									'0': 'sun',
-									'1': 'mon',
-									'2': 'tue',
-									'3': 'wed',
-									'4': 'thu',
-									'5': 'fri',
-									'6': 'sat',
-									'7': 'sun'
-								};
-								day.value = dowMap[dowNum] || 'sun';
-							}
-							if (schedule) {
-								schedule.value = 'weekly';
-								schedule.dispatchEvent(new CustomEvent('change'));
-							}
-						}
-					}
-
-					return resolve(job);
-				}
+				return resolve(job);
 			})
 			.catch(() => {
 				// ignore fetch errors; show defaults
 			});
 	});
+}
+
+function populateCronJob(job, target) {
+	let schedule, time, day;
+
+	if (target) {
+		schedule = target.querySelector('[name="schedule"]');
+		time = target.querySelector('[name="time"]');
+		day = target.querySelector('[name="weekly_day"]');
+	}
+
+	if (target && !target.dataset.autoEventsAdded) {
+		// Add change event to schedule selector to show/hide relevant fields
+		target.dataset.autoEventsAdded = '1';
+
+		schedule.addEventListener('change', () => {
+			if (schedule.value === 'weekly') {
+				time.closest('.form-group').style.display = 'flex';
+				day.closest('.form-group').style.display = 'flex';
+			}
+			else if (schedule.value === 'daily') {
+				time.closest('.form-group').style.display = 'flex';
+				day.closest('.form-group').style.display = 'none';
+			}
+			else if (schedule.value === 'hourly') {
+				time.closest('.form-group').style.display = 'none';
+				day.closest('.form-group').style.display = 'none';
+			}
+			else {
+				time.closest('.form-group').style.display = 'none';
+				day.closest('.form-group').style.display = 'none';
+			}
+		});
+	}
+
+	if (!job) {
+		if (schedule) {
+			let hasDisabled = false;
+			schedule.querySelectorAll('option').forEach(option => {
+				if (option.value === 'disabled') {
+					hasDisabled = true;
+				}
+			});
+
+			if (hasDisabled) {
+				schedule.value = 'disabled';
+			}
+			else {
+				schedule.value = 'hourly';
+			}
+
+			schedule.dispatchEvent(new CustomEvent('change'));
+		}
+	}
+	else {
+		// parse schedule
+		const parts = job.schedule.split(/\s+/);
+		if (parts.length >= 5) {
+			const minute = parts[0].padStart(2, '0');
+			const hour = parts[1].padStart(2, '0');
+
+			if (parts[1] === '*') {
+				// 0 * * * *
+				if (schedule) {
+					schedule.value = 'hourly';
+					schedule.dispatchEvent(new CustomEvent('change'));
+				}
+			}
+			else if (parts[2] === '*' && parts[3] === '*' && parts[4] === '*') {
+				// X X * * *
+				if (time) {
+					time.value = `${hour}:${minute}`;
+				}
+				if (schedule) {
+					schedule.value = 'daily';
+					schedule.dispatchEvent(new CustomEvent('change'));
+				}
+			}
+			else if (parts[2] === '*' && parts[3] === '*') {
+				// X X * * DOW
+				if (time) {
+					time.value = `${hour}:${minute}`;
+				}
+				if (day) {
+					// map day number to option
+					const dowNum = parts[4];
+					const dowMap = {
+						'0': 'sun',
+						'1': 'mon',
+						'2': 'tue',
+						'3': 'wed',
+						'4': 'thu',
+						'5': 'fri',
+						'6': 'sat',
+						'7': 'sun'
+					};
+					day.value = dowMap[dowNum] || 'sun';
+				}
+				if (schedule) {
+					schedule.value = 'weekly';
+					schedule.dispatchEvent(new CustomEvent('change'));
+				}
+			}
+		}
+	}
 }
 
 function parseCronSchedule(target) {
@@ -1139,6 +1429,306 @@ function parseCronSchedule(target) {
 	}
 }
 
+/**
+ * Format a cron schedule string into a human-readable description.
+ *
+ * Input string should be in a cron format ie "0 2 * * 1"
+ *
+ * @param {string} schedule
+ */
+function formatCronSchedule(schedule) {
+	if (!schedule) return 'Disabled';
+
+	const s = String(schedule).trim();
+	if (!s || s.toUpperCase() === 'DISABLED') return 'Disabled';
+
+	// Handle @-shortcuts
+	const shortcuts = {
+		'@hourly': 'Hourly',
+		'@daily': 'Daily',
+		'@midnight': 'Daily at 00:00',
+		'@weekly': 'Weekly',
+		'@monthly': 'Monthly',
+		'@yearly': 'Yearly',
+		'@annually': 'Yearly',
+		'@reboot': 'At reboot'
+	};
+	if (shortcuts[s.toLowerCase()]) return shortcuts[s.toLowerCase()];
+
+	// Split into parts (minute hour dom month dow)
+	const parts = s.split(/\s+/);
+	if (parts.length < 5) return s;
+
+	const [minute, hour, dom, month, dow] = parts;
+
+	// Helper to map DOW numbers to names
+	const dowMap = { '0': 'Sunday', '1': 'Monday', '2': 'Tuesday', '3': 'Wednesday', '4': 'Thursday', '5': 'Friday', '6': 'Saturday', '7': 'Sunday' };
+
+	function prettyTime(h, m) {
+		// h or m might be '*' or numbers
+		if (h === '*' || m === '*') return null;
+		const hh = String(h).padStart(2, '0');
+		const mm = String(m).padStart(2, '0');
+		return `${hh}:${mm}`;
+	}
+
+	// Common patterns
+	// Every minute
+	if (minute === '*' && hour === '*' && dom === '*' && month === '*' && dow === '*') return 'Every minute';
+
+	// Every N minutes: */N * * * *
+	if (/^\*\/\d+$/.test(minute) && hour === '*' && dom === '*' && month === '*' && dow === '*') {
+		const n = minute.split('/')[1];
+		return `Every ${n} minute${n !== '1' ? 's' : ''}`;
+	}
+
+	// Hourly (e.g., 0 * * * *) or minute fixed, hour = *
+	if (hour === '*' && dom === '*' && month === '*' && dow === '*') {
+		if (/^\d+$/.test(minute)) {
+			return `Hourly at minute ${String(minute).padStart(2, '0')}`;
+		}
+		return 'Hourly';
+	}
+
+	// Daily (minute hour * * *)
+	if (dom === '*' && month === '*' && dow === '*') {
+		if (/^(\d+|\*+)$/.test(minute) && /^(\d+|\*+)$/.test(hour) && minute !== '*') {
+			const t = prettyTime(hour, minute);
+			if (t) return `Daily at ${t}`;
+		}
+		// Fallback
+		return 'Daily';
+	}
+
+	// Weekly (minute hour * * DOW)
+	if (dom === '*' && month === '*') {
+		if (dow && dow !== '*') {
+			// dow may be a list like 1,3
+			const partsDow = String(dow).split(',');
+			const mapped = partsDow.map(d => dowMap[d] || d);
+			const t = prettyTime(hour, minute);
+			if (mapped.length === 1) {
+				return t ? `Every ${mapped[0]} at ${t}` : `Every ${mapped[0]}`;
+			}
+			return t ? `Every ${mapped.join(', ')} at ${t}` : `Every ${mapped.join(', ')}`;
+		}
+	}
+
+	// Monthly (minute hour DOM * *)
+	if (month === '*' && dow === '*') {
+		if (dom && dom !== '*') {
+			const t = prettyTime(hour, minute) || '';
+			return `Monthly on day ${dom}${t ? ` at ${t}` : ''}`;
+		}
+	}
+
+	// If we reach here, produce a sensible summary
+	let summaryParts = [];
+	if (minute && minute !== '*') summaryParts.push(`minute: ${minute}`);
+	if (hour && hour !== '*') summaryParts.push(`hour: ${hour}`);
+	if (dom && dom !== '*') summaryParts.push(`day-of-month: ${dom}`);
+	if (month && month !== '*') summaryParts.push(`month: ${month}`);
+	if (dow && dow !== '*') summaryParts.push(`day-of-week: ${dow}`);
+
+	if (summaryParts.length === 0) return 'Every minute';
+
+	return summaryParts.join(', ');
+}
+
+/**
+ * Check if a given application on a given host has a specific option enabled.
+ *
+ * @param guid
+ * @param host
+ * @param option
+ * @returns {*|boolean}
+ */
+function checkHostAppHasOption(guid, host, option) {
+	const appData = getApplicationData(guid);
+
+	if (!appData) {
+		// App data not loaded yet or not found
+		return false;
+	}
+
+	const appHostData = appData.installs.find(h => h.host === host);
+	if (!appHostData) {
+		// No specific host data for this host
+		return false;
+	}
+
+	return appHostData.options && appHostData.options.includes(option);
+}
+
+function openModal(modal) {
+	modal.classList.add('show');
+	document.body.style.overflow = 'hidden';
+}
+
+function closeModal(modal) {
+	modal.classList.remove('show');
+	document.body.style.overflow = '';
+}
+
+/**
+ * Poll the server for a continuous feed of changes for a given service
+ *
+ * @param {string} app_guid
+ * @param {string} host
+ * @param {string} service
+ */
+function pollService(app_guid, host, service) {
+	stream(`/api/service/stream/${app_guid}/${host}/${service}`, 'GET',{},null,(event, data) => {
+		if (event === 'data') {
+			let svcName = data.service || service;
+
+			// Keep the application state consistent with latest data if it's the currently loaded service
+			if (loadedService === svcName) {
+				loadedServiceData = Object.assign(loadedServiceData, data);
+			}
+
+			// Dispatch the change notification so dependent functions can pick up on the new data.
+			document.dispatchEvent(new CustomEvent('serviceChange', { detail: data }));
+		}
+	}, true);
+}
+
+/**
+ * Poll the server for a continuous feed of changes for ALL services
+ */
+function pollServices() {
+	stream(`/api/services/stream`, 'GET',{},null,(event, data) => {
+		if (event === 'data') {
+			let svcName = data.service || null;
+
+			// Keep the application state consistent with latest data if it's the currently loaded service
+			if (svcName !== null && loadedService === svcName) {
+				loadedServiceData = Object.assign(loadedServiceData, data);
+			}
+
+			// Dispatch the change notification so dependent functions can pick up on the new data.
+			document.dispatchEvent(new CustomEvent('serviceChange', { detail: data }));
+		}
+	}, true);
+}
+
+/**
+ * Poll the server for a continuous feed of changes for a single
+ *
+ */
+function pollHostMetrics(host) {
+	stream(`/api/host/metrics/stream/${host}`, 'GET',{},null,(event, data) => {
+		if (event === 'data') {
+			// Save the metrics on the loaded hosts, if there is one
+			if (loadedHostData && loadedHostData.host === data.host) {
+				loadedHostData.metrics = Object.assign(loadedHostData.metrics || {}, data);
+			}
+
+			// Notify the application that a change was detected.
+			document.dispatchEvent(new CustomEvent('hostChange', {detail: data}));
+		}
+	}, true);
+}
+
+/**
+ * Poll the server for a continuous feed of changes for all hosts
+ *
+ */
+function pollHostsMetrics() {
+	stream(`/api/hosts/metrics/stream`, 'GET',{},null,(event, data) => {
+		if (event === 'data') {
+			// Save the metrics on the loaded hosts, if there is one
+			let host = hostData.find(h => h.host === data.host);
+			if (host) {
+				host.metrics = Object.assign(host.metrics || {}, data);
+			}
+			// Notify the application that a change was detected.
+			document.dispatchEvent(new CustomEvent('hostChange', {detail: data}));
+		}
+	}, true);
+}
+
+/**
+ * Visually tick up/down the number in a given element.
+ *
+ * If the previous number was 1 and the new number is 10,
+ * the values will be updated in the DOM to count up from 1 to 10.
+ *
+ * @param {Element} element
+ * @param {number|string} value
+ * @param {function|null} displayFormat
+ */
+function numberTick(element, value, displayFormat) {
+	const prev = parseFloat(element.dataset.numberTickPrevious || null);
+	const target = typeof value === 'number' ? value : parseFloat(value);
+	const format = typeof displayFormat === 'function' ? displayFormat : (v) => v.toFixed(1);
+
+	element.dataset.numberTickPrevious = target;
+	if (isNaN(prev) || isNaN(target) || prev === target) {
+		element.textContent = format(target);
+		return;
+	}
+
+	const step = (target - prev) / 20;
+	let current = prev,
+		interval;
+
+	const tick = () => {
+		current += step;
+		if ((step > 0 && current >= target) || (step < 0 && current <= target)) {
+			element.textContent = format(target);
+			if (interval) {
+				clearInterval(interval);
+			}
+			return;
+		}
+		element.textContent = format(current);
+	};
+
+	tick();
+	interval = setInterval(tick, 200);
+}
+
+/**
+ * Simple helper function to update a progress bar with a new percentage.
+ *
+ * Does not handle animations, just sets the class to "good", "warning", or "critical"
+ * and sets the width of the bar.
+ *
+ * @param {Element} barFill    DOMElement to update, should be the inner fill object.
+ * @param {number} percent     Current value of progress bar, in 0-100 percent
+ * @param {number} goodMax     Maximum value for good styling
+ * @param {number} warningMax  Maximum value for warning styling
+ */
+function progressBarTick(barFill, percent, goodMax = 50, warningMax = 75) {
+	if (percent <= goodMax) {
+		barFill.classList.remove('critical', 'warning');
+		barFill.classList.add('good');
+	}
+	else if (percent <= warningMax) {
+		barFill.classList.remove('good', 'critical');
+		barFill.classList.add('warning');
+	}
+	else {
+		barFill.classList.remove('good', 'warning');
+		barFill.classList.add('critical');
+	}
+
+	barFill.style.width = `${Math.max(Math.min(percent, 100), 0)}%`;
+}
+
+function sha256(str) {
+	const data = (new TextEncoder()).encode(str);
+
+	// Compute SHA-256 digest using SubtleCrypto API
+	return crypto.subtle.digest('SHA-256', data)
+		.then(hashBuffer => {
+			// Convert ArrayBuffer to a hex string representation
+			const hashArray = Array.from(new Uint8Array(hashBuffer));
+			return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+		});
+}
+
 
 document.addEventListener('DOMContentLoaded', () => {
 	// Add standard close events to Modals
@@ -1146,7 +1736,7 @@ document.addEventListener('DOMContentLoaded', () => {
 		button.addEventListener('click', (e) => {
 			const modal = e.target.closest('.modal');
 			if (modal) {
-				modal.classList.remove('show');
+				closeModal(modal);
 			}
 		});
 	});
@@ -1156,7 +1746,7 @@ document.addEventListener('DOMContentLoaded', () => {
 		overlay.addEventListener('click', e => {
 			const modal = e.target.closest('.modal');
 			if (modal) {
-				modal.classList.remove('show');
+				closeModal(modal);
 			}
 		});
 	});
@@ -1165,7 +1755,7 @@ document.addEventListener('DOMContentLoaded', () => {
 	document.addEventListener('keydown', (e) => {
 		if (e.key === 'Escape') {
 			document.querySelectorAll('.modal.show').forEach(modal => {
-				modal.classList.remove('show');
+				closeModal(modal);
 			});
 		}
 	});

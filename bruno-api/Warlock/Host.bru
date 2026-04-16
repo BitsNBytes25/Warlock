@@ -1,0 +1,20 @@
+meta {
+  name: Host
+  type: http
+  seq: 24
+}
+
+get {
+  url: {{host}}/api/host/:host
+  body: none
+  auth: inherit
+}
+
+params:path {
+  host: {{lookup_host}}
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

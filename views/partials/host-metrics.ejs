@@ -1,0 +1,29 @@
+<div id="metricsTimeframeSelector" style="margin-bottom: 20px; text-align: center;">
+    <button class="timeframe-btn active" data-timeframe="hour">Hour</button>
+    <button class="timeframe-btn" data-timeframe="day">Day</button>
+    <button class="timeframe-btn" data-timeframe="week">Week</button>
+    <button class="timeframe-btn" data-timeframe="month">Month</button>
+    <button class="timeframe-btn" data-timeframe="3month">3 Months</button>
+    <button class="timeframe-btn" data-timeframe="6month">6 Months</button>
+    <button class="timeframe-btn" data-timeframe="year">Year</button>
+</div>
+<div id="metricsCharts">
+    <div class="chart-container">
+        <h4>CPU Usage (%)</h4>
+        <div><canvas id="cpuChart"></canvas></div>
+    </div>
+    <div class="chart-container">
+        <h4>Memory Usage (GB)</h4>
+        <div><canvas id="memoryChart"></canvas></div>
+    </div>
+    <div class="chart-container">
+        <h4>Network Traffic (Kbps)</h4>
+        <div><canvas id="networkChart"></canvas></div>
+    </div>
+    <div class="chart-container">
+        <h4>Disk Usage (GB)</h4>
+        <div><canvas id="diskChart"></canvas></div>
+    </div>
+</div>
+
+<script src="<%= assetUrl('/assets/host_graphs.js') %>"></script>

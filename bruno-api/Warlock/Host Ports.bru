@@ -1,0 +1,20 @@
+meta {
+  name: Host Ports
+  type: http
+  seq: 28
+}
+
+get {
+  url: {{host}}/api/ports/:host
+  body: none
+  auth: inherit
+}
+
+params:path {
+  host: {{lookup_host}}
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
