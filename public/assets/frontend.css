@@ -2933,7 +2933,7 @@ host-nexus-status .help-link:hover {
 .toast {
 	pointer-events: auto;
 	min-width: 280px;
-	max-width: 720px;
+	max-width: 768px;
 	width: auto;
 	color: #ffffff;
 	background: rgba(15, 17, 25, 0.95);
@@ -2949,12 +2949,19 @@ host-nexus-status .help-link:hover {
 	transform: translateY(20px);
 	opacity: 0;
 	transition: transform 250ms cubic-bezier(0.4, 0, 0.2, 1), opacity 250ms ease;
-	display: flex;
 	align-items: center;
 	gap: 0.875rem;
 	font-size: 0.9375rem;
 	line-height: 1.5;
 	cursor: pointer;
+}
+
+.toast .toast-title {
+	font-weight: bold;
+	text-align: center;
+}
+.toast .toast-message {
+	white-space: pre-wrap;
 }
 
 .toast.show {
@@ -2966,24 +2973,28 @@ host-nexus-status .help-link:hover {
 	background: rgba(16, 185, 129, 0.15);
 	border-color: var(--status-good);
 	color: var(--status-good);
+	box-shadow: 0 4px 20px 0 var(--status-good);
 }
 
 .toast--error {
 	background: rgba(239, 68, 68, 0.15);
 	border-color: var(--status-critical);
 	color: var(--status-critical);
+	box-shadow: 0 4px 20px 0 var(--status-critical);
 }
 
 .toast--warning {
 	background: rgba(245, 158, 11, 0.15);
 	border-color: var(--status-warning);
 	color: var(--status-warning);
+	box-shadow: 0 4px 20px 0 var(--status-warning);
 }
 
 .toast--info {
 	background: rgba(59, 130, 246, 0.15);
 	border-color: var(--status-neutral);
 	color: var(--status-neutral);
+	box-shadow: 0 4px 20px 0 var(--status-neutral);
 }
 
 

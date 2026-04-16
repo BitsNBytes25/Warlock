@@ -1129,8 +1129,15 @@ function parseTerminalCodes(data) {
 	return result;
 }
 
-// UI Toast helper: creates bottom-center toasts, newest on top, auto-dismiss and click-to-dismiss
-function showToast(type, message, duration = 4000) {
+/**
+ * Show a notification pop-over in the bottom of the screen
+ *
+ * @param type     {string} { success, error, warning, info}
+ * @param message  {string} Message to display
+ * @param duration {number|false} Number of milliseconds to show, or False to stay open until dismissed
+ * @param title    {string|null} Optional title to display
+ */
+function showToast(type, message, duration = 4000, title = null) {
 	try {
 		const allowed = ['success', 'error', 'warning', 'info'];
 		const t = allowed.includes(type) ? type : 'info';
@@ -1146,7 +1153,18 @@ function showToast(type, message, duration = 4000) {
 		toast.className = 'toast toast--' + t;
 		toast.setAttribute('role', 'status');
 		toast.setAttribute('aria-live', 'polite');
-		toast.textContent = message;
+
+		if (title) {
+			const titleEl = document.createElement('div');
+			titleEl.className = 'toast-title';
+			titleEl.textContent = title;
+			toast.appendChild(titleEl);
+		}
+
+		const msg = document.createElement('div');
+		msg.className = 'toast-message';
+		msg.textContent = message;
+		toast.appendChild(msg);
 
 		// Prepend so newest appears on top
 		if (container.firstChild) container.insertBefore(toast, container.firstChild);
@@ -1179,11 +1197,16 @@ function showToast(type, message, duration = 4000) {
 			setTimeout(cleanup, 600);
 		};
 
-		const timer = setTimeout(removeToast, duration);
+		let timer = null;
+		if (duration !== false && duration > 0) {
+			timer = setTimeout(removeToast, duration);
+		}
 
 		// Click to dismiss immediately
 		toast.addEventListener('click', () => {
-			clearTimeout(timer);
+			if (timer) {
+				clearTimeout(timer);
+			}
 			removeToast();
 		});
 	} catch (err) {
