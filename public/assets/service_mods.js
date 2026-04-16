@@ -192,6 +192,7 @@ async function installServiceMod(modId, provider) {
 	serviceModsLoading.style.display = 'none';
 	if (installModResult.success) {
 		loadServiceEnabledMods();
+		showToast('success', 'Mod installed successfully!');
 	}
 	else {
 		showToast('error', `Failed to install mod: ${installModResult.error}`);
@@ -284,11 +285,6 @@ function renderServiceMod(modData, allowableActions = []) {
 	header.appendChild(icon);
 	header.appendChild(title);
 
-	//content.appendChild(title);
-	//content.appendChild(metaInfo);
-	//content.appendChild(description);
-	//content.appendChild(author);
-
 	// Create Actions Container (Buttons)
 	const actionsContainer = document.createElement('div');
 	actionsContainer.className = 'actions';
@@ -304,10 +300,20 @@ function renderServiceMod(modData, allowableActions = []) {
 	}
 
 	allowableActions.forEach(action => {
+		let icon = 'fa-cog';
+		if (action === 'install') {
+			icon = 'fa-download';
+		}
+		else if (action === 'remove') {
+			icon = 'fa-trash';
+		}
 		const button = document.createElement('button');
 		button.className = `action-${action}`;
 		// Capitalize the first letter for the button label (e.g., 'install' -> 'Install')
-		button.textContent = action.charAt(0).toUpperCase() + action.slice(1);
+		let buttonContent = action.charAt(0).toUpperCase() + action.slice(1);
+		// Add an icon; serves as a visual cue and a place to swap in a spinner.
+		buttonContent = `<i class="fa ${icon}"></i> ` + buttonContent;
+		button.innerHTML = buttonContent;
 		button.dataset.action = action;
 		button.dataset.id = modData.id;
 		button.dataset.provider = modData.provider;
@@ -315,14 +321,32 @@ function renderServiceMod(modData, allowableActions = []) {
 		if (action === 'install') {
 			button.addEventListener('click', e => {
 				e.preventDefault();
-				installServiceMod(modData.id, modData.provider);
+				let icon = e.target.querySelector('i');
+				if (icon) {
+					icon.dataset.originalIcon = icon.className;
+					icon.className = 'fa fa-spinner fa-spin';
+				}
+				installServiceMod(modData.id, modData.provider).then(() => {
+					if (icon) {
+						icon.className = icon.dataset.originalIcon;
+					}
+				});
 			});
 		}
 		else if (action === 'remove') {
 			button.addEventListener('click', e => {
 				e.preventDefault();
+				let icon = e.target.querySelector('i');
+				if (icon) {
+					icon.dataset.originalIcon = icon.className;
+					icon.className = 'fa fa-spinner fa-spin';
+				}
 				if (confirm('Confirm removal of this mod?')) {
-					removeServiceMod(modData.id, modData.provider);
+					removeServiceMod(modData.id, modData.provider).then(() => {
+						if (icon) {
+							icon.className = icon.dataset.originalIcon;
+						}
+					});
 				}
 			});
 		}
