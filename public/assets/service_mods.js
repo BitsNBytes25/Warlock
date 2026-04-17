@@ -169,11 +169,14 @@ async function searchServiceMods(query) {
 	if (!result.success) {
 		serviceModsSearchResults.innerHTML = '<div class="error-message">Failed to search mods: ' + result.message + '</div>';
 	}
+	else if( result.data.length === 0 ) {
+		serviceModsSearchResults.innerHTML = '<div class="warning-message">No mods found matching your search criteria.</div>';
+	}
 	else {
 		serviceModsSearchResults.innerHTML = '';
 		result.data.forEach(mod => {
 			serviceModsSearchResults.appendChild(renderServiceMod(mod, ['install']));
-		})
+		});
 	}
 }
 
