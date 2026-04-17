@@ -525,37 +525,45 @@ if [ $CONFIGURE_NGINX -eq 1 ]; then
 	TMP_NGINX=$(mktemp)
 	cat > "$TMP_NGINX" <<NGINX
 server {
-    listen 80;
-    server_name $FQDN;
+	listen 80;
+	server_name $FQDN;
 
-    client_max_body_size 50M;
-    proxy_request_buffering off;
-    proxy_buffering off;
-    proxy_pass_request_body on;
-    proxy_read_timeout 10m;
+	client_max_body_size 50M;
+	proxy_request_buffering off;
+	proxy_buffering off;
+	proxy_pass_request_body on;
+	proxy_read_timeout 10m;
 
-    # Serve the service worker at root so it can control site-wide scope
-    location = /service-worker.js {
-        alias $INSTALL_DIR/public/service-worker.js;
-        access_log off;
-    }
+	# Serve the service worker at root so it can control site-wide scope
+	location = /service-worker.js {
+		alias $INSTALL_DIR/public/service-worker.js;
+		access_log off;
+	}
 
-    # Serve static assets directly from the install directory
-    location /assets/ {
-        alias $INSTALL_DIR/public/assets/;
-        access_log off;
-        expires 1d;
-    }
+	# Serve static assets directly from the install directory
+	location /assets/ {
+		alias $INSTALL_DIR/public/assets/;
+		access_log off;
+		expires 1d;
+	}
 
-    # Proxy all other requests to the local Node.js app
-    location / {
-        proxy_pass http://127.0.0.1:$WARLOCK_LISTEN_PORT;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade \$http_upgrade;
-        proxy_set_header Connection 'upgrade';
-        proxy_set_header Host \$host;
-        proxy_cache_bypass \$http_upgrade;
-    }
+	# Define the error page for 502 errors
+	error_page 502 /502.html;
+	# Serve the error page from your public directory
+	location = /502.html {
+		root $INSTALL_DIR/public/;
+		internal;
+	}
+
+	# Proxy all other requests to the local Node.js app
+	location / {
+		proxy_pass http://127.0.0.1:$WARLOCK_LISTEN_PORT;
+		proxy_http_version 1.1;
+		proxy_set_header Upgrade \$http_upgrade;
+		proxy_set_header Connection 'upgrade';
+		proxy_set_header Host \$host;
+		proxy_cache_bypass \$http_upgrade;
+	}
 }
 NGINX
 	chmod 0644 "$TMP_NGINX"
