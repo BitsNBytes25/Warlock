@@ -44,17 +44,13 @@ function renderCronJobs(jobs) {
 		let scheduleDisplay = job.schedule ? formatCronSchedule(job.schedule) : 'N/A',
 			actions = '';
 
-		if (!job.is_warlock) {
-			actions = `<button class="action-edit">
+		actions = `<button class="action-edit">
 	<i class="fas fa-edit"></i>
 </button>
 <button class="action-remove">
 	<i class="fas fa-trash"></i>
 </button>`;
-		}
-		else {
-			actions = '<em>Managed by Warlock</em>';
-		}
+
 
 		row.innerHTML = `
             <td>${scheduleDisplay}</td>
@@ -63,10 +59,8 @@ function renderCronJobs(jobs) {
         `;
 		cronTableBody.appendChild(row);
 
-		if (!job.is_warlock) {
-			row.querySelector('.action-edit').addEventListener('click', editCronJob);
-			row.querySelector('.action-remove').addEventListener('click', deleteCronJob);
-		}
+		row.querySelector('.action-edit').addEventListener('click', editCronJob);
+		row.querySelector('.action-remove').addEventListener('click', deleteCronJob);
 	});
 }
 
