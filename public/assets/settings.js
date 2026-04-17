@@ -222,12 +222,12 @@ async function saveCommunityProfile() {
 		}
 
 		// Success!
-		alert("Community profile saved successfully!");
+		showToast('success', 'Profile saved successfully!');
 		console.log("Saved payload:", payload);
 
 	} catch (error) {
 		console.error("Error saving profile:", error);
-		alert(`Error: ${error.message}`);
+		showToast('error', error.message, false, 'Failed to save profile!');
 	} finally {
 		// 5. Restore button state
 		saveButton.disabled = false;
