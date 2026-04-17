@@ -75,7 +75,7 @@
 		const appVersion = hostData.version;
 
 		let identifier;
-		if (service && appVersion >= 2) {
+		if (service && VersionCompare.ge(appVersion, '2.0.0')) {
 			identifier = `${application}_${service}_backup`;
 		}
 		else {
@@ -125,7 +125,7 @@
 		}
 
 		let identifier;
-		if (service && appVersion >= 2) {
+		if (service && VersionCompare.ge(appVersion, '2.0.0')) {
 			identifier = `${guid}_${service}_backup`;
 		}
 		else {

@@ -1,5 +1,6 @@
 import {cmdRunner} from "./cmd_runner.mjs";
 import {logger} from "./logger.mjs";
+import {VersionCompare} from "./version_compare.mjs";
 
 /**
  * Class representing the application data for a specific host and application path.
@@ -49,14 +50,20 @@ export class AppInstallData {
 		return cmdRunner(this.host, `${this.path}/manage.py --help`, 86400)
 			.then(result => {
 				let options = [],
-					version = 1,
+					version = null,
 					in_commands = false,
 					match = null;
 				const helpText = result.stdout.split('\n').map(line => line.trim());
 
 				for(let line of helpText) {
-					if(line.startsWith('╭─ Commands')) {
-						version = 2;
+					if (line.trim().startsWith('Warlock Manager: ')) {
+						// V2.1.2+ of Warlock Manager supports rendering the actual version, no more guess work!
+						version = line.trim().split(' ')[2];
+					}
+					else if(line.startsWith('╭─ Commands')) {
+						if (version === null) {
+							version = 2;
+						}
 						in_commands = true;
 					}
 					else if(line.startsWith('options:')) {
@@ -64,12 +71,12 @@ export class AppInstallData {
 						in_commands = true;
 					}
 
-					if (in_commands) {
-						if (version === 1 && (match = line.match(/^--([a-zA-Z0-9_-]+)\s.*$/))) {
+					if (in_commands && version !== null) {
+						if (VersionCompare.satisfies(version, '^1.0.0') && (match = line.match(/^--([a-zA-Z0-9_-]+)\s.*$/))) {
 							// Version 1 uses '--option' format
 							options.push(match[1]);
 						}
-						else if (version === 2 && (match = line.match(/^\│ ([a-zA-Z0-9_-]+)\s+.*$/))) {
+						else if (VersionCompare.ge(version, '2.0.0') && (match = line.match(/^\│ ([a-zA-Z0-9_-]+)\s+.*$/))) {
 							// Version 2 uses a table format with '│ option description'
 							options.push(match[1]);
 						}
@@ -121,10 +128,10 @@ export class AppInstallData {
 		}
 		const argsString = this._argsParse(args);
 
-		if (this.version === 1) {
+		if (VersionCompare.satisfies(this.version, '^1.0.0')) {
 			return `${this.path}/manage.py --${option} ${argsString}`.trim();
 		}
-		else if (this.version === 2) {
+		else if (VersionCompare.ge(this.version, '2.0.0')) {
 			return `${this.path}/manage.py ${option} ${argsString}`.trim();
 		}
 		else {
@@ -162,10 +169,10 @@ export class AppInstallData {
 		}
 		const argsString = this._argsParse(args);
 
-		if (this.version === 1) {
+		if (VersionCompare.satisfies(this.version, '^1.0.0')) {
 			return `${this.path}/manage.py --service "${service}" --${option} ${argsString}`.trim();
 		}
-		else if (this.version === 2) {
+		else if (VersionCompare.ge(this.version, '2.0.0')) {
 			return `${this.path}/manage.py ${option} --service "${service}" ${argsString}`.trim();
 		}
 		else {

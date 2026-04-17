@@ -30,7 +30,7 @@ async function loadAutomaticUpdates() {
 		appVersion = hostData.version;
 
 	let identifier;
-	if (appVersion >= 2 && loadedServiceData.multi_binary) {
+	if (VersionCompare.ge(appVersion, '2.0.0') && loadedServiceData.multi_binary) {
 		identifier = `${loadedApplication}_${loadedService}_update`;
 	}
 	else {
@@ -57,7 +57,7 @@ async function loadAutomaticRestarts() {
 		appVersion = hostData.version;
 
 	let identifier;
-	if (appVersion >= 2) {
+	if (VersionCompare.ge(appVersion, '2.0.0')) {
 		identifier = `${loadedApplication}_${loadedService}_restart`;
 	}
 	else {

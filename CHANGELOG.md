@@ -50,6 +50,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Hidden files are now hidden, but can be displayed by clicking the eye icon
 - Move default installation from /var/www/Warlock to /var/www/warlock
 - Clear files cache for a variety of actions and increase cache for listing files
+- Warlock.Manager now can provide full version strings
 
 ### Deprecated
 

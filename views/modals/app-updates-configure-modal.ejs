@@ -75,7 +75,7 @@
 		const appVersion = hostData.version;
 
 		let identifier;
-		if (service && appVersion >= 2) {
+		if (service && VersionCompare.ge(appVersion, '2.0.0')) {
 			identifier = `${application}_${service}_update`;
 		}
 		else {
@@ -116,7 +116,7 @@
 
 		let command, identifier;
 
-		if (service && appVersion >= 2) {
+		if (service && VersionCompare.ge(appVersion, '2.0.0')) {
 			identifier = `${application}_${service}_update`;
 		}
 		else {
@@ -152,7 +152,7 @@
 
 		if (hostData.options.includes('delayed-update') && delayedUpdate.checked) {
 			// Build command for delayed updates
-			if (service && appVersion >= 2) {
+			if (service && VersionCompare.ge(appVersion, '2.0.0')) {
 				command = `${appDir}/manage.py check-update --service ${service} &&` +
 					`${appDir}/manage.py delayed-update --service ${service}`;
 			}
@@ -161,7 +161,7 @@
 			}
 		}
 		else {
-			if (service && appVersion >= 2) {
+			if (service && VersionCompare.ge(appVersion, '2.0.0')) {
 				command = `! ${appDir}/manage.py has-players --service ${service} &&` +
 					` ${appDir}/manage.py check-update --service ${service} &&` +
 					` ${appDir}/manage.py update --service ${service}`;
