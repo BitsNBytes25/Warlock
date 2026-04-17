@@ -4,6 +4,7 @@ const {cmdStreamer} = require("../../libs/cmd_streamer.mjs");
 const {validateHostApplication} = require("../../libs/validate_host_application.mjs");
 const {logger} = require('../../libs/logger.mjs');
 const {validateHostService} = require("../../libs/validate_host_service.mjs");
+const {clearTaggedCache} = require("../../libs/cache.mjs");
 
 const router = express.Router();
 
@@ -21,6 +22,8 @@ router.post('/:guid/:host', validate_session, validateHostApplication, (req, res
 		logger.error('cmdStreamer error (backup):', err);
 		// cmdStreamer will generally have written to the response, but ensure closed
 		try { res.end(); } catch(e){}
+	}).finally(() => {
+		clearTaggedCache(req.appInstallData.host, 'files');
 	});
 });
 
@@ -41,6 +44,8 @@ router.post('/:guid/:host/:service', validate_session, validateHostService, (req
 		logger.error('cmdStreamer error (backup):', err);
 		// cmdStreamer will generally have written to the response, but ensure closed
 		try { res.end(); } catch(e){}
+	}).finally(() => {
+		clearTaggedCache(req.appInstallData.host, 'files');
 	});
 });
 

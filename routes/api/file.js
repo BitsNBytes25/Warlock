@@ -9,6 +9,7 @@ const { logger } = require('../../libs/logger.mjs');
 const {buildRemoteExec} = require("../../libs/build_remote_exec.mjs");
 const {correctMimetype} = require("../../libs/correct_mimetype.mjs");
 const crypto = require('crypto');
+const {clearTaggedCache} = require("../../libs/cache.mjs");
 
 const router = express.Router();
 
@@ -157,6 +158,7 @@ router.move('/:host', validate_session, (req, res) => {
 
 	// Use mv command to rename
 	cmdRunner(host, `mv "${oldPath}" "${newPath}"`).then(() => {
+		clearTaggedCache(host, 'files');
 		logger.info('Item renamed successfully:', oldPath, '->', newPath);
 		res.json({
 			success: true,
@@ -235,6 +237,7 @@ router.post('/:host', validate_session, (req, res) => {
 			logger.info('Creating directory:', path);
 			let cmd = `mkdir -p "${path}" && chown $(stat -c%U "$(dirname "${path}")"):$(stat -c%U "$(dirname "${path}")") "${path}"`;
 			cmdRunner(host, cmd).then(() => {
+				clearTaggedCache(host, 'files');
 				logger.debug('Directory created successfully:', path);
 				res.json({
 					success: true,
@@ -259,6 +262,7 @@ router.post('/:host', validate_session, (req, res) => {
 
 			// Push the temporary file to the target device
 			filePushRunner(host, tempFile, path).then(() => {
+				clearTaggedCache(host, 'files');
 				logger.info('File saved successfully:', path);
 				res.json({
 					success: true,
@@ -280,6 +284,7 @@ router.post('/:host', validate_session, (req, res) => {
 			// No content supplied, that's fine!  We can still create an empty file.
 			let cmd = `[ -e "${path}" ] && echo -n "" > "${path}" || touch "${path}"; chown $(stat -c%U "$(dirname "${path}")"):$(stat -c%U "$(dirname "${path}")") "${path}"`;
 			cmdRunner(host, cmd).then(() => {
+				clearTaggedCache(host, 'files');
 				logger.debug('File created successfully:', path);
 				res.json({
 					success: true,
@@ -374,6 +379,7 @@ router.put('/:host', validate_session, (req, res) => {
 
 			// Push the temporary file to the target device
 			filePushRunner(host, tempFile, filePath).then(() => {
+				clearTaggedCache(host, 'files');
 				logger.info('File uploaded successfully:', filePath);
 				res.json({
 					success: true,
@@ -437,6 +443,7 @@ router.delete('/:host', validate_session, (req, res) => {
 
 		logger.info('Deleting file:', path);
 		cmdRunner(host, `rm -fr "${path}"`).then(() => {
+			clearTaggedCache(host, 'files');
 			logger.debug('File deleted successfully:', path);
 			res.json({
 				success: true,
@@ -575,6 +582,7 @@ router.post('/extract/:host', validate_session, (req, res) => {
 
 			// Finally, extract the archive
 			cmdRunner(host, cmdExtract).then(async output => {
+				clearTaggedCache(host, 'files');
 				logger.info('Extracted archive successfully:', path);
 				res.json({
 					success: true,
@@ -695,6 +703,7 @@ router.post('/compress/:host', validate_session, (req, res) => {
 
 			// Finally, extract the archive
 			cmdRunner(host, cmdCompress).then(async output => {
+				clearTaggedCache(host, 'files');
 				logger.info('Compressed archive successfully:', path);
 				res.json({
 					success: true,

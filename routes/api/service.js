@@ -56,6 +56,7 @@ router.put('/:guid/:host/:service', validate_session, validateHostApplication, (
 		.then(output => {
 			// On updates to the service state, clear the cache for the application
 			clearTaggedCache(req.appInstallData.host, req.appInstallData.guid);
+			clearTaggedCache(req.appInstallData.host, 'files');
 
 			// Check if the application responded "CreatedService:..." in stdout.
 			// That's the identifier of the newly created service.
@@ -111,6 +112,7 @@ router.delete(
 			.then(async output => {
 				// On updates to the service state, clear the cache for the application
 				clearTaggedCache(req.appInstallData.host, req.appInstallData.guid);
+				clearTaggedCache(req.appInstallData.host, 'files');
 
 				// Clear any cron jobs that were attached to this service.
 				try {

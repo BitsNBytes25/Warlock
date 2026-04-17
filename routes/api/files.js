@@ -45,7 +45,7 @@ router.get('/:host', validate_session, (req, res) => {
 			'[ -r "$FP" ] && MTIME="$(stat -c%Y "$FP")" || MTIME="null";' +
 			`echo "{\\"name\\":\\"$F\\",\\"mimetype\\":\\"$M\\",\\"path\\":\\"$FP\\",\\"size\\":$S,\\"symlink\\":$SL,\\"permissions\\":$PERMS,\\"user\\":\\"$U\\",\\"group\\":\\"$G\\",\\"modified\\":$MTIME},";` +
 			'done;';
-		cmdRunner(host, cmd, 15, 'files').then(result => {
+		cmdRunner(host, cmd, 300, 'files').then(result => {
 			// Resulting code will be _almost_ JSON compatible, just strip the trailing comma and wrap in []
 			let jsonOutput = `[${result.stdout.trim().replace(/,$/, '')}]`;
 			let files = [];

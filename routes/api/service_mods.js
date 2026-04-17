@@ -73,6 +73,7 @@ router.post(
 
 		cmdRunner(host, cmd)
 			.then(result => {
+				clearTaggedCache(host, 'files');
 				return res.json({
 					success: true,
 					output: result.stdout.trim(),
@@ -123,6 +124,7 @@ router.delete(
 
 		cmdRunner(host, cmd)
 			.then(result => {
+				clearTaggedCache(host, 'files');
 				return res.json({
 					success: true,
 					output: result.stdout.trim(),
