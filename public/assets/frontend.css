@@ -1764,6 +1764,11 @@ host-connected-metric .critical {
 	flex: 4 100%;
 	opacity: 0.8;
 }
+.card-view .mod-entry .mod-message {
+	order: 6;
+	z-index: 2;
+	flex: 4 100%;
+}
 
 /* Action buttons at the bottom of the card */
 .card-view .host-entry .actions,

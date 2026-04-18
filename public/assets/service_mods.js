@@ -292,6 +292,16 @@ function renderServiceMod(modData, allowableActions = []) {
 	author.className = 'mod-author';
 	author.textContent = `By ${modData.author}`;
 
+	let msg = null;
+	if (allowableActions.includes('install') && !modData.source && modData.provider === 'nexusmods') {
+		msg = document.createElement('div');
+		msg.className = 'mod-message';
+		const msg_p = document.createElement('p');
+		msg_p.className = 'error-message';
+		msg_p.textContent = 'NexusMods does not allow mods to be auto-installed.';
+		msg.appendChild(msg_p);
+	}
+
 	const header = document.createElement('h4');
 	header.className = 'mod-header';
 	header.appendChild(icon);
@@ -340,6 +350,11 @@ function renderServiceMod(modData, allowableActions = []) {
 		}
 		const button = document.createElement('button');
 		button.className = `action-${action}`;
+
+		if (action === 'install' && !modData.source) {
+			button.classList.add('disabled');
+		}
+
 		// Capitalize the first letter for the button label (e.g., 'install' -> 'Install')
 		let buttonContent = action.charAt(0).toUpperCase() + action.slice(1);
 		// Add an icon; serves as a visual cue and a place to swap in a spinner.
@@ -352,6 +367,11 @@ function renderServiceMod(modData, allowableActions = []) {
 		if (action === 'install') {
 			button.addEventListener('click', e => {
 				e.preventDefault();
+
+				if (button.classList.contains('disabled')) {
+					return;
+				}
+
 				let icon = e.target.querySelector('i');
 				if (icon) {
 					icon.dataset.originalIcon = icon.className;
@@ -389,6 +409,9 @@ function renderServiceMod(modData, allowableActions = []) {
 	container.appendChild(metaInfo);
 	container.appendChild(description);
 	container.appendChild(author);
+	if (msg) {
+		container.appendChild(msg);
+	}
 	container.appendChild(actionsContainer);
 
 	return container;
