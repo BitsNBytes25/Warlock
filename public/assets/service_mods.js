@@ -240,6 +240,30 @@ async function removeServiceMod(modId, provider) {
 }
 
 /**
+ * Some mod providers store the mod description as bbcode, (Steam).
+ * Strip out bbcode tags and shorten the description to 200 characters.
+ *
+ * @param {string} description
+ * @return {string}
+ */
+function trimAndStripModDescription(description) {
+	// Strip out bbcode blocks first; these include images and links.
+	const fullRemovalRegex = /\[(img|url|bbvideo).*?\].*?\[\/\1\]/gis;
+	description = description.replace(fullRemovalRegex, '');
+	// Strip out any bbcode tags.
+	const tagStrippingRegex = /\[[^\]]+\]/g;
+	description = description.replace(tagStrippingRegex, '');
+	// Strip out repeated dashes.
+	description = description.replace(/[-]+/g, '-');
+
+	if (description.length > 200) {
+		description = description.substring(0, 200) + '...';
+	}
+
+	return description;
+}
+
+/**
  * Render a single mod entry
  *
  * @param modData
@@ -281,12 +305,18 @@ function renderServiceMod(modData, allowableActions = []) {
 	const metaInfo = document.createElement('div');
 	metaInfo.className = 'mod-meta';
 	// Showing version and provider if available
-	const providerText = modData.provider ? ` [${modData.provider}]` : '';
-	metaInfo.textContent = `${modData.version}${providerText}`;
+	let providerText = modData.provider ? ` [${modData.provider}]` : '';
+	if (modData.version) {
+		providerText = modData.version + ' ' + providerText;
+	}
+	if (modData.id) {
+		providerText = providerText + ' - ' + modData.id;
+	}
+	metaInfo.textContent = providerText;
 
 	const description = document.createElement('p');
 	description.className = 'mod-description';
-	description.textContent = modData.description || '';
+	description.textContent = trimAndStripModDescription(modData.description);
 
 	const author = document.createElement('small');
 	author.className = 'mod-author';
@@ -351,7 +381,7 @@ function renderServiceMod(modData, allowableActions = []) {
 		const button = document.createElement('button');
 		button.className = `action-${action}`;
 
-		if (action === 'install' && !modData.source) {
+		if (action === 'install' && modData.provider === 'nexusmods') {
 			button.classList.add('disabled');
 		}
 
