@@ -52,10 +52,11 @@
 			terminalOutput = modal.querySelector('.terminal'),
 			host = modal.dataset.host,
 			application = modal.dataset.guid,
-			service = modal.dataset.service;
+			service = modal.dataset.service,
+			version = getAppAPIVersion(application, host);
 
 		let url;
-		if (getAppAPIVersion(application, host) >= 2 && service) {
+		if (VersionCompare.ge(version, 2) && service) {
 			url = `/api/application/backup/${application}/${host}/${service}`;
 		}
 		else {
