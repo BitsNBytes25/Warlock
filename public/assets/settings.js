@@ -12,6 +12,7 @@ const settingsNexusAuthToken = document.getElementById('settingsNexusAuthToken')
 const nexusPreDonateMessage = document.getElementById('nexusPreDonateMessage');
 const settingsNexusRegister = document.getElementById('settingsNexusRegister');
 const settingsNexusCommunityProfile = document.getElementById('settingsNexusCommunityProfile');
+const warlockLatestVersion = document.getElementById('warlock-latest-version');
 
 function closeModal(el) { if (!el) return; el.classList.remove('show'); }
 function openModal(el) { if (!el) return; el.classList.add('show'); }
@@ -399,6 +400,23 @@ settingsNexusRegister.addEventListener('click', () => {
 			});
 	});
 });
+
+// Pull the latest version for reference.
+fetch('https://api.github.com/repos/BitsNBytes25/Warlock/tags').then(
+	response => response.json()
+).then(data => {
+	if (!data || !data.length) {
+		warlockLatestVersion.innerText = 'Error';
+		console.error("Error:", "No data received");
+	}
+	else {
+		warlockLatestVersion.innerText = data[0].name;
+	}
+}).catch(e => {
+	warlockLatestVersion.innerText = 'Error';
+	console.error("Error:", e);
+});
+
 
 // initial load
 loadUsers();
