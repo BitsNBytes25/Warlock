@@ -21,7 +21,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Security
 
 
-## [1.2.0] - (unreleased)
+## [1.2.1]
+
+### Added
+
+### Changed
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+- Fix support for http connections by providing a fallback for sha256
+
+### Security
+
+
+## [1.2.0] - 2026-04-25
 
 ### Added
 
@@ -51,10 +68,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Move default installation from /var/www/Warlock to /var/www/warlock
 - Clear files cache for a variety of actions and increase cache for listing files
 - Warlock.Manager now can provide full version strings
-
-### Deprecated
-
-### Removed
 
 ### Fixed
 

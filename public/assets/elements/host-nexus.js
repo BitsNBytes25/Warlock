@@ -48,14 +48,7 @@ class HostNexusStatusElement extends HTMLElement {
 	}
 
 	async nexusHostPing(host) {
-		const data = (new TextEncoder()).encode(this.getAttribute('email'));
-
-		// Compute SHA-256 digest using SubtleCrypto API
-		const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-
-		// Convert ArrayBuffer to a hex string representation
-		const hashArray = Array.from(new Uint8Array(hashBuffer));
-		const email = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+		const email = await sha256(this.getAttribute('email'));
 
 		const headers = {
 			'X-Host-Token': this.getAttribute('token'),
