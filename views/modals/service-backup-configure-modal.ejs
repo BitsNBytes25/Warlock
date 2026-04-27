@@ -160,7 +160,7 @@
 
 		// Build command
 		let command;
-		if (appVersion >= 2) {
+		if (VersionCompare.ge(appVersion, '2.0.0')) {
 			command = `${appDir}/manage.py backup --service ${service} --max-backups=${keep}`;
 		}
 		else {

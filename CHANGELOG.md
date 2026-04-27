@@ -34,6 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Fix support for http connections by providing a fallback for sha256
+- Fix backup interfaces for new complex version strings
 
 ### Security
 

@@ -119,7 +119,7 @@ async function loadAutomaticBackupConfig() {
 		appVersion = hostData.version;
 
 	let identifier;
-	if (appVersion >= 2) {
+	if (VersionCompare.ge(appVersion, '2.0.0')) {
 		identifier = `${loadedApplication}_${loadedService}_backup`;
 	}
 	else {

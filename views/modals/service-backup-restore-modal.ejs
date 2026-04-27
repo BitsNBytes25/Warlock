@@ -53,7 +53,7 @@
 			service = modal.dataset.service;
 
 		let url;
-		if (getAppAPIVersion(application, host) >= 2 && service) {
+		if (VersionCompare.ge(getAppAPIVersion(application, host), '2.0.0') && service) {
 			url = `/api/application/backup/${application}/${host}/${service}`;
 		}
 		else {

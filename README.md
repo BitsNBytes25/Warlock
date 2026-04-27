@@ -1,6 +1,6 @@
 # ![Warlock Logo](public/assets/media/logos/warlock/warlock-lopoly-logo-128x96.webp) ![Warlock Game Server Manager](public/assets/media/logos/warlock/warlock-lopoly-text-246x96.webp)
 
-Server game manager that supports your fleet of servers and games.
+Warlock is a "bring-your-own-server" game manager that supports managing your fleet of Linux servers.
 
 * [Jump to Quick Install](#production-install)
 * [Games Supported](#games-supported)
