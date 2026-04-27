@@ -21,22 +21,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Security
 
 
-## [1.2.1]
-
-### Added
-
-### Changed
-
-### Deprecated
-
-### Removed
+## [1.2.1] - 2026-04-27
 
 ### Fixed
 
 - Fix support for http connections by providing a fallback for sha256
 - Fix backup interfaces for new complex version strings
-
-### Security
 
 
 ## [1.2.0] - 2026-04-25
@@ -105,6 +95,7 @@ This project is under active development. For the latest features and bug fixes,
 
 - **v1.0.1**: Initial release with core functionality
 
+[1.2.1]: https://github.com/BitsNBytes25/Warlock/tree/v1.2.1
 [1.2.0]: https://github.com/BitsNBytes25/Warlock/tree/v1.2.0
 [1.0.1]: https://github.com/BitsNBytes25/Warlock/tree/v1.0.1
 [1.0.0]: https://github.com/BitsNBytes25/Warlock/tree/v1.0.0
