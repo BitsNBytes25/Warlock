@@ -52,8 +52,20 @@
                 Install Game
             </button>
 
+            <button id="btnCancelInstall" class="action-remove disabled">
+                <i class="fas fa-ban" id="cancelIcon"></i>
+                Abort Install
+            </button>
+
             <br/><br/>
             <pre class="terminal" id="output" style="display:none;"><code></code></pre>
+            <div class="command-input-wrapper" style="display:none;">
+                <label for="commandInput" class="command-prefix-label">Input</label>
+                <input type="text" id="commandInput" class="command-input" placeholder="Enter input..." disabled data-running="0">
+                <button class="command-send-btn" id="commandInputSend">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
         </div>
     </main>
 </div>

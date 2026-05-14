@@ -21,6 +21,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Security
 
 
+## [1.2.2] - NEXT
+
+### Added
+
+- Add support for user input on app installations
+- Add support for canceling / aborting app installations
+
+### Changed
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Security
+
+
 ## [1.2.1] - 2026-04-27
 
 ### Fixed
