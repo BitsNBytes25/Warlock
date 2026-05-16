@@ -120,8 +120,13 @@ window.addEventListener('DOMContentLoaded', () => {
 			return;
 		}
 
-		// Send the command to the log, (just for game servers which don't display it)
-		terminalOutputHelper(terminalOutput, 'stdin', terminalInput.value);
+		// Send the command to the log for reference to the user
+		if (terminalOutput.lastElementChild.innerText.includes('password')) {
+			terminalOutputHelper(terminalOutput, 'stdin', '*********');
+		}
+		else {
+			terminalOutputHelper(terminalOutput, 'stdin', terminalInput.value);
+		}
 
 		fetch('/api/job/' + terminalInput.dataset.jobid, {
 			method: 'POST',

@@ -30,6 +30,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Remote scripts now download to the filesystem prior to execution
+
 ### Deprecated
 
 ### Removed
