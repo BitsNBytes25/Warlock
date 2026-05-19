@@ -265,12 +265,14 @@ with each instance being configurable and manageable separately.
 ## Games Supported
 
 [![ARK Survival Ascended](https://github.com/cdp1337/ARKSurvivalAscended-Linux/blob/main/images/ark-128x128.webp?raw=true)](https://github.com/cdp1337/ARKSurvivalAscended-Linux)
+[![Arma3](https://github.com/BitsNBytes25/Arma3-Installer/blob/main/media/arma3-icon.webp?raw=true)](https://github.com/BitsNBytes25/Arma3-Installer)
 [![Hytale](https://github.com/BitsNBytes25/Hytale-Installer/blob/main/media/logo-h.png?raw=true)](https://github.com/BitsNBytes25/Hytale-Installer)
 [![Minecraft](https://github.com/BitsNBytes25/Minecraft-Installer/blob/main/media/minecraft-128x128.webp?raw=true)](https://github.com/BitsNBytes25/Minecraft-Installer)
 [![Palworld](https://github.com/BitsNBytes25/Palworld-Installer/blob/main/media/palworld-128x128.webp?raw=true)](https://github.com/BitsNBytes25/Palworld-Installer)
 [![Project Zomboid](https://github.com/BitsNBytes25/Zomboid-Installer/blob/main/media/zomboid-128x128.webp?raw=true)](https://github.com/BitsNBytes25/Zomboid-Installer)
 [![Valheim](https://github.com/BitsNBytes25/Valheim-Installer/blob/main/media/valheim-128x128.webp?raw=true)](https://github.com/BitsNBytes25/Valheim-Installer)
 [![VEIN](https://github.com/BitsNBytes25/VEIN-Dedicated-Server/blob/main/media/vein-128x128.png?raw=true)](https://github.com/BitsNBytes25/VEIN-Dedicated-Server)
+[![Windrose](https://github.com/BitsNBytes25/Windrose-Installer/blob/main/media/windrose-icon.webp?raw=true)](https://github.com/BitsNBytes25/Windrose-Installer)
 
 To add a new game, [check out the Template Repo](https://github.com/BitsNBytes25/Warlock-Game-Template)
 for example code and instructions on getting started!
