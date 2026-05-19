@@ -266,7 +266,7 @@ with each instance being configurable and manageable separately.
 
 [![ARK Survival Ascended](https://github.com/cdp1337/ARKSurvivalAscended-Linux/blob/main/images/ark-128x128.webp?raw=true)](https://github.com/cdp1337/ARKSurvivalAscended-Linux)
 [![Arma3](https://github.com/BitsNBytes25/Arma3-Installer/blob/main/media/arma3-icon.webp?raw=true)](https://github.com/BitsNBytes25/Arma3-Installer)
-[![Hytale](https://github.com/BitsNBytes25/Hytale-Installer/blob/main/media/logo-h.png?raw=true)](https://github.com/BitsNBytes25/Hytale-Installer)
+[![Hytale](https://github.com/BitsNBytes25/Hytale-Installer/blob/main/media/hytale-128x128.webp?raw=true)](https://github.com/BitsNBytes25/Hytale-Installer)
 [![Minecraft](https://github.com/BitsNBytes25/Minecraft-Installer/blob/main/media/minecraft-128x128.webp?raw=true)](https://github.com/BitsNBytes25/Minecraft-Installer)
 [![Palworld](https://github.com/BitsNBytes25/Palworld-Installer/blob/main/media/palworld-128x128.webp?raw=true)](https://github.com/BitsNBytes25/Palworld-Installer)
 [![Project Zomboid](https://github.com/BitsNBytes25/Zomboid-Installer/blob/main/media/zomboid-128x128.webp?raw=true)](https://github.com/BitsNBytes25/Zomboid-Installer)
