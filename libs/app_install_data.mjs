@@ -99,8 +99,12 @@ export class AppInstallData {
 			if (typeof (arg) == 'number') {
 				return arg.toString();
 			}
-			if (arg === null || arg === undefined) {
+			if (arg === undefined) {
 				return '';
+			}
+			if (arg === null || arg === '') {
+				// Empty string
+				return '""';
 			}
 			if (arg.startsWith('"') && arg.endsWith('"')) {
 				return arg; // Already quoted, assume properly escaped
