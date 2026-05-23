@@ -29,6 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add support for canceling / aborting app installations
 - Add support for Arma3
 - Add support for Windrose
+- Add support to set auto-restart to NOT warn players with 1-hour notice
 
 ### Changed
 
@@ -44,6 +45,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix web UI still requiring host authorization for mod lookups with Warlock.Nexus
 - Fix empty configuration parameters being saved (they were being ignored completely)
 - Fix firewall manager to allow ':' in comments
+- Fix cron correctly saving updates to cron tasks
 
 ### Security
 

@@ -167,7 +167,7 @@ export class Cron{
 					};
 				}
 				// If it did change, save the new line instead of the existing one.
-				newLines.push(j.getRaw());
+				newLines.push(this.getRaw());
 				exists = true;
 			}
 			else {

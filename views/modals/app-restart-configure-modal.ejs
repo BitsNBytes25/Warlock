@@ -36,6 +36,14 @@
 				<label for="autoRestartTime">Time</label>
 				<input type="time" id="autoRestartTime" name="time" value="02:00">
 			</div>
+
+			<div class="form-group">
+				<label for="autoRestartDelayed">Delayed Restart</label>
+				<input type="checkbox" id="autoRestartDelayed" name="delayed" value="1">
+				<p class="form-help">
+					Warn players online with a 1 hour warning before restart
+				</p>
+			</div>
 		</div>
 		<div class="modal-footer">
 			<button class="action-save" id="saveAutoRestartBtn">
@@ -79,7 +87,33 @@
 		openModal(modal);
 		openAutoRestartModalCallback = callback;
 
-		loadCronJob(host, identifier, modal).catch(e => {
+		loadCronJob(host, identifier, modal).then(job => {
+			const delayedRestart = document.getElementById('autoRestartDelayed'),
+				delayedRestartSupported = hostData.options.includes('delayed-restart');
+
+			if (job) {
+				delayedRestart.closest('.form-group').style.display = 'flex';
+			}
+			else {
+				delayedRestart.closest('.form-group').style.display = 'none';
+			}
+
+			if (!delayedRestartSupported) {
+				// Disable the functionality altogether.
+				delayedRestart.checked = false;
+				delayedRestart.disabled = true;
+			}
+			else {
+				delayedRestart.disabled = false;
+
+				if (job && job.command && job.command.includes('manage.py restart')) {
+					delayedRestart.checked = false;
+				}
+				else {
+					delayedRestart.checked = true;
+				}
+			}
+		}).catch(e => {
 			console.error('Error loading cron job:', e);
 			showToast('error', 'Error loading automatic updates configuration.');
 		});
@@ -87,6 +121,7 @@
 
 	async function saveAutomaticRestarts() {
 		const modal = document.getElementById('autoRestartModal'),
+			delayedRestart = document.getElementById('autoRestartDelayed'),
 			application = modal.dataset.guid,
 			host = modal.dataset.host,
 			service = modal.dataset.service,
@@ -131,12 +166,13 @@
 		}
 
 		// if this service supports delayed-restart, use that instead
-		if (hostData.options.includes('delayed-restart')) {
+		if (hostData.options.includes('delayed-restart') && delayedRestart.checked) {
 			command = 'delayed-restart';
 		}
 		else {
 			command = 'restart';
 		}
+
 		// Build command for delayed updates
 		if (service && VersionCompare.ge(appVersion, '2.0.0')) {
 			command = `${appDir}/manage.py ${command} --service ${service}`;
@@ -170,5 +206,15 @@
 
 	window.addEventListener('DOMContentLoaded', () => {
 		document.getElementById('saveAutoRestartBtn').addEventListener('click', saveAutomaticRestarts);
+
+		document.getElementById('autoRestartSchedule').addEventListener('change', e => {
+			const delayedRestart = document.getElementById('autoRestartDelayed');
+			if (e.target.value === 'disabled') {
+				delayedRestart.closest('.form-group').style.display = 'none';
+			}
+			else {
+				delayedRestart.closest('.form-group').style.display = 'flex';
+			}
+		});
 	});
 </script>
