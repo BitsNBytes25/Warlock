@@ -33,6 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Remote scripts now download to the filesystem prior to execution
+- Upgrade FontAwesome from v6.0.0 to v7.2.0 and migrate it to local
 
 ### Deprecated
 
