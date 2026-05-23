@@ -42,6 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Fix web UI still requiring host authorization for mod lookups with Warlock.Nexus
 - Fix empty configuration parameters being saved (they were being ignored completely)
+- Fix firewall manager to allow ':' in comments
 
 ### Security
 

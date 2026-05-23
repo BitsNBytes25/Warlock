@@ -161,7 +161,7 @@ function addRule(action, to, from, proto, comment) {
 	const allowedActions = ['ALLOW','DENY','REJECT'];
 	if (!allowedActions.includes(action)) return showToast('error','Invalid action');
 	if (proto && !['tcp','udp'].includes(proto)) return showToast('error','Invalid proto');
-	if (comment && !/^[a-zA-Z0-9 _.\-()]+$/.test(comment)) return showToast('error','Invalid comment characters');
+	if (comment && !/^[a-zA-Z0-9 _.:\-()]+$/.test(comment)) return showToast('error','Invalid comment characters');
 
 	const payload = { action };
 	if (proto) payload.proto = proto;
