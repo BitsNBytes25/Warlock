@@ -39,6 +39,7 @@ export async function getLatestServiceMetrics(app_guid, host, service) {
 			}
 
 			metrics.status = res.status === 1 ? 'running' : 'stopped';
+			metrics.metrics_timestamp = res.timestamp;
 
 			if (res.player_count !== null) {
 				metrics.player_count = res.player_count;

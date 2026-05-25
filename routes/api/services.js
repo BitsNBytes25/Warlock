@@ -16,9 +16,11 @@ const router = express.Router();
  * Returns JSON data with success (True/False), output/error, and services {list}
  *
  */
-router.get('/', validate_session, (req, res) => {
-	getAllServices()
-		.then(async services => {
+router.get(
+	'/',
+	validate_session,
+	(req, res) => {
+		getAllServices().then(async services => {
 			// For each service, lookup the latest metrics and tack them onto the service object
 			for (let svcEntry of services) {
 				let metrics = await getLatestServiceMetrics(svcEntry.host.guid, svcEntry.host.host, svcEntry.service.service),
@@ -38,15 +40,15 @@ router.get('/', validate_session, (req, res) => {
 				success: true,
 				services: services
 			});
-		})
-		.catch(e => {
+		}).catch(e => {
 			return res.json({
 				success: false,
 				error: e.message,
 				services: []
 			});
 		});
-});
+	}
+);
 
 /**
  * Stream all services and their stats
@@ -124,7 +126,7 @@ router.get(
 				}
 			}
 
-			// Schedule the next lookup in 5 seconds
+			// Schedule the next lookup in 10 seconds
 			setTimeout(lookup,10000, appInstall);
 		};
 

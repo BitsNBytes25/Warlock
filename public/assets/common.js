@@ -60,22 +60,46 @@
  */
 
 /**
- * Represents the details of a service.
+ * Representation of a port definition used in a service
+ *
+ * @typedef {Object} ServicePort
+ * @property {number} port        Port number
+ * @property {string} protocol    Protocol used for the port, eg "tcp" or "udp"
+ * @property {string} description Short description of the port
+ * @property {bool}   global      Set to true if the port is global (not bound to a specific IP)
+ * @property {bool}   listening   Set to true if the port is currently listening
+ * @property {bool}   open        Set to true if the port is open in the firewall
+ * @property {string} option      Optional configuration option that controls this port
+ * @property {bool}   owned       Set to true if the port is owned by the service or false if owned by a DIFFERENT process
+ */
+
+/**
+ * Represents the full combined details, metrics, and host data of a service.
  *
  * @typedef {Object} FullServiceData
- * @property {string} name Name of the service, usually operator set for the instance/map name.
- * @property {string} service Service identifier registered in systemd.
- * @property {string} status Current status of the service, one of [running, stopped, starting, stopping].
- * @property {string} cpu_usage Current CPU usage of the service as a percentage or 'N/A'.
- * @property {string} memory_usage Current memory usage of the service in MB/GB or 'N/A'.
- * @property {number} game_pid Process ID of the game server process, or 0 if not running.
- * @property {number} service_pid Process ID of the service manager process, or 0 if not running.
- * @property {string} ip IP address the service is bound to.
- * @property {number} port Port number the service is using.
- * @property {number} player_count Current number of players connected to the service.
- * @property {number} max_players Maximum number of players allowed on the service.
- * @property {ServiceExecResult,null} pre_exec Details of the last start execution attempt.
- * @property {ServiceExecResult,null} start_exec Details of the last stop execution attempt.
+ * @property {string}        name            Name of the service, usually operator set for the instance/map name.
+ * @property {string}        service         Service identifier registered in systemd.
+ * @property {string}        status          Current status of the service, one of [running, stopped, starting, stopping].
+ * @property {number}        cpu_usage       Current CPU usage of the service as a percentage.
+ * @property {number}        memory_usage    Current memory usage of the service in MB.
+ * @property {bool}          enabled         Whether the service is enabled to start on boot.
+ * @property {number}        game_pid        Process ID of the game server process, or 0 if not running.
+ * @property {number}        service_pid     Process ID of the service manager process, or 0 if not running.
+ * @property {string}        guid            Application GUID of the application this service belongs to.
+ * @property {string}        host            Host identifier (usually IP) of the host this service is running on.
+ * @property {string}        ip              IP address (usually WAN IP) the service is bound to.
+ * @property {string|null}   loader          Loader framework used for this service, or null if not applicable.
+ * @property {number}        port            Primary port number the service is using.
+ * @property {ServicePort[]} ports           List of all ports used by the service.
+ * @property {number}        player_count    Current number of players connected to the service.
+ * @property {number}        max_players     Maximum number of players allowed on the service.
+ * @property {array}         players         List of players currently connected to the service. (@todo document and flesh out)
+ * @property {string}        app_dir         Full path to the application data directory, eg "/home/steam/ArkSurvivalAscended/AppFiles"
+ * @property {string}        bak_dir         Full path to the backup directory, eg "/home/steam/ArkSurvivalAscended/Backups/ark-island"
+ * @property {string|null}   version         Version of the application running this service, if supported by the game.
+ * @property {string}        warlock_version Version of the Warlock-Manager library used for this service
+ * @property {string[]}      warlock_options List of command options supported by the underlying manager API
+ * @property {bool}          multi_binary    Set to True if each service has its own set of binaries, or False if they are shared.
  */
 
 /**
@@ -414,47 +438,297 @@ function legacy_sha256(ascii) {
 }
 
 /**
- * Fetches the list of services from the backend API.
+ * Shortcut function for performing a basic HTTP GET request for JSON data
  *
- * @returns {Promise<[{app: AppData, host: HostAppData, service: ServiceData}]>} A promise that resolves to an array of AppDetails objects.
+ * @param {string} url
  */
-async function fetchServices() {
-	return new Promise((resolve, reject) => {
-		fetch('/api/services', {
-			method: 'GET',
-			headers: {
-				'Content-Type': 'application/json'
-			}
-		})
-			.then(response => response.json())
-			.then(response => {
-				if (response.success) {
-					return resolve(response.services);
-				}
-			});
-	});
+async function fetchGetJSON(url) {
+	return fetch(url, {
+		method: 'GET',
+		headers: {
+			'Content-Type': 'application/json'
+		}
+	}).then(response => response.json());
+}
+
+/**
+ * Internal function to standardize serviceData into FullServiceData format.
+ *
+ * @param serviceData
+ * @returns {{identifier: string, fullServiceData: FullServiceData}}
+ * @private
+ */
+function _resolveService(serviceData) {
+	const identifier = [
+		serviceData.host.guid,
+		serviceData.host.host,
+		serviceData.service.service
+	].join('/');
+
+	/**
+	 * @property {FullServiceData}
+	 */
+	let fullServiceData = serviceData.service;
+	fullServiceData.host = serviceData.host.host;
+	fullServiceData.guid = serviceData.host.guid;
+	fullServiceData.warlock_version = serviceData.host.version;
+	fullServiceData.warlock_options = serviceData.host.options;
+
+	return {identifier, fullServiceData};
 }
 
 /**
  * Fetches the list of services from the backend API.
  *
- * @returns {Promise<ServiceData>} A promise that resolves to an array of AppDetails objects.
+ * @returns {Promise<FullServiceData[]>} A promise that resolves to an array of AppDetails objects.
+ */
+async function fetchServices() {
+	return fetchGetJSON('/api/services').then(response => {
+		if (response.success) {
+			// Store these discovered services in localStorage for faster lookups in the future
+			let serviceIdentifiers = [];
+			let foundServices = []
+			response.services.forEach(serviceData => {
+				const {identifier, fullServiceData} = _resolveService(serviceData);
+				serviceIdentifiers.push(identifier);
+
+				localStorage.setItem('service_' + identifier, JSON.stringify(fullServiceData));
+				foundServices.push(fullServiceData);
+
+				// Dispatch the change notification so dependent functions can pick up on the new data.
+				document.dispatchEvent(new CustomEvent('serviceChange', { detail: fullServiceData }));
+			});
+
+			localStorage.setItem('services', JSON.stringify(serviceIdentifiers));
+			return foundServices;
+		}
+		else {
+			throw new Error(response.error);
+		}
+	});
+}
+
+/**
+ * Poll the server for a continuous feed of changes for ALL services
+ */
+function pollServices() {
+	stream(`/api/services/stream`, 'GET',{},null,(event, data) => {
+		if (event === 'data') {
+			let svcName = data.service || null;
+
+			// Keep the application state consistent with latest data if it's the currently loaded service
+			if (svcName !== null && loadedService === svcName) {
+				loadedServiceData = Object.assign(loadedServiceData, data);
+			}
+
+			// Keep the local application state in sync with the latest server data
+			let serviceIdentifiers = localStorage.getItem('services');
+			if (serviceIdentifiers) {
+				try {
+					serviceIdentifiers = JSON.parse(serviceIdentifiers);
+				}
+				catch (e) {
+					console.error('Failed to parse services list from localStorage: ' + e);
+					serviceIdentifiers = [];
+				}
+			}
+			else {
+				serviceIdentifiers = [];
+			}
+
+			const identifier = [
+				data.guid,
+				data.host,
+				data.service
+			].join('/');
+			if (!serviceIdentifiers.includes(identifier)) {
+				serviceIdentifiers.push(identifier);
+				localStorage.setItem('services', JSON.stringify(serviceIdentifiers));
+			}
+
+			let localServiceData = localStorage.getItem('service_' + identifier);
+			if (localServiceData) {
+				try {
+					localServiceData = JSON.parse(localServiceData);
+					localStorage.setItem('service_' + identifier, JSON.stringify(Object.assign(localServiceData, data)));
+				}
+				catch (e) {
+					console.error('Failed to parse service data from localStorage: ' + e);
+					localStorage.setItem('service_' + identifier, JSON.stringify(data));
+				}
+			}
+			else {
+				// New item to store
+				localStorage.setItem('service_' + identifier, JSON.stringify(data));
+			}
+
+			// Dispatch the change notification so dependent functions can pick up on the new data.
+			document.dispatchEvent(new CustomEvent('serviceChange', { detail: data }));
+		}
+	}, true);
+}
+
+/**
+ * Load the list of services from either localStorage or the backend API.
+ *
+ * @returns {Promise<[{host: HostAppData, service: ServiceData}]>} A promise that resolves to an array of AppDetails objects.
+ */
+async function loadServices() {
+	let serviceIdentifiers = localStorage.getItem('services');
+
+	if (serviceIdentifiers) {
+		let ret = [];
+		serviceIdentifiers = JSON.parse(serviceIdentifiers);
+		serviceIdentifiers.forEach(identifier => {
+			let serviceData = localStorage.getItem('service_' + identifier);
+			if (serviceData) {
+				serviceData = JSON.parse(serviceData);
+				ret.push(serviceData);
+
+				// Dispatch the change notification so dependent functions can pick up on the new data.
+				document.dispatchEvent(new CustomEvent('serviceChange', { detail: serviceData }));
+			}
+		});
+
+		// Return localStorage results immediately, but also queue a fetch of LIVE data to ensure the local state is consistent.
+		fetchServices();
+
+		return ret;
+	}
+
+	// Default to the server lookup
+	return fetchServices();
+}
+
+/**
+ * Fetches the list of services from the backend API.
+ *
+ * @returns {Promise<FullServiceData>} A promise that contains the full details of the requested service.
  */
 async function fetchService(app_guid, host, service) {
-	return new Promise((resolve, reject) => {
-		fetch(`/api/service/${app_guid}/${host}/${service}`, {
-			method: 'GET',
-			headers: {
-				'Content-Type': 'application/json'
-			}
-		})
-			.then(response => response.json())
-			.then(response => {
-				if (response.success) {
-					return resolve(response.service);
+	return fetchGetJSON(`/api/service/${app_guid}/${host}/${service}`)
+		.then(response => {
+			if (response.success) {
+				const {identifier, fullServiceData} = _resolveService(response);
+
+				let serviceIdentifiers = localStorage.getItem('services');
+				if (serviceIdentifiers) {
+					try {
+						serviceIdentifiers = JSON.parse(serviceIdentifiers);
+					}
+					catch (e) {
+						console.error('Failed to parse services list from localStorage: ' + e);
+						serviceIdentifiers = [];
+					}
 				}
-			});
-	});
+				else {
+					serviceIdentifiers = [];
+				}
+
+				if (!serviceIdentifiers.includes(identifier)) {
+					serviceIdentifiers.push(identifier);
+					localStorage.setItem('services', JSON.stringify(serviceIdentifiers));
+				}
+
+				localStorage.setItem('service_' + identifier, JSON.stringify(fullServiceData));
+
+				// Set the new data, (this is done prior to dispatching events in case a caller expects the object to be ready)
+				loadedService = fullServiceData.service;
+				loadedServiceData = fullServiceData;
+
+				// Dispatch the change notification so dependent functions can pick up on the new data.
+				document.dispatchEvent(new CustomEvent('serviceChange', { detail: fullServiceData }));
+
+				// Replace content from service
+				replaceServicePlaceholders(fullServiceData);
+
+				return fullServiceData;
+			}
+			else {
+				throw new Error(response.error);
+			}
+		});
+}
+
+/**
+ * Poll the server for a continuous feed of changes for a given service
+ *
+ * @param {string} app_guid
+ * @param {string} host
+ * @param {string} service
+ */
+function pollService(app_guid, host, service) {
+	stream(`/api/service/stream/${app_guid}/${host}/${service}`, 'GET',{},null,(event, data) => {
+		if (event === 'data') {
+			let svcName = data.service || service;
+
+			const identifier = [
+				data.guid,
+				data.host,
+				data.service
+			].join('/');
+
+			let localServiceData = localStorage.getItem('service_' + identifier);
+			if (localServiceData) {
+				try {
+					localServiceData = JSON.parse(localServiceData);
+					localStorage.setItem('service_' + identifier, JSON.stringify(Object.assign(localServiceData, data)));
+				}
+				catch (e) {
+					console.error('Failed to parse service data from localStorage: ' + e);
+					localStorage.setItem('service_' + identifier, JSON.stringify(data));
+				}
+			}
+			else {
+				// New item to store
+				localStorage.setItem('service_' + identifier, JSON.stringify(data));
+			}
+
+			// Keep the application state consistent with latest data if it's the currently loaded service
+			if (loadedService === svcName) {
+				loadedServiceData = Object.assign(loadedServiceData, data);
+			}
+
+			// Dispatch the change notification so dependent functions can pick up on the new data.
+			document.dispatchEvent(new CustomEvent('serviceChange', { detail: data }));
+		}
+	}, true);
+}
+
+/**
+ * Load service data for the given application GUID, host, and service identifier.
+ *
+ * @param app_guid
+ * @param host
+ * @param service
+ * @returns {Promise<ServiceData>}
+ */
+async function loadService(app_guid, host, service) {
+	const identifier = [app_guid, host, service].join('/');
+	let serviceData = localStorage.getItem('service_' + identifier);
+	if (serviceData) {
+		serviceData = JSON.parse(serviceData);
+
+		if (loadedService !== serviceData.service) {
+			// Set the new data, (this is done prior to dispatching events in case a caller expects the object to be ready)
+			loadedService = serviceData.service;
+			loadedServiceData = serviceData;
+
+			// Dispatch the change notification so dependent functions can pick up on the new data.
+			document.dispatchEvent(new CustomEvent('serviceChange', { detail: serviceData }));
+
+			// Replace content from service
+			replaceServicePlaceholders(serviceData);
+
+			// Issue a background task to pull the full details to keep the local state in sync.
+			//fetchService(app_guid, host, service);
+		}
+
+		return serviceData;
+	}
+
+	// Fallback; let fetchService handle this if the data is not available.
+	return fetchService(app_guid, host, service);
 }
 
 /**
@@ -1021,36 +1295,6 @@ async function loadHost(host) {
 		replaceHostPlaceholders(hostInfo);
 
 		return hostInfo;
-	});
-}
-
-/**
- * Load service data for the given application GUID, host, and service identifier.
- *
- * @param app_guid
- * @param host
- * @param service
- * @returns {Promise<ServiceData>}
- */
-async function loadService(app_guid, host, service) {
-	return new Promise((resolve, reject) => {
-		fetchService(app_guid, host, service)
-			.then(serviceData => {
-				// Set the new data, (this is done prior to dispatching events in case a caller expects the object to be ready)
-				loadedService = serviceData.service;
-				loadedServiceData = serviceData;
-
-				// Dispatch event notifiers that things changed
-				document.dispatchEvent(new CustomEvent('serviceChange', {detail: loadedServiceData}));
-
-				// Replace content from service
-				replaceServicePlaceholders(serviceData);
-
-				resolve(serviceData);
-			})
-			.catch(error => {
-				reject(error);
-			});
 	});
 }
 
@@ -1807,48 +2051,6 @@ function openModal(modal) {
 function closeModal(modal) {
 	modal.classList.remove('show');
 	document.body.style.overflow = '';
-}
-
-/**
- * Poll the server for a continuous feed of changes for a given service
- *
- * @param {string} app_guid
- * @param {string} host
- * @param {string} service
- */
-function pollService(app_guid, host, service) {
-	stream(`/api/service/stream/${app_guid}/${host}/${service}`, 'GET',{},null,(event, data) => {
-		if (event === 'data') {
-			let svcName = data.service || service;
-
-			// Keep the application state consistent with latest data if it's the currently loaded service
-			if (loadedService === svcName) {
-				loadedServiceData = Object.assign(loadedServiceData, data);
-			}
-
-			// Dispatch the change notification so dependent functions can pick up on the new data.
-			document.dispatchEvent(new CustomEvent('serviceChange', { detail: data }));
-		}
-	}, true);
-}
-
-/**
- * Poll the server for a continuous feed of changes for ALL services
- */
-function pollServices() {
-	stream(`/api/services/stream`, 'GET',{},null,(event, data) => {
-		if (event === 'data') {
-			let svcName = data.service || null;
-
-			// Keep the application state consistent with latest data if it's the currently loaded service
-			if (svcName !== null && loadedService === svcName) {
-				loadedServiceData = Object.assign(loadedServiceData, data);
-			}
-
-			// Dispatch the change notification so dependent functions can pick up on the new data.
-			document.dispatchEvent(new CustomEvent('serviceChange', { detail: data }));
-		}
-	}, true);
 }
 
 /**
