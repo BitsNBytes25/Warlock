@@ -23,16 +23,16 @@ router.get(
 		getAllServices().then(async services => {
 			// For each service, lookup the latest metrics and tack them onto the service object
 			for (let svcEntry of services) {
-				let metrics = await getLatestServiceMetrics(svcEntry.host.guid, svcEntry.host.host, svcEntry.service.service),
-					cached_players = cache.default.get(`players_${svcEntry.host.guid}_${svcEntry.host.host}_${svcEntry.service.service}`);
-				svcEntry.service = {...svcEntry.service, ...metrics};
+				let metrics = await getLatestServiceMetrics(svcEntry.guid, svcEntry.host, svcEntry.service),
+					cached_players = cache.default.get(`players_${svcEntry.guid}_${svcEntry.host}_${svcEntry.service}`);
+				svcEntry = {...svcEntry, ...metrics};
 
 				// Add in player data if available
 				if (cached_players) {
-					svcEntry.service.players = cached_players;
+					svcEntry.players = cached_players;
 				}
 				else {
-					svcEntry.service.players = [];
+					svcEntry.players = [];
 				}
 			}
 

@@ -94,6 +94,7 @@
  * @property {number}        player_count    Current number of players connected to the service.
  * @property {number}        max_players     Maximum number of players allowed on the service.
  * @property {array}         players         List of players currently connected to the service. (@todo document and flesh out)
+ * @property {string}        root_dir        Full path to the application root directory, eg "/home/steam/ArkSurvivalAscended"
  * @property {string}        app_dir         Full path to the application data directory, eg "/home/steam/ArkSurvivalAscended/AppFiles"
  * @property {string}        bak_dir         Full path to the backup directory, eg "/home/steam/ArkSurvivalAscended/Backups/ark-island"
  * @property {string|null}   version         Version of the application running this service, if supported by the game.
@@ -452,32 +453,6 @@ async function fetchGetJSON(url) {
 }
 
 /**
- * Internal function to standardize serviceData into FullServiceData format.
- *
- * @param serviceData
- * @returns {{identifier: string, fullServiceData: FullServiceData}}
- * @private
- */
-function _resolveService(serviceData) {
-	const identifier = [
-		serviceData.host.guid,
-		serviceData.host.host,
-		serviceData.service.service
-	].join('/');
-
-	/**
-	 * @property {FullServiceData}
-	 */
-	let fullServiceData = serviceData.service;
-	fullServiceData.host = serviceData.host.host;
-	fullServiceData.guid = serviceData.host.guid;
-	fullServiceData.warlock_version = serviceData.host.version;
-	fullServiceData.warlock_options = serviceData.host.options;
-
-	return {identifier, fullServiceData};
-}
-
-/**
  * Fetches the list of services from the backend API.
  *
  * @returns {Promise<FullServiceData[]>} A promise that resolves to an array of AppDetails objects.
@@ -489,14 +464,34 @@ async function fetchServices() {
 			let serviceIdentifiers = [];
 			let foundServices = []
 			response.services.forEach(serviceData => {
-				const {identifier, fullServiceData} = _resolveService(serviceData);
+				const identifier = [
+					serviceData.guid,
+					serviceData.host,
+					serviceData.service
+				].join('/');
 				serviceIdentifiers.push(identifier);
 
-				localStorage.setItem('service_' + identifier, JSON.stringify(fullServiceData));
-				foundServices.push(fullServiceData);
+				// Load the existing data to prevent overwriting some properties, (metrics or data available from pollService)
+				let savedServiceData = localStorage.getItem('service_' + identifier);
+				if (savedServiceData) {
+					try {
+						savedServiceData = JSON.parse(savedServiceData);
+					}
+					catch (e) {
+						console.error('Failed to parse service data from localStorage: ' + e);
+						savedServiceData = {};
+					}
+				}
+				else {
+					savedServiceData = {};
+				}
+				serviceData = Object.assign(savedServiceData, serviceData);
+
+				localStorage.setItem('service_' + identifier, JSON.stringify(serviceData));
+				foundServices.push(serviceData);
 
 				// Dispatch the change notification so dependent functions can pick up on the new data.
-				document.dispatchEvent(new CustomEvent('serviceChange', { detail: fullServiceData }));
+				document.dispatchEvent(new CustomEvent('serviceChange', { detail: serviceData }));
 			});
 
 			localStorage.setItem('services', JSON.stringify(serviceIdentifiers));
@@ -609,7 +604,11 @@ async function fetchService(app_guid, host, service) {
 	return fetchGetJSON(`/api/service/${app_guid}/${host}/${service}`)
 		.then(response => {
 			if (response.success) {
-				const {identifier, fullServiceData} = _resolveService(response);
+				const identifier = [
+					response.guid,
+					response.host,
+					response.service
+				].join('/');
 
 				let serviceIdentifiers = localStorage.getItem('services');
 				if (serviceIdentifiers) {
@@ -630,19 +629,35 @@ async function fetchService(app_guid, host, service) {
 					localStorage.setItem('services', JSON.stringify(serviceIdentifiers));
 				}
 
-				localStorage.setItem('service_' + identifier, JSON.stringify(fullServiceData));
+				// Load the existing data to prevent overwriting some properties, (metrics or data available from pollService)
+				let savedServiceData = localStorage.getItem('service_' + identifier);
+				if (savedServiceData) {
+					try {
+						savedServiceData = JSON.parse(savedServiceData);
+					}
+					catch (e) {
+						console.error('Failed to parse service data from localStorage: ' + e);
+						savedServiceData = {};
+					}
+				}
+				else {
+					savedServiceData = {};
+				}
+				const serviceData = Object.assign(savedServiceData, response);
+
+				localStorage.setItem('service_' + identifier, JSON.stringify(serviceData));
 
 				// Set the new data, (this is done prior to dispatching events in case a caller expects the object to be ready)
-				loadedService = fullServiceData.service;
-				loadedServiceData = fullServiceData;
+				loadedService = serviceData.service;
+				loadedServiceData = serviceData;
 
 				// Dispatch the change notification so dependent functions can pick up on the new data.
-				document.dispatchEvent(new CustomEvent('serviceChange', { detail: fullServiceData }));
+				document.dispatchEvent(new CustomEvent('serviceChange', { detail: serviceData }));
 
 				// Replace content from service
-				replaceServicePlaceholders(fullServiceData);
+				replaceServicePlaceholders(serviceData);
 
-				return fullServiceData;
+				return serviceData;
 			}
 			else {
 				throw new Error(response.error);

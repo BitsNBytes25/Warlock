@@ -5,7 +5,7 @@ import {getApplicationServices} from "./get_application_services.mjs";
 /**
  * Get all services from all applications across all hosts
  *
- * @returns {Promise<[{service:ServiceData, app:AppData, host:AppInstallData}]>}
+ * @returns {Promise<FullServiceData[]>}
  */
 export async function getAllServices() {
 	return getAllApplications()
@@ -18,7 +18,7 @@ export async function getAllServices() {
 					allLookups.push(
 						hostData.getServices().then(hostServices => {
 							for (let s of Object.keys(hostServices)) {
-								services.push({service: hostServices[s], host: hostData});
+								services.push(hostServices[s]);
 							}
 						})
 					);

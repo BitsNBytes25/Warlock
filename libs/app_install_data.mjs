@@ -187,7 +187,7 @@ export class AppInstallData {
 	/**
 	 * Get all service instances in this host application.
 	 *
-	 * @returns {Promise<Object<string, ServiceData>>}
+	 * @returns {Promise<Object<string, FullServiceData>>}
 	 */
 	async getServices() {
 		return cmdRunner(this.host, this.getCommandString('get-services'), 3600, this.guid)
@@ -196,9 +196,16 @@ export class AppInstallData {
 					let services = JSON.parse(result.stdout);
 					// Standardize some data for each service, notably app_dir, bak_dir, and add multi_binary.
 					for(let service in services) {
+						services[service].root_dir = this.path;
 						services[service].app_dir = services[service].app_dir || (this.path + '/AppFiles');
 						services[service].bak_dir = services[service].bak_dir || (this.path + '/backups');
 						services[service].multi_binary = services[service].app_dir !== this.path + '/AppFiles';
+
+						// Add in some data from the AppInstallData instance
+						services[service].guid = this.guid;
+						services[service].host = this.host;
+						services[service].warlock_options = this.options;
+						services[service].warlock_version = this.version;
 
 						// Remove some keys which are now unused
 						delete services[service].start_exec;
