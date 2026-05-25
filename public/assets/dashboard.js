@@ -24,9 +24,25 @@ function populateServicesTable(servicesWithStats) {
 	// Create new row
 	row = document.createElement('div');
 	row.className = 'service-entry';
-	row.setAttribute('data-host', host);
-	row.setAttribute('data-service', service);
-	table.querySelector('.body').appendChild(row);
+	row.dataset.host = host;
+	row.dataset.service = service;
+	row.dataset.name = servicesWithStats.name;
+
+	// Add this row to either the end of the body OR after the next item alphabetically.
+	const bodyContainer = table.querySelector('.body');
+	const allRows = bodyContainer.querySelectorAll('.service-entry');
+	let added = false;
+	if (allRows.length > 0) {
+		allRows.forEach(r => {
+			if (!added && r.dataset.name > servicesWithStats.name) {
+				bodyContainer.insertBefore(row, r);
+				added = true;
+			}
+		});
+	}
+	if (!added) {
+		bodyContainer.appendChild(row);
+	}
 
 	// Initialize default cells
 	fields.forEach(field => {
