@@ -139,6 +139,12 @@ if [ "$EUID" -eq 0 ] && [ -e /etc/systemd/system/warlock.service ]; then
 	fi
 fi
 
+# Do some checks before applying the updates
+if [ -n "$(git status --porcelain package-lock.json)" ]; then
+	# This file can safely be reverted, as it usually just indicates the developer didn't npm i after updating the version.
+	git restore package-lock.json
+fi
+
 if [ "$selected_branch" != "$CURRENT_BRANCH" ]; then
 	# Switch to selected branch and pull latest
 	echo ""
