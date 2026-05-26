@@ -296,7 +296,7 @@ document.addEventListener('serviceChange', e => {
 	}
 
 	if (e.detail.hasOwnProperty('max_players')) {
-		serviceDetailsPlayers.innerText = loadedServiceData.player_count + ' / ' + e.detail.max_players;
+		serviceDetailsPlayers.innerText = (loadedServiceData.player_count || 0) + ' / ' + e.detail.max_players;
 	}
 
 	if (e.detail.hasOwnProperty('port')) {

@@ -596,6 +596,60 @@ async function loadServices() {
 }
 
 /**
+ * Manually update a service key/value parameter in the location application
+ *
+ * DOES NOT INFORM SERVER!  Simply updates the local state for more immediate UX updates.
+ *
+ * @param {string} app_guid
+ * @param {string} host
+ * @param {string} service
+ * @param {Object} newData
+ *
+ * @returns {FullServiceData}
+ */
+function updateService(app_guid, host, service, newData) {
+	const identifier = [
+		app_guid,
+		host,
+		service
+	].join('/');
+
+	// Load the existing data to prevent overwriting some properties, (metrics or data available from pollService)
+	let savedServiceData = localStorage.getItem('service_' + identifier);
+	if (savedServiceData) {
+		try {
+			savedServiceData = JSON.parse(savedServiceData);
+		}
+		catch (e) {
+			console.error('Failed to parse service data from localStorage: ' + e);
+			savedServiceData = {};
+		}
+	}
+	else {
+		savedServiceData = {};
+	}
+	const serviceData = Object.assign(savedServiceData, newData);
+
+	localStorage.setItem('service_' + identifier, JSON.stringify(serviceData));
+
+	// If this is the active service for the application, set the application state
+	// This must be done before dispatchEvent in case something in there checks for the current state.
+	if (loadedService === service) {
+		loadedServiceData = serviceData;
+	}
+
+	// Replace content from service
+	// @todo Remove the need for this in favor of event dispatching.
+	replaceServicePlaceholders(serviceData);
+
+	// Dispatch the change notification so dependent functions can pick up on the new data.
+	document.dispatchEvent(new CustomEvent('serviceChange', { detail: serviceData }));
+
+	// Allow the calling script to get a full copy of the merged data, just in case it's useful to it.
+	return serviceData;
+}
+
+/**
  * Fetches the list of services from the backend API.
  *
  * @returns {Promise<FullServiceData>} A promise that contains the full details of the requested service.
@@ -630,34 +684,8 @@ async function fetchService(app_guid, host, service) {
 				}
 
 				// Load the existing data to prevent overwriting some properties, (metrics or data available from pollService)
-				let savedServiceData = localStorage.getItem('service_' + identifier);
-				if (savedServiceData) {
-					try {
-						savedServiceData = JSON.parse(savedServiceData);
-					}
-					catch (e) {
-						console.error('Failed to parse service data from localStorage: ' + e);
-						savedServiceData = {};
-					}
-				}
-				else {
-					savedServiceData = {};
-				}
-				const serviceData = Object.assign(savedServiceData, response);
-
-				localStorage.setItem('service_' + identifier, JSON.stringify(serviceData));
-
-				// Set the new data, (this is done prior to dispatching events in case a caller expects the object to be ready)
-				loadedService = serviceData.service;
-				loadedServiceData = serviceData;
-
-				// Dispatch the change notification so dependent functions can pick up on the new data.
-				document.dispatchEvent(new CustomEvent('serviceChange', { detail: serviceData }));
-
-				// Replace content from service
-				replaceServicePlaceholders(serviceData);
-
-				return serviceData;
+				loadedService = response.service;
+				return updateService(app_guid, host, service, response);
 			}
 			else {
 				throw new Error(response.error);
@@ -675,37 +703,7 @@ async function fetchService(app_guid, host, service) {
 function pollService(app_guid, host, service) {
 	stream(`/api/service/stream/${app_guid}/${host}/${service}`, 'GET',{},null,(event, data) => {
 		if (event === 'data') {
-			let svcName = data.service || service;
-
-			const identifier = [
-				data.guid,
-				data.host,
-				data.service
-			].join('/');
-
-			let localServiceData = localStorage.getItem('service_' + identifier);
-			if (localServiceData) {
-				try {
-					localServiceData = JSON.parse(localServiceData);
-					localStorage.setItem('service_' + identifier, JSON.stringify(Object.assign(localServiceData, data)));
-				}
-				catch (e) {
-					console.error('Failed to parse service data from localStorage: ' + e);
-					localStorage.setItem('service_' + identifier, JSON.stringify(data));
-				}
-			}
-			else {
-				// New item to store
-				localStorage.setItem('service_' + identifier, JSON.stringify(data));
-			}
-
-			// Keep the application state consistent with latest data if it's the currently loaded service
-			if (loadedService === svcName) {
-				loadedServiceData = Object.assign(loadedServiceData, data);
-			}
-
-			// Dispatch the change notification so dependent functions can pick up on the new data.
-			document.dispatchEvent(new CustomEvent('serviceChange', { detail: data }));
+			updateService(app_guid, host, service, data);
 		}
 	}, true);
 }
@@ -724,19 +722,11 @@ async function loadService(app_guid, host, service) {
 	if (serviceData) {
 		serviceData = JSON.parse(serviceData);
 
+		// Only run the logic if the loaded service has changed.
 		if (loadedService !== serviceData.service) {
 			// Set the new data, (this is done prior to dispatching events in case a caller expects the object to be ready)
 			loadedService = serviceData.service;
-			loadedServiceData = serviceData;
-
-			// Dispatch the change notification so dependent functions can pick up on the new data.
-			document.dispatchEvent(new CustomEvent('serviceChange', { detail: serviceData }));
-
-			// Replace content from service
-			replaceServicePlaceholders(serviceData);
-
-			// Issue a background task to pull the full details to keep the local state in sync.
-			//fetchService(app_guid, host, service);
+			updateService(app_guid, host, service, serviceData);
 		}
 
 		return serviceData;
@@ -1154,24 +1144,27 @@ function formatBitSpeed(bits, precision) {
  * @returns {Promise<unknown>}
  */
 async function serviceAction(guid, host, service, action) {
-	return new Promise((resolve, reject) => {
-		fetch(`/api/service/control/${guid}/${host}/${service}`, {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json'
-			},
-			body: JSON.stringify({
-				action: action
-			})
+	// Update the UI immediately to reflect the action being performed.
+	if (action === 'start') {
+		updateService(guid, host, service, { status: 'starting' });
+	}
+	else if (action === 'stop') {
+		updateService(guid, host, service, { status: 'stopping' });
+	}
+
+	return fetch(`/api/service/control/${guid}/${host}/${service}`, {
+		method: 'POST',
+		headers: {
+			'Content-Type': 'application/json'
+		},
+		body: JSON.stringify({
+			action: action
 		})
-			.then(response => response.json())
-			.then(response => {
-				resolve(response);
-			})
-			.catch(error => {
-				reject(error);
-			});
-	});
+	})
+		.then(response => response.json())
+		.then(response => {
+			return response;
+		});
 }
 
 /**
