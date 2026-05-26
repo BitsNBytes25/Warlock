@@ -1,6 +1,8 @@
 import {Host} from "../db.js";
 import {spawn} from 'child_process';
 import {logger} from "./logger.mjs";
+import {activeJobs} from "./active_jobs.mjs"
+import { v4 as uuidv4 } from 'uuid';
 
 /**
  * Stream command output via SSE from target host
@@ -52,6 +54,11 @@ export async function cmdStreamer(target, cmd, res, ignoreClose = false) {
 		// Spawn the command process - spawn requires a program (string) as first arg
 		logger.debug(`Spawning command: ${spawnCommand} ${spawnArgs.join(' ')}`);
 		const process = spawn(spawnCommand, spawnArgs);
+		const jobId = uuidv4();
+
+		// Store the process object in the registry
+		activeJobs.set(jobId, process);
+		res.write(`event: jobid\ndata: ${jobId}\n\n`);
 
 		// Helper to send data to client as SSE data: lines prefixed with "data: " and double newline
 		const sendData = (pipe, chunk) => {
@@ -86,6 +93,7 @@ export async function cmdStreamer(target, cmd, res, ignoreClose = false) {
 			req.removeListener('close', onClientClose);
 			req.removeListener('aborted', onClientClose);
 			res.removeListener('close', onClientClose);
+			activeJobs.delete(jobId);
 		};
 
 		process.stdout.on('data', (chunk) => sendData('stdout', chunk));

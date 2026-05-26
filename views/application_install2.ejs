@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Warlock - Install Game</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="<%= assetUrl('/assets/fontawesome/css/all.min.css') %>">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="<%= assetUrl('/assets/frontend.css') %>">
     <link rel="stylesheet" href="<%= assetUrl('/assets/themes.css') %>">
@@ -52,8 +52,20 @@
                 Install Game
             </button>
 
+            <button id="btnCancelInstall" class="action-remove disabled">
+                <i class="fas fa-ban" id="cancelIcon"></i>
+                Abort Install
+            </button>
+
             <br/><br/>
             <pre class="terminal" id="output" style="display:none;"><code></code></pre>
+            <div class="command-input-wrapper" style="display:none;">
+                <label for="commandInput" class="command-prefix-label">Input</label>
+                <input type="text" id="commandInput" class="command-input" placeholder="Enter input..." disabled data-running="0">
+                <button class="command-send-btn" id="commandInputSend">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
         </div>
     </main>
 </div>

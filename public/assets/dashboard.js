@@ -6,37 +6,53 @@ let liveServices = [];
 
 /**
  *
- * @param servicesWithStats {app: {string}, host: HostAppData, service: ServiceData}
+ * @param servicesWithStats {FullServiceData}
  */
 function populateServicesTable(servicesWithStats) {
 	const table = servicesTable,
-		now = parseInt(Date.now() / 1000),
-		app_guid = servicesWithStats.host.guid,
+		now = servicesWithStats.metrics_timestamp || parseInt(Date.now() / 1000),
+		app_guid = servicesWithStats.guid,
 		host = servicesWithStats.host,
 		service = servicesWithStats.service;
 
 	let row,
 		fields = ['thumbnail', 'host', 'icon', 'name', 'enabled', 'status', 'port', 'players', 'memory', 'cpu', 'actions'],
 		appIcon = renderAppIcon(app_guid),
-		supportsDelayedStop = host.options.includes('delayed-stop') ? '1' : '0',
-		supportsDelayedRestart = host.options.includes('delayed-restart') ? '1' : '0';
+		supportsDelayedStop = servicesWithStats.warlock_options.includes('delayed-stop') ? '1' : '0',
+		supportsDelayedRestart = servicesWithStats.warlock_options.includes('delayed-restart') ? '1' : '0';
 
 	// Create new row
 	row = document.createElement('div');
 	row.className = 'service-entry';
-	row.setAttribute('data-host', host.host);
-	row.setAttribute('data-service', service.service);
-	table.querySelector('.body').appendChild(row);
+	row.dataset.host = host;
+	row.dataset.service = service;
+	row.dataset.name = servicesWithStats.name;
+
+	// Add this row to either the end of the body OR after the next item alphabetically.
+	const bodyContainer = table.querySelector('.body');
+	const allRows = bodyContainer.querySelectorAll('.service-entry');
+	let added = false;
+	if (allRows.length > 0) {
+		allRows.forEach(r => {
+			if (!added && r.dataset.name > servicesWithStats.name) {
+				bodyContainer.insertBefore(row, r);
+				added = true;
+			}
+		});
+	}
+	if (!added) {
+		bodyContainer.appendChild(row);
+	}
 
 	// Initialize default cells
 	fields.forEach(field => {
 		const cell = document.createElement('div');
 		cell.className = field;
 
-		let val = service[field] || '';
+		let val = servicesWithStats[field] || '';
 
 		if (field === 'host') {
-			val = renderHostName(host.host);
+			val = renderHostName(host);
 		}
 		else if (field === 'thumbnail') {
 			val = getAppThumbnail(app_guid);
@@ -49,27 +65,27 @@ function populateServicesTable(servicesWithStats) {
 		}
 		else if (field === 'enabled') {
 			val = `<div class="">
-	<button style="display:none;" title="Enabled at Boot, click to disable" data-host="${host.host}" data-service="${service.service}" data-action="disable" data-guid="${app_guid}" class="service-control action-start">
+	<button style="display:none;" title="Enabled at Boot, click to disable" data-host="${host}" data-service="${service}" data-action="disable" data-guid="${app_guid}" class="service-control action-start">
 		<i class="fas fa-check-circle"></i>
 	</button>
-	<button style="display:none;" title="Disabled at Boot, click to enable" data-host="${host.host}" data-service="${service.service}" data-action="enable" data-guid="${app_guid}" class="service-control action-stop">
+	<button style="display:none;" title="Disabled at Boot, click to enable" data-host="${host}" data-service="${service}" data-action="enable" data-guid="${app_guid}" class="service-control action-stop">
 		<i class="fas fa-times-circle"></i>
 	</button>
 </div>`;
 		}
 		else if (field === 'players') {
-			cell.dataset.players = service.player_count || 0;
-			cell.dataset.maxPlayers = service.max_players || 0;
+			cell.dataset.players = servicesWithStats.player_count || 0;
+			cell.dataset.maxPlayers = servicesWithStats.max_players || 0;
 		}
 		else if (field === 'actions') {
 			val = `<div class="">
-	<button title="Game Details" data-href="/service/details/${app_guid}/${host.host}/${service.service}" class="link-control action-view">
+	<button title="Game Details" data-href="/service/details/${app_guid}/${host}/${service}" class="link-control action-view">
 		<i class="fas fa-cog"></i><span>Details</span>
 	</button>
-	<button style="display:none;" title="Stop Game" data-host="${host.host}" data-service="${service.service}" data-guid="${app_guid}" data-support-delayed-stop="${supportsDelayedStop}" data-support-delayed-restart="${supportsDelayedRestart}" class="open-stop-modal action-stop">
+	<button style="display:none;" title="Stop Game" data-host="${host}" data-service="${service}" data-guid="${app_guid}" data-support-delayed-stop="${supportsDelayedStop}" data-support-delayed-restart="${supportsDelayedRestart}" class="open-stop-modal action-stop">
 		<i class="fas fa-stop"></i><span>Stop</span>
 	</button>
-	<button style="display:none;" title="Start Game" data-host="${host.host}" data-service="${service.service}" data-action="start" data-guid="${app_guid}" class="service-control action-start">
+	<button style="display:none;" title="Start Game" data-host="${host}" data-service="${service}" data-action="start" data-guid="${app_guid}" class="service-control action-start">
 		<i class="fas fa-play"></i><span>Start</span>
 	</button>
 </div>`;
@@ -123,7 +139,11 @@ function noHostsAvailable() {
 /**
  * Load all services and their stats
  */
-function loadAllServicesAndStats() {
+async function loadAllServicesAndStats() {
+	return loadServices().then(services => {
+		//console.log(services);
+	});
+	/*
 	return fetch('/api/services', {method: 'GET'})
 		.then(r => r.json())
 		.then(results => {
@@ -136,7 +156,7 @@ function loadAllServicesAndStats() {
 				console.error('Error loading services.', results);
 				noServicesAvailable();
 			}
-		});
+		});*/
 }
 
 // Dynamic events for various buttons
@@ -241,9 +261,16 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 
 document.addEventListener('serviceChange', e => {
-	const row = servicesContainer.querySelector(`div[data-host="${e.detail.host}"][data-service="${e.detail.service}"]`);
+	let row = servicesContainer.querySelector(`div[data-host="${e.detail.host}"][data-service="${e.detail.service}"]`);
 	if (!row) {
-		return;
+		// Allow services to be auto-created
+		populateServicesTable(e.detail);
+
+		row = servicesContainer.querySelector(`div[data-host="${e.detail.host}"][data-service="${e.detail.service}"]`);
+		if (!row) {
+			// Create failed
+			return;
+		}
 	}
 
 	if (e.detail.hasOwnProperty('status')) {

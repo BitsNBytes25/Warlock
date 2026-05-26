@@ -21,6 +21,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Security
 
 
+## [1.2.2] - 2026-05-25
+
+### Added
+
+- Add support for user input on app installations
+- Add support for canceling / aborting app installations
+- Add support for Arma3
+- Add support for Windrose
+- Add support to set auto-restart to NOT warn players with 1-hour notice
+
+### Changed
+
+- Remote scripts now download to the filesystem prior to execution
+- Upgrade FontAwesome from v6.0.0 to v7.2.0 and migrate it to local
+- Utilize localStorage for services for faster page loads
+
+### Fixed
+
+- Fix web UI still requiring host authorization for mod lookups with Warlock.Nexus
+- Fix empty configuration parameters being saved (they were being ignored completely)
+- Fix firewall manager to allow ':' in comments
+- Fix cron correctly saving updates to cron tasks
+- Skip changes to package-lock.json during upgrade, (happens sometimes)
+
+
 ## [1.2.1] - 2026-04-27
 
 ### Fixed
@@ -93,8 +118,11 @@ This project is under active development. For the latest features and bug fixes,
 
 ### Version History Summary
 
+- **v1.2.2**: Performance fixes to UI, new games, and interactive installation support
+- **v1.2.1**: Fixes for installation on non-https sites
 - **v1.0.1**: Initial release with core functionality
 
+[1.2.2]: https://github.com/BitsNBytes25/Warlock/tree/v1.2.2
 [1.2.1]: https://github.com/BitsNBytes25/Warlock/tree/v1.2.1
 [1.2.0]: https://github.com/BitsNBytes25/Warlock/tree/v1.2.0
 [1.0.1]: https://github.com/BitsNBytes25/Warlock/tree/v1.0.1

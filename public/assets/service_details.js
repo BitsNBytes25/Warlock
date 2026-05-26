@@ -171,7 +171,7 @@ window.addEventListener('DOMContentLoaded', () => {
 			btnServiceStart.dataset.host = host;
 			btnServiceStart.dataset.guid = app_guid;
 
-			pollService(app_guid, host, service);
+			//pollService(app_guid, host, service);
 
 			if (loadedServiceData.multi_binary) {
 				// Service supports per-service binaries
@@ -296,7 +296,7 @@ document.addEventListener('serviceChange', e => {
 	}
 
 	if (e.detail.hasOwnProperty('max_players')) {
-		serviceDetailsPlayers.innerText = loadedServiceData.player_count + ' / ' + e.detail.max_players;
+		serviceDetailsPlayers.innerText = (loadedServiceData.player_count || 0) + ' / ' + e.detail.max_players;
 	}
 
 	if (e.detail.hasOwnProperty('port')) {

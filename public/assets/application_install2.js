@@ -105,9 +105,40 @@ window.addEventListener('DOMContentLoaded', () => {
 	const {guid, host} = getPathParams('/application/install/:guid/:host'),
 		installOptions = document.getElementById('installOptions'),
 		btnInstall = document.getElementById('btnInstall'),
+		btnCancelInstall = document.getElementById('btnCancelInstall'),
 		terminalOutput = document.getElementById('output'),
+		terminalInput = document.getElementById('commandInput'),
+		commandInputSend = document.getElementById('commandInputSend'),
 		installSpinner = document.getElementById('installSpinner'),
 		installIcon = document.getElementById('installIcon');
+
+	const sendInstallInput = () => {
+		if (terminalInput.dataset.running !== '1') {
+			return;
+		}
+		if (terminalInput.value === '') {
+			return;
+		}
+
+		// Send the command to the log for reference to the user
+		if (terminalOutput.lastElementChild.innerText.includes('password')) {
+			terminalOutputHelper(terminalOutput, 'stdin', '*********');
+		}
+		else {
+			terminalOutputHelper(terminalOutput, 'stdin', terminalInput.value);
+		}
+
+		fetch('/api/job/' + terminalInput.dataset.jobid, {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+				'Accept': 'application/json'
+			},
+			body: JSON.stringify({text: terminalInput.value})
+		});
+
+		terminalInput.value = '';
+	}
 
 	loadApplication(guid).then(appData => {
 		loadHost(host).then(hostData => {
@@ -167,6 +198,25 @@ window.addEventListener('DOMContentLoaded', () => {
 				installOptions.appendChild(p);
 			}
 
+			commandInputSend.addEventListener('click', sendInstallInput);
+
+			terminalInput.addEventListener('keydown', e => {
+				if (e.key === 'Enter') {
+					sendInstallInput();
+				}
+			});
+
+			btnCancelInstall.addEventListener('click', () => {
+				if (btnCancelInstall.classList.contains('disabled')) {
+					return;
+				}
+
+				terminalOutputHelper(terminalOutput, 'stdin', 'CANCELING JOB');
+				fetch('/api/job/' + btnCancelInstall.dataset.jobid, {
+					method: 'DELETE',
+				});
+			});
+
 			btnInstall.addEventListener('click', () => {
 				if (btnInstall.classList.contains('disabled')) {
 					return;
@@ -200,7 +250,18 @@ window.addEventListener('DOMContentLoaded', () => {
 					{'Content-Type': 'application/json'},
 					JSON.stringify({options: options}),
 					(event, data) => {
-						terminalOutputHelper(terminalOutput, event, data);
+						if (event === 'jobid') {
+							const jobId = data;
+							terminalInput.closest('.command-input-wrapper').style.display = 'block';
+							terminalInput.removeAttribute('disabled');
+							terminalInput.dataset.running = '1';
+							terminalInput.dataset.jobid = jobId;
+							btnCancelInstall.dataset.jobid = jobId;
+							btnCancelInstall.classList.remove('disabled');
+						}
+						else {
+							terminalOutputHelper(terminalOutput, event, data);
+						}
 					}).then(() => {
 						// Stream ended
 						showToast('success', 'Installation process completed.');
@@ -210,6 +271,11 @@ window.addEventListener('DOMContentLoaded', () => {
 						installSpinner.style.display = 'none';
 						installIcon.style.display = 'inline-block';
 						btnInstall.classList.remove('disabled');
+						terminalInput.setAttribute('disabled', 'disabled');
+						terminalInput.dataset.running = '0';
+						terminalInput.dataset.jobid = '';
+						btnCancelInstall.dataset.jobid = '';
+						btnCancelInstall.classList.add('disabled');
 					});
 			});
 

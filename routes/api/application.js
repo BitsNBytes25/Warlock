@@ -13,6 +13,7 @@ const {validateHost} = require("../../libs/validate_host.mjs");
 const {UnprocessableEntityError} = require("../../libs/errors.mjs");
 const {clearTaggedCache} = require("../../libs/cache.mjs");
 const {firewallAutoAllow} = require("../../libs/firewall_auto_allow.mjs");
+const {scriptLoader} = require("../../libs/script_loader.mjs");
 
 const router = express.Router();
 
@@ -60,7 +61,7 @@ router.put(
 		}
 
 		// Use buildRemoteExec to build the actual command to pass to the guest.
-		cmdData = buildRemoteExec(url, Array.prototype.concat(options, ['--non-interactive']));
+		cmdData = await scriptLoader(host.host, url, Array.prototype.concat(options, ['--non-interactive']));
 
 		logger.debug(cmdData);
 		logger.info(`Installing ${appData.title} on host ${host.host} with flags ${cmdData.parameters.join(', ')}`);

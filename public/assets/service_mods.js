@@ -49,23 +49,11 @@ async function loadServiceMods() {
 	serviceModsNotAvailable.style.display = 'none';
 	serviceModsLoading.style.display = 'block';
 
-	// If the host has Warlock.Nexus parameters set, ping to check if the host is currently authenticated.
 	if (hostToken && hostEmail) {
 		serviceModsEmailHash = await sha256(hostEmail);
-
-		const headers = {
-			'X-Host-Token': hostToken,
-			'X-Email': serviceModsEmailHash
-		}
-		const result = await fetch('https://api.warlock.nexus/host/ping', {headers}).then(r => r.json());
-		if (!result.success) {
-			serviceModsNotAuthenticated.style.display = 'block';
-		}
-		else {
-			serviceModsAuthenticated = true;
-			serviceModsSearch.style.display = 'block';
-		}
 	}
+	serviceModsAuthenticated = true;
+	serviceModsSearch.style.display = 'block';
 
 	loadServiceEnabledMods();
 
@@ -128,14 +116,14 @@ async function loadServiceEnabledMods() {
  * @returns {Promise<void>}
  */
 async function searchServiceMods(query) {
-	if (!serviceModsEmailHash ) {
+	/*if (!serviceModsEmailHash ) {
 		console.error('Service mods not authenticated');
 		return;
 	}
 	if (!serviceModsAuthenticated ) {
 		console.error('Service mods not authenticated');
 		return;
-	}
+	}*/
 
 	const host = loadedHost || null,
 		guid = loadedApplication || null,
