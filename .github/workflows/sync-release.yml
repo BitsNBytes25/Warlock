@@ -1,0 +1,80 @@
+name: Sync Main to Release Branch
+
+on:
+  push:
+    tags:
+      - 'v*' # Triggers on any tag starting with 'v'
+
+jobs:
+  merge-main-to-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # Required to push changes back to the repo
+      pull-requests: write # Required to create pull requests
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Git
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Determine Source and Target Branches
+        run: |
+          # github.ref_name gives us the tag (e.g., 'v1.2.3')
+          TAG_NAME="${{ github.ref_name }}"
+          
+          # Use 'cut' to grab the first two fields separated by a dot (e.g., 'v1.2')
+          VERSION_PREFIX=$(echo $TAG_NAME | cut -d'.' -f1,2)
+          
+          # Construct the target branch name
+          TARGET_BRANCH="release-$VERSION_PREFIX"
+          
+          # Get the commit hash that the tag points to
+          COMMIT_HASH=$(git rev-parse $TAG_NAME)
+          
+          # Find all remote branches containing this commit
+          # We filter out 'HEAD', the tag itself, and strip the 'origin/' prefix
+          # We take the first result (head -n 1) as our candidate source branch
+          SOURCE_BRANCH=$(git branch -r --contains $COMMIT_HASH | \
+            grep -v 'HEAD' | \
+            grep -v 'tags/' | \
+            sed 's|origin/||' | \
+            head -n 1)
+          
+          # Fallback to main if no specific branch is found (safety net)
+          if [ -z "$SOURCE_BRANCH" ]; then
+            SOURCE_BRANCH="main"
+          fi
+          
+          echo "Detected Tag: $TAG_NAME"
+          echo "Detected Source Branch: $SOURCE_BRANCH"
+          echo "Target Release Branch: $TARGET_BRANCH"
+          
+          # Save both to GITHUB_ENV
+          echo "TARGET_BRANCH=$TARGET_BRANCH" >> $GITHUB_ENV
+          echo "SOURCE_BRANCH=$SOURCE_BRANCH" >> $GITHUB_ENV
+
+      - name: Create Pull Request
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git fetch origin
+          
+          # Check if this branch exists in the first place.
+          if ! git ls-remote --heads origin "$TARGET_BRANCH"; then
+            echo "Target branch $TARGET_BRANCH does not exist. Creating it from $SOURCE_BRANCH..."
+            git checkout -b "$TARGET_BRANCH" "origin/$SOURCE_BRANCH"
+            git push origin "$TARGET_BRANCH"
+          else
+            # Create a pull request from the source branch to the target branch
+            gh pr create \
+              --base $TARGET_BRANCH \
+              --head $SOURCE_BRANCH \
+              --title "Merge $SOURCE_BRANCH into $TARGET_BRANCH" \
+              --body "Automated pull request to sync changes from $SOURCE_BRANCH to $TARGET_BRANCH"
+          fi
