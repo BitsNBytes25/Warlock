@@ -1,0 +1,27 @@
+{
+  "version": "7",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1779948282344,
+      "tag": "0000_skinny_power_man",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1779949765471,
+      "tag": "0001_magical_shiva",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1779949914581,
+      "tag": "0002_luxuriant_nightmare",
+      "breakpoints": true
+    }
+  ]
+}
