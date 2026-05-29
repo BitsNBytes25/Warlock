@@ -34,7 +34,7 @@ export async function getApplicationMetrics(hostData, service = null) {
 		}
 
 
-		cmdRunner(hostData.host, cmd)
+		cmdRunner(hostData.host, cmd, 15, hostData.guid)
 			.then(async result => {
 				let appServices;
 				const responseTime = Date.now() - requestStartTime;

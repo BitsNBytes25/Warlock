@@ -171,7 +171,7 @@ window.addEventListener('DOMContentLoaded', () => {
 			btnServiceStart.dataset.host = host;
 			btnServiceStart.dataset.guid = app_guid;
 
-			//pollService(app_guid, host, service);
+			pollService(app_guid, host, service);
 
 			if (loadedServiceData.multi_binary) {
 				// Service supports per-service binaries
