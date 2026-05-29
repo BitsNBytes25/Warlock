@@ -1,4 +1,4 @@
-import {Metric} from "../db.js";
+import {MetricModel} from "../db/models/metric.mjs";
 
 /**
  * Get the latest metrics for a given service on a host
@@ -19,15 +19,14 @@ export async function getLatestServiceMetrics(app_guid, host, service) {
 		cpu_usage: 0
 	};
 
-		let res = await Metric.findOne({
-			where: {
+		let res = await MetricModel.findOne(
+			{
 				ip: host,
 				app_guid,
 				service
 			},
-			order: [['timestamp', 'DESC']],
-			raw: true
-		});
+			[['timestamp', 'DESC']]
+		);
 
 		if (res) {
 			if (res.cpu_usage !== null) {

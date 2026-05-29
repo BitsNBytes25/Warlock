@@ -1,5 +1,5 @@
 const express = require('express');
-const {User} = require("../db");
+const {UserModel} = require("../db/models/user.mjs");
 const csrf = require('@dr.pogodin/csurf');
 const bodyParser = require('body-parser');
 const twofactor = require("node-2fa");
@@ -33,7 +33,7 @@ router.post('/', parseForm, csrfProtection, (req, res) => {
 		return res.render('install', {error: 'Username and password are required.'});
 	}
 
-	User.findOne({ where: { username } })
+	UserModel.findOne({ username } )
 		.then(user => {
 			if (!user || !user.validatePassword(password)) {
 				return res.render('login', { error: badPasswordOrCode });

@@ -1,5 +1,5 @@
 const express = require('express');
-const {User} = require("../db");
+const {UserModel} = require("../db/models/user.mjs");
 const csrf = require('@dr.pogodin/csurf');
 const bodyParser = require('body-parser');
 const {validate_session} = require("../libs/validate_session.mjs");
@@ -47,7 +47,7 @@ router.post('/', validate_session, parseForm, csrfProtection, (req, res) => {
 	}
 
 	// Save the secret to the user's account
-	User.findByPk(req.user.id).then((user) => {
+	UserModel.findByPk(req.user.id).then((user) => {
 		if (!user) {
 			res.redirect('/login');
 			return;

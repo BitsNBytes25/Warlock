@@ -28,6 +28,8 @@ const taglines = [
 export const errorHandler = (err, req, res, next) => {
 	const status = err.status || 400;
 
+	console.error(err.stack);
+
 	if (req.accepts('html')) {
 		let tagLine = taglines[Math.floor(Math.random() * taglines.length)];
 

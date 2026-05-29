@@ -1,7 +1,7 @@
 const express = require('express');
 const { validate_session } = require("../../libs/validate_session.mjs");
 const { cmdRunner } = require("../../libs/cmd_runner.mjs");
-const { Host } = require('../../db');
+const { HostModel } = require('../../db/models/host.mjs');
 const { logger } = require('../../libs/logger.mjs');
 const {buildRemoteExec} = require("../../libs/build_remote_exec.mjs");
 const {clearTaggedCache} = require("../../libs/cache.mjs");
@@ -61,7 +61,7 @@ function buildUFWOptions(to, from, proto, action) {
 router.get('/:host', validate_session, (req, res) => {
 	const host = req.params.host;
 
-	Host.count({ where: { ip: host } }).then(count => {
+	HostModel.count({ ip: host } ).then(count => {
 		if (count === 0) {
 			return res.json({ success: false, error: 'Requested host is not in the configured HOSTS list' });
 		}
@@ -164,7 +164,7 @@ router.post('/:host', validate_session, (req, res) => {
 
 	action = action.toUpperCase();
 
-	Host.count({ where: { ip: host } }).then(count => {
+	HostModel.count({ ip: host } ).then(count => {
 		if (count === 0) {
 			return res.json({ success: false, error: 'Requested host is not in the configured HOSTS list' });
 		}
@@ -214,7 +214,7 @@ router.delete('/:host', validate_session, (req, res) => {
 
 	action = action.toUpperCase();
 
-	Host.count({ where: { ip: host } }).then(count => {
+	HostModel.count({ ip: host } ).then(count => {
 		if (count === 0) {
 			return res.json({ success: false, error: 'Requested host is not in the configured HOSTS list' });
 		}
@@ -240,7 +240,7 @@ router.delete('/:host', validate_session, (req, res) => {
 // Enable/disable
 router.post('/enable/:host', validate_session, (req, res) => {
 	const host = req.params.host;
-	Host.count({ where: { ip: host } }).then(count => {
+	HostModel.count({ ip: host } ).then(count => {
 		if (count === 0) {
 			return res.json({ success: false, error: 'Requested host is not in the configured HOSTS list' });
 		}
@@ -258,7 +258,7 @@ router.post('/enable/:host', validate_session, (req, res) => {
 
 router.post('/disable/:host', validate_session, (req, res) => {
 	const host = req.params.host;
-	Host.count({ where: { ip: host } }).then(count => {
+	HostModel.count({ ip: host } ).then(count => {
 		if (count === 0) {
 			return res.json({ success: false, error: 'Requested host is not in the configured HOSTS list' });
 		}

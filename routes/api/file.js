@@ -4,7 +4,7 @@ const { cmdRunner } = require("../../libs/cmd_runner.mjs");
 const { filePushRunner } = require("../../libs/file_push_runner.mjs");
 const path = require('path');
 const fs = require('fs');
-const { Host } = require('../../db');
+const {HostModel} = require('../../db/models/host.mjs');
 const { logger } = require('../../libs/logger.mjs');
 const {buildRemoteExec} = require("../../libs/build_remote_exec.mjs");
 const {correctMimetype} = require("../../libs/correct_mimetype.mjs");
@@ -31,7 +31,7 @@ router.get('/:host', validate_session, (req, res) => {
 	}
 	logger.info('Viewing file:', filePath);
 
-	Host.count({ where: { ip: host } }).then(count => {
+	HostModel.count({ ip: host } ).then(count => {
 		if (count === 0) {
 			return res.json({
 				success: false,
@@ -225,7 +225,7 @@ router.post('/:host', validate_session, (req, res) => {
 		path = path.replace(/\/+$/, '') + '/' + name;
 	}
 
-	Host.count({ where: { ip: host } }).then(count => {
+	HostModel.count({ ip: host } ).then(count => {
 		if (count === 0) {
 			return res.json({
 				success: false,
@@ -316,7 +316,7 @@ router.put('/:host', validate_session, (req, res) => {
 		});
 	}
 
-	Host.count({ where: { ip: host } }).then(count => {
+	HostModel.count({ ip: host } ).then(count => {
 		if (count === 0) {
 			return res.json({
 				success: false,
@@ -433,7 +433,7 @@ router.delete('/:host', validate_session, (req, res) => {
 		});
 	}
 
-	Host.count({ where: { ip: host } }).then(count => {
+	HostModel.count({ ip: host } ).then(count => {
 		if (count === 0) {
 			return res.json({
 				success: false,
@@ -475,7 +475,7 @@ router.post('/extract/:host', validate_session, (req, res) => {
 		});
 	}
 
-	Host.count({ where: { ip: host } }).then(count => {
+	HostModel.count({ ip: host } ).then(count => {
 		if (count === 0) {
 			return res.json({
 				success: false,
@@ -615,7 +615,7 @@ router.post('/compress/:host', validate_session, (req, res) => {
 		});
 	}
 
-	Host.count({ where: { ip: host } }).then(count => {
+	HostModel.count({ ip: host } ).then(count => {
 		if (count === 0) {
 			return res.json({
 				success: false,

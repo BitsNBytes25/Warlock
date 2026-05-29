@@ -2,7 +2,7 @@ const express = require('express');
 const {validate_session} = require("../libs/validate_session.mjs");
 const csrf = require('@dr.pogodin/csurf');
 const bodyParser = require('body-parser');
-const {Host} = require("../db");
+const {HostModel} = require("../db/models/host.mjs");
 const {get_ssh_key} = require("../libs/get_ssh_key.mjs");
 const {exec} = require('child_process');
 const {hostPostAdd} = require("../libs/host_post_add.mjs");
@@ -51,7 +51,7 @@ router.post(
 		}
 
 		// Verify it's not already in the host database
-		let existingHost = await Host.findOne({where: {ip}});
+		let existingHost = await HostModel.findOne({ip});
 
 		if (ip === 'localhost' || ip === '127.0.0.1') {
 			// Localhost does not require an SSH connection; we can just add the host immediately
@@ -61,7 +61,7 @@ router.post(
 				);
 			}
 
-			Host.create({ip})
+			(new HostModel({ip})).save()
 				.then(newHost => {
 					return res.redirect('/hosts');
 				})
@@ -99,7 +99,7 @@ router.post(
 
 			// If successful, add the host to the database if necessary
 			if (!existingHost) {
-				await Host.create({ip});
+				await (new HostModel({ip})).save();
 			}
 
 			// Perform any operations required on the host

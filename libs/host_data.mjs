@@ -1,7 +1,7 @@
 import {cmdRunner} from "./cmd_runner.mjs";
 import {AppInstallData} from "./app_install_data.mjs";
 import {logger} from "./logger.mjs";
-import {HostMetric} from "../db.js";
+import {HostMetricModel} from "../db/models/host_metric.mjs";
 
 /**
  * @property {string}   this.host            Hostname or IP of this host, as set from Warlock config
@@ -290,10 +290,10 @@ export class HostData {
 				}
 
 				// Lookup the last RX/TX values from the database to calculate deltas
-				const lastMetric = await HostMetric.findOne({
-					where: {ip: this.host},
-					order: [['timestamp', 'DESC']]
-				});
+				const lastMetric = await HostMetricModel.findOne(
+					{ip: this.host},
+					[['timestamp', 'DESC']]
+				);
 
 				if (lastMetric) {
 					if (lastMetric.timestamp && lastMetric.timestamp < timestamp && lastMetric.rx_last && lastMetric.rx_last <= metrics.net_total_rx) {
@@ -306,7 +306,7 @@ export class HostData {
 
 				// Store metrics from this discovery if this data is at least a minute old.
 				if (!lastMetric || timestamp - lastMetric.timestamp >= 60) {
-					HostMetric.create({
+					const newMetric = new HostMetricModel({
 						ip: this.host,
 						timestamp: timestamp,
 						cpu: metrics.cpu_usage,
@@ -316,7 +316,8 @@ export class HostData {
 						rx: metrics.net_rx,
 						tx_last: metrics.net_total_tx,
 						tx: metrics.net_tx
-					}).catch(err => {
+					});
+					newMetric.save().catch(err => {
 						// Ignore errors here
 						console.error('Error storing host metrics for', this.host, err);
 					});

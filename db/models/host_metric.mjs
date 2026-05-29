@@ -1,4 +1,4 @@
-import {hostMetrics} from '../schema.js';
+import {hostMetrics} from '../schema.mjs';
 import {BaseModel} from './base.mjs';
 
 

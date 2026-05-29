@@ -54,7 +54,6 @@ const cookieParser = require('cookie-parser');
 const session = require('express-session');
 const {logger} = require("./libs/logger.mjs");
 const {push_analytics} = require("./libs/push_analytics.mjs");
-const {sequelize} = require("./db.js");
 const {MetricsPollTask} = require("./tasks/metrics_poll.mjs");
 const {MetricsMergeTask} = require("./tasks/metrics_merge.mjs");
 const {HostMetricsMergeTask} = require("./tasks/host_metrics_merge.mjs");
@@ -130,7 +129,6 @@ app.use('/test', require('./routes/test'));
 /***************************************************************
  **                      API Endpoints
  ***************************************************************/
-
 app.use('/api/applications', require('./routes/api/applications'));
 app.use('/api/file', require('./routes/api/file'));
 app.use('/api/files', require('./routes/api/files'));
@@ -147,7 +145,6 @@ app.use('/api/application', require('./routes/api/application'));
 app.use('/api/application/backup', require('./routes/api/application_backup'));
 app.use('/api/application/configs', require('./routes/api/application_configs'));
 app.use('/api/application/update', require('./routes/api/application_update'));
-app.use('/api/quickpaths', require('./routes/api/quickpaths'));
 app.use('/api/cron', require('./routes/api/cron'));
 app.use('/api/users', require('./routes/api/users'));
 app.use('/api/firewall', require('./routes/api/firewall'));
@@ -181,39 +178,21 @@ app.listen(PORT, HOST, () => {
 		logger.info(`Listening on ${HOST} port ${PORT}`);
 	}
 
+	// Allow dev:quick to run without performing the automated background tasks.
 	if (!SKIP_AUTOMATIONS) {
-		// Sequelize doesn't handle cleaning up _backup tables all the time, so manually check if there are any.
-		sequelize.showAllSchemas().then(res => {
-			let dropPromises = [];
-			res.forEach(schema => {
-				if (schema.name && schema.name.endsWith('_backup')) {
-					const tableName = schema.name;
-					logger.info(`Dropping leftover backup table: ${tableName}`);
-					dropPromises.push(sequelize.getQueryInterface().dropTable(tableName));
-				}
-			});
+		// Send a tracking snippet to our analytics server so we can monitor basic usage.
+		push_analytics('Start');
 
-			Promise.allSettled(dropPromises).then(() => {
-				// Ensure the sqlite database is up to date with the schema.
-				sequelize.sync({ alter: true }).then(() => {
-					logger.info('Initialized database connection and synchronized schema.');
+		MetricsPollTask();
+		setInterval(MetricsPollTask, 60000); // Run every 60 seconds
 
-					// Send a tracking snippet to our analytics server so we can monitor basic usage.
-					push_analytics('Start');
+		HostMetricsPollTask();
+		setInterval(HostMetricsPollTask, 60000); // Run every 60 seconds
 
-					MetricsPollTask();
-					setInterval(MetricsPollTask, 60000); // Run every 60 seconds
+		MetricsMergeTask();
+		setInterval(MetricsMergeTask, 3600000); // Run every hour
 
-					HostMetricsPollTask();
-					setInterval(HostMetricsPollTask, 60000); // Run every 60 seconds
-
-					MetricsMergeTask();
-					setInterval(MetricsMergeTask, 3600000); // Run every hour
-
-					HostMetricsMergeTask();
-					setInterval(HostMetricsMergeTask, 3600000); // Run every hour
-				});
-			});
-		});
+		HostMetricsMergeTask();
+		setInterval(HostMetricsMergeTask, 3600000); // Run every hour
 	}
 });

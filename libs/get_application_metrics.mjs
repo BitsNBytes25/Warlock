@@ -1,5 +1,5 @@
 import {cmdRunner} from "./cmd_runner.mjs";
-import {Metric} from "../db.js";
+import {MetricModel} from "../db/models/metric.mjs";
 import {logger} from "./logger.mjs";
 import cache from "./cache.mjs";
 
@@ -81,17 +81,16 @@ export async function getApplicationMetrics(hostData, service = null) {
 
 						try {
 							// Get the last metric for this service, and only record if at least a minute old.
-							let lastMetric = await Metric.findOne({
-								where: {
+							let lastMetric = await MetricModel.findOne(
+								{
 									ip: hostData.host,
 									app_guid: guid,
 									service: svcName
 								},
-								order: [['timestamp', 'DESC']],
-								raw: true
-							});
+								[['timestamp', 'DESC']]
+							);
 							if (!lastMetric || (lastMetric && (timestamp - lastMetric.timestamp) >= 60)) {
-								await Metric.create({
+								const newMetric = new MetricModel({
 									timestamp: timestamp,
 									app_guid: guid,
 									service: svcName,
@@ -102,10 +101,12 @@ export async function getApplicationMetrics(hostData, service = null) {
 									memory_usage: memoryValue,
 									cpu_usage: cpuValue
 								});
+								await newMetric.save();
 							}
 						}
 						catch(e) {
 							logger.warn(`getApplicationMetrics: Error saving metrics for service '${svcName}' on app '${guid}' at host '${hostData.host}':`, e.message);
+							console.warn(e.stack);
 						}
 
 						if (typeof(svc.players) !== 'undefined') {

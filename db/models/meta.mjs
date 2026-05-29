@@ -1,4 +1,4 @@
-import {meta} from '../schema.js';
+import {meta} from '../schema.mjs';
 import {BaseModel} from './base.mjs';
 
 export class MetaModel extends BaseModel {

@@ -1,6 +1,8 @@
-import {HostMetric, sequelize} from "../db.js";
-import {Op, QueryTypes} from 'sequelize';
+import {HostMetricModel} from "../db/models/host_metric.mjs";
 import {logger} from "../libs/logger.mjs";
+import {and, gte, lt} from "drizzle-orm";
+import {db} from "../db/db.mjs";
+
 
 /**
  * Merge host metrics down to aggregated sizes to reduce database size.
@@ -23,13 +25,9 @@ export async function HostMetricsMergeTask() {
 
 	try {
 		// Delete metrics older than 1 year
-		const deleteCount = await HostMetric.destroy({
-			where: {
-				timestamp: {
-					[Op.lt]: now - oneYear
-				}
-			}
-		});
+		const table = HostMetricModel._tableDefinition;
+		const deleteInfo = await db.delete(table).where(lt(table.timestamp, now - oneYear)).execute();
+		const deleteCount = deleteInfo.rowsAffected || 0;
 
 		if (deleteCount > 0) {
 			logger.info(`HostMetricsMergeTask: Deleted ${deleteCount} metrics older than 1 year`);
@@ -54,36 +52,32 @@ export async function HostMetricsMergeTask() {
  * Merge metrics within a time range to a specific interval
  */
 async function mergeHostMetricsToInterval(startTime, endTime, intervalSeconds, intervalName) {
-	const transaction = await sequelize.transaction();
-
 	try {
+		const table = HostMetricModel._tableDefinition;
+
 		// Get all unique combinations of ip, app_guid, and service in the time range
-		const uniqueHosts = await sequelize.query(
-			`SELECT DISTINCT ip FROM HostMetrics 
-			 WHERE timestamp >= :startTime AND timestamp < :endTime`,
-			{
-				replacements: { startTime, endTime },
-				type: QueryTypes.SELECT,
-				transaction
-			}
-		);
+		const uniqueHosts = await db
+			.selectDistinct({ip: table.ip})
+			.from(table)
+			.where(and(
+				gte(table.timestamp, startTime),
+				lt(table.timestamp, endTime)
+			))
+			.execute();
 
 		let mergedCount = 0;
 
 		for (const host of uniqueHosts) {
 			// Get metrics for this service in the time range
-			const metrics = await HostMetric.findAll({
-				where: {
-					ip: host.ip,
-					timestamp: {
-						[Op.gte]: startTime,
-						[Op.lt]: endTime
-					}
-				},
-				order: [['timestamp', 'ASC']],
-				raw: true,
-				transaction
-			});
+			const metrics = await db
+				.select()
+				.from(table)
+				.where(and(
+					eq(table.ip, host.ip),
+					gte(table.timestamp, startTime),
+					lt(table.timestamp, endTime)
+				))
+				.execute();
 
 			if (metrics.length === 0) continue;
 
@@ -113,19 +107,17 @@ async function mergeHostMetricsToInterval(startTime, endTime, intervalSeconds, i
 					avgNetTx = groupMetrics.reduce((sum, m) => sum + (m.disk || 0), 0) / groupMetrics.length;
 
 				// Delete all metrics in this interval
-				await HostMetric.destroy({
-					where: {
-						ip: host.ip,
-						timestamp: {
-							[Op.gte]: parseInt(intervalTimestamp),
-							[Op.lt]: parseInt(intervalTimestamp) + intervalSeconds
-						}
-					},
-					transaction
-				});
+				await db
+					.delete(table)
+					.where(and(
+						eq(table.ip, host.ip),
+						gte(table.timestamp, parseInt(intervalTimestamp)),
+						lt(table.timestamp, parseInt(intervalTimestamp) + intervalSeconds)
+					))
+					.execute();
 
 				// Create aggregated metric
-				await HostMetric.create({
+				await (new HostMetricModel({
 					ip: host.ip,
 					timestamp: parseInt(intervalTimestamp),
 					cpu: parseInt(avgCpuUsage),
@@ -133,19 +125,16 @@ async function mergeHostMetricsToInterval(startTime, endTime, intervalSeconds, i
 					disk: parseInt(avgDiskUsage),
 					rx: parseInt(avgNetRx),
 					tx: parseInt(avgNetTx)
-				}, { transaction });
+				})).save();
 
 				mergedCount += groupMetrics.length - 1; // Count how many metrics were merged
 			}
 		}
 
-		await transaction.commit();
-
 		if (mergedCount > 0) {
 			logger.info(`HostMetricsMergeTask: Merged ${mergedCount} metrics to ${intervalName} intervals`);
 		}
 	} catch (error) {
-		await transaction.rollback();
 		logger.error(`HostMetricsMergeTask: Error merging to ${intervalName} intervals:`, error.message);
 		throw error;
 	}

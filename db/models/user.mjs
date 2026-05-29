@@ -1,4 +1,4 @@
-import {users} from '../schema.js';
+import {users} from '../schema.mjs';
 import {BaseModel} from './base.mjs';
 import bcrypt from 'bcrypt';
 
@@ -55,11 +55,12 @@ export class UserModel extends BaseModel {
 	/**
 	 * Find a single user filtered by a where clause.
 	 *
-	 * @param {Object|null} where
+	 * @param {Object|null=null} where
+	 * @param {string|Array<[string, string]>|null=null} order
 	 * @returns {Promise<UserModel|null>}
 	 */
-	static async findOne(where) {
-		return BaseModel.findOne(UserModel, where);
+	static async findOne(where, order) {
+		return BaseModel.findOne(UserModel, where, order);
 	}
 
 	/**
@@ -75,11 +76,12 @@ export class UserModel extends BaseModel {
 	/**
 	 * Get all users, optionally filtered by a where clause.
 	 *
-	 * @param {Object|null} where
+	 * @param {Object|null=null} where
+	 * @param {string|Array<[string, string]>|null=null} order
 	 * @returns {Promise<UserModel[]>}
 	 */
-	static async findAll(where) {
-		return BaseModel.findAll(UserModel, where);
+	static async findAll(where, order) {
+		return BaseModel.findAll(UserModel, where, order);
 	}
 
 	/**

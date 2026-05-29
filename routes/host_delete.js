@@ -2,7 +2,7 @@ const express = require('express');
 const {validate_session} = require("../libs/validate_session.mjs");
 const csrf = require('@dr.pogodin/csurf');
 const bodyParser = require('body-parser');
-const {Host} = require("../db");
+const {HostModel} = require("../db/models/host.mjs");
 const cache = require("../libs/cache.mjs");
 
 const router = express.Router();
@@ -16,7 +16,7 @@ router.get('/:host', validate_session, csrfProtection, (req, res) => {
         return res.render('host_delete', { error: 'IP address is required.' });
     }
 
-    Host.findOne({ where: { ip } }).then(host => {
+    HostModel.findOne({ ip } ).then(host => {
         if (!host) {
             return res.render('host_delete', { error: 'Host not found.', ip });
         }
@@ -35,15 +35,18 @@ router.post('/', parseForm, csrfProtection, validate_session, (req, res) => {
         return res.render('host_delete', { error: 'IP address is required.' });
     }
 
-    Host.destroy({ where: { ip } }).then(deletedCount => {
-        if (!deletedCount) {
-            return res.render('host_delete', { error: 'Host not found or already deleted.', ip });
+    HostModel.findOne({ ip } ).then(host => {
+        if (!host) {
+            return res.render('host_delete', { error: 'Host not found.', ip });
         }
-        cache.default.set('all_applications', null, 1); // Invalidate cache
-        return res.redirect('/hosts');
-    }).catch(err => {
-        console.error('Error deleting host:', err);
-        return res.render('host_delete', { error: 'Failed to delete host. Please try again.', ip });
+
+        host.remove().then(() => {
+            cache.default.set('all_applications', null, 1); // Invalidate cache
+            return res.redirect('/hosts');
+        }).catch(err => {
+            console.error('Error deleting host:', err);
+            return res.render('host_delete', { error: 'Failed to delete host. Please try again.', ip });
+        })
     });
 });
 

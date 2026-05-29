@@ -1,4 +1,4 @@
-import {db} from '../db.js';
+import {db} from '../db.mjs';
 import {and, asc, desc, eq, sql} from "drizzle-orm";
 
 /**
@@ -80,6 +80,8 @@ export class BaseModel {
 			.returning()
 			.then(results => {
 				this._originalData = {...results[0]};
+				// Map the ID over, this is particularly useful for saveNew.
+				this._data['id'] = this._originalData['id'];
 				return this;
 			});
 	}

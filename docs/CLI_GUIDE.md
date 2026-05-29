@@ -348,7 +348,7 @@ echo "yes" | npm run cli -- delete-user temporary_user
 
 - [Warlock README](../README.md) - Main documentation
 - [Installation Guide](install.md) - How to install Warlock
-- [Database Schema](../db.js) - User model definition
+- [Database Schema](../db/schema.mjs) - Model definitions
 - [User API](../routes/api/users.js) - Web API for user management
 
 ## Support

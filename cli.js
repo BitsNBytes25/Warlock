@@ -17,7 +17,7 @@
 
 const dotenv = require('dotenv');
 const readline = require('readline');
-const { User, sequelize } = require('./db.js');
+const {UserModel} = require('./db/models/user.mjs');
 const { logger } = require('./libs/logger.mjs');
 
 // Load environment variables
@@ -152,9 +152,7 @@ Recovery Scenario:
  */
 async function listUsers() {
 	try {
-		const users = await User.findAll({
-			attributes: ['id', 'username', 'secret_2fa', 'createdAt', 'updatedAt']
-		});
+		const users = await UserModel.findAll();
 
 		if (users.length === 0) {
 			console.log('\n✗ No users found in system');
@@ -171,7 +169,7 @@ async function listUsers() {
 			const id = String(user.id).padEnd(2);
 			const username = user.username.padEnd(16);
 			const has2fa = user.secret_2fa ? '✓' : '✗';
-			const created = user.createdAt.toISOString().substring(0, 19);
+			const created = user.createdAt.substring(0, 19);
 			console.log(`║ ${id} │ ${username} │ ${has2fa}   │ ${created}              ║`);
 		});
 
@@ -205,16 +203,16 @@ async function createUser(username, password) {
 			return false;
 		}
 
-		const exists = await User.findOne({ where: { username: trimmedUsername } });
+		const exists = await UserModel.findOne({ username: trimmedUsername } );
 		if (exists) {
 			console.error(`\n✗ Username "${trimmedUsername}" already exists`);
 			return false;
 		}
 
-		const user = await User.create({
+		const user = await (new UserModel({
 			username: trimmedUsername,
 			password: password
-		});
+		})).save();
 
 		console.log(`\n✓ User "${user.username}" created successfully (ID: ${user.id})`);
 		console.log('  User must configure 2FA on first login\n');
@@ -238,7 +236,7 @@ async function resetPassword(username, password) {
 			return false;
 		}
 
-		const user = await User.findOne({ where: { username: trimmedUsername } });
+		const user = await UserModel.findOne({ username: trimmedUsername } );
 		if (!user) {
 			console.error(`\n✗ User "${trimmedUsername}" not found`);
 			return false;
@@ -277,7 +275,7 @@ async function reset2FA(username) {
 			return false;
 		}
 
-		const user = await User.findOne({ where: { username: trimmedUsername } });
+		const user = await UserModel.findOne({ username: trimmedUsername } );
 		if (!user) {
 			console.error(`\n✗ User "${trimmedUsername}" not found`);
 			return false;
@@ -308,7 +306,7 @@ async function deleteUser(username) {
 			return false;
 		}
 
-		const user = await User.findOne({ where: { username: trimmedUsername } });
+		const user = await UserModel.findOne({ username: trimmedUsername } );
 		if (!user) {
 			console.error(`\n✗ User "${trimmedUsername}" not found`);
 			return false;
@@ -323,7 +321,7 @@ async function deleteUser(username) {
 			return false;
 		}
 
-		await user.destroy();
+		await user.remove();
 		console.log(`\n✓ User "${user.username}" deleted\n`);
 		return true;
 	} catch (error) {
@@ -338,8 +336,6 @@ async function deleteUser(username) {
  */
 async function main() {
 	try {
-		// Initialize database connection
-		await sequelize.authenticate();
 
 		const command = process.argv[2];
 		const args = process.argv.slice(3);

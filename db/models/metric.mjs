@@ -1,4 +1,4 @@
-import {metrics} from '../schema.js';
+import {metrics} from '../schema.mjs';
 import {BaseModel} from './base.mjs';
 
 export class MetricModel extends BaseModel {

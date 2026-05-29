@@ -1,4 +1,4 @@
-import { User } from '../db.js';
+import { UserModel } from '../db/models/user.mjs';
 
 export const validate_session = (req, res, next) => {
 	if (process.env.SKIP_AUTHENTICATION === 'true' || process.env.SKIP_AUTHENTICATION === '1') {
@@ -13,7 +13,7 @@ export const validate_session = (req, res, next) => {
 	if (req.session && req.session.user) {
 		// Lookup the user in the database to ensure session is valid
 		const userId = req.session.user;
-		User.findByPk(userId).then((user) => {
+		UserModel.findByPk(userId).then((user) => {
 			if (user) {
 				// User exists, proceed to next middleware
 				// Attach the values from the user, (sans password and sensitive info)
@@ -52,7 +52,7 @@ export const validate_session = (req, res, next) => {
 	} else {
 		// No session, redirect to login or install (if not installed)
 		// If there are no users in the database, redirect to install page
-		User.count().then((count) => {
+		UserModel.count().then((count) => {
 			if (count === 0) {
 				return res.redirect('/install');
 			}

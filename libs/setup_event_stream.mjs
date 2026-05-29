@@ -1,5 +1,3 @@
-import {Host} from "../db.js";
-import {HostData} from "./host_data.mjs";
 
 /**
  * Setup a request as an event stream

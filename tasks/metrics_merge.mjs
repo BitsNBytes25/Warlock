@@ -1,6 +1,8 @@
-import {Metric, sequelize} from "../db.js";
-import {Op, QueryTypes} from 'sequelize';
+import {MetricModel} from "../db/models/metric.mjs";
 import {logger} from "../libs/logger.mjs";
+import {and, eq, gte, lt} from "drizzle-orm";
+import {db} from "../db/db.mjs";
+import {HostMetricModel} from "../db/models/host_metric.mjs";
 
 /**
  * Merge metrics down to aggregated sizes to reduce database size.
@@ -22,14 +24,10 @@ export async function MetricsMergeTask() {
 		oneHour = 60 * 60;
 
 	try {
+		const table = MetricModel._tableDefinition;
 		// Delete metrics older than 1 year
-		const deleteCount = await Metric.destroy({
-			where: {
-				timestamp: {
-					[Op.lt]: now - oneYear
-				}
-			}
-		});
+		const deleteInfo = await db.delete(table).where(lt(table.timestamp, now - oneYear)).execute();
+		const deleteCount = deleteInfo.rowsAffected || 0;
 
 		if (deleteCount > 0) {
 			logger.info(`MetricsMergeTask: Deleted ${deleteCount} metrics older than 1 year`);
@@ -54,38 +52,33 @@ export async function MetricsMergeTask() {
  * Merge metrics within a time range to a specific interval
  */
 async function mergeMetricsToInterval(startTime, endTime, intervalSeconds, intervalName) {
-	const transaction = await sequelize.transaction();
-
 	try {
+		const table = MetricModel._tableDefinition;
 		// Get all unique combinations of ip, app_guid, and service in the time range
-		const uniqueServices = await sequelize.query(
-			`SELECT DISTINCT ip, app_guid, service FROM Metrics 
-			 WHERE timestamp >= :startTime AND timestamp < :endTime`,
-			{
-				replacements: { startTime, endTime },
-				type: QueryTypes.SELECT,
-				transaction
-			}
-		);
+		const uniqueServices = await db
+			.selectDistinct({ip: table.ip, app_guid: table.app_guid, service: table.service})
+			.from(table)
+			.where(and(
+				gte(table.timestamp, startTime),
+				lt(table.timestamp, endTime)
+			))
+			.execute();
 
 		let mergedCount = 0;
 
 		for (const svc of uniqueServices) {
 			// Get metrics for this service in the time range
-			const metrics = await Metric.findAll({
-				where: {
-					ip: svc.ip,
-					app_guid: svc.app_guid,
-					service: svc.service,
-					timestamp: {
-						[Op.gte]: startTime,
-						[Op.lt]: endTime
-					}
-				},
-				order: [['timestamp', 'ASC']],
-				raw: true,
-				transaction
-			});
+			const metrics = await db
+				.select()
+				.from(table)
+				.where(and(
+					eq(table.ip, svc.ip),
+					eq(table.app_guid, svc.app_guid),
+					eq(table.service, svc.service),
+					gte(table.timestamp, startTime),
+					lt(table.timestamp, endTime)
+				))
+				.execute();
 
 			if (metrics.length === 0) continue;
 
@@ -115,21 +108,19 @@ async function mergeMetricsToInterval(startTime, endTime, intervalSeconds, inter
 					avgStatus = groupMetrics.reduce((sum, m) => sum + (m.status || 0), 0) / groupMetrics.length;
 
 				// Delete all metrics in this interval
-				await Metric.destroy({
-					where: {
-						ip: svc.ip,
-						app_guid: svc.app_guid,
-						service: svc.service,
-						timestamp: {
-							[Op.gte]: parseInt(intervalTimestamp),
-							[Op.lt]: parseInt(intervalTimestamp) + intervalSeconds
-						}
-					},
-					transaction
-				});
+				await db
+					.delete(table)
+					.where(and(
+						eq(table.ip, svc.ip),
+						eq(table.app_guid, svc.app_guid),
+						eq(table.service, svc.service),
+						gte(table.timestamp, parseInt(intervalTimestamp)),
+						lt(table.timestamp, parseInt(intervalTimestamp) + intervalSeconds)
+					))
+					.execute();
 
 				// Create aggregated metric
-				await Metric.create({
+				await (new MetricModel({
 					ip: svc.ip,
 					app_guid: svc.app_guid,
 					service: svc.service,
@@ -139,19 +130,16 @@ async function mergeMetricsToInterval(startTime, endTime, intervalSeconds, inter
 					player_count: Math.round(avgPlayerCount),
 					response_time: Math.round(avgResponseTime),
 					status: Math.round(avgStatus)
-				}, { transaction });
+				})).save();
 
 				mergedCount += groupMetrics.length - 1; // Count how many metrics were merged
 			}
 		}
 
-		await transaction.commit();
-
 		if (mergedCount > 0) {
 			logger.info(`MetricsMergeTask: Merged ${mergedCount} metrics to ${intervalName} intervals`);
 		}
 	} catch (error) {
-		await transaction.rollback();
 		logger.error(`MetricsMergeTask: Error merging to ${intervalName} intervals:`, error.message);
 		throw error;
 	}

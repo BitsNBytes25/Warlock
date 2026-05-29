@@ -1,4 +1,4 @@
-import {Host} from "../db.js";
+import {HostModel} from "../db/models/host.mjs";
 import {spawn} from 'child_process';
 import {logger} from "./logger.mjs";
 import {activeJobs} from "./active_jobs.mjs"
@@ -22,7 +22,7 @@ export async function cmdStreamer(target, cmd, res, ignoreClose = false) {
 		});
 
 		const req = res.req;
-		const hostLookup = await Host.count({where: {ip: target}});
+		const hostLookup = await HostModel.count({ip: target});
 		let spawnCommand, spawnArgs, clientGone = false;
 
 		if (hostLookup === 0) {

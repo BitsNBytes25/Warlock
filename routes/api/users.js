@@ -1,6 +1,6 @@
 const express = require('express');
 const { validate_session } = require('../../libs/validate_session.mjs');
-const { User } = require('../../db');
+const {UserModel} = require('../../db/models/user.mjs');
 const { logger } = require('../../libs/logger.mjs');
 
 const router = express.Router();
@@ -8,7 +8,7 @@ const router = express.Router();
 // List users (omit password)
 router.get('/', validate_session, async (req, res) => {
 	try {
-		const users = await User.findAll({ attributes: ['id', 'username', 'secret_2fa', 'createdAt', 'updatedAt'] });
+		const users = await UserModel.findAll();
 		let userData = [];
 		for (let user of users) {
 			userData.push({
@@ -36,9 +36,10 @@ router.post('/', validate_session, async (req, res) => {
 		return res.json({ success: false, error: 'Password is required and must be at least 8 characters' });
 	}
 	try {
-		const exists = await User.findOne({ where: { username } });
+		const exists = await UserModel.findOne({ username } );
 		if (exists) return res.json({ success: false, error: 'Username already exists' });
-		const user = await User.create({ username, password });
+		const user = new UserModel({ username, password });
+		await user.save();
 		return res.json({ success: true, data: { id: user.id, username: user.username } });
 	} catch (e) {
 		logger.error('Error creating user:', e);
@@ -54,9 +55,9 @@ router.put('/:id', validate_session, async (req, res) => {
 		return res.json({ success: false, error: 'Username is required' });
 	}
 	try {
-		const user = await User.findByPk(id);
+		const user = await UserModel.findByPk(id);
 		if (!user) return res.json({ success: false, error: 'User not found' });
-		const exists = await User.findOne({ where: { username } });
+		const exists = await UserModel.findOne({ username } );
 		if (exists && exists.id !== user.id) return res.json({ success: false, error: 'Username already in use' });
 		user.username = username;
 		await user.save();
@@ -75,7 +76,7 @@ router.post('/:id/password', validate_session, async (req, res) => {
 		return res.json({ success: false, error: 'Password is required and must be at least 8 characters' });
 	}
 	try {
-		const user = await User.findByPk(id);
+		const user = await UserModel.findByPk(id);
 		if (!user) return res.json({ success: false, error: 'User not found' });
 		user.password = password; // model hooks will hash on save
 		await user.save();
@@ -91,7 +92,7 @@ router.post('/:id/reset2fa', validate_session, async (req, res) => {
 	const id = req.params.id;
 
 	try {
-		const user = await User.findByPk(id);
+		const user = await UserModel.findByPk(id);
 		if (!user) return res.json({ success: false, error: 'User not found' });
 		// Clearing the 2FA secret to force re-setup
 		user.secret_2fa = null;
@@ -107,9 +108,9 @@ router.post('/:id/reset2fa', validate_session, async (req, res) => {
 router.delete('/:id', validate_session, async (req, res) => {
 	const id = req.params.id;
 	try {
-		const user = await User.findByPk(id);
+		const user = await UserModel.findByPk(id);
 		if (!user) return res.json({ success: false, error: 'User not found' });
-		await user.destroy();
+		await user.remove();
 		return res.json({ success: true });
 	} catch (e) {
 		logger.error('Error deleting user:', e);

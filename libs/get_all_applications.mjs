@@ -2,7 +2,7 @@ import { fileURLToPath} from 'url';
 import path from 'path';
 import fs from 'fs';
 import yaml from 'js-yaml';
-import {Host} from "../db.js";
+import {HostModel} from "../db/models/host.mjs";
 import {logger} from "./logger.mjs";
 import cache from "./cache.mjs";
 import {HostData} from "./host_data.mjs";
@@ -42,7 +42,7 @@ export async function getAllApplications() {
 
 		appCount = Object.keys(applications).length;
 		logger.debug('getAllApplications: Loading application definitions from hosts');
-		Host.findAll().then(async hosts => {
+		HostModel.findAll().then(async hosts => {
 			if (hosts.length === 0) {
 				logger.debug('getAllApplications: No hosts found in database.');
 				return reject(new Error('No hosts found in database.'));

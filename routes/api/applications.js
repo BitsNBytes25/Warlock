@@ -2,6 +2,7 @@ const express = require('express');
 const {validate_session} = require("../../libs/validate_session.mjs");
 const {getAllApplications} = require("../../libs/get_all_applications.mjs");
 const {cmdRunner} = require("../../libs/cmd_runner.mjs");
+const {logger} = require("../../libs/logger.mjs");
 
 const router = express.Router();
 
@@ -50,15 +51,20 @@ router.get('/updates', validate_session, (req, res) => {
 
 			applications.forEach(application => {
 				application.installs.forEach(hostData => {
-					promises.push(
-						cmdRunner(hostData.host, hostData.getCommandString('check-update'))
-							.then(() => {
-								updates.push({
-									guid: hostData.guid,
-									host: hostData.host
-								});
-							})
-					);
+					try {
+						promises.push(
+							cmdRunner(hostData.host, hostData.getCommandString('check-update'))
+								.then(() => {
+									updates.push({
+										guid: hostData.guid,
+										host: hostData.host
+									});
+								})
+						);
+					}
+					catch(e) {
+						logger.error(e);
+					}
 				});
 			});
 

@@ -1,4 +1,4 @@
-import {Host} from '../db.js';
+import {HostModel} from "../db/models/host.mjs";
 import {HostData} from './host_data.mjs';
 import {BadRequestError, NotFoundError} from "./errors.mjs";
 
@@ -18,7 +18,7 @@ export async function validateHost(req, res, next) {
 		throw new BadRequestError('Missing host parameter');
 	}
 
-	let count = await Host.count({ where: { ip: host } });
+	let count = await HostModel.count({ ip: host } );
 	if (count === 0) {
 		throw new NotFoundError('Requested host is not registered in Warlock');
 	}

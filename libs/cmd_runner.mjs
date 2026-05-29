@@ -1,6 +1,6 @@
 import {exec} from 'child_process';
 import {createHash} from 'crypto';
-import {Host} from "../db.js";
+import {HostModel} from "../db/models/host.mjs";
 import {logger} from "./logger.mjs";
 import cache, {tagCacheKey} from "./cache.mjs";
 import {recordMetric} from "./cmd_profiler.mjs";
@@ -35,7 +35,7 @@ export async function cmdRunner(target, cmd, cacheable = false, cacheTag = null)
 		}
 
 		// Confirm the host exists in the database first
-		Host.count({where: {ip: target}}).then(count => {
+		HostModel.count({ip: target}).then(count => {
 			let sshCommand = null,
 				cmdOptions = {timeout: 30000, maxBuffer: 1024 * 1024 * 20},
 				isSSH = false;

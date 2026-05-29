@@ -1,7 +1,7 @@
 const express = require('express');
 const {validate_session} = require("../../libs/validate_session.mjs");
 const {cmdRunner} = require("../../libs/cmd_runner.mjs");
-const {Host} = require('../../db');
+const {HostModel} = require('../../db/models/host.mjs');
 const {logger} = require('../../libs/logger.mjs');
 const {correctMimetype} = require('../../libs/correct_mimetype.mjs');
 
@@ -19,7 +19,7 @@ router.get('/:host', validate_session, (req, res) => {
 		});
 	}
 
-	Host.count({where: {ip: host}}).then(count => {
+	HostModel.count({ip: host}).then(count => {
 		if (count === 0) {
 			return res.json({
 				success: false,

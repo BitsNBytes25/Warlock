@@ -1,4 +1,4 @@
-import {Host} from "../db.js";
+import {HostModel} from "../db/models/host.mjs";
 import {HostData} from "./host_data.mjs";
 
 /**
@@ -12,7 +12,7 @@ import {HostData} from "./host_data.mjs";
  * @returns {Promise<void>}
  */
 export async function injectHosts(req, res, next) {
-	Host.findAll().then(async hosts => {
+	HostModel.findAll().then(async hosts => {
 		let promises = [],
 			result = [];
 		hosts.forEach(host => {

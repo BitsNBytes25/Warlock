@@ -28,7 +28,7 @@ export const metrics = sqliteTable("Metrics", {
 	status: integer(),
 },
 (table) => [
-	index("metrics_app_guid_service_timestamp").on(table.appGuid, table.service, table.timestamp),
+	index("metrics_app_guid_service_timestamp").on(table.app_guid, table.service, table.timestamp),
 	index("metrics_ip_service_timestamp").on(table.ip, table.service, table.timestamp),
 ]);
 
@@ -51,5 +51,7 @@ export const hostMetrics = sqliteTable("HostMetrics", {
 export const hosts = sqliteTable("Hosts", {
 	id: integer().primaryKey(),
 	ip: text({ length: 255 }),
+	createdAt: numeric().notNull(),
+	updatedAt: numeric().notNull(),
 });
 

@@ -1,9 +1,9 @@
 import {logger} from "../libs/logger.mjs";
-import {Host} from "../db.js";
+import {HostModel} from "../db/models/host.mjs";
 import {HostData} from "../libs/host_data.mjs";
 
 export function HostMetricsPollTask() {
-	Host.findAll().then(hosts => {
+	HostModel.findAll().then(hosts => {
 		hosts.forEach(host => {
 			let hostData = new HostData(host.ip);
 			hostData.getMetrics().catch(error => {
