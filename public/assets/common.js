@@ -2306,6 +2306,13 @@ document.addEventListener('DOMContentLoaded', () => {
 		}
 	});
 
+	// Pre-create max length notices for all inputs/textareas with a maxLength limit
+	document.querySelectorAll('input, textarea').forEach(input => {
+		if (input.maxLength > 0) {
+			getOrCreateMaxLengthNotice(input);
+		}
+	});
+
 	// Check if any element is already focused when the page loads
 	if (document.activeElement && document.activeElement.closest('input, textarea')) {
 		const input = document.activeElement.closest('input, textarea');
