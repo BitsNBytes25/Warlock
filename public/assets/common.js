@@ -2208,14 +2208,111 @@ document.addEventListener('DOMContentLoaded', () => {
 		});
 	});
 
-	// Pressing escape closes any open modals
+	// Helper functions for input maxLength notice
+	const getOrCreateMaxLengthNotice = (input) => {
+		let notice = input._maxLengthNotice;
+		if (!notice) {
+			// Check if a notice element is already adjacent in the DOM
+			let next = input.nextElementSibling;
+			if (next && next.classList.contains('input-max-length-notice')) {
+				notice = next;
+			} else {
+				notice = document.createElement('div');
+				notice.className = 'input-max-length-notice';
+				input.parentNode.insertBefore(notice, input.nextSibling);
+			}
+			input._maxLengthNotice = notice;
+		}
+		return notice;
+	};
+
+	const updateMaxLengthNotice = (input) => {
+		const notice = getOrCreateMaxLengthNotice(input);
+		const currentLen = input.value.length;
+		const maxLen = input.maxLength;
+		notice.textContent = `${currentLen} / ${maxLen}`;
+
+		const percent = (currentLen / maxLen) * 100;
+		if (percent >= 100) {
+			notice.classList.add('danger');
+			notice.classList.remove('warning');
+		} else if (percent >= 80) {
+			notice.classList.add('warning');
+			notice.classList.remove('danger');
+		} else {
+			notice.classList.remove('warning', 'danger');
+		}
+	};
+
+	const showMaxLengthNotice = (input) => {
+		const notice = getOrCreateMaxLengthNotice(input);
+		updateMaxLengthNotice(input);
+		requestAnimationFrame(() => {
+			notice.classList.add('show');
+		});
+	};
+
+	const hideMaxLengthNotice = (input) => {
+		const notice = input._maxLengthNotice || getOrCreateMaxLengthNotice(input);
+		notice.classList.remove('show');
+	};
+
+	// Pressing escape closes any open modals, and keydown triggers limits on maxLength
 	document.addEventListener('keydown', (e) => {
 		if (e.key === 'Escape') {
 			document.querySelectorAll('.modal.show').forEach(modal => {
 				closeModal(modal);
 			});
 		}
+
+		if (e.target.closest('input, textarea')) {
+			const input = e.target.closest('input, textarea');
+			if (input.maxLength > 0) {
+				const currentLen = input.value.length;
+				if (currentLen >= input.maxLength && e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+					const notice = getOrCreateMaxLengthNotice(input);
+					notice.classList.remove('danger');
+					void notice.offsetWidth; // Trigger reflow to restart animation
+					notice.classList.add('danger');
+				}
+			}
+		}
 	});
+
+	document.addEventListener('input', (e) => {
+		if (e.target.closest('input, textarea')) {
+			const input = e.target.closest('input, textarea');
+			if (input.maxLength > 0) {
+				updateMaxLengthNotice(input);
+			}
+		}
+	});
+
+	document.addEventListener('focusin', (e) => {
+		if (e.target.closest('input, textarea')) {
+			const input = e.target.closest('input, textarea');
+			if (input.maxLength > 0) {
+				showMaxLengthNotice(input);
+			}
+		}
+	});
+
+	document.addEventListener('focusout', (e) => {
+		if (e.target.closest('input, textarea')) {
+			const input = e.target.closest('input, textarea');
+			if (input.maxLength > 0) {
+				hideMaxLengthNotice(input);
+			}
+		}
+	});
+
+	// Check if any element is already focused when the page loads
+	if (document.activeElement && document.activeElement.closest('input, textarea')) {
+		const input = document.activeElement.closest('input, textarea');
+		if (input.maxLength > 0) {
+			showMaxLengthNotice(input);
+		}
+	}
 });
 
 

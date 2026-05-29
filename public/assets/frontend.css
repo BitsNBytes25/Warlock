@@ -815,6 +815,48 @@ table td {
 	order: 4;
 }
 
+.input-max-length-notice {
+	display: block;
+	font-size: 0.75rem;
+	color: var(--muted);
+	text-align: right;
+	width: 100%;
+	box-sizing: border-box;
+	transition: opacity 0.25s ease, transform 0.25s ease, max-height 0.25s ease, margin-top 0.25s ease, color 0.25s ease;
+	opacity: 0;
+	transform: translateY(-4px);
+	pointer-events: none;
+	order: 4;
+	max-height: 0;
+	margin-top: 0;
+	overflow: hidden;
+}
+
+.input-max-length-notice.show {
+	opacity: 1;
+	transform: translateY(0);
+	max-height: 1.5rem;
+	margin-top: 0.25rem;
+}
+
+.input-max-length-notice.warning {
+	color: var(--terminal-warning, #f59e0b);
+	font-weight: 500;
+}
+
+.input-max-length-notice.danger {
+	color: var(--term-red, #ef4444);
+	font-weight: 600;
+	animation: notice-shake 0.3s ease;
+}
+
+@keyframes notice-shake {
+	0%, 100% { transform: translateX(0); }
+	20%, 60% { transform: translateX(-4px); }
+	40%, 80% { transform: translateX(4px); }
+}
+
+
 .btn-primary {
 	background: var(--primary);
 	color: white;
