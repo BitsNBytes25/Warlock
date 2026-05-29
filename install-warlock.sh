@@ -448,6 +448,16 @@ if [ "$PWD" != "$INSTALL_DIR" ]; then
 	cd "$PWD"
 fi
 
+if [ $ONLY_UPDATE -eq 1 ]; then
+	# This is needed as of May 2026 (v1.2.3) because sequelize is no longer functional on Debian 12.
+	echo "Applying baseline migration to database"
+	node upgrades/baseline.js
+fi
+
+# Apply standard migrations.
+# This runs for both new installs and upgrades.
+node upgrades/migrate.js
+
 # Generate unit file
 if [ $CONFIGURE_SYSTEMD -eq 1 ]; then
 	echo "Generating and saving unit file"
