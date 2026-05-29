@@ -7,3 +7,4 @@ warlock.sqlite
 /ssh/
 /data/
 /warlock-profile.csv
+/scriptlets/warlock/__pycache__
