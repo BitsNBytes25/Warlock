@@ -61,6 +61,7 @@ const {HostMetricsMergeTask} = require("./tasks/host_metrics_merge.mjs");
 const {HostMetricsPollTask} = require("./tasks/host_metrics_poll.mjs");
 const {initializeProfiler, isEnabled: isProfilerEnabled} = require("./libs/cmd_profiler.mjs");
 const {errorHandler} = require("./libs/error_handler.mjs");
+const {startBot} = require('./libs/bot_manager.js');
 
 // Load environment variables
 dotenv.config();
@@ -123,6 +124,7 @@ app.use('/application/install', require('./routes/application_install'));
 app.use('/application/backups', require('./routes/application_backups'));
 app.use('/application/configure', require('./routes/application_configure'));
 app.use('/settings', require('./routes/settings'));
+app.use('/integrations', require('./routes/integrations'));
 app.use('/2fa-setup', require('./routes/2fa-setup'));
 app.use('/test', require('./routes/test'));
 
@@ -154,6 +156,7 @@ app.use('/api/firewall', require('./routes/api/firewall'));
 app.use('/api/ports', require('./routes/api/ports'));
 app.use('/api/metrics', require('./routes/api/metrics'));
 app.use('/api/job', require('./routes/api/job'));
+app.use('/api/integrations', require('./routes/api/integrations'));
 
 
 // Register a generic error handler to use inside this application
@@ -212,6 +215,9 @@ app.listen(PORT, HOST, () => {
 
 					HostMetricsMergeTask();
 					setInterval(HostMetricsMergeTask, 3600000); // Run every hour
+
+					// Start the integration bot manager
+					startBot();
 				});
 			});
 		});

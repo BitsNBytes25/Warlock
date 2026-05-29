@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Warlock - Integrations</title>
+    <link rel="stylesheet" href="<%= assetUrl('/assets/fontawesome/css/all.min.css') %>">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="<%= assetUrl('/assets/frontend.css') %>">
+    <link rel="stylesheet" href="<%= assetUrl('/assets/themes.css') %>">
+    <script src="<%= assetUrl('/assets/common.js') %>"></script>
+    <link rel="icon" type="image/webp" sizes="64x64" href="<%= assetUrl('/assets/media/logos/warlock/warlock-lopoly-logo-64x64.webp') %>">
+    <link rel="icon" type="image/webp" sizes="128x128" href="<%= assetUrl('/assets/media/logos/warlock/warlock-lopoly-logo-128x128.webp') %>">
+    <link rel="icon" type="image/webp" sizes="256x256" href="<%= assetUrl('/assets/media/logos/warlock/warlock-lopoly-logo-256x256.webp') %>">
+    <link rel="icon" type="image/webp" sizes="512x512" href="<%= assetUrl('/assets/media/logos/warlock/warlock-lopoly-logo-512x512.webp') %>">
+</head>
+<body>
+
+<%- include('partials/nav.ejs') %>
+
+<div class="main-container" style="grid-template-columns: 1fr; max-width: 1000px;">
+    <main class="content-area">
+        <div class="content-header">
+            <div class="content-header-inner">
+                <h2>
+                    <i class="fas fa-robot"></i>
+                    Integrations
+                </h2>
+                <div class="content-header-buttons">
+                    <button id="btnSaveIntegrations" class="action-save">
+                        <i class="fas fa-save"></i> Save & Restart Bot
+                    </button>
+                </div>
+                <p>Configure Discord & Fluxer Bots</p>
+            </div>
+        </div>
+
+        <div class="content-body">
+            <div id="integrationsMessage"></div>
+
+            <div class="settings-meta">
+                <h3>Global Bot Settings</h3>
+                <div class="form-group form-check" style="margin-top: 1rem;">
+                    <input type="checkbox" class="form-check-input" id="botEnabled" <%= config.BOT_ENABLED === '1' ? 'checked' : '' %>>
+                    <label class="form-check-label" for="botEnabled">Enable Bot Integration Process</label>
+                    <p class="form-description">
+                        When enabled, Warlock will automatically run the bot in the background to handle Discord and Fluxer connections.
+                    </p>
+                </div>
+            </div>
+
+            <div class="settings-meta" style="margin-top: 2rem;">
+                <h3><i class="fab fa-discord"></i> Discord Integration</h3>
+                <p class="form-description" style="margin-bottom: 1.5rem;">
+                    To setup Discord, you need to create a bot application. <br/>
+                    1. Go to the <a href="https://discord.com/developers/applications" target="_blank" rel="noopener">Discord Developer Portal</a>.<br/>
+                    2. Click "New Application", go to "Bot", and enable the Message Content Intent.<br/>
+                    3. Reset the token and paste it here.<br/>
+                    4. Go to OAuth2 -> URL Generator, select "bot", and invite it to your server.
+                </p>
+
+                <div class="form-group">
+                    <label for="discordToken">Bot Token</label>
+                    <input type="password" id="discordToken" class="form-control" placeholder="Enter Discord Bot Token" value="<%= config.DISCORD_TOKEN || '' %>">
+                </div>
+                
+                <div class="form-group">
+                    <label for="discordStatusChannel">Status Channel ID</label>
+                    <input type="text" id="discordStatusChannel" class="form-control" placeholder="e.g. 1509939049631322173" value="<%= config.DISCORD_STATUS_CHANNEL_ID || '' %>">
+                    <p class="form-description">The ID of the channel where the live dashboard will be posted.</p>
+                </div>
+
+                <div class="form-group">
+                    <label for="discordAdminRole">Admin Role ID</label>
+                    <input type="text" id="discordAdminRole" class="form-control" placeholder="e.g. 1480336792528565174" value="<%= config.DISCORD_ADMIN_ROLE_ID || '' %>">
+                    <p class="form-description">The ID of the role that is allowed to run !w commands.</p>
+                </div>
+            </div>
+
+            <div class="settings-meta" style="margin-top: 2rem;">
+                <h3><i class="fas fa-satellite-dish"></i> Fluxer Integration</h3>
+                
+                <div class="form-group">
+                    <label for="fluxerToken">Bot Token</label>
+                    <input type="password" id="fluxerToken" class="form-control" placeholder="Enter Fluxer Bot Token" value="<%= config.FLUXER_TOKEN || '' %>">
+                </div>
+                
+                <div class="form-group">
+                    <label for="fluxerStatusChannel">Status Channel ID</label>
+                    <input type="text" id="fluxerStatusChannel" class="form-control" placeholder="Fluxer Channel ID" value="<%= config.STATUS_CHANNEL_ID || '' %>">
+                </div>
+
+                <div class="form-group">
+                    <label for="fluxerAdminRole">Admin Role ID</label>
+                    <input type="text" id="fluxerAdminRole" class="form-control" placeholder="Fluxer Admin Role ID" value="<%= config.ADMIN_ROLE_ID || '' %>">
+                </div>
+            </div>
+
+        </div>
+    </main>
+</div>
+
+<%- include('partials/theme-selector.ejs') %>
+
+<script>
+    document.getElementById('btnSaveIntegrations').addEventListener('click', async () => {
+        const btn = document.getElementById('btnSaveIntegrations');
+        const msgDiv = document.getElementById('integrationsMessage');
+        const originalText = btn.innerHTML;
+        
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+        btn.disabled = true;
+        
+        const payload = {
+            BOT_ENABLED: document.getElementById('botEnabled').checked ? '1' : '0',
+            DISCORD_TOKEN: document.getElementById('discordToken').value,
+            DISCORD_STATUS_CHANNEL_ID: document.getElementById('discordStatusChannel').value,
+            DISCORD_ADMIN_ROLE_ID: document.getElementById('discordAdminRole').value,
+            FLUXER_TOKEN: document.getElementById('fluxerToken').value,
+            STATUS_CHANNEL_ID: document.getElementById('fluxerStatusChannel').value,
+            ADMIN_ROLE_ID: document.getElementById('fluxerAdminRole').value
+        };
+
+        try {
+            const res = await fetch('/api/integrations/save', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            
+            if (data.success) {
+                msgDiv.innerHTML = '<div class="info-message"><p><i class="fas fa-check"></i> ' + data.message + '</p></div>';
+            } else {
+                msgDiv.innerHTML = '<div class="warning-message"><p><i class="fas fa-exclamation-triangle"></i> ' + data.error + '</p></div>';
+            }
+        } catch (e) {
+            msgDiv.innerHTML = '<div class="warning-message"><p><i class="fas fa-exclamation-triangle"></i> Failed to save settings.</p></div>';
+        }
+        
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+        
+        setTimeout(() => {
+            msgDiv.innerHTML = '';
+        }, 5000);
+    });
+</script>
+</body>
+</html>

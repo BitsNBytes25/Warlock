@@ -1,0 +1,20 @@
+{
+  "windrose": {
+    "guid": "b5453ff4-e65e-3975-a9db-3ec4c12cb911",
+    "service_name": "windrose-server",
+    "commands": {
+      "start": {
+        "description": "Start the windrose server",
+        "requires_args": false,
+        "type": "control",
+        "action": "start"
+      },
+      "stop": {
+        "description": "Stop the windrose server",
+        "requires_args": false,
+        "type": "control",
+        "action": "stop"
+      }
+    }
+  }
+}

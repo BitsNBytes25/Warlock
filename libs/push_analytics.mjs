@@ -20,8 +20,13 @@ export function push_analytics(action) {
 		console.log(e);
 	}
 
-	uaData.platform = execSync('lsb_release -i 2>/dev/null | sed "s#.*:\\t##"').toString().trim();
-	uaData.platformVersion = execSync('lsb_release -r 2>/dev/null | sed "s#.*:\\t##"').toString().trim();
+	try {
+		uaData.platform = execSync('lsb_release -i 2>/dev/null | sed "s#.*:\\t##"').toString().trim();
+		uaData.platformVersion = execSync('lsb_release -r 2>/dev/null | sed "s#.*:\\t##"').toString().trim();
+	} catch (e) {
+		uaData.platform = "Windows";
+		uaData.platformVersion = "10";
+	}
 	params.append('uadata', JSON.stringify(uaData));
 
 	Meta.findOne({where: {key: 'install_id'}}).then(meta => {
