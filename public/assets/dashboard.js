@@ -141,22 +141,13 @@ function noHostsAvailable() {
  */
 async function loadAllServicesAndStats() {
 	return loadServices().then(services => {
-		//console.log(services);
+		if (!services.length) {
+			noServicesAvailable();
+		}
+	}).catch(e => {
+		console.error('Error loading services.', e);
+		noServicesAvailable();
 	});
-	/*
-	return fetch('/api/services', {method: 'GET'})
-		.then(r => r.json())
-		.then(results => {
-			if (results.success && results.services.length > 0) {
-				results.services.forEach(s => {
-					populateServicesTable(s);
-				});
-			}
-			else {
-				console.error('Error loading services.', results);
-				noServicesAvailable();
-			}
-		});*/
 }
 
 // Dynamic events for various buttons
