@@ -139,7 +139,7 @@ function renderCharts(metrics, timeframe) {
 				borderColor: '#0096ff',
 				backgroundColor: 'rgba(0, 150, 255, 0.1)',
 				fill: true,
-				tension: 0.4
+				tension: 0.1
 			}]
 		},
 		options: commonOptions
@@ -155,7 +155,7 @@ function renderCharts(metrics, timeframe) {
 				borderColor: '#00d4aa',
 				backgroundColor: 'rgba(0, 212, 170, 0.1)',
 				fill: true,
-				tension: 0.4
+				tension: 0.1
 			}]
 		},
 		options: commonOptions
@@ -171,7 +171,7 @@ function renderCharts(metrics, timeframe) {
 				borderColor: '#ff6b6b',
 				backgroundColor: 'rgba(255, 107, 107, 0.1)',
 				fill: true,
-				tension: 0.4,
+				tension: 0.1,
 				stepped: true
 			}]
 		},
@@ -233,7 +233,7 @@ function renderCharts(metrics, timeframe) {
 				borderColor: '#c44569',
 				backgroundColor: 'rgba(196, 69, 105, 0.1)',
 				fill: true,
-				tension: 0.4
+				tension: 0.1
 			}]
 		},
 		options: commonOptions
