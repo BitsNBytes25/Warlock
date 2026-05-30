@@ -22,6 +22,13 @@
       "when": 1779949914581,
       "tag": "0002_luxuriant_nightmare",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1780094669176,
+      "tag": "0003_add_api_key_to_users",
+      "breakpoints": true
     }
   ]
 }

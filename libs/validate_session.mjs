@@ -49,6 +49,28 @@ export const validate_session = (req, res, next) => {
 			console.error('Database error during session validation:', err);
 			return res.status(500).send('Internal Server Error');
 		});
+	} else if ('x-api-key' in req.headers) {
+		// Check for the API key in the headers.
+		const apiKey = req.headers['x-api-key'];
+		if (!apiKey) {
+			return res.status(401).send('API key is required.');
+		}
+
+		UserModel.findOne({ api_key: apiKey } )
+			.then(user => {
+				if (!user) {
+					return res.status(401).send('Invalid API key.');
+				}
+				req.user = {
+					id: user.id,
+					username: user.username,
+					// Add other non-sensitive fields as needed
+				};
+				return next();
+			})
+			.catch(err => {
+				console.error('Error during API key validation:', err);
+			});
 	} else {
 		// No session, redirect to login or install (if not installed)
 		// If there are no users in the database, redirect to install page

@@ -49,6 +49,7 @@
                         <tr>
                             <th>Username</th>
                             <th title="2-Factor Authentication">2FA</th>
+                            <th>API</th>
                             <th>Created</th>
                             <th>Actions</th>
                         </tr>
@@ -305,6 +306,10 @@
                 <label for="inputUsername">Username</label>
                 <input id="inputUsername" type="text" />
             </div>
+            <div class="form-group" id="apiKeyRow">
+                <label for="inputApiKey">API Key</label>
+                <input id="inputApiKey" type="text" readonly="readonly"/>
+            </div>
             <div class="form-group" id="passwordRow">
                 <label for="inputPassword">Password</label>
                 <input id="inputPassword" type="password" />
@@ -312,6 +317,7 @@
             <input type="hidden" id="inputUserId" />
         </div>
         <div class="modal-footer">
+            <button id="regenerateAPIKeyBtn" class="action-redo">Regenerate Key</button>
             <button id="saveUserBtn" class="action-save">Save</button>
             <button class="action-cancel modal-close">Cancel</button>
         </div>

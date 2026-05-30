@@ -1,0 +1,1 @@
+ALTER TABLE `Users` ADD `api_key` text(255);

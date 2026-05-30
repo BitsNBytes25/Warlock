@@ -1,5 +1,6 @@
 const express = require('express');
 const { validate_session } = require('../../libs/validate_session.mjs');
+const crypto = require('crypto');
 const {UserModel} = require('../../db/models/user.mjs');
 const { logger } = require('../../libs/logger.mjs');
 
@@ -15,8 +16,10 @@ router.get('/', validate_session, async (req, res) => {
 				id: user.id,
 				username: user.username,
 				secret_2fa: parseInt(user.id) === parseInt(req.user.id) ? user.secret_2fa : !!user.secret_2fa,
+				api_key: parseInt(user.id) === parseInt(req.user.id) ? user.api_key : !!user.api_key,
 				createdAt: user.createdAt,
-				updatedAt: user.updatedAt
+				updatedAt: user.updatedAt,
+				_current: parseInt(user.id) === parseInt(req.user.id)
 			});
 		}
 		return res.json({ success: true, data: userData });
@@ -26,7 +29,11 @@ router.get('/', validate_session, async (req, res) => {
 	}
 });
 
-// Create user
+/**
+ * Create new user account
+ *
+ * API Endpoint: POST /api/users
+ */
 router.post('/', validate_session, async (req, res) => {
 	const { username, password } = req.body || {};
 	if (!username || typeof username !== 'string' || username.trim().length === 0) {
@@ -47,7 +54,11 @@ router.post('/', validate_session, async (req, res) => {
 	}
 });
 
-// Update username
+/**
+ * Update the username for a given user
+ *
+ * API Endpoint: PUT /api/users/:id
+ */
 router.put('/:id', validate_session, async (req, res) => {
 	const id = req.params.id;
 	const { username } = req.body || {};
@@ -68,7 +79,11 @@ router.put('/:id', validate_session, async (req, res) => {
 	}
 });
 
-// Change password (admin reset)
+/**
+ * Change password (admin reset)
+ *
+ * API Endpoint: POST /api/users/:id/password
+ */
 router.post('/:id/password', validate_session, async (req, res) => {
 	const id = req.params.id;
 	const { password } = req.body || {};
@@ -87,7 +102,11 @@ router.post('/:id/password', validate_session, async (req, res) => {
 	}
 });
 
-// Reset 2FA authentication
+/**
+ * Reset 2FA authentication
+ *
+ * API Endpoint: POST /api/users/:id/reset2fa
+ */
 router.post('/:id/reset2fa', validate_session, async (req, res) => {
 	const id = req.params.id;
 
@@ -104,7 +123,11 @@ router.post('/:id/reset2fa', validate_session, async (req, res) => {
 	}
 });
 
-// Delete user
+/**
+ * Delete requested user
+ *
+ * API Endpoint: DELETE /api/users/:id
+ */
 router.delete('/:id', validate_session, async (req, res) => {
 	const id = req.params.id;
 	try {
@@ -114,6 +137,34 @@ router.delete('/:id', validate_session, async (req, res) => {
 		return res.json({ success: true });
 	} catch (e) {
 		logger.error('Error deleting user:', e);
+		return res.json({ success: false, error: String(e) });
+	}
+});
+
+/**
+ * Regenerate API Key for a user
+ *
+ * API Endpoint: POST /api/users/:id/regenerate-key
+ */
+router.post('/:id/regenerate-key', validate_session, async (req, res) => {
+	const id = req.params.id;
+	try {
+		const user = await UserModel.findByPk(id);
+		if (!user) return res.json({ success: false, error: 'User not found' });
+
+		// Generate a secure 32-byte API key (64 hex characters)
+		const newApiKey = crypto.randomBytes(32).toString('hex');
+
+		// Update the user record with the new API key
+		user.api_key = newApiKey;
+		await user.save();
+
+		return res.json({
+			success: true,
+			data: { id: user.id, username: user.username, api_key: newApiKey }
+		});
+	} catch (e) {
+		logger.error('Error regenerating API key:', e);
 		return res.json({ success: false, error: String(e) });
 	}
 });

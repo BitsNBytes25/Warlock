@@ -21,6 +21,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Security
 
 
+## [1.2.3]
+
+### Added
+
+- Add max length notices for inputs
+- Add API-Key support for automation goodness
+
+### Changed
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Security
+
+
 ## [1.2.2] - 2026-05-25
 
 ### Added

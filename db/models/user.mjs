@@ -11,11 +11,13 @@ export class UserModel extends BaseModel {
 	get username() { return this._data.username; }
 	get password() { return this._data.password; }
 	get secret_2fa() { return this._data.secret_2fa; }
+	get api_key() { return this._data.api_key; }
 	get createdAt() { return this._data.createdAt; }
 	get updatedAt() { return this._data.updatedAt; }
 	set username(value) { this._data.username = value; }
 	set password(value) { this._data.password = value; }
 	set secret_2fa(value) { this._data.secret_2fa = value; }
+	set api_key(value) { this._data.api_key = value; }
 
 	/**
 	 * Validate the password against the hashed password in the database.

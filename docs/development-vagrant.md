@@ -1,4 +1,4 @@
-# Local Development
+# Development Guide (Vagrant)
 
 This guide covers setting up a local development environment on Windows using Vagrant.
 

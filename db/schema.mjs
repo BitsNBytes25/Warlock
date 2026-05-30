@@ -7,6 +7,7 @@ export const users = sqliteTable("Users", {
 	createdAt: numeric().notNull(),
 	updatedAt: numeric().notNull(),
 	secret_2fa: text("secret_2fa", { length: 255 }),
+	api_key: text("api_key", { length: 255 }),
 });
 
 export const meta = sqliteTable("Meta", {

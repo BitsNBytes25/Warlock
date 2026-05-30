@@ -1,5 +1,6 @@
 const usersTableBody = document.getElementById('usersTableBody');
 const btnCreateUser = document.getElementById('btnCreateUser');
+const btnRegenerateAPIKey = document.getElementById('regenerateAPIKeyBtn');
 const userModal = document.getElementById('userModal');
 const changePasswordModal = document.getElementById('changePasswordModal');
 const userDeleteModal = document.getElementById('userDeleteModal');
@@ -13,6 +14,7 @@ const nexusPreDonateMessage = document.getElementById('nexusPreDonateMessage');
 const settingsNexusRegister = document.getElementById('settingsNexusRegister');
 const settingsNexusCommunityProfile = document.getElementById('settingsNexusCommunityProfile');
 const warlockLatestVersion = document.getElementById('warlock-latest-version');
+let currentUserID = null;
 
 function closeModal(el) { if (!el) return; el.classList.remove('show'); }
 function openModal(el) { if (!el) return; el.classList.add('show'); }
@@ -30,18 +32,29 @@ async function loadUsers() {
 		}
 		usersTableBody.innerHTML = '';
 		users.forEach(u => {
+			let api_key;
+			if (u._current) {
+				currentUserID = u.id;
+				api_key = u.api_key || '';
+			}
+			else {
+				api_key = u.api_key ? '1' : '0';
+			}
+
 			const tr = document.createElement('tr');
 			tr.innerHTML = `<td>${u.username}</td>
 <td>${twofactor ? (u.secret_2fa ? '<i class="fas fa-check"></i>' : '<i class="fas fa-times"></i>') : 'N/A'}</td>
+<td>${u.api_key ? '<i class="fas fa-check" title="API Key Set"></i>' : '<i class="fas fa-times" title="No API Key Set"></i>'}</td>
 <td>${new Date(u.createdAt).toLocaleString()}</td>
 <td>
 	<div class="button-group">
-		<button class="action-edit" data-id="${u.id}">Edit</button>
+		<button class="action-edit" data-id="${u.id}" data-api="${api_key}">Edit</button>
 		<button class="action-password" data-id="${u.id}">Password</button>
 		${twofactor && u.secret_2fa ? '<button class="action-2fa" data-id="' + u.id + '" data-secret="' + u.secret_2fa + '">2FA</button>' : ''}
 		<button class="action-remove" data-id="${u.id}">Delete</button>
 	</div>
 </td>`;
+
 			usersTableBody.appendChild(tr);
 		});
 		// attach handlers
@@ -59,10 +72,20 @@ function onEditUser(e) {
 	const id = e.currentTarget.dataset.id;
 	const row = e.currentTarget.closest('tr');
 	const username = row.children[0].innerText;
+	const api = e.currentTarget.dataset.api;
+
 	document.getElementById('userModalTitle').innerText = 'Edit User';
 	document.getElementById('inputUsername').value = username;
 	document.getElementById('inputUserId').value = id;
 	document.getElementById('passwordRow').style.display = 'none';
+	btnRegenerateAPIKey.dataset.userid = id;
+
+	if (currentUserID === parseInt(id)) {
+		document.getElementById('apiKeyRow').querySelector('input').value = api;
+	}
+	else {
+		document.getElementById('apiKeyRow').querySelector('input').value = api === '1' ? 'Set' : 'Not Set';
+	}
 	openModal(userModal);
 }
 
@@ -322,6 +345,20 @@ confirmUserReset2faBtn.addEventListener('click', async () => {
 		showToast('error', `Failed to reset user: ${e.message}`);
 	}
 });
+
+btnRegenerateAPIKey.addEventListener('click', async () => {
+	const id = btnRegenerateAPIKey.dataset.userid;
+	try {
+		const res = await fetch(`/api/users/${id}/regenerate-key`, { method: 'POST' });
+		const data = await res.json();
+		if (!data.success) throw new Error(data.error || 'Failed to reset');
+		showToast('success', 'Generated new API Key.  IMPORTANT - Please copy this key to a safe place!');
+		document.getElementById('apiKeyRow').querySelector('input').value = data.data.api_key;
+		await loadUsers();
+	} catch (e) {
+		showToast('error', `Failed to reset user: ${e.message}`);
+	}
+})
 
 const saveBtn = document.getElementById('btnSaveCommunityProfile');
 if (saveBtn) {
